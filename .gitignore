@@ -1,0 +1,14 @@
+*.iml
+.gradle
+/local.properties
+.idea/
+misc.xml
+deploymentTargetDropDown.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+*.apk
+output.json

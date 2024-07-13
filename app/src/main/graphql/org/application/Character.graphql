@@ -1,0 +1,16 @@
+query Character($id: [ID!]) {
+    characters(ids: $id) {
+        id
+        name
+        russian
+        japanese
+        synonyms
+        poster {
+            originalUrl
+        }
+        descriptionHtml
+        topic {
+            id
+        }
+    }
+}

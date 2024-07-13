@@ -1,0 +1,112 @@
+query AnimeList(
+    $page: PositiveInt!,
+    $limit: PositiveInt!,
+    $order: OrderEnum,
+    $kind: AnimeKindString,
+    $status: AnimeStatusString,
+    $season: SeasonString,
+    $score: Int,
+    $duration: DurationString,
+    $rating: RatingString,
+    $genre: String,
+    #$studio: String,
+    #$franchise: String,
+    #$censored: Boolean,
+    #$mylist: MylistString,
+    $search: String
+) {
+    animes(
+        page: $page, limit: $limit, order: $order, kind: $kind, status: $status, season: $season,
+        score: $score, duration: $duration, rating: $rating, genre: $genre, censored: true, search: $search
+    ) {
+        id
+        name
+        russian
+        kind
+        season
+        poster {
+            originalUrl
+        }
+    }
+}
+
+query AnimeGenres {
+    genres(entryType: Anime) {
+        id
+        russian
+    }
+}
+
+query Anime($id: String!) {
+    animes (ids: $id) {
+        id
+        name
+        russian
+        english
+        japanese
+        synonyms
+        kind
+        rating
+        score
+        status
+        episodes
+        episodesAired
+        season
+        poster {
+            originalUrl
+        }
+        genres {
+            russian
+        }
+        studios {
+            id
+            name
+            imageUrl
+        }
+        personRoles {
+            rolesRu
+            person {
+                id
+                name
+                russian
+                poster {
+                    originalUrl
+                }
+            }
+        }
+        characterRoles {
+            rolesRu
+            character {
+                id
+                name
+                russian
+                poster {
+                    originalUrl
+                }
+            }
+        }
+        screenshots {
+            originalUrl
+        }
+        scoresStats {
+            score
+            count
+        }
+        statusesStats {
+            status
+            count
+        }
+        descriptionHtml
+        topic {
+            id
+        }
+        userRate {
+            id
+            episodes
+            rewatches
+            score
+            status
+            text
+        }
+    }
+}
