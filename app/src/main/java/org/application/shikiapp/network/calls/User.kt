@@ -11,9 +11,9 @@ interface User {
 
     @GET("users")
     suspend fun getList(
+        @Query("search") search: String? = null,
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 5,
-        @Query("search") search: String? = null
     ): List<User>
 
     @GET("users/{userId}")
@@ -35,9 +35,9 @@ interface User {
     @GET("users/{userId}/anime_rates")
     suspend fun getAnimeRates(
         @Path(value = "userId") userId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 5000,
         @Query("status") status: String? = null,
-        @Query("censored") censored: Boolean? = null
+        @Query("censored") censored: Boolean? = null,
+        @Query("page") page: Int = 1,
+        @Query("limit") limit: Int = 5000
     ): List<AnimeRate>
 }

@@ -20,7 +20,7 @@ data class Club(
     @Json(name = "images") val images: List<ClubImages> = emptyList(),
     @Json(name = "members") val members: List<User> = emptyList(),
     @Json(name = "animes") val animes: List<AnimeShort> = emptyList(),
-    @Json(name = "mangas") val mangas: List<Manga> = emptyList(),
+    @Json(name = "mangas") val mangas: List<MangaShort> = emptyList(),
     @Json(name = "characters") val characters: List<Character> = emptyList()
 )
 

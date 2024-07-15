@@ -11,6 +11,7 @@ import retrofit2.http.Path
 import retrofit2.http.Query
 
 interface Clubs {
+
     @GET("clubs")
     suspend fun getClubs(): List<Club>
 

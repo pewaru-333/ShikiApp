@@ -38,3 +38,19 @@ data class Manga(
     @Json(name = "publishers") val publishers: List<Publisher> = emptyList(),
     @Json(name = "user_rate") val userRate: List<UserRate> = emptyList()
 )
+
+@JsonClass(generateAdapter = true)
+data class MangaShort(
+    @Json(name = "id") val id: Long,
+    @Json(name = "name") val name: String,
+    @Json(name = "russian") val russian: String,
+    @Json(name = "image") val image: Image,
+    @Json(name = "url") val url: String,
+    @Json(name = "kind") val kind: String,
+    @Json(name = "score") val score: String,
+    @Json(name = "status") val status: String,
+    @Json(name = "volumes") val volumes: Int,
+    @Json(name = "chapters") val chapters: Int,
+    @Json(name = "aired_on") val airedOn: String?,
+    @Json(name = "released_on") val releasedOn: String?,
+)
