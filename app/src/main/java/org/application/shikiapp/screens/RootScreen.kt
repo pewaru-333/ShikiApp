@@ -14,7 +14,6 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -36,14 +35,11 @@ import org.application.shikiapp.R.string.text_catalog
 import org.application.shikiapp.R.string.text_news
 import org.application.shikiapp.R.string.text_profile
 import org.application.shikiapp.R.string.text_settings
-import org.application.shikiapp.utils.TokenManager
 
 @Composable
 fun RootScreen(navController: NavHostController) {
     val navigator = navController.rememberDestinationsNavigator()
     val current by navController.currentDestinationAsState()
-
-    LaunchedEffect(Unit) { TokenManager.refreshToken() }
 
     Scaffold(
         bottomBar = {

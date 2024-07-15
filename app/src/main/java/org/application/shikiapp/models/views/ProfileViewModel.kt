@@ -32,7 +32,7 @@ class ProfileViewModel : ViewModel() {
     ).flow.cachedIn(viewModelScope).retryWhen { _, attempt -> attempt <= 3 }
 
     init {
-        if (Preferences.tokenExists()) setProfile()
+        if (Preferences.isTokenExists()) setProfile()
     }
 
     fun login(code: String) {

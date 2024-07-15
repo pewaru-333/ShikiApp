@@ -42,7 +42,8 @@ object Preferences {
     fun setUserId(userId: Long) = auth.edit { putLong(USER_ID, userId).apply() }
 
     fun getToken() = auth.getString(ACCESS_TOKEN, BLANK) ?: BLANK
-    fun getRefreshToken() = auth.getString(REFRESH_TOKEN, BLANK) ?: BLANK
-    fun tokenExists() = auth.contains(ACCESS_TOKEN) && auth.getString(ACCESS_TOKEN, BLANK) != BLANK
+    fun isTokenExists() = auth.contains(ACCESS_TOKEN) && auth.getString(ACCESS_TOKEN, BLANK) != BLANK
+    fun isTokenExpired() = auth.getLong(CREATED_AT, 0L) + auth.getLong(EXPIRES_IN, 0L) < System.currentTimeMillis() / 1000
+    fun refreshToken() = auth.getString(REFRESH_TOKEN, BLANK) ?: BLANK
     fun getUserId() = auth.getLong(USER_ID, 0L)
 }

@@ -18,15 +18,10 @@ object TokenManager {
         return user
     }
 
-    suspend fun refreshToken() {
-        if (Preferences.tokenExists())
-            try {
-                val refreshToken = Preferences.getRefreshToken()
-                val token = NetworkClient.profile.getRefreshToken(refreshToken = refreshToken)
-
-                Preferences.saveToken(token)
-            } catch (e: Throwable) {
-                e.printStackTrace()
-            }
+    suspend fun refreshToken() = try {
+        val token = NetworkClient.profile.getRefreshToken(refreshToken = Preferences.refreshToken())
+        Preferences.saveToken(token)
+    } catch (e: Throwable) {
+        e.printStackTrace()
     }
 }
