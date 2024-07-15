@@ -21,8 +21,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 34
-        versionCode = 1
-        versionName = "alpha-0.0.1"
+        versionCode = 2
+        versionName = "alpha-0.0.2"
     }
 
     buildTypes {
@@ -77,6 +77,5 @@ dependencies {
 
     // ============================== Utilities ==============================
     implementation(libs.coil.compose)
-    implementation(libs.coil.video)
     implementation(libs.preference.library)
 }
