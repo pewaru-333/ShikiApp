@@ -16,8 +16,18 @@ query AnimeList(
     $search: String
 ) {
     animes(
-        page: $page, limit: $limit, order: $order, kind: $kind, status: $status, season: $season,
-        score: $score, duration: $duration, rating: $rating, genre: $genre, censored: true, search: $search
+        page: $page,
+        limit: $limit,
+        order: $order,
+        kind: $kind,
+        status: $status,
+        season: $season,
+        score: $score,
+        duration: $duration,
+        rating: $rating,
+        genre: $genre,
+        censored: true,
+        search: $search
     ) {
         id
         name
@@ -87,6 +97,12 @@ query Anime($id: String!) {
         }
         screenshots {
             originalUrl
+        }
+        videos {
+            url
+            name
+            kind
+            imageUrl
         }
         scoresStats {
             score
