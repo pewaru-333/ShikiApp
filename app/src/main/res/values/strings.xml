@@ -23,7 +23,7 @@
     <string name="text_studio">Студия</string>
     <string name="text_user_rates">Оценки людей</string>
     <string name="text_in_lists">В списках</string>
-    <string name="text_screenshots">Скриншоты</string>
+    <string name="text_screenshots">Кадры</string>
     <string name="text_characters">Персонажи</string>
     <string name="text_show_all_m">Показать всех</string>
     <string name="text_authors">Авторы</string>
@@ -50,6 +50,7 @@
     <string name="text_settings">Настройки</string>
     <string name="text_comments">Комментарии</string>
     <string name="text_calendar">Календарь</string>
+    <string name="text_video">Видео</string>
 
     <plurals name="age">
         <item quantity="zero">%d лет</item>

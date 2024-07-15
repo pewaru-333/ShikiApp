@@ -103,3 +103,9 @@ val SCORES = mapOf(
 )
 
 val THEMES = listOf("Системная", "Светлая", "Тёмная")
+
+enum class VideoKinds(val title: String, val kinds: List<String>) {
+    Video("Видео", listOf("pv", "ed", "op", "op_ed_clip", "other")),
+    Character("Трейлеры персонажей", listOf("character_trailer")),
+    Episode("Превью эпизодов", listOf("episode_preview"))
+}

@@ -22,7 +22,7 @@ class UserRatesViewModel(private val userId: Long) : ViewModel() {
             _response.emit(UserRateState.Loading)
 
             try {
-                val rates = ArrayList<AnimeRate>()
+                val rates = mutableListOf<AnimeRate>()
                 var page = 1
 
                 while (true) {

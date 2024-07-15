@@ -78,7 +78,7 @@ fun ParagraphTitle(text: String, modifier: Modifier = Modifier) = Text(
     text = text,
     modifier = modifier,
     color = MaterialTheme.colorScheme.onSurface,
-    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
 )
 
 @Composable

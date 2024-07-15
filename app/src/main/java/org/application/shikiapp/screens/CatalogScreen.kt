@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -84,6 +85,8 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 import org.application.AnimeListQuery
 import org.application.shikiapp.R
+import org.application.shikiapp.R.drawable.vector_filter
+import org.application.shikiapp.R.string.text_search
 import org.application.shikiapp.models.views.AnimeListViewModel
 import org.application.shikiapp.models.views.CatalogState
 import org.application.shikiapp.models.views.CatalogViewModel
@@ -111,11 +114,10 @@ import org.application.shikiapp.utils.STATUSES
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getSeason
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 @Destination<RootGraph>
 fun CatalogScreen(navigator: DestinationsNavigator) {
-    val viewModel: CatalogViewModel = viewModel()
+    val viewModel = viewModel<CatalogViewModel>()
     val state by viewModel.state.collectAsStateWithLifecycle()
 
     val focus = LocalFocusManager.current
@@ -130,59 +132,53 @@ fun CatalogScreen(navigator: DestinationsNavigator) {
         }
     }
 
-    ModalNavigationDrawer(
-        drawerState = state.drawerState,
-        drawerContent = {
-            ModalDrawerSheet(Modifier.width(260.dp)) {
-                Text(
-                    text = stringResource(R.string.text_catalog),
-                    modifier = Modifier.padding(16.dp),
-                    style = MaterialTheme.typography.headlineSmall
-                )
+    ModalNavigationDrawer(drawerMenu(viewModel, state), Modifier, state.drawerState) {
+        Scaffold(topBar = topBar(viewModel, state)) { values ->
+            when (state.menu) {
+                0 -> AnimeList(viewModel, state, navigator, values)
 
-                Items.entries.forEach { item ->
-                    NavigationDrawerItem(
-                        label = {
-                            Text(text = item.title, style = MaterialTheme.typography.labelLarge)
-                        },
-                        selected = state.menu == item.ordinal,
-                        onClick = { viewModel.pick(item.ordinal) },
-                        modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                        icon = { Icon(painterResource(item.icon), null) }
-                    )
-                }
+                1 -> MangaList(navigator, values)
+                2 -> RanobeList(navigator, values)
             }
         }
-    ) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = {
-                        TextField(
-                            value = state.search,
-                            onValueChange = viewModel::setSearch,
-                            enabled = state.menu == 0,
-                            placeholder = { Text(stringResource(R.string.text_search)) },
-                            trailingIcon = { if (state.search.isEmpty()) Icon(Icons.Default.Search, null) }
-                        )
-                    },
-                    navigationIcon = {
-                        IconButton(viewModel::drawer) { Icon(Icons.Default.Menu, null) }
-                    },
-                    actions = {
-                        IconButton(viewModel::showDialog) {
-                            Icon(painterResource(R.drawable.vector_filter), null)
-                        }
-                    }
-                )
-            }
-        ) { paddingValues ->
-            when (state.menu) {
-                0 -> AnimeList(viewModel, state, navigator, paddingValues)
+    }
+}
 
-                1 -> MangaList(navigator, paddingValues)
-                2 -> RanobeList(navigator, paddingValues)
-            }
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun topBar(model: CatalogViewModel, state: CatalogState): @Composable () -> Unit = {
+    TopAppBar(
+        title = {
+            TextField(
+                value = state.search,
+                onValueChange = model::setSearch,
+                enabled = state.menu == 0,
+                placeholder = { Text(stringResource(text_search)) },
+                trailingIcon = { if (state.search.isEmpty()) Icon(Icons.Default.Search, null) }
+            )
+        },
+        navigationIcon = { IconButton(model::drawer) { Icon(Icons.Default.Menu, null) } },
+        actions = { IconButton(model::showDialog) { Icon(painterResource(vector_filter), null) } }
+    )
+}
+
+@Composable
+private fun drawerMenu(model: CatalogViewModel, state: CatalogState): @Composable () -> Unit = {
+    ModalDrawerSheet(Modifier.width(260.dp)) {
+        Text(
+            text = stringResource(R.string.text_catalog),
+            modifier = Modifier.padding(16.dp),
+            style = MaterialTheme.typography.headlineSmall
+        )
+
+        Items.entries.forEach { item ->
+            NavigationDrawerItem(
+                label = { Text(text = item.title, style = MaterialTheme.typography.labelLarge) },
+                selected = state.menu == item.ordinal,
+                onClick = { model.pick(item.ordinal) },
+                modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
+                icon = { Icon(painterResource(item.icon), null) }
+            )
         }
     }
 }
@@ -191,12 +187,12 @@ fun CatalogScreen(navigator: DestinationsNavigator) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AnimeList(
-    catalogVM: CatalogViewModel,
+    model: CatalogViewModel,
     state: CatalogState,
     navigator: DestinationsNavigator,
-    padding: PaddingValues
+    values: PaddingValues
 ) {
-    val animeVM: AnimeListViewModel = viewModel()
+    val animeVM = viewModel<AnimeListViewModel>()
     val animeList = animeVM.list.collectAsLazyPagingItems()
     val filters by animeVM.filters.collectAsStateWithLifecycle()
 
@@ -208,7 +204,7 @@ private fun AnimeList(
         is LoadState.Loading -> LoadingScreen()
         is LoadState.NotLoading -> {
             LazyColumn(
-                contentPadding = PaddingValues(8.dp, padding.calculateTopPadding().plus(8.dp)),
+                contentPadding = PaddingValues(8.dp, values.calculateTopPadding().plus(8.dp)),
                 verticalArrangement = spacedBy(16.dp)
             ) {
                 animeList(animeList, navigator)
@@ -218,16 +214,16 @@ private fun AnimeList(
         }
     }
 
-    if (state.show) Dialog(catalogVM::closeDialog, DialogProperties(usePlatformDefaultWidth = false)) {
+    if (state.show) Dialog(model::closeDialog, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.text_filters)) },
-                    navigationIcon = { NavigationIcon(catalogVM::closeDialog) }
+                    navigationIcon = { NavigationIcon(model::closeDialog) }
                 )
             },
             floatingActionButton = {
-                FloatingActionButton({ catalogVM.closeDialog(); animeList.refresh() })
+                FloatingActionButton({ model.closeDialog(); animeList.refresh() })
                 { Icon(Icons.Default.Search, null) }
             }
         ) { values ->
@@ -256,7 +252,8 @@ private fun LazyListScope.animeList(list: LazyPagingItems<AnimeListQuery.Anime>,
                     model = poster?.originalUrl,
                     modifier = Modifier
                         .size(160.dp, 225.dp)
-                        .clip(MaterialTheme.shapes.medium),
+                        .clip(MaterialTheme.shapes.medium)
+                        .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
                     filterQuality = FilterQuality.High
@@ -265,7 +262,7 @@ private fun LazyListScope.animeList(list: LazyPagingItems<AnimeListQuery.Anime>,
                     Text(
                         text = russian ?: name,
                         maxLines = 5,
-                        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                     )
                     Text(text = getKind(kind?.rawValue), style = MaterialTheme.typography.bodyLarge)
                     Text(text = getSeason(season), style = MaterialTheme.typography.bodyLarge)
@@ -346,8 +343,7 @@ private fun AnimeKind(viewModel: AnimeListViewModel, filters: QueryMap) {
 private fun AnimeSeason(viewModel: AnimeListViewModel, filters: QueryMap) {
     ParagraphTitle(stringResource(R.string.text_season), Modifier.padding(bottom = 8.dp))
     Column {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween)
-        {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
             OutlinedTextField(
                 value = filters.seasonYS,
                 onValueChange = {
