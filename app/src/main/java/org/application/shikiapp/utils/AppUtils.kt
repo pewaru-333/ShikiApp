@@ -4,6 +4,9 @@ import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.text.format.DateUtils
 import android.util.Patterns
+import org.application.AnimeQuery
+import org.application.shikiapp.models.data.AnimeShort
+import org.application.shikiapp.models.data.MangaShort
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -66,17 +69,18 @@ fun getPoster(text: String?): String? {
     return (embed ?: poster)
 }
 
-fun getImage(link: String?): String = "https://shikimori.one${link.orEmpty()}"
-fun getStatus(status: String?): String = STATUSES[status] ?: "Неизвестно"
+fun getImage(link: String?) = "https://shikimori.one${link.orEmpty()}"
+fun getStatus(status: String?) = STATUSES[status] ?: "Неизвестно"
 fun getWatchStatus(status: String?) = WATCH_STATUSES[status] ?: "Неизвестно"
-fun getKind(kind: String?): String = KINDS[kind] ?: "Неизвестно"
-fun getRating(rating: String?): String = RATINGS[rating] ?: "Неизвестно"
-fun getSex(sex: String?): String = when (sex) {
+fun getKind(kind: String?) = KINDS[kind] ?: "Неизвестно"
+fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
+fun getSex(sex: String?) = when (sex) {
     "male" -> "Мужской"
     "female" -> "Женский"
     else -> "Не указан"
 }
-fun getSeason(text: String?): String = when (text) {
+
+fun getSeason(text: String?) = when (text) {
     null -> BLANK
     "?" -> "Неизвестно"
     else -> {
@@ -85,3 +89,11 @@ fun getSeason(text: String?): String = when (text) {
         "${SEASONS[season]} $year"
     }
 }
+
+fun getStudio(studio: List<AnimeQuery.Studio>) = try {
+    studio.first().name
+} catch (e: NoSuchElementException) {
+    "Неизвестно"
+}
+
+fun getTitle(anime: AnimeShort?, manga: MangaShort?) = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name!!

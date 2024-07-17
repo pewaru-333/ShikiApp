@@ -92,10 +92,7 @@ fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
                     Modifier.padding(top = paddingValues.calculateTopPadding()),
                     spacedBy(16.dp)
                 ) {
-                    ScrollableTabRow(
-                        selectedTabIndex = tab,
-                        edgePadding = 8.dp
-                        ) {
+                    ScrollableTabRow(selectedTabIndex = tab, edgePadding = 8.dp) {
                         WATCH_STATUSES.entries.forEachIndexed { index, entry ->
                             Tab(tab == index, { tab = index })
                             { Text(entry.value, Modifier.padding(8.dp, 12.dp)) }

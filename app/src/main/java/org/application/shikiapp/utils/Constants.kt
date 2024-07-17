@@ -71,7 +71,6 @@ val DURATIONS = mapOf(
     "F" to "Более 30 минут"
 )
 
-
 val RATINGS = mapOf(
     "none" to "Без ограничений",
     "g" to "G",
@@ -100,6 +99,41 @@ val SCORES = mapOf(
     8 to "8 — Отлично",
     9 to "9 — Великолепно",
     10 to "10 — Эпик вин!",
+)
+
+val EXTERNAL_LINK_KINDS = mapOf(
+    "official_site" to "Официальный сайт",
+    "wikipedia" to "Википедия",
+    "anime_news_network" to "Anime News Network",
+    "myanimelist" to "MyAnimeList",
+    "anime_db" to "AniDB",
+    "world_art" to "World Art",
+    "kinopoisk" to "Кинопоиск",
+    "kage_project" to "Kage Project",
+    "twitter" to "Twitter/X",
+    "smotret_anime" to "Anime 365",
+    "crunchyroll" to "Crunchyroll",
+    "amazon" to "Amazon",
+    "hidive" to "Hidive",
+    "hulu" to "Hulu",
+    "ivi" to "ИВИ",
+    "kinopoisk_hd" to "Кинопоиск HD",
+    "wink" to "Wink",
+    "netflix" to "Netflix",
+    "okko" to "Okko",
+    "youtube" to "Youtube",
+    "readmanga" to "ReadManga",
+    "mangalib" to "MangaLib",
+    "remanga" to "ReManga",
+    "mangaupdates" to "Baka-Updates",
+    "mangadex" to "MangaDex",
+    "mangafox" to "MangaFox",
+    "mangachan" to "Mangachan",
+    "mangahub" to "Mangahub",
+    "novel_tl" to "Novel.tl",
+    "ruranobe" to "RuRanobe",
+    "ranobelib" to "RanobeLib",
+    "novelupdates" to "Novel Updates"
 )
 
 val THEMES = listOf("Системная", "Светлая", "Тёмная")

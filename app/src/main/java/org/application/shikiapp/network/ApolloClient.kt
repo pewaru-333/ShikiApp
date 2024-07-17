@@ -32,7 +32,7 @@ object ApolloClient {
         NetworkClient.apollo.query(AnimeGenresQuery()).execute().data?.genres ?: emptyList()
 
     suspend fun getAnime(id: String) =
-        NetworkClient.apollo.query(AnimeQuery(id)).execute().data?.animes ?: emptyList()
+        NetworkClient.apollo.query(AnimeQuery(id)).execute().data?.animes?.first()!!
 
     suspend fun getCharacter(id: String) =
         NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute().data?.characters

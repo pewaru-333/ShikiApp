@@ -127,7 +127,7 @@ fun NameCircleImage(text: String, size: Dp = 96.dp) {
         overflow = TextOverflow.Ellipsis,
         maxLines = 2,
         minLines = 2,
-        style = MaterialTheme.typography.titleSmall
+        style = MaterialTheme.typography.labelLarge
     )
 }
 
