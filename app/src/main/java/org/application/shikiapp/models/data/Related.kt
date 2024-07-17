@@ -7,6 +7,6 @@ import com.squareup.moshi.JsonClass
 data class Related(
     @Json(name = "relation") val relation: String,
     @Json(name = "relation_russian") val relationRussian: String,
-    @Json(name = "anime") val anime: Anime?,
-    @Json(name = "manga") val manga: Manga?
+    @Json(name = "anime") val anime: AnimeShort?,
+    @Json(name = "manga") val manga: MangaShort?
 )
