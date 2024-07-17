@@ -1,8 +1,6 @@
 package org.application.shikiapp.network
 
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.application.shikiapp.utils.Preferences
@@ -14,10 +12,8 @@ class TokenInterceptor : Interceptor {
         val builder = original.newBuilder()
 
         if (Preferences.isTokenExists()) {
-            if (Preferences.isTokenExpired()) CoroutineScope(Dispatchers.IO).launch {
-                TokenManager.refreshToken()
-            }
-            builder.header("User-Agent", "ShikiApp")
+            if (Preferences.isTokenExpired()) runBlocking { TokenManager.refreshToken() }
+            else builder.header("User-Agent", "ShikiApp")
                 .header("Accept", "application/json")
                 .header("Content-Type", "application/json")
                 .header("Authorization", "Bearer ${Preferences.getToken()}")

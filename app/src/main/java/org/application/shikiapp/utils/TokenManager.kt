@@ -1,5 +1,8 @@
 package org.application.shikiapp.utils
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.User
 import org.application.shikiapp.network.NetworkClient
 
@@ -18,10 +21,12 @@ object TokenManager {
         return user
     }
 
-    suspend fun refreshToken() = try {
-        val token = NetworkClient.profile.getRefreshToken(refreshToken = Preferences.refreshToken())
-        Preferences.saveToken(token)
-    } catch (e: Throwable) {
-        e.printStackTrace()
+    suspend fun refreshToken() = CoroutineScope(Dispatchers.IO).launch {
+        try {
+            val token = NetworkClient.profile.getRefreshToken(refreshToken = Preferences.refreshToken())
+            Preferences.saveToken(token)
+        } catch (e: Throwable) {
+            e.printStackTrace()
+        }
     }
 }
