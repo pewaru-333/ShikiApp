@@ -225,7 +225,7 @@ private fun Members(members: LazyPagingItems<User>, navigator: DestinationsNavig
             is LoadState.NotLoading -> {
                 items(members.itemCount) {
                     members[it]?.let { member ->
-                        SmallItem(
+                        OneLineImage(
                             name = member.nickname,
                             link = member.image.x160,
                             modifier = Modifier.clickable {
@@ -251,7 +251,7 @@ private fun Characters(characters: LazyPagingItems<Character>, navigator: Destin
             is LoadState.NotLoading -> {
                 items(characters.itemCount) {
                     characters[it]?.let { (id, name, russian, image) ->
-                        SmallItem(
+                        OneLineImage(
                             name = russian ?: name,
                             link = getImage(image.original),
                             modifier = Modifier.clickable {

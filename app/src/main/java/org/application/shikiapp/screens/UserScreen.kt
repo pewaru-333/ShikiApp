@@ -197,7 +197,7 @@ fun LazyListScope.friends(list: LazyPagingItems<Friend>, navigator: Destinations
         is LoadState.NotLoading -> {
             items(list.itemCount) { index ->
                 list[index]?.let { (id, nickname, _, image) ->
-                    SmallItem(
+                    OneLineImage(
                         name = nickname,
                         link = image.x160,
                         modifier = Modifier.clickable { navigator.navigate(UserScreenDestination(id)) }
@@ -213,7 +213,7 @@ fun LazyListScope.friends(list: LazyPagingItems<Friend>, navigator: Destinations
 fun LazyListScope.clubs(list: List<Club>, navigator: DestinationsNavigator) =
     if (list.isEmpty()) item { Box(Modifier.fillMaxSize(), Center) { Text("Пусто") } }
     else items(list) { (id, name, logo) ->
-        SmallItem(
+        OneLineImage(
             name = name,
             link = getImage(logo.original),
             modifier = Modifier.clickable { navigator.navigate(ClubScreenDestination(id)) }

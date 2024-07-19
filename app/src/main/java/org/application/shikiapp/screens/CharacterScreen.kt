@@ -222,8 +222,8 @@ private fun Seyu(seyuList: List<Person>, navigator: DestinationsNavigator) {
         Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(16.dp), CenterVertically) {
             seyuList.take(3).forEach { (id, name, russian, image) ->
                 Column(Modifier.clickable { navigator.navigate(PersonScreenDestination(id)) }) {
-                    CircleImage(image.original, 76.dp)
-                    NameCircleImage(russian.ifEmpty { name }, 76.dp)
+                    CircleImage(image.original)
+                    TextCircleImage(russian.ifEmpty { name })
                 }
             }
         }
@@ -240,7 +240,7 @@ private fun Seyu(seyuList: List<Person>, navigator: DestinationsNavigator) {
         ) { paddingValues ->
             Column(Modifier.padding(top = paddingValues.calculateTopPadding())) {
                 seyuList.forEach { (id, name, russian, image) ->
-                    SmallItem(
+                    OneLineImage(
                         name = russian.ifEmpty { name },
                         link = image.original,
                         modifier = Modifier.clickable { navigator.navigate(PersonScreenDestination(id)) }

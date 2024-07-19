@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -8,7 +9,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -51,7 +51,6 @@ import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
@@ -78,15 +77,14 @@ fun ParagraphTitle(text: String, modifier: Modifier = Modifier) = Text(
     text = text,
     modifier = modifier,
     color = MaterialTheme.colorScheme.onSurface,
-    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
+    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.W500)
 )
 
 @Composable
 fun Poster(link: String?) = AsyncImage(
     model = if (link?.contains("https") == true) link else getImage(link),
     modifier = Modifier
-        .width(175.dp)
-        .height(300.dp)
+        .size(175.dp, 300.dp)
         .clip(MaterialTheme.shapes.medium)
         .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
     contentDescription = null,
@@ -95,16 +93,16 @@ fun Poster(link: String?) = AsyncImage(
 )
 
 @Composable
-fun CircleImage(link: String?, size: Dp = 96.dp) = AsyncImage(
+fun CircleImage(link: String?) = AsyncImage(
     model = if (link?.contains("https") == true) link else getImage(link),
     contentDescription = null,
     modifier = Modifier
-        .size(size)
+        .size(64.dp)
         .clip(CircleShape)
         .border((0.4).dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
     error = painterResource(R.drawable.vector_home),
     fallback = painterResource(R.drawable.vector_home),
-    alignment = Alignment.TopCenter,
+    alignment = Alignment.Center,
     contentScale = ContentScale.Crop,
     filterQuality = FilterQuality.High,
 )
@@ -119,17 +117,15 @@ fun Names(names: List<String?>) {
 }
 
 @Composable
-fun NameCircleImage(text: String, size: Dp = 96.dp) {
-    Text(
-        text = text,
-        modifier = Modifier.width(size),
-        textAlign = TextAlign.Center,
-        overflow = TextOverflow.Ellipsis,
-        maxLines = 2,
-        minLines = 2,
-        style = MaterialTheme.typography.labelLarge
-    )
-}
+fun TextCircleImage(text: String) = Text(
+    text = text,
+    modifier = Modifier.width(64.dp),
+    textAlign = TextAlign.Center,
+    overflow = TextOverflow.Ellipsis,
+    minLines = 2,
+    maxLines = 2,
+    style = MaterialTheme.typography.labelMedium
+)
 
 @Composable
 fun Description(text: String?) {
@@ -140,9 +136,9 @@ fun Description(text: String?) {
 
     var show by remember { mutableStateOf(false) }
 
-    Column {
-        ParagraphTitle("Описание")
-        Text(main, Modifier.padding(top = 8.dp))
+    Column(Modifier.animateContentSize()) {
+        ParagraphTitle("Описание", Modifier.padding(bottom = 4.dp))
+        Text(main)
         if (hasSpoiler) Row(Modifier.clickable { show = !show }) {
             Text("Спойлер")
             Icon(if (show) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown, null)
@@ -193,25 +189,23 @@ fun Comment(comment: Comment, navigator: DestinationsNavigator) {
 }
 
 @Composable
-fun SmallItem(name: String, link: String?, modifier: Modifier = Modifier) {
-    ListItem(
-        headlineContent = { Text(name) },
-        modifier = modifier,
-        leadingContent = {
-            AsyncImage(
-                model = if (link?.contains("https") == true) link else getImage(link),
-                contentDescription = null,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Color.Gray, CircleShape),
-                alignment = Alignment.Center,
-                contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.High,
-            )
-        }
-    )
-}
+fun OneLineImage(name: String, link: String?, modifier: Modifier = Modifier) = ListItem(
+    headlineContent = { Text(name) },
+    modifier = modifier,
+    leadingContent = {
+        AsyncImage(
+            model = if (link?.contains("https") == true) link else getImage(link),
+            contentDescription = null,
+            modifier = Modifier
+                .size(64.dp)
+                .clip(CircleShape)
+                .border(1.dp, Color.Gray, CircleShape),
+            alignment = Alignment.Center,
+            contentScale = ContentScale.Crop,
+            filterQuality = FilterQuality.High,
+        )
+    }
+)
 
 @Composable
 fun NavigationIcon(onClick: () -> Unit) =

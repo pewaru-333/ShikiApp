@@ -153,8 +153,8 @@ private fun Roles(roles: List<Roles>?, navigator: DestinationsNavigator) {
                         verticalArrangement = Arrangement.spacedBy(4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircleImage(image.original, 76.dp)
-                        NameCircleImage(russian ?: name, 76.dp)
+                        CircleImage(image.original)
+                        TextCircleImage(russian ?: name)
                     }
                 }
             }
@@ -172,7 +172,7 @@ private fun Roles(roles: List<Roles>?, navigator: DestinationsNavigator) {
                 Column(Modifier.padding(top = paddingValues.calculateTopPadding())) {
                     roles?.forEach { role ->
                         role.characters.forEach { (id, name, russian, image) ->
-                            SmallItem(
+                            OneLineImage(
                                 name = russian ?: name,
                                 link = image.original,
                                 modifier = Modifier.clickable {

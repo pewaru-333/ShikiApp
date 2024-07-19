@@ -20,6 +20,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavHostController
 import com.ramcosta.composedestinations.DestinationsNavHost
+import com.ramcosta.composedestinations.animations.defaults.DefaultFadingTransitions
 import com.ramcosta.composedestinations.generated.NavGraphs
 import com.ramcosta.composedestinations.generated.destinations.CalendarScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.CatalogScreenDestination
@@ -73,11 +74,12 @@ fun RootScreen(navController: NavHostController) {
                 }
             }
         }
-    ) { paddingValues ->
+    ) { padding ->
         DestinationsNavHost(
             navGraph = NavGraphs.root,
-            modifier = Modifier.padding(paddingValues),
+            modifier = Modifier.padding(padding),
             startRoute = NewsScreenDestination,
+            defaultTransitions = DefaultFadingTransitions,
             navController = navController
         )
     }
