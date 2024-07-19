@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +28,7 @@ import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedFilterChip
@@ -48,6 +50,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -58,6 +61,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
@@ -83,7 +88,7 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
-import org.application.AnimeListQuery
+import org.application.AnimeListQuery.Anime
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_search
@@ -147,15 +152,27 @@ fun CatalogScreen(navigator: DestinationsNavigator) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun topBar(model: CatalogViewModel, state: CatalogState): @Composable () -> Unit = {
-    TopAppBar(
+    CenterAlignedTopAppBar(
         title = {
             TextField(
                 value = state.search,
                 onValueChange = model::setSearch,
+                modifier = Modifier.fillMaxWidth(),
                 enabled = state.menu == 0,
                 placeholder = { Text(stringResource(text_search)) },
-                trailingIcon = { if (state.search.isEmpty()) Icon(Icons.Default.Search, null) }
+                trailingIcon = { if (state.search.isEmpty()) Icon(Icons.Default.Search, null) },
+                singleLine = true,
+                colors = TextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedIndicatorColor = Color.Transparent,
+                    unfocusedIndicatorColor = Color.Transparent,
+                    disabledIndicatorColor = Color.Transparent,
+                )
             )
+        },
+        modifier = Modifier.drawBehind {
+            drawLine(Color.LightGray, Offset(0f, size.height), Offset(size.width, size.height), 4f)
         },
         navigationIcon = { IconButton(model::drawer) { Icon(Icons.Default.Menu, null) } },
         actions = { IconButton(model::showDialog) { Icon(painterResource(vector_filter), null) } }
@@ -196,7 +213,6 @@ private fun AnimeList(
     val animeList = animeVM.list.collectAsLazyPagingItems()
     val filters by animeVM.filters.collectAsStateWithLifecycle()
 
-    LaunchedEffect(Unit) { animeVM.getGenres() }
     LaunchedEffect(state.search) { animeVM.onEvent(SetTitle(state.search)) }
 
     when (animeList.loadState.refresh) {
@@ -214,16 +230,16 @@ private fun AnimeList(
         }
     }
 
-    if (state.show) Dialog(model::closeDialog, DialogProperties(usePlatformDefaultWidth = false)) {
+    if (state.showFiltersAnime) Dialog(model::hideDialog, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.text_filters)) },
-                    navigationIcon = { NavigationIcon(model::closeDialog) }
+                    navigationIcon = { NavigationIcon(model::hideDialog) }
                 )
             },
             floatingActionButton = {
-                FloatingActionButton({ model.closeDialog(); animeList.refresh() })
+                FloatingActionButton({ model.hideDialog(); animeList.refresh() })
                 { Icon(Icons.Default.Search, null) }
             }
         ) { values ->
@@ -244,24 +260,31 @@ private fun AnimeList(
     }
 }
 
-private fun LazyListScope.animeList(list: LazyPagingItems<AnimeListQuery.Anime>, navigator: DestinationsNavigator) {
-    items(list.itemCount) { index ->
+private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: DestinationsNavigator) =
+    items(list.itemCount, { it }) { index ->
         list[index]?.let { (id, name, russian, kind, season, poster) ->
-            Row(Modifier.clickable { navigator.navigate(AnimeScreenDestination(id)) }, spacedBy(16.dp)) {
+            Row(
+                Modifier
+                    .height(198.dp)
+                    .clickable { navigator.navigate(AnimeScreenDestination(id)) }, spacedBy(16.dp)
+            ) {
                 AsyncImage(
                     model = poster?.originalUrl,
                     modifier = Modifier
-                        .size(160.dp, 225.dp)
+                        .width(140.dp)
+                        .fillMaxHeight()
                         .clip(MaterialTheme.shapes.medium)
-                        .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
+                        .border(
+                            1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium
+                        ),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
                     filterQuality = FilterQuality.High
                 )
-                Column(verticalArrangement =  spacedBy(4.dp)) {
+                Column(verticalArrangement = Arrangement.SpaceBetween) {
                     Text(
                         text = russian ?: name,
-                        maxLines = 5,
+                        maxLines = 3,
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
                     )
                     Text(text = getKind(kind?.rawValue), style = MaterialTheme.typography.bodyLarge)
@@ -270,7 +293,6 @@ private fun LazyListScope.animeList(list: LazyPagingItems<AnimeListQuery.Anime>,
             }
         }
     }
-}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

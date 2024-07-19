@@ -24,12 +24,12 @@ class CatalogViewModel : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(search = text) } }
     }
 
-    fun closeDialog() {
-        viewModelScope.launch { _state.update { it.copy(show = false) } }
+    fun hideDialog() {
+        viewModelScope.launch { _state.update { it.copy(showFiltersAnime = false) } }
     }
 
     fun showDialog() {
-        viewModelScope.launch { _state.update { it.copy(show = true) } }
+        viewModelScope.launch { _state.update { it.copy(showFiltersAnime = true) } }
     }
 
     fun drawer() {
@@ -49,7 +49,7 @@ class CatalogViewModel : ViewModel() {
 data class CatalogState(
     val menu: Int = 0,
     val search: String = BLANK,
-    val show: Boolean = false,
+    val showFiltersAnime: Boolean = false,
     val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
 )
 
