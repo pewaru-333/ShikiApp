@@ -15,13 +15,12 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.AnimeQuery.Anime
 import org.application.shikiapp.models.data.ExternalLink
-import org.application.shikiapp.models.data.Related
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.network.NetworkClient
 
 
 class AnimeViewModel(private val animeId: String) : ViewModel() {
-    private val _response = MutableStateFlow<AnimeResponse>(AnimeResponse.Loading)
+    private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
     private val _state = MutableStateFlow(AnimeState())
@@ -33,18 +32,17 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
 
     fun getAnime() {
         viewModelScope.launch {
-            _response.emit(AnimeResponse.Loading)
+            _response.emit(Response.Loading)
 
             try {
                 val anime = ApolloClient.getAnime(animeId)
-                val related = NetworkClient.anime.getRelated(animeId.toLong())
                 val links = NetworkClient.anime.getLinks(animeId.toLong())
                 val favoured = NetworkClient.anime.getAnime(animeId.toLong()).favoured
 
-                _response.emit(AnimeResponse.Success(anime, links, related, favoured))
+                _response.emit(Response.Success(anime, links, favoured))
             } catch (e: Throwable) {
                 e.printStackTrace()
-                _response.emit(AnimeResponse.Error)
+                _response.emit(Response.Error)
             }
         }
     }
@@ -65,12 +63,12 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         viewModelScope.launch { hideRate(); delay(300); getAnime() }
     }
 
-    fun showFull() {
-        viewModelScope.launch { _state.update { it.copy(showFull = true, showSheet = false) } }
+    fun showComments() {
+        viewModelScope.launch { _state.update { it.copy(showComments = true) } }
     }
 
-    fun hideFull() {
-        viewModelScope.launch { _state.update { it.copy(showFull = false, showSheet = true) } }
+    fun hideComments() {
+        viewModelScope.launch { _state.update { it.copy(showComments = false) } }
     }
 
     fun showSheet() {
@@ -81,28 +79,12 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(showSheet = false) } }
     }
 
-    fun showRate() {
-        viewModelScope.launch { _state.update { it.copy(showRate = true, showSheet = false) } }
-    }
-
-    fun hideRate() {
-        viewModelScope.launch { _state.update { it.copy(showRate = false) } }
-    }
-
     fun showRelated() {
         viewModelScope.launch { _state.update { it.copy(showRelated = true) } }
     }
 
     fun hideRelated() {
         viewModelScope.launch { _state.update { it.copy(showRelated = false) } }
-    }
-
-    fun showLinks() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = false, showLinks = true) } }
-    }
-
-    fun hideLinks() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = true, showLinks = false) } }
     }
 
     fun showCharacters() {
@@ -121,6 +103,14 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(showAuthors = false) } }
     }
 
+    fun showScreenshots() {
+        viewModelScope.launch { _state.update { it.copy(showScreenshots = true) } }
+    }
+
+    fun hideScreenshots() {
+        viewModelScope.launch { _state.update { it.copy(showScreenshots = false) } }
+    }
+
     fun showScreenshot(index: Int) {
         viewModelScope.launch {
             _state.update { it.copy(showScreenshot = true, screenshot = index) }
@@ -133,14 +123,6 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         }
     }
 
-    fun showScreenshots() {
-        viewModelScope.launch { _state.update { it.copy(showScreenshots = true) } }
-    }
-
-    fun hideScreenshots() {
-        viewModelScope.launch { _state.update { it.copy(showScreenshots = false) } }
-    }
-
     fun showVideo() {
         viewModelScope.launch { _state.update { it.copy(showVideo = true) } }
     }
@@ -148,33 +130,53 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
     fun hideVideo() {
         viewModelScope.launch { _state.update { it.copy(showVideo = false) } }
     }
+
+    fun showRate() {
+        viewModelScope.launch { _state.update { it.copy(showRate = true, showSheet = false) } }
+    }
+
+    fun hideRate() {
+        viewModelScope.launch { _state.update { it.copy(showRate = false) } }
+    }
+
+    fun showStats() {
+        viewModelScope.launch { _state.update { it.copy(showStats = true, showSheet = false) } }
+    }
+
+    fun hideStats() {
+        viewModelScope.launch { _state.update { it.copy(showStats = false, showSheet = true) } }
+    }
+
+    fun showLinks() {
+        viewModelScope.launch { _state.update { it.copy(showSheet = false, showLinks = true) } }
+    }
+
+    fun hideLinks() {
+        viewModelScope.launch { _state.update { it.copy(showSheet = true, showLinks = false) } }
+    }
+
+    sealed interface Response {
+        data object Error : Response
+        data object Loading : Response
+        data class Success(val anime: Anime, val links: List<ExternalLink>, val favoured: Boolean) : Response
+    }
 }
 
 data class AnimeState(
-    val showFull: Boolean = false,
+    val showComments: Boolean = false,
     val showSheet: Boolean = false,
-    val showRate: Boolean = false,
     val showRelated: Boolean = false,
-    val showLinks: Boolean = false,
     val showCharacters: Boolean = false,
     val showAuthors: Boolean = false,
-    val showScreenshot: Boolean = false,
     val showScreenshots: Boolean = false,
+    val showScreenshot: Boolean = false,
     val showVideo: Boolean = false,
+    val showRate: Boolean = false,
+    val showStats: Boolean = false,
+    val showLinks: Boolean = false,
     val screenshot: Int = 0,
-    val sheetState: SheetState = SheetState(false, Density(1f)),
-    val linksState: SheetState = SheetState(false, Density(1f)),
-    val characterLazyState: LazyListState = LazyListState(),
-    val authorsLazyState: LazyListState = LazyListState()
+    val sheetBottom: SheetState = SheetState(false, Density(1f)),
+    val sheetLinks: SheetState = SheetState(false, Density(1f)),
+    val lazyCharacters: LazyListState = LazyListState(),
+    val lazyAuthors: LazyListState = LazyListState()
 )
-
-sealed interface AnimeResponse {
-    data object Error : AnimeResponse
-    data object Loading : AnimeResponse
-    data class Success(
-        val anime: Anime,
-        val links: List<ExternalLink>,
-        val related: List<Related>,
-        val favoured: Boolean
-    ) : AnimeResponse
-}

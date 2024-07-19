@@ -34,11 +34,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.automirrored.filled.List
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CardDefaults
@@ -55,7 +57,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -87,6 +88,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.ramcosta.composedestinations.annotation.Destination
@@ -94,9 +97,10 @@ import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import org.application.AnimeQuery
 import org.application.AnimeQuery.Anime
 import org.application.AnimeQuery.CharacterRole
-import org.application.AnimeQuery.Genre
 import org.application.AnimeQuery.PersonRole
 import org.application.AnimeQuery.ScoresStat
 import org.application.AnimeQuery.Screenshot
@@ -104,16 +108,16 @@ import org.application.AnimeQuery.StatusesStat
 import org.application.AnimeQuery.UserRate
 import org.application.AnimeQuery.Video
 import org.application.shikiapp.R
+import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_add_fav
 import org.application.shikiapp.R.string.text_add_rate
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_authors
-import org.application.shikiapp.R.string.text_cancel
 import org.application.shikiapp.R.string.text_change
 import org.application.shikiapp.R.string.text_change_rate
 import org.application.shikiapp.R.string.text_characters
 import org.application.shikiapp.R.string.text_episodes
-import org.application.shikiapp.R.string.text_full_info
+import org.application.shikiapp.R.string.text_genres
 import org.application.shikiapp.R.string.text_in_lists
 import org.application.shikiapp.R.string.text_kind
 import org.application.shikiapp.R.string.text_rate
@@ -124,21 +128,19 @@ import org.application.shikiapp.R.string.text_rewatches
 import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_screenshots
-import org.application.shikiapp.R.string.text_show_all_m
 import org.application.shikiapp.R.string.text_show_all_w
+import org.application.shikiapp.R.string.text_statistics
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_studio
-import org.application.shikiapp.R.string.text_title_english
-import org.application.shikiapp.R.string.text_title_japanese
-import org.application.shikiapp.R.string.text_title_synonyms
-import org.application.shikiapp.R.string.text_titles
 import org.application.shikiapp.R.string.text_user_rates
 import org.application.shikiapp.R.string.text_video
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
-import org.application.shikiapp.models.data.Related
-import org.application.shikiapp.models.views.AnimeResponse
 import org.application.shikiapp.models.views.AnimeState
 import org.application.shikiapp.models.views.AnimeViewModel
+import org.application.shikiapp.models.views.AnimeViewModel.Response.Error
+import org.application.shikiapp.models.views.AnimeViewModel.Response.Loading
+import org.application.shikiapp.models.views.AnimeViewModel.Response.Success
 import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.NewRate
 import org.application.shikiapp.models.views.NewRateEvent.SetEpisodes
@@ -156,12 +158,10 @@ import org.application.shikiapp.utils.SCORES
 import org.application.shikiapp.utils.STATUSES
 import org.application.shikiapp.utils.VideoKinds
 import org.application.shikiapp.utils.WATCH_STATUSES
-import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getRating
 import org.application.shikiapp.utils.getStatus
 import org.application.shikiapp.utils.getStudio
-import org.application.shikiapp.utils.getTitle
 import org.application.shikiapp.utils.getWatchStatus
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
@@ -174,19 +174,17 @@ fun AnimeScreen(id: String, navigator: Navigator) {
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = response) {
-        is AnimeResponse.Error -> ErrorScreen(model.getAnime())
-        is AnimeResponse.Loading -> LoadingScreen()
-        is AnimeResponse.Success -> AnimeView(model, state, data.anime, data.related, data.links, data.favoured,  navigator)
+        Error -> ErrorScreen(model.getAnime())
+        Loading -> LoadingScreen()
+        is Success -> AnimeView(model, state, data.anime, data.links, data.favoured,  navigator)
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun AnimeView(
     model: AnimeViewModel,
     state: AnimeState,
     anime: Anime,
-    related: List<Related>,
     links: List<ExternalLink>,
     favoured: Boolean,
     navigator: Navigator
@@ -195,17 +193,7 @@ private fun AnimeView(
         viewModel<CommentViewModel>(factory = factory { CommentViewModel(it.toLong()) })
     }?.comments?.collectAsLazyPagingItems()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(text_anime)) },
-                navigationIcon = { NavigationIcon(navigator::popBackStack) },
-                actions = {
-                    IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
-                }
-            )
-        }
-    ) { values ->
+    Scaffold(topBar = topBar(model, comments, navigator)) { values ->
         LazyColumn(
             contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
             verticalArrangement = spacedBy(16.dp)
@@ -223,24 +211,45 @@ private fun AnimeView(
                 }
             }
 
-            anime.genres?.let { item { Genres(it) } }
             anime.descriptionHtml?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
-            related.let { if (it.isNotEmpty()) item { Related(model, it, navigator) } }
+            anime.related?.let { item { Related(model, it, navigator) } }
             anime.characterRoles?.let { item { Characters(model, it, navigator) } }
             anime.personRoles?.let { item { Authors(model, it, navigator) } }
-            comments?.let { comments(it, navigator) }
+            anime.screenshots.let { if (it.isNotEmpty()) item { Screenshots(model, it) } }
+            anime.videos.let { if (it.isNotEmpty()) item { Video(model, it) } }
         }
     }
 
     when {
+        state.showComments -> Comments(model, comments!!, navigator)
         state.showSheet -> BottomSheet(model, state, anime.userRate, favoured)
-        state.showFull -> FullInfo(model, state, anime)
-        state.showRate -> CreateRate(model, anime)
-        state.showRelated -> DialogRelated(model, related, navigator)
+        state.showRelated -> DialogRelated(model, anime.related!!, navigator)
         state.showCharacters -> DialogCharacters(model, state, anime.characterRoles!!, navigator)
         state.showAuthors -> DialogAuthors(model, state, anime.personRoles!!, navigator)
+        state.showScreenshots -> DialogScreenshots(model, state, anime.screenshots)
+        state.showScreenshot -> DialogScreenshot(model, state, anime.screenshots)
+        state.showVideo -> DialogVideo(model, anime.videos)
+        state.showRate -> CreateRate(model, anime)
+        state.showStats -> Statistics(model, anime)
         state.showLinks -> LinksSheet(model, state, links)
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun topBar(
+    model: AnimeViewModel,
+    comments: LazyPagingItems<Comment>?,
+    navigator: DestinationsNavigator
+): @Composable () -> Unit = {
+    TopAppBar(
+        title = { Text(stringResource(text_anime)) },
+        navigationIcon = { NavigationIcon(navigator::popBackStack) },
+        actions = {
+            comments?.let { IconButton(model::showComments) { Icon(painterResource(vector_comments), null) } }
+            IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
+        }
+    )
 }
 
 @Composable
@@ -266,6 +275,14 @@ private fun ShortInfo(anime: Anime) {
             Text(stringResource(text_status), style = name)
             Text(getStatus(anime.status?.rawValue), style = info)
         }
+        anime.genres?.let { genres ->
+            Column {
+                Text(stringResource(text_genres), style = name)
+                Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(6.dp)) {
+                    genres.forEach { (russian) -> Text(russian, style = info) }
+                }
+            }
+        }
         Column {
             Text(stringResource(text_studio), style = name)
             Text(getStudio(anime.studios), style = info)
@@ -285,22 +302,24 @@ private fun ShortInfo(anime: Anime) {
 }
 
 @Composable
-private fun Related(model: AnimeViewModel, list: List<Related>, navigator: Navigator) =
+private fun Related(model: AnimeViewModel, list: List<AnimeQuery.Related>, navigator: Navigator) =
     Column(verticalArrangement = spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_related), Modifier.padding(bottom = 4.dp))
             TextButton(model::showRelated) { Text(stringResource(text_show_all_w)) }
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp)) {
-            list.take(4).forEach { (_, _, anime, manga) ->
-                Column(Modifier.clickable {
-                    anime?.let { navigator.navigate(AnimeScreenDestination(it.id.toString())) }
-                }) {
+            list.take(4).forEach { (anime, manga) ->
+                Column(
+                    Modifier
+                        .width(120.dp)
+                        .clickable { anime?.let { navigator.navigate(AnimeScreenDestination(it.id)) } }) {
                     AsyncImage(
-                        model = getImage(anime?.image?.original ?: manga?.image?.original),
+                        model = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl,
                         contentDescription = null,
                         modifier = Modifier
-                            .size(141.dp, 220.dp)
+                            .fillMaxWidth()
+                            .height(187.dp)
                             .clip(MaterialTheme.shapes.medium)
                             .border(
                                 (0.5).dp,
@@ -311,8 +330,8 @@ private fun Related(model: AnimeViewModel, list: List<Related>, navigator: Navig
                         filterQuality = FilterQuality.High
                     )
                     Text(
-                        text = getTitle(anime, manga),
-                        modifier = Modifier.width(141.dp),
+                        text = anime?.russian ?: anime?.name ?: manga?.russian ?: manga!!.name,
+                        modifier = Modifier.fillMaxWidth(),
                         textAlign = TextAlign.Center,
                         maxLines = 3,
                         overflow = TextOverflow.Ellipsis,
@@ -324,8 +343,105 @@ private fun Related(model: AnimeViewModel, list: List<Related>, navigator: Navig
     }
 
 @Composable
+private fun Characters(model: AnimeViewModel, roles: List<CharacterRole>, navigator: Navigator) =
+    Column(verticalArrangement = spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+            ParagraphTitle(stringResource(text_characters))
+            IconButton(model::showCharacters) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
+        }
+        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp), CenterVertically) {
+            roles.filter { it.rolesRu.contains("Main") }.forEach { role ->
+                role.character.let { character ->
+                    Column(
+                        modifier = Modifier.clickable {
+                            navigator.navigate(CharacterScreenDestination(character.id))
+                        },
+                        verticalArrangement = spacedBy(4.dp),
+                        horizontalAlignment = CenterHorizontally
+                    ) {
+                        CircleImage(character.poster?.originalUrl)
+                        TextCircleImage(character.russian ?: character.name)
+                    }
+                }
+            }
+        }
+    }
+
+@Composable
+private fun Authors(model: AnimeViewModel, roles: List<PersonRole>, navigator: Navigator) =
+    Column(verticalArrangement = spacedBy(8.dp)) {
+        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+            ParagraphTitle(stringResource(text_authors))
+            IconButton(model::showAuthors) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
+        }
+        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(8.dp), CenterVertically) {
+            roles.filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }.forEach { role ->
+                role.person.let { person ->
+                    Column(
+                        modifier = Modifier.clickable {
+                            navigator.navigate(PersonScreenDestination(person.id.toLong()))
+                        },
+                        verticalArrangement = spacedBy(4.dp),
+                        horizontalAlignment = CenterHorizontally
+                    ) {
+                        CircleImage(person.poster?.originalUrl)
+                        TextCircleImage(person.russian ?: person.name)
+                    }
+                }
+            }
+        }
+    }
+
+@Composable
+private fun Screenshots(model: AnimeViewModel, screenshots: List<Screenshot>) =
+    Column(verticalArrangement = spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+            ParagraphTitle(stringResource(text_screenshots), Modifier.padding(bottom = 4.dp))
+            IconButton(model::showScreenshots) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
+        }
+        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp)) {
+            screenshots.take(6).forEachIndexed { index, screenshot ->
+                AsyncImage(
+                    model = screenshot.originalUrl,
+                    contentDescription = null,
+                    modifier = Modifier
+                        .size(172.dp, 97.dp)
+                        .clip(MaterialTheme.shapes.small)
+                        .clickable { model.showScreenshot(index) }
+                )
+            }
+        }
+    }
+
+@Composable
+private fun Video(
+    model: AnimeViewModel,
+    video: List<Video>,
+    handler: UriHandler = LocalUriHandler.current
+) = Column(verticalArrangement = spacedBy(4.dp)) {
+    Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+        ParagraphTitle(stringResource(text_video), Modifier.padding(bottom = 4.dp))
+        IconButton(model::showVideo) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
+    }
+    Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp)) {
+        video.take(3).forEach { video ->
+            AsyncImage(
+                model = "https:${video.imageUrl}",
+                contentDescription = null,
+                modifier = Modifier
+                    .size(172.dp, 130.dp)
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable { handler.openUri(video.url) }
+            )
+        }
+    }
+}
+
+// =========================================== Dialogs ===========================================
+
+@Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun DialogRelated(model: AnimeViewModel, list: List<Related>, navigator: Navigator) =
+private fun DialogRelated(model: AnimeViewModel, list: List<AnimeQuery.Related>, navigator: Navigator) =
     Dialog(model::hideRelated, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
@@ -336,20 +452,20 @@ private fun DialogRelated(model: AnimeViewModel, list: List<Related>, navigator:
             }
         ) { values ->
             LazyColumn(contentPadding = values) {
-                items(list) { (_, russian, anime, manga) ->
+                items(list) { (anime, manga, relationText) ->
                     ListItem(
                         headlineContent = {
                             Text(
-                                text = getTitle(anime, manga),
+                                text = anime?.russian ?: anime?.name ?: manga?.russian ?: manga!!.name,
                                 style = MaterialTheme.typography.titleMedium
                             )
                         },
                         modifier = Modifier.clickable {
-                            anime?.let { navigator.navigate(AnimeScreenDestination(it.id.toString())) }
+                            anime?.let { navigator.navigate(AnimeScreenDestination(it.id)) }
                         },
                         leadingContent = {
                             AsyncImage(
-                                model = getImage(anime?.image?.original ?: manga?.image?.original),
+                                model = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl,
                                 contentDescription = null,
                                 modifier = Modifier
                                     .size(80.dp, 121.dp)
@@ -362,47 +478,190 @@ private fun DialogRelated(model: AnimeViewModel, list: List<Related>, navigator:
                                 contentScale = ContentScale.Crop
                             )
                         },
-                        supportingContent = { Text(russian) }
+                        supportingContent = { Text(relationText) }
                     )
                 }
             }
         }
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun FullInfo(model: AnimeViewModel, state: AnimeState, anime: Anime) =
-    Dialog(model::hideFull, DialogProperties(usePlatformDefaultWidth = false)) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(text_anime)) },
-                    navigationIcon = { NavigationIcon(model::hideFull) }
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DialogCharacters(
+    model: AnimeViewModel,
+    state: AnimeState,
+    roles: List<CharacterRole>,
+    navigator: Navigator
+) = Dialog(model::hideCharacters, DialogProperties(usePlatformDefaultWidth = false)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(text_characters)) },
+                navigationIcon = { NavigationIcon(model::hideCharacters) }
+            )
+        }
+    ) { values ->
+        LazyColumn(
+            contentPadding = PaddingValues(top = values.calculateTopPadding()),
+            state = state.lazyCharacters
+        ) {
+            items(roles) { (_, character) ->
+                OneLineImage(
+                    name = character.russian ?: character.name,
+                    link = character.poster?.originalUrl,
+                    modifier = Modifier.clickable {
+                        navigator.navigate(CharacterScreenDestination(character.id))
+                    }
                 )
-            }
-        ) { values ->
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-                verticalArrangement = spacedBy(16.dp)
-            ) {
-                item { Titles(anime) }
-                anime.scoresStats?.let { item { Scores(it) } }
-                anime.statusesStats?.let { item { Statuses(it) } }
-                anime.screenshots.let { if (it.isNotEmpty()) item { Screenshots(model, state, it) } }
-                anime.videos.let { if (it.isNotEmpty()) item { Video(model, state, it) } }
             }
         }
     }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DialogAuthors(
+    model: AnimeViewModel,
+    state: AnimeState,
+    roles: List<PersonRole>,
+    navigator: Navigator
+) = Dialog(model::hideAuthors, DialogProperties(usePlatformDefaultWidth = false)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(text_authors)) },
+                navigationIcon = { NavigationIcon(model::hideAuthors) }
+            )
+        }
+    ) { values ->
+        LazyColumn(
+            contentPadding = PaddingValues(vertical = values.calculateTopPadding()),
+            state = state.lazyAuthors
+        ) {
+            items(roles) { (_, person) ->
+                OneLineImage(
+                    name = person.russian ?: person.name,
+                    link = person.poster?.originalUrl,
+                    modifier = Modifier.clickable {
+                        navigator.navigate(PersonScreenDestination(person.id.toLong()))
+                    }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DialogScreenshots(model: AnimeViewModel, state: AnimeState, list: List<Screenshot>) =
+    Dialog(model::hideScreenshots, DialogProperties(usePlatformDefaultWidth = false)) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(text_screenshots)) },
+                    navigationIcon = { NavigationIcon(model::hideScreenshots) }
+                )
+            }
+        ) { values ->
+            LazyVerticalStaggeredGrid(
+                columns = StaggeredGridCells.Adaptive(100.dp),
+                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
+                verticalItemSpacing = 2.dp,
+                horizontalArrangement = spacedBy(2.dp)
+            ) {
+                items(list.size) {
+                    AsyncImage(
+                        model = list[it].originalUrl,
+                        contentDescription = null,
+                        modifier = Modifier.clickable { model.showScreenshot(it) }
+                    )
+                }
+            }
+        }
+    }.also { if (state.showScreenshot) DialogScreenshot(model, state, list) }
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun DialogScreenshot(model: AnimeViewModel, state: AnimeState, list: List<Screenshot>) =
+    Dialog(model::hideScreenshot, DialogProperties(usePlatformDefaultWidth = false)) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = {},
+                    navigationIcon = { NavigationIcon(model::hideScreenshot) }
+                )
+            }
+        ) { values ->
+            HorizontalPager(
+                state = rememberPagerState(state.screenshot) { list.size },
+                modifier = Modifier.fillMaxSize(),
+                contentPadding = values
+            ) { AsyncImage(list[it].originalUrl, null) }
+        }
+    }
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+private fun DialogVideo(
+    model: AnimeViewModel,
+    list: List<Video>,
+    handler: UriHandler = LocalUriHandler.current
+) = Dialog(model::hideVideo, DialogProperties(usePlatformDefaultWidth = false)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(text_video)) },
+                navigationIcon = { NavigationIcon(model::hideVideo) }
+            )
+        }
+    ) { values ->
+        Column(
+            modifier = Modifier
+                .padding(8.dp, values.calculateTopPadding(), 8.dp, 0.dp)
+                .verticalScroll(rememberScrollState()),
+            verticalArrangement = spacedBy(12.dp)
+        ) {
+            VideoKinds.entries.forEach { entry ->
+                ParagraphTitle(entry.title, Modifier.padding(bottom = 4.dp))
+                FlowRow(Modifier.fillMaxWidth(), SpaceBetween, spacedBy(12.dp)) {
+                    list.filter { it.kind.rawValue in entry.kinds }.sortedBy { it.name }
+                        .forEach { video ->
+                            Column(verticalArrangement = spacedBy(4.dp)) {
+                                AsyncImage(
+                                    model = "https:${video.imageUrl}",
+                                    contentDescription = null,
+                                    modifier = Modifier
+                                        .size(172.dp, 130.dp)
+                                        .clip(MaterialTheme.shapes.small)
+                                        .clickable { handler.openUri(video.url) }
+                                )
+                                video.name?.let {
+                                    Text(
+                                        text = it,
+                                        modifier = Modifier.width(172.dp),
+                                        textAlign = TextAlign.Center,
+                                        maxLines = 2,
+                                        overflow = TextOverflow.Ellipsis,
+                                        style = MaterialTheme.typography.titleSmall
+                                    )
+                                }
+                            }
+                        }
+                }
+            }
+        }
+    }
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate?, star: Boolean) =
-    ModalBottomSheet(model::hideSheet, sheetState = state.sheetState) {
+    ModalBottomSheet(model::hideSheet, sheetState = state.sheetBottom) {
         if (Preferences.isTokenExists()) {
             ListItem(
                 headlineContent = { Text(stringResource(rate?.let { text_change_rate } ?: text_add_rate)) },
                 modifier = Modifier.clickable { model.showRate() },
-                leadingContent = { Icon(Icons.Default.Edit, null) }
+                leadingContent = { Icon(Icons.Outlined.Edit, null) }
             )
             ListItem(
                 headlineContent = { Text(stringResource(if (star) text_remove_fav else text_add_fav)) },
@@ -417,9 +676,9 @@ private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate
             )
         }
         ListItem(
-            headlineContent = { Text(stringResource(text_full_info)) },
-            modifier = Modifier.clickable { model.showFull() },
-            leadingContent = { Icon(Icons.Default.Info, null) }
+            headlineContent = { Text(stringResource(text_statistics)) },
+            modifier = Modifier.clickable { model.showStats() },
+            leadingContent = { Icon(Icons.Outlined.Info, null) }
         )
         ListItem(
             headlineContent = { Text("На других сайтах") },
@@ -429,6 +688,74 @@ private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
 
+@Composable
+private fun CreateRate(animeVM: AnimeViewModel, anime: Anime) {
+    val model: UserRateViewModel = viewModel()
+    val state by model.newRate.collectAsStateWithLifecycle()
+    val exists by rememberSaveable { mutableStateOf(anime.userRate != null) }
+
+    anime.userRate?.let { rate ->
+        model.onEvent(SetRateId(rate.id))
+        model.onEvent(SetStatus(WATCH_STATUSES.entries.first { it.key == rate.status.rawValue }))
+        model.onEvent(SetScore(SCORES.entries.first { it.key == rate.score }))
+        model.onEvent(SetEpisodes(rate.episodes.toString()))
+        model.onEvent(SetRewatches(rate.rewatches.toString()))
+    }
+
+    AlertDialog(
+        onDismissRequest = animeVM::hideRate,
+        confirmButton = {
+            TextButton(
+                onClick = {
+                    if (exists) model.updateRate(state.id) else model.createRate(anime.id)
+                    animeVM.reload()
+                },
+                enabled = !state.status.isNullOrEmpty()
+            ) { Text(stringResource(text_save)) }
+        },
+        dismissButton = {
+            if (exists) TextButton({ model.deleteRate(state.id); animeVM.reload() })
+            { Text("Удалить") }
+        },
+        title = {
+            Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+                Text(stringResource(if (exists) text_change else text_rate))
+                IconButton(animeVM::hideRate) { Icon(Icons.Outlined.Close, null) }
+            }
+        },
+        text = {
+            Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
+                RateStatus(model, state)
+                RateEpisodes(model, state)
+                RateScore(model, state)
+                RateRewatches(model, state)
+            }
+        }
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Statistics(model: AnimeViewModel, anime: Anime) =
+    Dialog(model::hideStats, DialogProperties(usePlatformDefaultWidth = false)) {
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(text_anime)) },
+                    navigationIcon = { NavigationIcon(model::hideStats) }
+                )
+            }
+        ) { values ->
+            LazyColumn(
+                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
+                verticalArrangement = spacedBy(16.dp)
+            ) {
+                anime.scoresStats?.let { item { Scores(it) } }
+                anime.statusesStats?.let { item { Statuses(it) } }
+            }
+        }
+    }
+
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 private fun LinksSheet(
@@ -436,7 +763,7 @@ private fun LinksSheet(
     state: AnimeState,
     list: List<ExternalLink>,
     handler: UriHandler = LocalUriHandler.current
-) = ModalBottomSheet(model::hideLinks, sheetState = state.linksState) {
+) = ModalBottomSheet(model::hideLinks, sheetState = state.sheetLinks) {
     FlowRow(
         modifier = Modifier
             .fillMaxWidth()
@@ -476,20 +803,6 @@ private fun LinksSheet(
         }
     }
     Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
-}
-
-@Composable
-private fun Titles(anime: Anime) = Column {
-    ParagraphTitle(stringResource(text_titles))
-    Text(stringResource(text_title_japanese, anime.japanese.orEmpty()))
-    Text(stringResource(text_title_english, anime.english.orEmpty()))
-    Text(stringResource(text_title_synonyms, anime.synonyms.joinToString(", ")))
-}
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun Genres(genres: List<Genre>) = FlowRow(horizontalArrangement = spacedBy(8.dp)) {
-    genres.forEach { (russian) -> SuggestionChip({}, { Text(russian) }) }
 }
 
 @Composable
@@ -562,300 +875,29 @@ private fun Statuses(statuses: List<StatusesStat>) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Screenshots(model: AnimeViewModel, state: AnimeState, screenshots: List<Screenshot>) {
-    Column(verticalArrangement = spacedBy(4.dp)) {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
-            ParagraphTitle(stringResource(text_screenshots), Modifier.padding(bottom = 4.dp))
-            TextButton(model::showScreenshots) { Text(stringResource(text_show_all_w)) }
-        }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp)) {
-            screenshots.take(6).forEachIndexed { index, screenshot ->
-                AsyncImage(
-                    model = screenshot.originalUrl,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(172.dp, 93.dp)
-                        .clickable { model.showScreenshot(index) }
-                )
-            }
-        }
-    }
-
-    when {
-        state.showScreenshot ->
-            Dialog(model::hideScreenshot, DialogProperties(usePlatformDefaultWidth = false)) {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = {},
-                            navigationIcon = { NavigationIcon(model::hideScreenshot) }
-                        )
-                    }
-                ) { values ->
-                    HorizontalPager(
-                        state = rememberPagerState(state.screenshot) { screenshots.size },
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = values
-                    ) { AsyncImage(screenshots[it].originalUrl, null) }
-                }
-            }
-
-        state.showScreenshots ->
-            Dialog(model::hideScreenshots, DialogProperties(usePlatformDefaultWidth = false)) {
-                Scaffold(
-                    topBar = {
-                        TopAppBar(
-                            title = { Text(stringResource(text_screenshots)) },
-                            navigationIcon = { NavigationIcon(model::hideScreenshots) }
-                        )
-                    }
-                ) { values ->
-                    LazyVerticalStaggeredGrid(
-                        columns = StaggeredGridCells.Adaptive(100.dp),
-                        contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-                        verticalItemSpacing = 2.dp,
-                        horizontalArrangement = spacedBy(2.dp)
-                    ) {
-                        items(screenshots.size) {
-                            AsyncImage(
-                                model = screenshots[it].originalUrl,
-                                contentDescription = null,
-                                modifier = Modifier.clickable { model.showScreenshot(it) }
-                            )
-                        }
-                    }
-                }
-            }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
-@Composable
-private fun Video(
+private fun Comments(
     model: AnimeViewModel,
-    state: AnimeState,
-    video: List<Video>,
-    handler: UriHandler = LocalUriHandler.current
-) {
-    Column(verticalArrangement = spacedBy(4.dp)) {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
-            ParagraphTitle(stringResource(text_video), Modifier.padding(bottom = 4.dp))
-            TextButton(model::showVideo) { Text(stringResource(text_show_all_w)) }
-        }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp)) {
-            video.take(3).forEach { video ->
-                AsyncImage(
-                    model = "https:${video.imageUrl}",
-                    contentDescription = null,
-                    modifier = Modifier
-                        .size(172.dp, 130.dp)
-                        .clickable { handler.openUri(video.url) }
-                )
-            }
-        }
-    }
-
-    if (state.showVideo) Dialog(model::hideVideo, DialogProperties(true, true, false)) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(text_video)) },
-                    navigationIcon = { NavigationIcon(model::hideVideo) }
-                )
-            }
-        ) { values ->
-            Column(
-                modifier = Modifier
-                    .padding(8.dp, values.calculateTopPadding(), 8.dp, 0.dp)
-                    .verticalScroll(rememberScrollState()),
-                verticalArrangement = spacedBy(12.dp)
-            ) {
-                VideoKinds.entries.forEach { entry ->
-                    ParagraphTitle(entry.title, Modifier.padding(bottom = 4.dp))
-                    FlowRow(Modifier.fillMaxWidth(), SpaceBetween, spacedBy(12.dp)) {
-                        video.filter { it.kind.rawValue in entry.kinds }.sortedBy { it.name }
-                            .forEach { video ->
-                                Column(verticalArrangement = spacedBy(4.dp)) {
-                                    AsyncImage(
-                                        model = "https:${video.imageUrl}",
-                                        contentDescription = null,
-                                        modifier = Modifier
-                                            .size(172.dp, 130.dp)
-                                            .clip(MaterialTheme.shapes.small)
-                                            .clickable { handler.openUri(video.url) }
-                                    )
-                                    video.name?.let {
-                                        Text(
-                                            text = it,
-                                            modifier = Modifier.width(172.dp),
-                                            textAlign = TextAlign.Center,
-                                            maxLines = 2,
-                                            overflow = TextOverflow.Ellipsis,
-                                            style = MaterialTheme.typography.titleSmall
-                                        )
-                                    }
-                                }
-                            }
-                    }
-                }
-            }
-        }
-    }
-}
-
-
-@Composable
-private fun Characters(model: AnimeViewModel, roles: List<CharacterRole>, navigator: Navigator) =
-    Column(verticalArrangement = spacedBy(4.dp)) {
-    Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
-        ParagraphTitle(stringResource(text_characters))
-        TextButton(model::showCharacters) { Text(stringResource(text_show_all_m)) }
-    }
-    Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp), CenterVertically) {
-        roles.filter { it.rolesRu.contains("Main") }.forEach { role ->
-            role.character.let { character ->
-                Column(
-                    modifier = Modifier.clickable {
-                        navigator.navigate(CharacterScreenDestination(character.id))
-                    },
-                    verticalArrangement = spacedBy(4.dp),
-                    horizontalAlignment = CenterHorizontally
-                ) {
-                    CircleImage(character.poster?.originalUrl, 64.dp)
-                    NameCircleImage(character.russian ?: character.name, 64.dp)
-                }
-            }
-        }
-    }
-}
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun DialogCharacters(
-    model: AnimeViewModel,
-    state: AnimeState,
-    roles: List<CharacterRole>,
-    navigator: Navigator
-) = Dialog(model::hideCharacters, DialogProperties(usePlatformDefaultWidth = false)) {
+    comments: LazyPagingItems<Comment>,
+    navigator: DestinationsNavigator
+) = Dialog(model::hideComments, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(text_characters)) },
-                navigationIcon = { NavigationIcon(model::hideCharacters) }
+                title = { Text("Комментарии") },
+                navigationIcon = { NavigationIcon(model::hideComments) }
             )
         }
     ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(vertical = values.calculateTopPadding()),
-            state = state.characterLazyState
-        ) {
-            items(roles) { (_, character) ->
-                SmallItem(
-                    name = character.russian ?: character.name,
-                    link = character.poster?.originalUrl,
-                    modifier = Modifier.clickable {
-                        navigator.navigate(CharacterScreenDestination(character.id))
-                    }
-                )
+        LazyColumn(contentPadding = PaddingValues(8.dp, values.calculateTopPadding())) {
+            when (comments.loadState.refresh) {
+                is LoadState.Error -> item { ErrorScreen() }
+                is LoadState.Loading -> item { LoadingScreen() }
+                is LoadState.NotLoading -> items(comments.itemCount) { Comment(comments[it]!!, navigator) }
             }
+            if (comments.loadState.append == LoadState.Loading) item { LoadingScreen() }
+            if (comments.loadState.hasError) item { ErrorScreen(comments.retry()) }
         }
     }
-}
-
-@Composable
-private fun Authors(model: AnimeViewModel, roles: List<PersonRole>, navigator: Navigator) =
-    Column(verticalArrangement = spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
-            ParagraphTitle(stringResource(text_authors))
-            TextButton(model::showAuthors) { Text(stringResource(text_show_all_m)) }
-        }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(8.dp), CenterVertically) {
-            roles.filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }.forEach { role ->
-                role.person.let { person ->
-                    Column(
-                        modifier = Modifier.clickable {
-                            navigator.navigate(PersonScreenDestination(person.id.toLong()))
-                        },
-                        verticalArrangement = spacedBy(4.dp),
-                        horizontalAlignment = CenterHorizontally
-                    ) {
-                        CircleImage(person.poster?.originalUrl, 64.dp)
-                        NameCircleImage(person.russian ?: person.name)
-                    }
-                }
-            }
-        }
-    }
-
-@Composable
-@OptIn(ExperimentalMaterial3Api::class)
-private fun DialogAuthors(
-    model: AnimeViewModel,
-    state: AnimeState,
-    roles: List<PersonRole>,
-    navigator: Navigator
-) = Dialog(model::hideAuthors, DialogProperties(usePlatformDefaultWidth = true)) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(text_authors)) },
-                navigationIcon = { NavigationIcon(model::hideAuthors) }
-            )
-        }
-    ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(vertical = values.calculateTopPadding()),
-            state = state.authorsLazyState
-        ) {
-            items(roles) { (_, person) ->
-                SmallItem(
-                    name = person.russian ?: person.name,
-                    link = person.poster?.originalUrl,
-                    modifier = Modifier.clickable {
-                        navigator.navigate(PersonScreenDestination(person.id.toLong()))
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CreateRate(animeVM: AnimeViewModel, anime: Anime) {
-    val model: UserRateViewModel = viewModel()
-    val state by model.newRate.collectAsStateWithLifecycle()
-    val exists by rememberSaveable { mutableStateOf(anime.userRate != null) }
-
-    anime.userRate?.let { rate ->
-        model.onEvent(SetRateId(rate.id))
-        model.onEvent(SetStatus(WATCH_STATUSES.entries.first { it.key == rate.status.rawValue }))
-        model.onEvent(SetScore(SCORES.entries.first { it.key == rate.score }))
-        model.onEvent(SetEpisodes(rate.episodes.toString()))
-        model.onEvent(SetRewatches(rate.rewatches.toString()))
-    }
-
-    AlertDialog(
-        onDismissRequest = animeVM::hideRate,
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    if (exists) model.updateRate(state.id) else model.createRate(anime.id)
-                    animeVM.reload()
-                },
-                enabled = !state.status.isNullOrEmpty()
-            ) { Text(stringResource(text_save)) }
-        },
-        dismissButton = { TextButton(animeVM::hideRate) { Text(stringResource(text_cancel)) } },
-        title = { Text(stringResource(if (exists) text_change else text_rate)) },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
-                RateStatus(model, state)
-                RateEpisodes(model, state)
-                RateScore(model, state)
-                RateRewatches(model, state)
-            }
-        }
-    )
 }
 
 @Composable
