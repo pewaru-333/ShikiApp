@@ -26,7 +26,7 @@ query AnimeList(
         duration: $duration,
         rating: $rating,
         genre: $genre,
-        censored: true,
+        censored: false,
         search: $search
     ) {
         id
@@ -52,9 +52,6 @@ query Anime($id: String!) {
         id
         name
         russian
-        english
-        japanese
-        synonyms
         kind
         rating
         score
@@ -71,7 +68,25 @@ query Anime($id: String!) {
         studios {
             id
             name
-            imageUrl
+        }
+        related {
+            anime {
+                id
+                name
+                russian
+                poster {
+                    originalUrl
+                }
+            }
+            manga {
+                id
+                name
+                russian
+                poster {
+                    originalUrl
+                }
+            }
+            relationText
         }
         personRoles {
             rolesRu
