@@ -93,6 +93,17 @@ class UserRateViewModel : ViewModel() {
         }
     }
 
+    fun deleteRate(rateId: String) {
+        viewModelScope.launch {
+            try {
+                NetworkClient.rates.delete(rateId.toLong())
+                _newRate.emit(NewRate())
+            } catch (e: Throwable) {
+                LoadState.Error(e)
+            }
+        }
+    }
+
     fun reload(model: UserRatesViewModel) {
         viewModelScope.launch {
             close()
