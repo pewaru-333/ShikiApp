@@ -55,7 +55,7 @@
     <string name="text_add_rate">Добавить в список</string>
     <string name="text_remove_fav">Удалить из избранного</string>
     <string name="text_add_fav">Добавить в избранное</string>
-    <string name="text_full_info">Подробная информация</string>
+    <string name="text_statistics">Статистика</string>
     <string name="text_related">Связанное</string>
 
     <plurals name="age">
