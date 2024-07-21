@@ -1,6 +1,7 @@
 package org.application.shikiapp.network.calls
 
 import org.application.shikiapp.models.data.Anime
+import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.Franchise
 import org.application.shikiapp.models.data.Related
@@ -18,7 +19,7 @@ interface Anime {
     suspend fun getRoles(@Path("animeId") animeId: Long): List<Role>
 
     @GET("animes/{animeId}/similar")
-    suspend fun getSimilar(@Path("animeId") animeId: Long): List<Anime>
+    suspend fun getSimilar(@Path("animeId") animeId: Long): List<AnimeShort>
 
     @GET("animes/{animeId}/related")
     suspend fun getRelated(@Path("animeId") animeId: Long): List<Related>
