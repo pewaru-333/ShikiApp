@@ -3,6 +3,7 @@ package org.application.shikiapp.network
 import org.application.AnimeGenresQuery
 import org.application.AnimeListQuery
 import org.application.AnimeQuery
+import org.application.CharacterListQuery
 import org.application.CharacterQuery
 import org.application.shikiapp.utils.ORDERS
 import org.application.type.OrderEnum
@@ -33,6 +34,10 @@ object ApolloClient {
 
     suspend fun getAnime(id: String) =
         NetworkClient.apollo.query(AnimeQuery(id)).execute().data?.animes?.first()!!
+
+    suspend fun getCharacters(page: Int, limit: Int, search: String?) =
+        NetworkClient.apollo.query(CharacterListQuery(page, limit, search)).execute()
+            .data?.characters ?: emptyList()
 
     suspend fun getCharacter(id: String) =
         NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute().data?.characters

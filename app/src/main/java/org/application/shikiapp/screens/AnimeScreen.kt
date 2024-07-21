@@ -134,6 +134,7 @@ import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_studio
 import org.application.shikiapp.R.string.text_user_rates
 import org.application.shikiapp.R.string.text_video
+import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.views.AnimeState
@@ -158,6 +159,7 @@ import org.application.shikiapp.utils.SCORES
 import org.application.shikiapp.utils.STATUSES
 import org.application.shikiapp.utils.VideoKinds
 import org.application.shikiapp.utils.WATCH_STATUSES
+import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getRating
 import org.application.shikiapp.utils.getStatus
@@ -176,7 +178,7 @@ fun AnimeScreen(id: String, navigator: Navigator) {
     when (val data = response) {
         Error -> ErrorScreen(model.getAnime())
         Loading -> LoadingScreen()
-        is Success -> AnimeView(model, state, data.anime, data.links, data.favoured,  navigator)
+        is Success -> AnimeView(model, state, data.anime, data.similar, data.links, data.favoured,  navigator)
     }
 }
 
@@ -185,6 +187,7 @@ private fun AnimeView(
     model: AnimeViewModel,
     state: AnimeState,
     anime: Anime,
+    similar: List<AnimeShort>,
     links: List<ExternalLink>,
     favoured: Boolean,
     navigator: Navigator
@@ -230,6 +233,7 @@ private fun AnimeView(
         state.showScreenshot -> DialogScreenshot(model, state, anime.screenshots)
         state.showVideo -> DialogVideo(model, anime.videos)
         state.showRate -> CreateRate(model, anime)
+        state.showSimilar -> DialogSimilar(model, state, similar, navigator)
         state.showStats -> Statistics(model, anime)
         state.showLinks -> LinksSheet(model, state, links)
     }
@@ -676,6 +680,11 @@ private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate
             )
         }
         ListItem(
+            headlineContent = { Text("Похожее") },
+            modifier = Modifier.clickable { model.showSimilar() },
+            leadingContent = { Icon(painterResource(R.drawable.vector_similar), null) }
+        )
+        ListItem(
             headlineContent = { Text(stringResource(text_statistics)) },
             modifier = Modifier.clickable { model.showStats() },
             leadingContent = { Icon(Icons.Outlined.Info, null) }
@@ -732,6 +741,51 @@ private fun CreateRate(animeVM: AnimeViewModel, anime: Anime) {
             }
         }
     )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun DialogSimilar(
+    model: AnimeViewModel,
+    state: AnimeState,
+    list: List<AnimeShort>,
+    navigator: Navigator
+) = Dialog(model::hideSimilar, DialogProperties(usePlatformDefaultWidth = false)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Похожее") },
+                navigationIcon = { NavigationIcon(model::hideSimilar) })
+        }
+    ) { values ->
+        LazyColumn(
+            state = state.lazySimilar,
+            contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
+            verticalArrangement = spacedBy(8.dp)
+        ) {
+            items(list) { (id, name, russian, image) ->
+                ListItem(
+                    headlineContent = { Text(russian ?: name) },
+                    modifier = Modifier.clickable {
+                        navigator.navigate(AnimeScreenDestination(id.toString()))
+                    },
+                    leadingContent = {
+                        AsyncImage(
+                            model = getImage(image.original),
+                            contentDescription = null,
+                            modifier = Modifier
+                                .clip(MaterialTheme.shapes.medium)
+                                .border(
+                                    (0.5).dp,
+                                    MaterialTheme.colorScheme.onSurface,
+                                    MaterialTheme.shapes.medium
+                                )
+                        )
+                    }
+                )
+            }
+        }
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -878,7 +932,7 @@ private fun Statuses(statuses: List<StatusesStat>) {
 private fun Comments(
     model: AnimeViewModel,
     comments: LazyPagingItems<Comment>,
-    navigator: DestinationsNavigator
+    navigator: Navigator
 ) = Dialog(model::hideComments, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
