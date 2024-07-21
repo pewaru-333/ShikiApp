@@ -1,0 +1,9 @@
+The application is under development!
+
+<b>The main functions at the moment</b>
+
+* Search and view information about anime.
+* Search and view information about characters.
+* View and read news and topics.
+* View user profiles, clubs and friends.
+* Add anime to your list and favorites (account required).
