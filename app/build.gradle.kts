@@ -25,6 +25,11 @@ android {
         versionName = "alpha-0.0.5"
     }
 
+    dependenciesInfo {
+        includeInApk = false
+        includeInBundle = false
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false

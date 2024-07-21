@@ -1,4 +1,4 @@
-The application is under development!
+Shikimori (shikimori.one) unofficial mobile app.
 
 <b>The main functions at the moment</b>
 
