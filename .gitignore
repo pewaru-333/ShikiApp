@@ -6,6 +6,7 @@ misc.xml
 deploymentTargetDropDown.xml
 .DS_Store
 /build
+/app/release
 /captures
 .externalNativeBuild
 .cxx
