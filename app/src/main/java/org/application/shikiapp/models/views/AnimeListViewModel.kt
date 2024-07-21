@@ -42,9 +42,9 @@ class AnimeListViewModel : ViewModel() {
         ).flow.map { list ->
             val set = mutableSetOf<String>()
             list.filter { if (it.id in set) false else set.add(it.id) }
-        }.cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is HttpException || attempt <= 3 }
-    }
+        }
+    }.cachedIn(viewModelScope)
+        .retryWhen { cause, attempt -> cause is HttpException || attempt <= 3 }
 
     init {
         getGenres()
@@ -129,9 +129,7 @@ class AnimeListViewModel : ViewModel() {
             is QueryEvent.SetFranchise -> {}
             is QueryEvent.SetCensored -> {}
             is QueryEvent.SetMyList -> {}
-            is QueryEvent.SetTitle -> event.title.let { title ->
-                _filters.update { it.copy(title = title.ifEmpty { null }) }
-            }
+            is QueryEvent.SetTitle -> _filters.update { it.copy(title = event.title) }
         }
     }
 
@@ -163,7 +161,7 @@ data class QueryMap(
     val franchise: String? = null,
     val censored: Boolean? = null,
     val myList: String? = null,
-    val title: String? = null
+    val title: String = BLANK
 )
 
 sealed interface QueryEvent {
