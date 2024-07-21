@@ -1,3 +1,14 @@
+query CharacterList($page: PositiveInt, $limit: PositiveInt, $search: String) {
+    characters(page: $page, limit: $limit, search: $search) {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+}
+
 query Character($id: [ID!]) {
     characters(ids: $id) {
         id

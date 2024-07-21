@@ -39,6 +39,7 @@ import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Label
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
@@ -86,15 +87,17 @@ import coil.compose.AsyncImage
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
 import kotlinx.coroutines.flow.collectLatest
 import org.application.AnimeListQuery.Anime
+import org.application.CharacterListQuery.Character
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_search
 import org.application.shikiapp.models.views.AnimeListViewModel
 import org.application.shikiapp.models.views.CatalogState
 import org.application.shikiapp.models.views.CatalogViewModel
+import org.application.shikiapp.models.views.CharacterListViewModel
 import org.application.shikiapp.models.views.DrawerEvent
 import org.application.shikiapp.models.views.Items
 import org.application.shikiapp.models.views.QueryEvent.SetDuration
@@ -118,18 +121,21 @@ import org.application.shikiapp.utils.SEASONS
 import org.application.shikiapp.utils.STATUSES
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getSeason
+import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
+
+private var PADDING = 0.dp
 
 @Composable
 @Destination<RootGraph>
-fun CatalogScreen(navigator: DestinationsNavigator) {
-    val viewModel = viewModel<CatalogViewModel>()
-    val state by viewModel.state.collectAsStateWithLifecycle()
+fun CatalogScreen(navigator: Navigator) {
+    val model = viewModel<CatalogViewModel>()
+    val state by model.state.collectAsStateWithLifecycle()
 
     val focus = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
-        viewModel.event.collectLatest {
-            when(it) {
+        model.event.collectLatest {
+            when (it) {
                 DrawerEvent.ClearDrawer -> focus.clearFocus()
                 DrawerEvent.ClickDrawer -> if (state.drawerState.isOpen) state.drawerState.close()
                 else state.drawerState.open()
@@ -137,13 +143,15 @@ fun CatalogScreen(navigator: DestinationsNavigator) {
         }
     }
 
-    ModalNavigationDrawer(drawerMenu(viewModel, state), Modifier, state.drawerState) {
-        Scaffold(topBar = topBar(viewModel, state)) { values ->
-            when (state.menu) {
-                0 -> AnimeList(viewModel, state, navigator, values)
+    ModalNavigationDrawer(drawerMenu(model, state), Modifier, state.drawerState) {
+        Scaffold(topBar = topBar(model, state)) { values ->
+            PADDING = values.calculateTopPadding().plus(8.dp)
 
+            when (state.menu) {
+                0 -> AnimeList(model, state, navigator)
                 1 -> MangaList(navigator, values)
                 2 -> RanobeList(navigator, values)
+                3 -> CharacterList(state, navigator)
             }
         }
     }
@@ -158,7 +166,7 @@ private fun topBar(model: CatalogViewModel, state: CatalogState): @Composable ()
                 value = state.search,
                 onValueChange = model::setSearch,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = state.menu == 0,
+                enabled = state.menu in listOf(0, 3),
                 placeholder = { Text(stringResource(text_search)) },
                 trailingIcon = { if (state.search.isEmpty()) Icon(Icons.Default.Search, null) },
                 singleLine = true,
@@ -175,7 +183,11 @@ private fun topBar(model: CatalogViewModel, state: CatalogState): @Composable ()
             drawLine(Color.LightGray, Offset(0f, size.height), Offset(size.width, size.height), 4f)
         },
         navigationIcon = { IconButton(model::drawer) { Icon(Icons.Default.Menu, null) } },
-        actions = { IconButton(model::showDialog) { Icon(painterResource(vector_filter), null) } }
+        actions = {
+            if (state.menu == 0) IconButton(model::showDialog) {
+                Icon(painterResource(vector_filter), null)
+            }
+        }
     )
 }
 
@@ -201,66 +213,69 @@ private fun drawerMenu(model: CatalogViewModel, state: CatalogState): @Composabl
 }
 
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimeList(
-    model: CatalogViewModel,
-    state: CatalogState,
-    navigator: DestinationsNavigator,
-    values: PaddingValues
-) {
+private fun AnimeList(model: CatalogViewModel, state: CatalogState, navigator: Navigator) {
     val animeVM = viewModel<AnimeListViewModel>()
-    val animeList = animeVM.list.collectAsLazyPagingItems()
+    val list = animeVM.list.collectAsLazyPagingItems()
     val filters by animeVM.filters.collectAsStateWithLifecycle()
 
     LaunchedEffect(state.search) { animeVM.onEvent(SetTitle(state.search)) }
 
-    when (animeList.loadState.refresh) {
-        is LoadState.Error -> ErrorScreen(animeList.retry())
+    when (list.loadState.refresh) {
+        is LoadState.Error -> ErrorScreen(list.retry())
         is LoadState.Loading -> LoadingScreen()
         is LoadState.NotLoading -> {
             LazyColumn(
-                contentPadding = PaddingValues(8.dp, values.calculateTopPadding().plus(8.dp)),
+                contentPadding = PaddingValues(8.dp, PADDING),
                 verticalArrangement = spacedBy(16.dp)
             ) {
-                animeList(animeList, navigator)
-                if (animeList.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (animeList.loadState.hasError) item { ErrorScreen(animeList.retry()) }
+                animeList(list, navigator)
+                if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
+                if (list.loadState.hasError) item { ErrorScreen(list.retry()) }
             }
         }
     }
 
-    if (state.showFiltersAnime) Dialog(model::hideDialog, DialogProperties(usePlatformDefaultWidth = false)) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(R.string.text_filters)) },
-                    navigationIcon = { NavigationIcon(model::hideDialog) }
-                )
-            },
-            floatingActionButton = {
-                FloatingActionButton({ model.hideDialog(); animeList.refresh() })
-                { Icon(Icons.Default.Search, null) }
-            }
-        ) { values ->
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-                verticalArrangement = spacedBy(16.dp)
-            ) {
-                item { AnimeSorting(animeVM, filters) }
-                item { AnimeStatus(animeVM, filters) }
-                item { AnimeKind(animeVM, filters) }
-                item { AnimeSeason(animeVM, filters) }
-                item { AnimeScore(animeVM, filters) }
-                item { AnimeDuration(animeVM, filters) }
-                item { AnimeRating(animeVM, filters) }
-                item { AnimeGenres(animeVM, filters) }
-            }
+    if (state.showFiltersAnime) AnimeFiltersDialog(model, animeVM, list, filters)
+}
+
+@Composable
+@OptIn(ExperimentalMaterial3Api::class)
+private fun AnimeFiltersDialog(
+    model: CatalogViewModel,
+    animeVM: AnimeListViewModel,
+    list: LazyPagingItems<Anime>,
+    filters: QueryMap
+) = Dialog(model::hideDialog, DialogProperties(usePlatformDefaultWidth = false)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.text_filters)) },
+                navigationIcon = { NavigationIcon(model::hideDialog) }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButton({ model.hideDialog(); list.refresh() })
+            { Icon(Icons.Default.Search, null) }
+        }
+    ) { values ->
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
+            verticalArrangement = spacedBy(16.dp)
+        ) {
+            item { AnimeSorting(animeVM, filters) }
+            item { AnimeStatus(animeVM, filters) }
+            item { AnimeKind(animeVM, filters) }
+            item { AnimeSeason(animeVM, filters) }
+            item { AnimeScore(animeVM, filters) }
+            item { AnimeDuration(animeVM, filters) }
+            item { AnimeRating(animeVM, filters) }
+            item { AnimeGenres(animeVM, filters) }
         }
     }
 }
 
-private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: DestinationsNavigator) =
+private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: Navigator) =
     items(list.itemCount, { it }) { index ->
         list[index]?.let { (id, name, russian, kind, season, poster) ->
             Row(
@@ -275,7 +290,9 @@ private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: Des
                         .fillMaxHeight()
                         .clip(MaterialTheme.shapes.medium)
                         .border(
-                            1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium
+                            1.dp,
+                            MaterialTheme.colorScheme.onSurface,
+                            MaterialTheme.shapes.medium
                         ),
                     contentDescription = null,
                     contentScale = ContentScale.FillBounds,
@@ -296,7 +313,7 @@ private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: Des
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimeSorting(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeSorting(model: AnimeListViewModel, filters: QueryMap) {
     var flag by remember { mutableStateOf(false) }
 
     ParagraphTitle(stringResource(R.string.text_sorting), Modifier.padding(bottom = 8.dp))
@@ -316,7 +333,7 @@ private fun AnimeSorting(viewModel: AnimeListViewModel, filters: QueryMap) {
             ORDERS.entries.forEach { entry ->
                 DropdownMenuItem(
                     text = { Text(text = entry.value, style = MaterialTheme.typography.bodyLarge) },
-                    onClick = { viewModel.onEvent(SetOrder(entry)); flag = false },
+                    onClick = { model.onEvent(SetOrder(entry)); flag = false },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                 )
             }
@@ -325,7 +342,7 @@ private fun AnimeSorting(viewModel: AnimeListViewModel, filters: QueryMap) {
 }
 
 @Composable
-private fun AnimeStatus(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeStatus(model: AnimeListViewModel, filters: QueryMap) {
     ParagraphTitle(stringResource(R.string.text_status))
     Column {
         STATUSES.entries.forEach { (key, value) ->
@@ -335,7 +352,7 @@ private fun AnimeStatus(viewModel: AnimeListViewModel, filters: QueryMap) {
                     .height(56.dp)
                     .toggleable(
                         value = key in filters.status,
-                        onValueChange = { viewModel.onEvent(SetStatus(key)) },
+                        onValueChange = { model.onEvent(SetStatus(key)) },
                         role = Role.Checkbox
                     ),
                 verticalAlignment = Alignment.CenterVertically
@@ -349,20 +366,20 @@ private fun AnimeStatus(viewModel: AnimeListViewModel, filters: QueryMap) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AnimeKind(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeKind(model: AnimeListViewModel, filters: QueryMap) {
     ParagraphTitle(stringResource(R.string.text_kind))
     FlowRow(horizontalArrangement = spacedBy(8.dp)) {
         KINDS.entries.forEach { (key, value) ->
             ElevatedFilterChip(
                 selected = key in filters.kind,
-                onClick = { viewModel.onEvent(SetKind(key)) },
+                onClick = { model.onEvent(SetKind(key)) },
                 label = { Text(value) })
         }
     }
 }
 
 @Composable
-private fun AnimeSeason(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeSeason(model: AnimeListViewModel, filters: QueryMap) {
     ParagraphTitle(stringResource(R.string.text_season), Modifier.padding(bottom = 8.dp))
     Column {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
@@ -370,8 +387,8 @@ private fun AnimeSeason(viewModel: AnimeListViewModel, filters: QueryMap) {
                 value = filters.seasonYS,
                 onValueChange = {
                     if (it.isDigitsOnly()) {
-                        viewModel.onEvent(SetSeasonYS(it))
-                        viewModel.onEvent(SetSeason)
+                        model.onEvent(SetSeasonYS(it))
+                        model.onEvent(SetSeason)
                     }
                 },
                 modifier = Modifier.width(160.dp),
@@ -382,8 +399,8 @@ private fun AnimeSeason(viewModel: AnimeListViewModel, filters: QueryMap) {
                 value = filters.seasonYF,
                 onValueChange = {
                     if (it.isDigitsOnly()) {
-                        viewModel.onEvent(SetSeasonYF(it))
-                        viewModel.onEvent(SetSeason)
+                        model.onEvent(SetSeasonYF(it))
+                        model.onEvent(SetSeason)
                     }
                 },
                 modifier = Modifier.width(160.dp),
@@ -396,7 +413,7 @@ private fun AnimeSeason(viewModel: AnimeListViewModel, filters: QueryMap) {
             SEASONS.entries.forEach { (key, value) ->
                 ElevatedFilterChip(
                     selected = key in filters.seasonS,
-                    onClick = { viewModel.onEvent(SetSeasonS(key)); viewModel.onEvent(SetSeason) },
+                    onClick = { model.onEvent(SetSeasonS(key)); model.onEvent(SetSeason) },
                     label = { Text(value) })
             }
         }
@@ -405,14 +422,14 @@ private fun AnimeSeason(viewModel: AnimeListViewModel, filters: QueryMap) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AnimeScore(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeScore(model: AnimeListViewModel, filters: QueryMap) {
     val interactionSource = remember(::MutableInteractionSource)
 
     ParagraphTitle(stringResource(R.string.text_score))
     Column {
         Slider(
             value = filters.score,
-            onValueChange = { viewModel.onEvent(SetScore(it)) },
+            onValueChange = { model.onEvent(SetScore(it)) },
             steps = 8,
             valueRange = 1f..10f,
             interactionSource = interactionSource,
@@ -441,7 +458,7 @@ private fun AnimeScore(viewModel: AnimeListViewModel, filters: QueryMap) {
 }
 
 @Composable
-private fun AnimeDuration(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeDuration(model: AnimeListViewModel, filters: QueryMap) {
     ParagraphTitle(stringResource(R.string.text_episode_duration))
     Column {
         DURATIONS.entries.forEach { (key, value) ->
@@ -451,7 +468,7 @@ private fun AnimeDuration(viewModel: AnimeListViewModel, filters: QueryMap) {
                     .height(56.dp)
                     .toggleable(
                         value = key in filters.duration,
-                        onValueChange = { viewModel.onEvent(SetDuration(key)) },
+                        onValueChange = { model.onEvent(SetDuration(key)) },
                         role = Role.Checkbox
                     ),
                 verticalAlignment = Alignment.CenterVertically
@@ -465,13 +482,13 @@ private fun AnimeDuration(viewModel: AnimeListViewModel, filters: QueryMap) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AnimeRating(viewModel: AnimeListViewModel, filters: QueryMap) {
+private fun AnimeRating(model: AnimeListViewModel, filters: QueryMap) {
     ParagraphTitle(stringResource(R.string.text_rating))
     FlowRow(horizontalArrangement = spacedBy(8.dp)) {
         RATINGS.entries.forEach { (key, value) ->
             ElevatedFilterChip(
                 selected = key in filters.rating,
-                onClick = { viewModel.onEvent(SetRating(key)) },
+                onClick = { model.onEvent(SetRating(key)) },
                 label = { Text(value) })
         }
     }
@@ -479,22 +496,22 @@ private fun AnimeRating(viewModel: AnimeListViewModel, filters: QueryMap) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun AnimeGenres(viewModel: AnimeListViewModel, filters: QueryMap) {
-    val genres by viewModel.genres.collectAsStateWithLifecycle()
+private fun AnimeGenres(model: AnimeListViewModel, filters: QueryMap) {
+    val genres by model.genres.collectAsStateWithLifecycle()
 
     ParagraphTitle(stringResource(R.string.text_genres))
     FlowRow(horizontalArrangement = spacedBy(8.dp)) {
         genres.forEach { (id, russian) ->
             ElevatedFilterChip(
                 selected = id in filters.genre,
-                onClick = { viewModel.onEvent(SetGenre(id)) },
+                onClick = { model.onEvent(SetGenre(id)) },
                 label = { Text(russian) })
         }
     }
 }
 
 @Composable
-private fun MangaList(navigator: DestinationsNavigator, padding: PaddingValues) {
+private fun MangaList(navigator: Navigator, padding: PaddingValues) {
     LazyColumn(
         modifier = Modifier.padding(horizontal = 8.dp),
         contentPadding = PaddingValues(top = padding.calculateTopPadding()),
@@ -506,7 +523,7 @@ private fun MangaList(navigator: DestinationsNavigator, padding: PaddingValues) 
 
 
 @Composable
-private fun RanobeList(navigator: DestinationsNavigator, padding: PaddingValues) {
+private fun RanobeList(navigator: Navigator, padding: PaddingValues) {
     LazyColumn(
         modifier = Modifier.padding(horizontal = 8.dp),
         contentPadding = PaddingValues(top = padding.calculateTopPadding()),
@@ -515,3 +532,54 @@ private fun RanobeList(navigator: DestinationsNavigator, padding: PaddingValues)
         item { Box(Modifier.fillMaxSize(), Alignment.Center) { Text("Ранобэ") } }
     }
 }
+
+@Composable
+private fun CharacterList(state: CatalogState, navigator: Navigator) {
+    val model = viewModel<CharacterListViewModel>()
+    val list = model.list.collectAsLazyPagingItems()
+
+    LaunchedEffect(state.search) { model.setSearch(state.search) }
+
+    when (list.loadState.refresh) {
+        is LoadState.Error -> ErrorScreen(list.retry())
+        is LoadState.Loading -> LoadingScreen()
+        is LoadState.NotLoading -> {
+            LazyColumn(
+                contentPadding = PaddingValues(8.dp, PADDING),
+                verticalArrangement = spacedBy(8.dp)
+            ) {
+                characterList(list, navigator)
+                if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
+                if (list.loadState.hasError) item { ErrorScreen(list.retry()) }
+            }
+        }
+    }
+}
+
+private fun LazyListScope.characterList(list: LazyPagingItems<Character>, navigator: Navigator) =
+    items(list.itemCount) { index ->
+        list[index]?.let { (id, name, russian, poster) ->
+            ListItem(
+                headlineContent = {
+                    Text(russian ?: name, style = MaterialTheme.typography.titleLarge)
+                },
+                modifier = Modifier.clickable { navigator.navigate(CharacterScreenDestination(id)) },
+                leadingContent = {
+                    AsyncImage(
+                        model = poster?.originalUrl,
+                        contentDescription = null,
+                        modifier = Modifier
+                            .size(127.dp, 180.dp)
+                            .clip(MaterialTheme.shapes.medium)
+                            .border(
+                                1.dp,
+                                MaterialTheme.colorScheme.onSurface,
+                                MaterialTheme.shapes.medium
+                            ),
+                        contentScale = ContentScale.FillBounds,
+                        filterQuality = FilterQuality.High
+                    )
+                }
+            )
+        }
+    }

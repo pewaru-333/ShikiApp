@@ -24,12 +24,12 @@ class CatalogViewModel : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(search = text) } }
     }
 
-    fun hideDialog() {
-        viewModelScope.launch { _state.update { it.copy(showFiltersAnime = false) } }
-    }
-
     fun showDialog() {
         viewModelScope.launch { _state.update { it.copy(showFiltersAnime = true) } }
+    }
+
+    fun hideDialog() {
+        viewModelScope.launch { _state.update { it.copy(showFiltersAnime = false) } }
     }
 
     fun drawer() {
@@ -56,7 +56,8 @@ data class CatalogState(
 enum class Items(val title: String, val icon: Int) {
     Anime("Аниме", R.drawable.vector_anime),
     Manga("Манга", R.drawable.vector_manga),
-    Ranobe("Ранобэ", R.drawable.vector_ranobe)
+    Ranobe("Ранобэ", R.drawable.vector_ranobe),
+    Charaters("Персонажи", R.drawable.vector_character)
 }
 
 sealed interface DrawerEvent {
