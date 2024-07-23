@@ -56,9 +56,9 @@ import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.User
 import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.LoadingState
-import org.application.shikiapp.models.views.UserMenus
 import org.application.shikiapp.models.views.UserViewModel
 import org.application.shikiapp.models.views.factory
+import org.application.shikiapp.utils.UserMenus
 import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getSex
 import org.application.shikiapp.models.data.User as Friend
@@ -146,7 +146,7 @@ private fun BriefInfo(viewModel: UserViewModel, user: User, clubs: List<Club> ,n
                     Modifier
                         .weight(1f)
                         .fillMaxHeight()) {
-                    TitleText(entry.row[0])
+                    TitleText(stringResource(entry.row[0]))
                     LabelText(when (entry.ordinal) {
                         0 -> user.name ?: "Неизвестно"
                         1 -> getSex(user.sex)
@@ -161,7 +161,7 @@ private fun BriefInfo(viewModel: UserViewModel, user: User, clubs: List<Club> ,n
                     enabled = entry.ordinal != 2
                 ) {
                     Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically) {
-                        TitleText(entry.row[1])
+                        TitleText(stringResource(entry.row[1]))
                         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
                     }
                 }
@@ -174,7 +174,7 @@ private fun BriefInfo(viewModel: UserViewModel, user: User, clubs: List<Club> ,n
             Scaffold(
                 topBar = {
                     TopAppBar(
-                        title = { Text(viewModel.getTitle()) },
+                        title = { Text(stringResource(viewModel.getTitle())) },
                         navigationIcon = { NavigationIcon(viewModel::close) }
                     )
                 }
@@ -192,7 +192,7 @@ private fun BriefInfo(viewModel: UserViewModel, user: User, clubs: List<Club> ,n
 
 fun LazyListScope.friends(list: LazyPagingItems<Friend>, navigator: DestinationsNavigator) {
     when (list.loadState.refresh) {
-        is LoadState.Error -> item { ErrorScreen(list.retry()) }
+        is LoadState.Error -> item { ErrorScreen(list::retry) }
         is LoadState.Loading -> item { LoadingScreen() }
         is LoadState.NotLoading -> {
             items(list.itemCount) { index ->
@@ -205,7 +205,7 @@ fun LazyListScope.friends(list: LazyPagingItems<Friend>, navigator: Destinations
                 }
             }
             if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-            if (list.loadState.hasError) item { ErrorScreen(list.retry()) }
+            if (list.loadState.hasError) item { ErrorScreen(list::retry) }
         }
     }
 }

@@ -10,6 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.R.string.blank
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.models.data.User
@@ -17,6 +18,9 @@ import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.network.paging.UserFriendsPaging
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.ProfileMenus.Achievements
+import org.application.shikiapp.utils.ProfileMenus.Clubs
+import org.application.shikiapp.utils.ProfileMenus.Friends
 import org.application.shikiapp.utils.TokenManager
 
 class ProfileViewModel : ViewModel() {
@@ -90,11 +94,11 @@ class ProfileViewModel : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(show = false) } }
     }
 
-    fun getTitle(): String = when (_state.value.menu) {
-        0 -> "Друзья"
-        1 -> "Клубы"
-        2 -> "Достижения"
-        else -> BLANK
+    fun getTitle() = when (_state.value.menu) {
+        0 -> Friends.title
+        1 -> Clubs.title
+        2 -> Achievements.title
+        else -> blank
     }
 }
 
@@ -103,10 +107,6 @@ data class ProfileState(
     val status: String = BLANK,
     val show: Boolean = false
 )
-
-enum class ProfileMenus(val title: String) {
-    Friends("Друзья"), Clubs("Клубы"), Achievements("Достижения")
-}
 
 sealed interface LoginState {
     data class Logged(val user: User, val clubs: List<Club>) : LoginState

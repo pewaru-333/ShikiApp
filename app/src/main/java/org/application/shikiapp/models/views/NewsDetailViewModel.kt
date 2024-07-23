@@ -6,11 +6,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.News
+import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Error
+import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Loading
+import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Success
 import org.application.shikiapp.network.NetworkClient
 
 
 class NewsDetailViewModel(private val newsId: Long) : ViewModel() {
-    private val _state = MutableStateFlow<NewsState>(NewsState.Loading)
+    private val _state = MutableStateFlow<Response>(Loading)
     val state = _state.asStateFlow()
 
     init {
@@ -19,21 +22,21 @@ class NewsDetailViewModel(private val newsId: Long) : ViewModel() {
 
     fun getNews() {
         viewModelScope.launch {
-            _state.emit(NewsState.Loading)
+            _state.emit(Loading)
 
             try {
                 val news = NetworkClient.client.getTopicById(newsId)
 
-                _state.emit(NewsState.Success(news))
+                _state.emit(Success(news))
             } catch (e: Exception) {
-                _state.emit(NewsState.Error)
+                _state.emit(Error)
             }
         }
     }
-}
 
-sealed interface NewsState {
-    data object Error : NewsState
-    data object Loading : NewsState
-    data class Success(val news: News) : NewsState
+    sealed interface Response {
+        data object Error : Response
+        data object Loading : Response
+        data class Success(val news: News) : Response
+    }
 }

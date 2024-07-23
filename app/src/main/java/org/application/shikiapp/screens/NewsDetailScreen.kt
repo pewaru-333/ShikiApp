@@ -37,7 +37,9 @@ import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.R
 import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.NewsDetailViewModel
-import org.application.shikiapp.models.views.NewsState
+import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Error
+import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Loading
+import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Success
 import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.getLinks
@@ -50,9 +52,9 @@ fun NewsDetail(newsId: Long, navigator: DestinationsNavigator) {
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val response = state) {
-        is NewsState.Error -> ErrorScreen(model.getNews())
-        is NewsState.Loading -> LoadingScreen()
-        is NewsState.Success -> {
+        is Error -> ErrorScreen(model::getNews)
+        is Loading -> LoadingScreen()
+        is Success -> {
             val comments = viewModel<CommentViewModel>(factory = factory {
                 CommentViewModel(newsId)
             }).comments.collectAsLazyPagingItems()

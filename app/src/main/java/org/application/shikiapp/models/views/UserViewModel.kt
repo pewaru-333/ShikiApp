@@ -10,11 +10,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.R.string.blank
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.User
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.network.paging.UserFriendsPaging
-import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.ProfileMenus.Achievements
+import org.application.shikiapp.utils.ProfileMenus.Clubs
+import org.application.shikiapp.utils.ProfileMenus.Friends
 
 class UserViewModel(private val userId: Long) : ViewModel() {
     private val _response = MutableStateFlow<LoadingState>(LoadingState.Loading)
@@ -51,11 +54,11 @@ class UserViewModel(private val userId: Long) : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(show = false) } }
     }
 
-    fun getTitle(): String = when (_state.value.menu) {
-        0 -> "Друзья"
-        1 -> "Клубы"
-        2 -> "Достижения"
-        else -> BLANK
+    fun getTitle() = when (_state.value.menu) {
+        0 -> Friends.title
+        1 -> Clubs.title
+        2 -> Achievements.title
+        else -> blank
     }
 }
 
@@ -63,12 +66,6 @@ data class UserState(
     val menu: Int = 0,
     val show: Boolean = false
 )
-
-enum class UserMenus(val row: List<String>) {
-    FIRST(listOf("Имя", "Друзья")),
-    SECOND(listOf("Пол", "Клубы")),
-    THIRD(listOf("Возраст", "Достижения"))
-}
 
 sealed interface LoadingState {
     data object Error : LoadingState

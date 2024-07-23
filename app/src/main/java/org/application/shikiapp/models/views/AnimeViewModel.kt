@@ -18,6 +18,7 @@ import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.utils.LINKED_TYPE
 
 
 class AnimeViewModel(private val animeId: String) : ViewModel() {
@@ -52,8 +53,8 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
     fun changeFavourite(flag: Boolean) {
         viewModelScope.launch {
             try {
-                if (flag) NetworkClient.profile.deleteFavourite("Anime", animeId.toLong())
-                else NetworkClient.profile.addFavourite("Anime", animeId.toLong())
+                if (flag) NetworkClient.profile.deleteFavourite(LINKED_TYPE[0], animeId.toLong())
+                else NetworkClient.profile.addFavourite(LINKED_TYPE[0], animeId.toLong())
                 getAnime()
             } catch (e: Throwable) {
                 e.printStackTrace()

@@ -46,7 +46,7 @@ fun CalendarScreen(navigator: DestinationsNavigator) {
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = state) {
-        Error -> ErrorScreen(model.getCalendar())
+        Error -> ErrorScreen(model::getCalendar)
         Loading -> LoadingScreen()
         is Success -> CalendarView(data.calendar, navigator)
     }

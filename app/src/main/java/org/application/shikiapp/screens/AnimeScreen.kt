@@ -88,7 +88,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
@@ -117,6 +116,7 @@ import org.application.shikiapp.R.string.text_change
 import org.application.shikiapp.R.string.text_change_rate
 import org.application.shikiapp.R.string.text_characters
 import org.application.shikiapp.R.string.text_episodes
+import org.application.shikiapp.R.string.text_external_links
 import org.application.shikiapp.R.string.text_genres
 import org.application.shikiapp.R.string.text_in_lists
 import org.application.shikiapp.R.string.text_kind
@@ -129,6 +129,7 @@ import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_screenshots
 import org.application.shikiapp.R.string.text_show_all_w
+import org.application.shikiapp.R.string.text_similar
 import org.application.shikiapp.R.string.text_statistics
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_studio
@@ -176,7 +177,7 @@ fun AnimeScreen(id: String, navigator: Navigator) {
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = response) {
-        Error -> ErrorScreen(model.getAnime())
+        Error -> ErrorScreen(model::getAnime)
         Loading -> LoadingScreen()
         is Success -> AnimeView(model, state, data.anime, data.similar, data.links, data.favoured,  navigator)
     }
@@ -215,16 +216,16 @@ private fun AnimeView(
             }
 
             anime.descriptionHtml?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
-            anime.related?.let { item { Related(model, it, navigator) } }
-            anime.characterRoles?.let { item { Characters(model, it, navigator) } }
-            anime.personRoles?.let { item { Authors(model, it, navigator) } }
+            anime.related?.let { if (it.isNotEmpty()) item { Related(model, it, navigator) } }
+            anime.characterRoles?.let { if (it.isNotEmpty()) item { Characters(model, it, navigator) } }
+            anime.personRoles?.let { if (it.isNotEmpty()) item { Authors(model, it, navigator) } }
             anime.screenshots.let { if (it.isNotEmpty()) item { Screenshots(model, it) } }
             anime.videos.let { if (it.isNotEmpty()) item { Video(model, it) } }
         }
     }
 
     when {
-        state.showComments -> Comments(model, comments!!, navigator)
+        state.showComments -> Comments(model::hideComments, comments!!, navigator)
         state.showSheet -> BottomSheet(model, state, anime.userRate, favoured)
         state.showRelated -> DialogRelated(model, anime.related!!, navigator)
         state.showCharacters -> DialogCharacters(model, state, anime.characterRoles!!, navigator)
@@ -318,29 +319,8 @@ private fun Related(model: AnimeViewModel, list: List<AnimeQuery.Related>, navig
                     Modifier
                         .width(120.dp)
                         .clickable { anime?.let { navigator.navigate(AnimeScreenDestination(it.id)) } }) {
-                    AsyncImage(
-                        model = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(187.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .border(
-                                (0.5).dp,
-                                MaterialTheme.colorScheme.onSurface,
-                                MaterialTheme.shapes.medium
-                            ),
-                        contentScale = ContentScale.FillHeight,
-                        filterQuality = FilterQuality.High
-                    )
-                    Text(
-                        text = anime?.russian ?: anime?.name ?: manga?.russian ?: manga!!.name,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.labelLarge
-                    )
+                    RoundedRelatedPoster(anime?.poster?.originalUrl ?: manga?.poster?.originalUrl)
+                    RelatedText(anime?.russian ?: anime?.name ?: manga?.russian ?: manga!!.name)
                 }
             }
         }
@@ -680,7 +660,7 @@ private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate
             )
         }
         ListItem(
-            headlineContent = { Text("Похожее") },
+            headlineContent = { Text(stringResource(text_similar)) },
             modifier = Modifier.clickable { model.showSimilar() },
             leadingContent = { Icon(painterResource(R.drawable.vector_similar), null) }
         )
@@ -690,7 +670,7 @@ private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate
             leadingContent = { Icon(Icons.Outlined.Info, null) }
         )
         ListItem(
-            headlineContent = { Text("На других сайтах") },
+            headlineContent = { Text(stringResource(text_external_links)) },
             modifier = Modifier.clickable { model.showLinks() },
             leadingContent = {Icon(Icons.AutoMirrored.Filled.List, null)}
         )
@@ -754,7 +734,7 @@ private fun DialogSimilar(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Похожее") },
+                title = { Text(stringResource(text_similar)) },
                 navigationIcon = { NavigationIcon(model::hideSimilar) })
         }
     ) { values ->
@@ -923,33 +903,6 @@ private fun Statuses(statuses: List<StatusesStat>) {
                     maxLines = 1,
                 )
             }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Comments(
-    model: AnimeViewModel,
-    comments: LazyPagingItems<Comment>,
-    navigator: Navigator
-) = Dialog(model::hideComments, DialogProperties(usePlatformDefaultWidth = false)) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Комментарии") },
-                navigationIcon = { NavigationIcon(model::hideComments) }
-            )
-        }
-    ) { values ->
-        LazyColumn(contentPadding = PaddingValues(8.dp, values.calculateTopPadding())) {
-            when (comments.loadState.refresh) {
-                is LoadState.Error -> item { ErrorScreen() }
-                is LoadState.Loading -> item { LoadingScreen() }
-                is LoadState.NotLoading -> items(comments.itemCount) { Comment(comments[it]!!, navigator) }
-            }
-            if (comments.loadState.append == LoadState.Loading) item { LoadingScreen() }
-            if (comments.loadState.hasError) item { ErrorScreen(comments.retry()) }
         }
     }
 }

@@ -47,6 +47,7 @@ import org.application.shikiapp.R.string.text_anime_list
 import org.application.shikiapp.R.string.text_cancel
 import org.application.shikiapp.R.string.text_change
 import org.application.shikiapp.R.string.text_empty
+import org.application.shikiapp.R.string.text_profile_closed
 import org.application.shikiapp.R.string.text_rate_episodes
 import org.application.shikiapp.R.string.text_rate_score
 import org.application.shikiapp.R.string.text_save
@@ -56,7 +57,10 @@ import org.application.shikiapp.models.views.NewRateEvent.SetRateId
 import org.application.shikiapp.models.views.NewRateEvent.SetRewatches
 import org.application.shikiapp.models.views.NewRateEvent.SetScore
 import org.application.shikiapp.models.views.NewRateEvent.SetStatus
-import org.application.shikiapp.models.views.UserRateState
+import org.application.shikiapp.models.views.UserRateState.Error
+import org.application.shikiapp.models.views.UserRateState.Loading
+import org.application.shikiapp.models.views.UserRateState.NoAccess
+import org.application.shikiapp.models.views.UserRateState.Success
 import org.application.shikiapp.models.views.UserRateViewModel
 import org.application.shikiapp.models.views.UserRatesViewModel
 import org.application.shikiapp.models.views.factory
@@ -74,10 +78,10 @@ fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
     val response by model.response.collectAsStateWithLifecycle()
 
     when(val data = response) {
-        UserRateState.NoAccess -> Box(Modifier.fillMaxSize()) { Text("Профиль закрыт") }
-        UserRateState.Error -> ErrorScreen(model.getUserRates())
-        UserRateState.Loading -> LoadingScreen()
-        is UserRateState.Success -> {
+        NoAccess -> Box(Modifier.fillMaxSize()) { Text(stringResource(text_profile_closed)) }
+        Error -> ErrorScreen(model::getUserRates)
+        Loading -> LoadingScreen()
+        is Success -> {
             var tab by remember { mutableIntStateOf(0) }
 
             Scaffold(

@@ -68,13 +68,13 @@ import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.ShortInfo
 import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.LoginState
-import org.application.shikiapp.models.views.ProfileMenus
 import org.application.shikiapp.models.views.ProfileViewModel
 import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.network.AUTH_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.ProfileMenus
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.getWatchStatus
 
@@ -188,7 +188,7 @@ private fun BriefInfo(model: ProfileViewModel, clubs: List<Club>, navigator: Des
                     .weight(1f)
             ) {
                 Row(Modifier.fillMaxSize(), Arrangement.Center, CenterVertically) {
-                    Text(text = entry.title, style = MaterialTheme.typography.titleSmall)
+                    Text(stringResource(entry.title), style = MaterialTheme.typography.titleSmall)
                     Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
                 }
             }
@@ -199,7 +199,7 @@ private fun BriefInfo(model: ProfileViewModel, clubs: List<Club>, navigator: Des
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = { Text(model.getTitle()) },
+                    title = { Text(stringResource(model.getTitle())) },
                     navigationIcon = { NavigationIcon(model::close) }
                 )
             }

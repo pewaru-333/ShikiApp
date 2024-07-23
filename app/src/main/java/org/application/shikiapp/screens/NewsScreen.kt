@@ -39,7 +39,7 @@ fun NewsScreen(navigator: DestinationsNavigator) {
     val news = viewModel<NewsViewModel>().newsList.collectAsLazyPagingItems()
 
     when (news.loadState.refresh) {
-        is LoadState.Error -> ErrorScreen(news.retry())
+        is LoadState.Error -> ErrorScreen(news::retry)
         is LoadState.Loading -> LoadingScreen()
         is LoadState.NotLoading -> LazyColumn(
             contentPadding = PaddingValues(16.dp),
@@ -47,7 +47,7 @@ fun NewsScreen(navigator: DestinationsNavigator) {
         ) {
             items(news.itemCount) { NewsCard(news[it]!!, navigator) }
             if (news.loadState.append == LoadState.Loading) item { LoadingScreen() }
-            if (news.loadState.hasError) item { ErrorScreen(news.retry()) }
+            if (news.loadState.hasError) item { ErrorScreen(news::retry) }
         }
     }
 }
