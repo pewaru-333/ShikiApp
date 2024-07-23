@@ -11,7 +11,7 @@ data class Anime(
     @Json(name = "russian") val russian: String,
     @Json(name = "image") val image: Image,
     @Json(name = "url") val url: String,
-    @Json(name = "kind") val kind: String,
+    @Json(name = "kind") val kind: String?,
     @Json(name = "score") val score: String,
     @Json(name = "status") val status: String,
     @Json(name = "episodes") val episodes: Int,
