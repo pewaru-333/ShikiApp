@@ -1,3 +1,5 @@
+# ============================================= Anime =============================================
+
 query AnimeList(
     $page: PositiveInt!,
     $limit: PositiveInt!,
@@ -37,13 +39,6 @@ query AnimeList(
         poster {
             originalUrl
         }
-    }
-}
-
-query AnimeGenres {
-    genres(entryType: Anime) {
-        id
-        russian
     }
 }
 
@@ -138,6 +133,61 @@ query Anime($id: String!) {
             score
             status
             text
+        }
+    }
+}
+
+query AnimeGenres {
+    genres(entryType: Anime) {
+        id
+        russian
+    }
+}
+
+# =========================================== Character ===========================================
+
+query CharacterList($page: PositiveInt, $limit: PositiveInt, $search: String) {
+    characters(page: $page, limit: $limit, search: $search) {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+}
+
+query Character($id: [ID!]) {
+    characters(ids: $id) {
+        poster {
+            originalUrl
+        }
+    }
+}
+
+# ============================================ People =============================================
+
+query People(
+    $page: PositiveInt,
+    $limit: PositiveInt,
+    $search: String,
+    $isSeyu: Boolean,
+    $isProducer: Boolean,
+    $isMangaka: Boolean
+) {
+    people(
+        page: $page,
+        limit: $limit,
+        search: $search,
+        isSeyu: $isSeyu,
+        isProducer: $isProducer,
+        isMangaka: $isMangaka
+    ) {
+        id
+        name
+        russian
+        poster {
+            originalUrl
         }
     }
 }
