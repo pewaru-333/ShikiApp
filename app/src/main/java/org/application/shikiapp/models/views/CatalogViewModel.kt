@@ -10,7 +10,6 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.application.shikiapp.R
 import org.application.shikiapp.utils.BLANK
 
 class CatalogViewModel : ViewModel() {
@@ -24,12 +23,19 @@ class CatalogViewModel : ViewModel() {
         viewModelScope.launch { _state.update { it.copy(search = text) } }
     }
 
-    fun showDialog() {
-        viewModelScope.launch { _state.update { it.copy(showFiltersAnime = true) } }
+    fun showFilters(menu: Int) {
+        viewModelScope.launch {
+            _state.update {
+                if (menu == 0) it.copy(showFiltersAnime = true)
+                else it.copy(showFiltersPeople = true)
+            }
+        }
     }
 
-    fun hideDialog() {
-        viewModelScope.launch { _state.update { it.copy(showFiltersAnime = false) } }
+    fun hideFilters() {
+        viewModelScope.launch {
+            _state.update { it.copy(showFiltersAnime = false, showFiltersPeople = false) }
+        }
     }
 
     fun drawer() {
@@ -44,23 +50,17 @@ class CatalogViewModel : ViewModel() {
             }
         }
     }
+
+    sealed interface DrawerEvent {
+        data object ClearDrawer : DrawerEvent
+        data object ClickDrawer : DrawerEvent
+    }
 }
 
 data class CatalogState(
     val menu: Int = 0,
     val search: String = BLANK,
     val showFiltersAnime: Boolean = false,
+    val showFiltersPeople: Boolean = false,
     val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
 )
-
-enum class Items(val title: String, val icon: Int) {
-    Anime("Аниме", R.drawable.vector_anime),
-    Manga("Манга", R.drawable.vector_manga),
-    Ranobe("Ранобэ", R.drawable.vector_ranobe),
-    Charaters("Персонажи", R.drawable.vector_character)
-}
-
-sealed interface DrawerEvent {
-    data object ClearDrawer : DrawerEvent
-    data object ClickDrawer : DrawerEvent
-}

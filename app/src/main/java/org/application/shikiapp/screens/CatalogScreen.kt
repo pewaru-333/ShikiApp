@@ -1,6 +1,5 @@
 package org.application.shikiapp.screens
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -11,7 +10,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,6 +25,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
@@ -50,6 +49,7 @@ import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
@@ -61,17 +61,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -83,23 +79,27 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
 import kotlinx.coroutines.flow.collectLatest
 import org.application.AnimeListQuery.Anime
 import org.application.CharacterListQuery.Character
+import org.application.PeopleQuery.Person
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_search
 import org.application.shikiapp.models.views.AnimeListViewModel
 import org.application.shikiapp.models.views.CatalogState
 import org.application.shikiapp.models.views.CatalogViewModel
+import org.application.shikiapp.models.views.CatalogViewModel.DrawerEvent.ClearDrawer
+import org.application.shikiapp.models.views.CatalogViewModel.DrawerEvent.ClickDrawer
 import org.application.shikiapp.models.views.CharacterListViewModel
-import org.application.shikiapp.models.views.DrawerEvent
-import org.application.shikiapp.models.views.Items
+import org.application.shikiapp.utils.PeopleFilterItems
+import org.application.shikiapp.models.views.PeopleFilters
+import org.application.shikiapp.models.views.PeopleViewModel
 import org.application.shikiapp.models.views.QueryEvent.SetDuration
 import org.application.shikiapp.models.views.QueryEvent.SetGenre
 import org.application.shikiapp.models.views.QueryEvent.SetKind
@@ -113,14 +113,13 @@ import org.application.shikiapp.models.views.QueryEvent.SetSeasonYS
 import org.application.shikiapp.models.views.QueryEvent.SetStatus
 import org.application.shikiapp.models.views.QueryEvent.SetTitle
 import org.application.shikiapp.models.views.QueryMap
+import org.application.shikiapp.utils.CatalogItems
 import org.application.shikiapp.utils.DURATIONS
 import org.application.shikiapp.utils.KINDS
 import org.application.shikiapp.utils.ORDERS
 import org.application.shikiapp.utils.RATINGS
 import org.application.shikiapp.utils.SEASONS
 import org.application.shikiapp.utils.STATUSES
-import org.application.shikiapp.utils.getKind
-import org.application.shikiapp.utils.getSeason
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
 private var PADDING = 0.dp
@@ -136,8 +135,8 @@ fun CatalogScreen(navigator: Navigator) {
     LaunchedEffect(Unit) {
         model.event.collectLatest {
             when (it) {
-                DrawerEvent.ClearDrawer -> focus.clearFocus()
-                DrawerEvent.ClickDrawer -> if (state.drawerState.isOpen) state.drawerState.close()
+                ClearDrawer -> focus.clearFocus()
+                ClickDrawer -> if (state.drawerState.isOpen) state.drawerState.close()
                 else state.drawerState.open()
             }
         }
@@ -152,6 +151,7 @@ fun CatalogScreen(navigator: Navigator) {
                 1 -> MangaList(navigator, values)
                 2 -> RanobeList(navigator, values)
                 3 -> CharacterList(state, navigator)
+                4 -> PeopleList(model, state, navigator)
             }
         }
     }
@@ -166,7 +166,7 @@ private fun topBar(model: CatalogViewModel, state: CatalogState): @Composable ()
                 value = state.search,
                 onValueChange = model::setSearch,
                 modifier = Modifier.fillMaxWidth(),
-                enabled = state.menu in listOf(0, 3),
+                enabled = state.menu in listOf(0, 3, 4),
                 placeholder = { Text(stringResource(text_search)) },
                 trailingIcon = { if (state.search.isEmpty()) Icon(Icons.Default.Search, null) },
                 singleLine = true,
@@ -184,7 +184,7 @@ private fun topBar(model: CatalogViewModel, state: CatalogState): @Composable ()
         },
         navigationIcon = { IconButton(model::drawer) { Icon(Icons.Default.Menu, null) } },
         actions = {
-            if (state.menu == 0) IconButton(model::showDialog) {
+            if (state.menu in listOf(0, 4)) IconButton({ model.showFilters(state.menu) }) {
                 Icon(painterResource(vector_filter), null)
             }
         }
@@ -200,9 +200,9 @@ private fun drawerMenu(model: CatalogViewModel, state: CatalogState): @Composabl
             style = MaterialTheme.typography.headlineSmall
         )
 
-        Items.entries.forEach { item ->
+        CatalogItems.entries.forEach { item ->
             NavigationDrawerItem(
-                label = { Text(text = item.title, style = MaterialTheme.typography.labelLarge) },
+                label = { Text(stringResource(item.title), style = MaterialTheme.typography.labelLarge) },
                 selected = state.menu == item.ordinal,
                 onClick = { model.pick(item.ordinal) },
                 modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
@@ -222,7 +222,7 @@ private fun AnimeList(model: CatalogViewModel, state: CatalogState, navigator: N
     LaunchedEffect(state.search) { animeVM.onEvent(SetTitle(state.search)) }
 
     when (list.loadState.refresh) {
-        is LoadState.Error -> ErrorScreen(list.retry())
+        is LoadState.Error -> ErrorScreen(list::retry)
         is LoadState.Loading -> LoadingScreen()
         is LoadState.NotLoading -> {
             LazyColumn(
@@ -231,13 +231,27 @@ private fun AnimeList(model: CatalogViewModel, state: CatalogState, navigator: N
             ) {
                 animeList(list, navigator)
                 if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (list.loadState.hasError) item { ErrorScreen(list.retry()) }
+                if (list.loadState.hasError) item { ErrorScreen(list::retry) }
             }
         }
     }
 
     if (state.showFiltersAnime) AnimeFiltersDialog(model, animeVM, list, filters)
 }
+
+private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: Navigator) =
+    items(list.itemCount, { it }) { index ->
+        list[index]?.let { (id, name, russian, kind, season, poster) ->
+            Row(
+                Modifier
+                    .height(198.dp)
+                    .clickable { navigator.navigate(AnimeScreenDestination(id)) }, spacedBy(16.dp)
+            ) {
+                RoundedAnimePoster(poster?.originalUrl)
+                AnimeShortDescription(russian ?: name, kind?.rawValue, season)
+            }
+        }
+    }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
@@ -246,16 +260,16 @@ private fun AnimeFiltersDialog(
     animeVM: AnimeListViewModel,
     list: LazyPagingItems<Anime>,
     filters: QueryMap
-) = Dialog(model::hideDialog, DialogProperties(usePlatformDefaultWidth = false)) {
+) = Dialog(model::hideFilters, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.text_filters)) },
-                navigationIcon = { NavigationIcon(model::hideDialog) }
+                navigationIcon = { NavigationIcon(model::hideFilters) }
             )
         },
         floatingActionButton = {
-            FloatingActionButton({ model.hideDialog(); list.refresh() })
+            FloatingActionButton({ model.hideFilters(); list.refresh() })
             { Icon(Icons.Default.Search, null) }
         }
     ) { values ->
@@ -274,42 +288,6 @@ private fun AnimeFiltersDialog(
         }
     }
 }
-
-private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: Navigator) =
-    items(list.itemCount, { it }) { index ->
-        list[index]?.let { (id, name, russian, kind, season, poster) ->
-            Row(
-                Modifier
-                    .height(198.dp)
-                    .clickable { navigator.navigate(AnimeScreenDestination(id)) }, spacedBy(16.dp)
-            ) {
-                AsyncImage(
-                    model = poster?.originalUrl,
-                    modifier = Modifier
-                        .width(140.dp)
-                        .fillMaxHeight()
-                        .clip(MaterialTheme.shapes.medium)
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.onSurface,
-                            MaterialTheme.shapes.medium
-                        ),
-                    contentDescription = null,
-                    contentScale = ContentScale.FillBounds,
-                    filterQuality = FilterQuality.High
-                )
-                Column(verticalArrangement = Arrangement.SpaceBetween) {
-                    Text(
-                        text = russian ?: name,
-                        maxLines = 3,
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-                    )
-                    Text(text = getKind(kind?.rawValue), style = MaterialTheme.typography.bodyLarge)
-                    Text(text = getSeason(season), style = MaterialTheme.typography.bodyLarge)
-                }
-            }
-        }
-    }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -541,7 +519,7 @@ private fun CharacterList(state: CatalogState, navigator: Navigator) {
     LaunchedEffect(state.search) { model.setSearch(state.search) }
 
     when (list.loadState.refresh) {
-        is LoadState.Error -> ErrorScreen(list.retry())
+        is LoadState.Error -> ErrorScreen(list::retry)
         is LoadState.Loading -> LoadingScreen()
         is LoadState.NotLoading -> {
             LazyColumn(
@@ -550,7 +528,7 @@ private fun CharacterList(state: CatalogState, navigator: Navigator) {
             ) {
                 characterList(list, navigator)
                 if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (list.loadState.hasError) item { ErrorScreen(list.retry()) }
+                if (list.loadState.hasError) item { ErrorScreen(list::retry) }
             }
         }
     }
@@ -564,22 +542,82 @@ private fun LazyListScope.characterList(list: LazyPagingItems<Character>, naviga
                     Text(russian ?: name, style = MaterialTheme.typography.titleLarge)
                 },
                 modifier = Modifier.clickable { navigator.navigate(CharacterScreenDestination(id)) },
-                leadingContent = {
-                    AsyncImage(
-                        model = poster?.originalUrl,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(127.dp, 180.dp)
-                            .clip(MaterialTheme.shapes.medium)
-                            .border(
-                                1.dp,
-                                MaterialTheme.colorScheme.onSurface,
-                                MaterialTheme.shapes.medium
-                            ),
-                        contentScale = ContentScale.FillBounds,
-                        filterQuality = FilterQuality.High
-                    )
-                }
+                leadingContent = { RoundedPersonImage(poster?.originalUrl) }
             )
         }
     }
+
+@Composable
+private fun PeopleList(model: CatalogViewModel, state: CatalogState, navigator: Navigator) {
+    val peopleVM = viewModel<PeopleViewModel>()
+    val list = peopleVM.list.collectAsLazyPagingItems()
+    val filters by peopleVM.filters.collectAsStateWithLifecycle()
+
+    LaunchedEffect(state.search) { peopleVM.setSearch(state.search) }
+
+    when (list.loadState.refresh) {
+        is LoadState.Error -> ErrorScreen(list::retry)
+        is LoadState.Loading -> LoadingScreen()
+        is LoadState.NotLoading -> {
+            LazyColumn(
+                contentPadding = PaddingValues(8.dp, PADDING),
+                verticalArrangement = spacedBy(8.dp)
+            ) {
+                peopleList(list, navigator)
+                if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
+                if (list.loadState.hasError) item { ErrorScreen(list::retry) }
+            }
+        }
+    }
+
+    if (state.showFiltersPeople) PeopleFiltersDialog(model, peopleVM, filters)
+}
+
+private fun LazyListScope.peopleList(list: LazyPagingItems<Person>, navigator: Navigator) =
+    items(list.itemCount) { index ->
+        list[index]?.let { (id, name, russian, poster) ->
+            ListItem(
+                headlineContent = {
+                    Text(russian ?: name, style = MaterialTheme.typography.titleLarge)
+                },
+                modifier = Modifier.clickable { navigator.navigate(PersonScreenDestination(id.toLong())) },
+                leadingContent = { RoundedPersonImage(poster?.originalUrl) }
+            )
+        }
+    }
+
+@Composable
+private fun PeopleFiltersDialog(
+    model: CatalogViewModel,
+    peopleVM: PeopleViewModel,
+    filters: PeopleFilters
+) = AlertDialog(
+    onDismissRequest = model::hideFilters,
+    confirmButton = {},
+    dismissButton = { TextButton(model::hideFilters) { Text(stringResource(R.string.text_close)) } },
+    title = { Text(stringResource(R.string.text_filters)) },
+    text = {
+        Column {
+            PeopleFilterItems.entries.forEachIndexed { index, entry ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(56.dp)
+                        .toggleable(
+                            value = entry.title in filters.query,
+                            onValueChange = { peopleVM.setFlag(it, index) },
+                            role = Role.Checkbox
+                        ),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Checkbox(entry.title in filters.query, null)
+                    Text(
+                        text = entry.title,
+                        modifier = Modifier.padding(start = 16.dp),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                }
+            }
+        }
+    }
+)
