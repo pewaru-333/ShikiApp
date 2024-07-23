@@ -5,10 +5,12 @@ import android.icu.util.Calendar
 import android.text.format.DateUtils
 import android.util.Patterns
 import org.application.AnimeQuery
-import org.application.shikiapp.models.data.AnimeShort
-import org.application.shikiapp.models.data.MangaShort
+import org.application.shikiapp.models.data.Date
+import org.application.shikiapp.models.data.Person
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
+import java.time.format.FormatStyle
 import java.util.Locale
 
 
@@ -62,6 +64,31 @@ fun getLinks(text: String): List<String> {
 fun fromISODate(date: String) = LocalDate.parse(date, DateTimeFormatter.ISO_DATE_TIME)
 fun toCalendarDate(date: LocalDate) = date.format(DateTimeFormatter.ofPattern("d MMMM, E"))
 
+fun getBirthday(birthday: Date) = DATE_FORMATS.firstNotNullOfOrNull {
+    try {
+        LocalDate.parse(
+            "${birthday.day}.${birthday.month}.${birthday.year}"
+                .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
+        ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+    } catch (e: DateTimeParseException) {
+        null
+    }
+}
+
+fun getDeathday(deceasedOn: Date) = DATE_FORMATS.firstNotNullOfOrNull {
+    try {
+        LocalDate.parse(
+            "${deceasedOn.day}.${deceasedOn.month}.${deceasedOn.year}"
+                .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
+        ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
+    } catch (e: DateTimeParseException) {
+        null
+    }
+}
+
+fun isPersonFavoured(person: Person) = person.personFavoured || person.producerFavoured
+        || person.mangakaFavoured || person.seyuFavoured
+
 fun getPoster(text: String?): String? {
     val embed = getLinks(text.orEmpty()).find { it.contains("img.youtube.com") }
     val poster = getLinks(text.orEmpty()).find { it.contains(".jpg") }
@@ -84,9 +111,12 @@ fun getSeason(text: String?) = when (text) {
     null -> BLANK
     "?" -> "Неизвестно"
     else -> {
-        val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
-        val year = text.substringAfter("_")
-        "${SEASONS[season]} $year"
+        if (text.contains("-")) BLANK
+        else {
+            val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
+            val year = text.substringAfter("_")
+            "${SEASONS[season]} $year"
+        }
     }
 }
 
@@ -95,5 +125,3 @@ fun getStudio(studio: List<AnimeQuery.Studio>) = try {
 } catch (e: NoSuchElementException) {
     "Неизвестно"
 }
-
-fun getTitle(anime: AnimeShort?, manga: MangaShort?) = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name!!
