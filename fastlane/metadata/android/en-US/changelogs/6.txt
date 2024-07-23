@@ -1,0 +1,2 @@
+— Added character search.
+— Added people search.
