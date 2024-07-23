@@ -5,6 +5,7 @@ import org.application.AnimeListQuery
 import org.application.AnimeQuery
 import org.application.CharacterListQuery
 import org.application.CharacterQuery
+import org.application.PeopleQuery
 import org.application.shikiapp.utils.ORDERS
 import org.application.type.OrderEnum
 
@@ -40,6 +41,15 @@ object ApolloClient {
             .data?.characters ?: emptyList()
 
     suspend fun getCharacter(id: String) =
-        NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute().data?.characters
-            ?: emptyList()
+        NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute().data?.characters?.first()!!
+
+    suspend fun getPeople(
+        page: Int,
+        limit: Int,
+        search: String?,
+        isSeyu: Boolean?,
+        isProducer: Boolean?,
+        isMangaka: Boolean?
+    ) = NetworkClient.apollo.query(PeopleQuery(page, limit, search, isSeyu, isProducer, isMangaka))
+        .execute().data?.people ?: emptyList()
 }
