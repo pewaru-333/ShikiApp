@@ -1,63 +1,87 @@
 <resources>
     <string name="app_name">ShikiApp</string>
 
-
-    <string name="text_anime_list">Список аниме</string>
-    <string name="text_empty">Пусто</string>
-    <string name="text_rate_episodes">Эпизоды: %1$s / %2$s</string>
-    <string name="text_rate_score">Оценка: %1$s</string>
-    <string name="text_save">Сохранить</string>
-    <string name="text_cancel">Отменить</string>
-    <string name="text_change">Изменить</string>
-    <string name="text_anime">Аниме</string>
-    <string name="text_kind">Тип</string>
+    <!-- Описание -->
+    <string name="text_all_roles">Все роли</string>
+    <string name="text_authors">Авторы</string>
+    <string name="text_best_roles">Лучшие роли</string>
+    <string name="text_character">Персонаж</string>
     <string name="text_episodes">Эпизоды</string>
-    <string name="text_status">Статус</string>
-    <string name="text_score">Оценка</string>
-    <string name="text_rating">Рейтинг</string>
-    <string name="text_titles">Названия</string>
-    <string name="text_title_japanese">По-японски: %1$s</string>
-    <string name="text_title_english">По-английски: %1$s</string>
-    <string name="text_title_synonyms">Другие: %1$s</string>
-    <string name="text_genres">Жанры</string>
+    <string name="text_external_links">На других сайтах</string>
+    <string name="text_in_lists">В списках</string>
+    <string name="text_related">Связанное</string>
+    <string name="text_screenshots">Кадры</string>
+    <string name="text_similar">Похожее</string>
+    <string name="text_statistics">Статистика</string>
     <string name="text_studio">Студия</string>
     <string name="text_user_rates">Оценки людей</string>
-    <string name="text_in_lists">В списках</string>
-    <string name="text_screenshots">Кадры</string>
-    <string name="text_characters">Персонажи</string>
-    <string name="text_show_all_m">Показать всех</string>
-    <string name="text_authors">Авторы</string>
-    <string name="text_rate">Оценить</string>
-    <string name="text_rewatches">Повторных просмотров</string>
+
+    <!-- Каталог -->
+    <string name="text_anime">Аниме</string>
+    <string name="text_calendar">Календарь</string>
     <string name="text_catalog">Каталог</string>
-    <string name="text_search">Поиск</string>
-    <string name="text_filters">Фильтры</string>
-    <string name="text_sorting">Сортировка</string>
-    <string name="text_season">Сезон</string>
-    <string name="text_start_year">Начальный год</string>
+    <string name="text_characters">Персонажи</string>
+    <string name="text_manga">Манга</string>
+    <string name="text_news_one">Новость</string>
+    <string name="text_news">Новости</string>
+    <string name="text_people">Персоналии</string>
+    <string name="text_ranobe">Ранобэ</string>
+    <string name="text_video">Видео</string>
+
+    <!-- Фильтры -->
     <string name="text_end_year">Конечный год</string>
     <string name="text_episode_duration">Длительность эпизода</string>
-    <string name="text_character">Персонаж</string>
-    <string name="text_show_all_w">Показать все</string>
-    <string name="text_seyu">Сэйю</string>
+    <string name="text_filters">Фильтры</string>
+    <string name="text_genres">Жанры</string>
     <string name="text_information">Информация</string>
-    <string name="text_news_one">Новость</string>
-    <string name="text_best_roles">Лучшие роли</string>
-    <string name="text_all_roles">Все роли</string>
-    <string name="text_profile">Профиль</string>
-    <string name="text_show_all_s">Показать весь</string>
-    <string name="text_news">Новости</string>
-    <string name="text_settings">Настройки</string>
-    <string name="text_comments">Комментарии</string>
-    <string name="text_calendar">Календарь</string>
-    <string name="text_video">Видео</string>
-    <string name="text_change_rate">Изменить оценку</string>
-    <string name="text_add_rate">Добавить в список</string>
-    <string name="text_remove_fav">Удалить из избранного</string>
-    <string name="text_add_fav">Добавить в избранное</string>
-    <string name="text_statistics">Статистика</string>
-    <string name="text_related">Связанное</string>
+    <string name="text_kind">Тип</string>
+    <string name="text_rating">Рейтинг</string>
+    <string name="text_score">Оценка</string>
+    <string name="text_search">Поиск</string>
+    <string name="text_season">Сезон</string>
+    <string name="text_seyu">Сэйю</string>
+    <string name="text_sorting">Сортировка</string>
+    <string name="text_start_year">Начальный год</string>
+    <string name="text_status">Статус</string>
 
+    <!-- Оценка -->
+    <string name="text_rate_episodes">Эпизоды: %1$s / %2$s</string>
+    <string name="text_rate_score">Оценка: %1$s</string>
+    <string name="text_rewatches">Повторных просмотров</string>
+
+    <!-- Пользователь -->
+    <string name="text_achievements">Достижения</string>
+    <string name="text_age">Возраст</string>
+    <string name="text_anime_list">Список аниме</string>
+    <string name="text_clubs">Клубы</string>
+    <string name="text_comments">Комментарии</string>
+    <string name="text_friends">Друзья</string>
+    <string name="text_name">Имя</string>
+    <string name="text_profile_closed">Профиль закрыт</string>
+    <string name="text_profile">Профиль</string>
+    <string name="text_sex">Пол</string>
+
+    <!-- Действия -->
+    <string name="text_add_fav">Добавить в избранное</string>
+    <string name="text_add_rate">Добавить в список</string>
+    <string name="text_cancel">Отменить</string>
+    <string name="text_change_rate">Изменить оценку</string>
+    <string name="text_change">Изменить</string>
+    <string name="text_close">Закрыть</string>
+    <string name="text_rate">Оценить</string>
+    <string name="text_remove_fav">Удалить из избранного</string>
+    <string name="text_save">Сохранить</string>
+    <string name="text_show_all_s">Показать весь</string>
+    <string name="text_show_all_w">Показать все</string>
+
+    <!-- Настройки -->
+    <string name="text_settings">Настройки</string>
+
+    <!-- Другое -->
+    <string name="blank" />
+    <string name="text_empty">Пусто</string>
+
+    <!-- Числительные -->
     <plurals name="age">
         <item quantity="zero">%d лет</item>
         <item quantity="one">%d год</item>
@@ -66,5 +90,4 @@
         <item quantity="many">%d лет</item>
         <item quantity="other">%d лет</item>
     </plurals>
-
 </resources>
