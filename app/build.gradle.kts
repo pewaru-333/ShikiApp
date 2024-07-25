@@ -21,8 +21,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 34
-        versionCode = 6
-        versionName = "alpha-0.0.6"
+        versionCode = 7
+        versionName = "alpha-0.0.7"
     }
 
     dependenciesInfo {
@@ -65,7 +65,6 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.paging.compose)
-    implementation(libs.androidx.startup.runtime)
     implementation(platform(libs.androidx.compose.bom))
     implementation(platform(libs.kotlin.bom))
 
