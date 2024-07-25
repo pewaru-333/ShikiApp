@@ -115,8 +115,6 @@ fun CircleImage(link: String?) = AsyncImage(
         .size(64.dp)
         .clip(CircleShape)
         .border((0.4).dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
-    error = painterResource(R.drawable.vector_home),
-    fallback = painterResource(R.drawable.vector_home),
     alignment = Alignment.Center,
     contentScale = ContentScale.Crop,
     filterQuality = FilterQuality.High,

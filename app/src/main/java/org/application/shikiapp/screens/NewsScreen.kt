@@ -15,7 +15,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -27,7 +26,6 @@ import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.NewsDetailDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import org.application.shikiapp.R
 import org.application.shikiapp.models.data.News
 import org.application.shikiapp.models.views.NewsViewModel
 import org.application.shikiapp.utils.convertDate
@@ -65,8 +63,6 @@ private fun NewsCard(news: News, navigator: DestinationsNavigator) {
                 .fillMaxWidth()
                 .height(175.dp)
                 .clip(MaterialTheme.shapes.large),
-            error = painterResource(R.drawable.vector_home),
-            fallback = painterResource(R.drawable.vector_home),
             contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.High,
         )

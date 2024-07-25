@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.retryWhen
 import org.application.shikiapp.network.paging.CommentsPaging
 import retrofit2.HttpException
 
-class CommentViewModel(private val id: Long) : ViewModel() {
+class CommentViewModel(id: Long) : ViewModel() {
     val comments = Pager(PagingConfig(pageSize = 15, enablePlaceholders = false))
     { CommentsPaging(id) }.flow.map { comment ->
         val set = mutableSetOf<Long>()

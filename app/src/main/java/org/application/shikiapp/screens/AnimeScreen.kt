@@ -822,8 +822,6 @@ private fun LinksSheet(
                             .padding(top = 4.dp)
                             .size(64.dp),
                         alignment = Center,
-                        error = painterResource(R.drawable.vector_home),
-                        fallback = painterResource(R.drawable.vector_home),
                         filterQuality = FilterQuality.High
                     )
                     Text(

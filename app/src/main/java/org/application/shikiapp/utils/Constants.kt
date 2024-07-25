@@ -46,6 +46,7 @@ const val BLANK = ""
 
 // =========================================== Lists ==============================================
 
+val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
 val DATE_FORMATS = listOf("d.M.yyyy", "d.M", "yyyy")
 val LINKED_KIND = listOf("common", "seyu", "mangaka", "producer", "person")
 val LINKED_TYPE = listOf("Anime", "Manga", "Ranobe", "Person", "Character")

@@ -11,6 +11,7 @@ import androidx.core.content.edit
 import org.application.shikiapp.models.data.Token
 
 private const val PREF_APP_THEME = "app_theme"
+private const val PREF_APP_CACHE = "app_cache"
 private const val PREF_DYNAMIC_COLORS = "dynamic_colors"
 
 object Preferences {
@@ -46,4 +47,7 @@ object Preferences {
     fun isTokenExpired() = auth.getLong(CREATED_AT, 0L) + auth.getLong(EXPIRES_IN, 0L) < System.currentTimeMillis() / 1000
     fun refreshToken() = auth.getString(REFRESH_TOKEN, BLANK) ?: BLANK
     fun getUserId() = auth.getLong(USER_ID, 0L)
+
+    fun setCache(cache: Int) = app.edit().putInt(PREF_APP_CACHE, cache).apply()
+    fun getCache() = app.getInt(PREF_APP_CACHE, 16)
 }
