@@ -5,6 +5,7 @@
     <uses-permission android:name="android.permission.INTERNET" />
 
     <application
+        android:name=".ShikiApp"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -31,15 +32,5 @@
                 <data android:scheme="org.application.shikiapp" />
             </intent-filter>
         </activity>
-
-        <provider
-            android:name="androidx.startup.InitializationProvider"
-            android:authorities="org.application.shikiapp.androidx-startup"
-            android:exported="false"
-            tools:node="merge">
-            <meta-data
-                android:name="org.application.shikiapp.PreferencesInitializer"
-                android:value="androidx.startup" />
-        </provider>
     </application>
 </manifest>
