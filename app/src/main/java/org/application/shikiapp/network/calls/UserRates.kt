@@ -4,7 +4,6 @@ import org.application.shikiapp.models.data.NewRate
 import org.application.shikiapp.models.data.UserRate
 import retrofit2.http.Body
 import retrofit2.http.DELETE
-import retrofit2.http.FormUrlEncoded
 import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
@@ -29,7 +28,6 @@ interface UserRates {
     @PATCH("v2/user_rates/{id}")
     suspend fun updateRate(@Path("id") id: Long, @Body newRate: NewRate): UserRate
 
-    @FormUrlEncoded
     @POST("v2/user_rates/{id}/increment")
     suspend fun increment(@Path("id") id: Long)
 
