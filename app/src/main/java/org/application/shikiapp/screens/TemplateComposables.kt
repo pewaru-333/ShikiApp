@@ -22,7 +22,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.Button
@@ -49,7 +49,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformSpanStyle
@@ -60,6 +59,7 @@ import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -121,11 +121,11 @@ fun CircleImage(link: String?) = AsyncImage(
 )
 
 @Composable
-fun RoundedAnimePoster(link: String?) = AsyncImage(
+fun RoundedAnimePoster(link: String?, width: Dp = 140.dp) = AsyncImage(
     model = if (link?.contains("https") == true) link else getImage(link),
     contentDescription = null,
     modifier = Modifier
-        .width(140.dp)
+        .width(width)
         .fillMaxHeight()
         .clip(MaterialTheme.shapes.medium)
         .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
@@ -308,7 +308,7 @@ fun OneLineImage(name: String, link: String?, modifier: Modifier = Modifier) = L
 
 @Composable
 fun NavigationIcon(onClick: () -> Unit) =
-    IconButton(onClick) { Icon(Icons.AutoMirrored.Filled.ArrowBack, null) }
+    IconButton(onClick) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) }
 
 fun LazyListScope.comments(comments: LazyPagingItems<Comment>, navigator: DestinationsNavigator) {
     item { ParagraphTitle(stringResource(R.string.text_comments), Modifier.offset(y = 8.dp)) }
