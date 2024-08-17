@@ -1,7 +1,7 @@
 package org.application.shikiapp.network
 
-import com.apollographql.apollo3.ApolloClient
-import com.apollographql.apollo3.network.okHttpClient
+import com.apollographql.apollo.ApolloClient
+import com.apollographql.apollo.network.okHttpClient
 import com.squareup.moshi.Moshi
 import okhttp3.OkHttpClient
 import org.application.shikiapp.network.calls.Anime
