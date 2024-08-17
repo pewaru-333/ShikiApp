@@ -7,7 +7,6 @@ import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.LoadState
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
@@ -45,7 +44,7 @@ class UserRateViewModel : ViewModel() {
             if (rewatches.isDigitsOnly()) _newRate.update { it.copy(rewatches = rewatches) }
         }
 
-        is NewRateEvent.SetText -> _newRate.update { it.copy(text = event.text) }
+        is NewRateEvent.SetText -> _newRate.update { it.copy(text = event.text ?: BLANK) }
     }
 
     fun createRate(animeId: String) {
@@ -104,11 +103,20 @@ class UserRateViewModel : ViewModel() {
         }
     }
 
+    fun increment(rateId: Long) {
+        viewModelScope.launch {
+            try {
+                NetworkClient.rates.increment(rateId)
+            } catch (e: Throwable) {
+                LoadState.Error(e)
+            }
+        }
+    }
+
     fun reload(model: UserRatesViewModel) {
         viewModelScope.launch {
             close()
-            delay(300)
-            model.getUserRates()
+            model.reload()
         }
     }
 
@@ -141,5 +149,5 @@ sealed interface NewRateEvent {
     data class SetEpisodes(val episodes: String) : NewRateEvent
     data class SetVolumes(val volumes: String) : NewRateEvent
     data class SetRewatches(val rewatches: String) : NewRateEvent
-    data class SetText(val text: String) : NewRateEvent
+    data class SetText(val text: String?) : NewRateEvent
 }
