@@ -61,11 +61,13 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterEnd
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
@@ -97,6 +99,7 @@ import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestin
 import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
+import kotlinx.coroutines.flow.collectLatest
 import org.application.AnimeQuery
 import org.application.AnimeQuery.Anime
 import org.application.AnimeQuery.CharacterRole
@@ -118,6 +121,7 @@ import org.application.shikiapp.R.string.text_characters
 import org.application.shikiapp.R.string.text_episodes
 import org.application.shikiapp.R.string.text_external_links
 import org.application.shikiapp.R.string.text_genres
+import org.application.shikiapp.R.string.text_image_of
 import org.application.shikiapp.R.string.text_in_lists
 import org.application.shikiapp.R.string.text_kind
 import org.application.shikiapp.R.string.text_rate
@@ -150,6 +154,7 @@ import org.application.shikiapp.models.views.NewRateEvent.SetRateId
 import org.application.shikiapp.models.views.NewRateEvent.SetRewatches
 import org.application.shikiapp.models.views.NewRateEvent.SetScore
 import org.application.shikiapp.models.views.NewRateEvent.SetStatus
+import org.application.shikiapp.models.views.NewRateEvent.SetText
 import org.application.shikiapp.models.views.UserRateViewModel
 import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.BLANK
@@ -566,23 +571,30 @@ private fun DialogScreenshots(model: AnimeViewModel, state: AnimeState, list: Li
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun DialogScreenshot(model: AnimeViewModel, state: AnimeState, list: List<Screenshot>) =
+private fun DialogScreenshot(model: AnimeViewModel, state: AnimeState, list: List<Screenshot>) {
+    val pagerState = rememberPagerState(state.screenshot) { list.size }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow { pagerState.currentPage }.collectLatest(model::setScreenshot)
+    }
+
     Dialog(model::hideScreenshot, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
                 TopAppBar(
-                    title = {},
+                    title = { Text(stringResource(text_image_of, state.screenshot + 1, list.size)) },
                     navigationIcon = { NavigationIcon(model::hideScreenshot) }
                 )
             }
         ) { values ->
             HorizontalPager(
-                state = rememberPagerState(state.screenshot) { list.size },
+                state = pagerState,
                 modifier = Modifier.fillMaxSize(),
                 contentPadding = values
             ) { AsyncImage(list[it].originalUrl, null) }
         }
     }
+}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
@@ -718,6 +730,7 @@ private fun CreateRate(animeVM: AnimeViewModel, anime: Anime) {
                 RateEpisodes(model, state)
                 RateScore(model, state)
                 RateRewatches(model, state)
+                RateText(model, state)
             }
         }
     )
@@ -966,21 +979,24 @@ fun RateScore(viewModel: UserRateViewModel, state: NewRate) {
 }
 
 @Composable
-fun RateEpisodes(viewModel: UserRateViewModel, state: NewRate) {
-    OutlinedTextField(
-        value = state.episodes ?: BLANK,
-        onValueChange = { viewModel.onEvent(SetEpisodes(it)) },
-        label = { Text(stringResource(text_episodes)) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-    )
-}
+fun RateEpisodes(viewModel: UserRateViewModel, state: NewRate) = OutlinedTextField(
+    value = state.episodes ?: BLANK,
+    onValueChange = { viewModel.onEvent(SetEpisodes(it)) },
+    label = { Text(stringResource(text_episodes)) },
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+)
 
 @Composable
-fun RateRewatches(viewModel: UserRateViewModel, state: NewRate) {
-    OutlinedTextField(
-        value = state.rewatches ?: BLANK,
-        onValueChange = { viewModel.onEvent(SetRewatches(it)) },
-        label = { Text(stringResource(text_rewatches)) },
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-    )
-}
+fun RateRewatches(viewModel: UserRateViewModel, state: NewRate) = OutlinedTextField(
+    value = state.rewatches ?: BLANK,
+    onValueChange = { viewModel.onEvent(SetRewatches(it)) },
+    label = { Text(stringResource(text_rewatches)) },
+    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+)
+
+@Composable
+fun RateText(viewModel: UserRateViewModel, state: NewRate) = OutlinedTextField(
+    value = state.text ?: BLANK,
+    onValueChange = { viewModel.onEvent(SetText(it)) },
+    label = { Text(stringResource(R.string.text_comment)) }
+)

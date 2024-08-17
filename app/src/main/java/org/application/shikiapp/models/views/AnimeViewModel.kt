@@ -126,6 +126,10 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         }
     }
 
+    fun setScreenshot(index: Int) {
+        viewModelScope.launch { _state.update { it.copy(screenshot = index) } }
+    }
+
     fun showVideo() {
         viewModelScope.launch { _state.update { it.copy(showVideo = true) } }
     }
