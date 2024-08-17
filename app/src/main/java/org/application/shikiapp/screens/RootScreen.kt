@@ -63,7 +63,7 @@ fun RootScreen(navController: NavHostController) {
         DestinationsNavHost(
             navGraph = NavGraphs.root,
             modifier = Modifier.padding(padding),
-            startRoute = NewsScreenDestination,
+            start = NewsScreenDestination,
             defaultTransitions = DefaultFadingTransitions,
             navController = navController
         )
