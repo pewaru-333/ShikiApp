@@ -1,20 +1,20 @@
 [versions]
-apolloRuntime = "4.0.0-beta.7"
+apolloRuntime = "4.0.0"
 appcompat = "1.7.0"
 coilCompose = "2.7.0"
 composeBom = "2024.06.00"
-composeDestinations = "2.1.0-beta09"
+composeDestinations = "2.1.0-beta11"
 composePreferences = "1.0.0"
 converterMoshi = "2.11.0"
-googleKsp = "2.0.0-1.0.23"
-gradle = "8.5.1"
+googleKsp = "2.0.0-1.0.24"
+gradle = "8.5.2"
 jetbrainsKotlin = "2.0.0"
 kotlinBom = "2.0.0"
 lifecycleRuntimeKtx = "2.8.4"
 material3 = "1.2.1"
 moshiKotlin = "1.15.1"
 okhttpBom = "4.12.0"
-pagingCompose = "3.3.1"
+pagingCompose = "3.3.2"
 retrofit = "2.11.0"
 
 [libraries]
@@ -23,7 +23,7 @@ androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = 
 androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
 androidx-material3 = { module = "androidx.compose.material3:material3", version.ref="material3" }
 androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCompose" }
-apollo-runtime = { module = "com.apollographql.apollo3:apollo-runtime", version.ref = "apolloRuntime" }
+apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apolloRuntime" }
 coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
 compose-destinations = { module = "io.github.raamcosta.compose-destinations:core", version.ref = "composeDestinations" }
 compose-destinations-ksp = { module = "io.github.raamcosta.compose-destinations:ksp", version.ref = "composeDestinations" }
@@ -36,7 +36,7 @@ retrofit = { module = "com.squareup.retrofit2:retrofit", version.ref = "retrofit
 
 [plugins]
 androidApplication = { id = "com.android.application", version.ref = "gradle" }
-apolloGraphQL = {id = "com.apollographql.apollo3", version.ref="apolloRuntime"}
+apolloGraphQL = {id = "com.apollographql.apollo", version.ref="apolloRuntime"}
 composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "jetbrainsKotlin" }
 googleKsp = { id = "com.google.devtools.ksp", version.ref = "googleKsp" }
 jetbrainsKotlin = { id = "org.jetbrains.kotlin.android", version.ref = "jetbrainsKotlin" }
