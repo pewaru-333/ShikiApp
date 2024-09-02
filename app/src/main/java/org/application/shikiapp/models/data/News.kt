@@ -12,5 +12,5 @@ data class News(
     @Json(name = "html_footer") val htmlFooter: String,
     @Json(name = "created_at") val createdAt: String,
     @Json(name = "comments_count") val commentsCount: Int,
-    @Json(name = "user") val user: User
+    @Json(name = "user") val user: UserShort
 )

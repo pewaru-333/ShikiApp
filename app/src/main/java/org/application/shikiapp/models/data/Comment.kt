@@ -16,5 +16,5 @@ data class Comment(
     @Json(name = "is_offtopic") val isOfftopic: Boolean,
     @Json(name = "is_summary") val isSummary: Boolean,
     @Json(name = "can_be_edited") val canBeEdited: Boolean,
-    @Json(name = "user") val user: User
+    @Json(name = "user") val user: UserShort
 )
