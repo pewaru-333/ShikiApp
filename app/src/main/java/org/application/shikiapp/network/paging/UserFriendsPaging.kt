@@ -2,18 +2,18 @@ package org.application.shikiapp.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import org.application.shikiapp.models.data.User
+import org.application.shikiapp.models.data.UserShort
 import org.application.shikiapp.network.NetworkClient
 
-class UserFriendsPaging(private val userId: Long) : PagingSource<Int, User>() {
+class UserFriendsPaging(private val userId: Long) : PagingSource<Int, UserShort>() {
 
-    override fun getRefreshKey(state: PagingState<Int, User>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, UserShort>): Int? =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, User> = try {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, UserShort> = try {
         val page = params.key ?: 1
         val response = NetworkClient.user.getFriends(userId, page, params.loadSize)
 
