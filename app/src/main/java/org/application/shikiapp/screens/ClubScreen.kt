@@ -17,7 +17,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -142,8 +142,12 @@ private fun BriefInfo(model: ClubViewModel, state: ClubState, navigator: Destina
                 enabled = menu.ordinal !in listOf(0, 3)
             ) {
                 Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically) {
-                    TitleText(menu.title)
-                    Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, null)
+                    Text(
+                        text = menu.title,
+                        modifier = Modifier.padding(4.dp),
+                        style = MaterialTheme.typography.titleMedium
+                    )
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
                 }
             }
         }
