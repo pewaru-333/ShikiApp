@@ -15,14 +15,14 @@ apollo {
 
 android {
     namespace = "org.application.shikiapp"
-    compileSdk = 34
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "org.application.shikiapp"
         minSdk = 26
-        targetSdk = 34
-        versionCode = 8
-        versionName = "alpha-0.0.8"
+        targetSdk = 35
+        versionCode = 9
+        versionName = "alpha-0.0.9"
     }
 
     dependenciesInfo {
