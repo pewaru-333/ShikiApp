@@ -18,19 +18,20 @@ import org.application.shikiapp.R.drawable.vector_person
 import org.application.shikiapp.R.drawable.vector_ranobe
 import org.application.shikiapp.R.drawable.vector_settings
 import org.application.shikiapp.R.string.text_achievements
-import org.application.shikiapp.R.string.text_age
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_characters
 import org.application.shikiapp.R.string.text_clubs
 import org.application.shikiapp.R.string.text_friends
 import org.application.shikiapp.R.string.text_manga
-import org.application.shikiapp.R.string.text_name
+import org.application.shikiapp.R.string.text_mangakas
+import org.application.shikiapp.R.string.text_others
 import org.application.shikiapp.R.string.text_people
 import org.application.shikiapp.R.string.text_ranobe
-import org.application.shikiapp.R.string.text_sex
+import org.application.shikiapp.R.string.text_seyu
 
 // =========================================== Strings ============================================
 
+const val CODE = "code"
 const val CLIENT_ID = "C0IlIBQYqt9VHjuoayfbBG9ulhBH9XWuTOxSX_6oE6g"
 const val CLIENT_SECRET = "0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM"
 const val REDIRECT_URI = "org.application.shikiapp://"
@@ -48,6 +49,10 @@ const val BLANK = ""
 
 val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
 val DATE_FORMATS = listOf("d.M.yyyy", "d.M", "yyyy")
+val FAVOURITES_ITEMS = listOf(
+    text_anime, text_manga, text_ranobe, text_characters, text_people,
+    text_mangakas, text_seyu, text_others
+)
 val LINKED_KIND = listOf("common", "seyu", "mangaka", "producer", "person")
 val LINKED_TYPE = listOf("Anime", "Manga", "Ranobe", "Person", "Character")
 val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр")
@@ -196,12 +201,6 @@ enum class PeopleFilterItems(val title: String) {
 
 enum class ProfileMenus(@StringRes val title: Int) {
     Friends(text_friends), Clubs(text_clubs), Achievements(text_achievements)
-}
-
-enum class UserMenus(@StringRes val row: List<Int>) {
-    FIRST(listOf(text_name, text_friends)),
-    SECOND(listOf(text_sex, text_clubs)),
-    THIRD(listOf(text_age, text_achievements))
 }
 
 enum class VideoKinds(val title: String, val kinds: List<String>) {
