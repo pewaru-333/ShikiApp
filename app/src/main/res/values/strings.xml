@@ -8,6 +8,7 @@
     <string name="text_character">Персонаж</string>
     <string name="text_episodes">Эпизоды</string>
     <string name="text_external_links">На других сайтах</string>
+    <string name="text_favourite">Избранное</string>
     <string name="text_image_of">Изображение %1$d из %2$d</string>
     <string name="text_in_lists">В списках</string>
     <string name="text_related">Связанное</string>
@@ -23,8 +24,10 @@
     <string name="text_catalog">Каталог</string>
     <string name="text_characters">Персонажи</string>
     <string name="text_manga">Манга</string>
-    <string name="text_news_one">Новость</string>
+    <string name="text_mangakas">Мангаки</string>
     <string name="text_news">Новости</string>
+    <string name="text_news_one">Новость</string>
+    <string name="text_others">Прочие</string>
     <string name="text_people">Персоналии</string>
     <string name="text_ranobe">Ранобэ</string>
     <string name="text_video">Видео</string>
@@ -53,15 +56,13 @@
 
     <!-- Пользователь -->
     <string name="text_achievements">Достижения</string>
-    <string name="text_age">Возраст</string>
     <string name="text_anime_list">Список аниме</string>
     <string name="text_clubs">Клубы</string>
     <string name="text_comments">Комментарии</string>
     <string name="text_friends">Друзья</string>
-    <string name="text_name">Имя</string>
-    <string name="text_profile_closed">Профиль закрыт</string>
+    <string name="text_history">История</string>
     <string name="text_profile">Профиль</string>
-    <string name="text_sex">Пол</string>
+    <string name="text_profile_closed">Профиль закрыт</string>
 
     <!-- Действия -->
     <string name="text_add_fav">Добавить в избранное</string>
@@ -82,14 +83,5 @@
     <!-- Другое -->
     <string name="blank" />
     <string name="text_empty">Пусто</string>
-
-    <!-- Числительные -->
-    <plurals name="age">
-        <item quantity="zero">%d лет</item>
-        <item quantity="one">%d год</item>
-        <item quantity="two">%d года</item>
-        <item quantity="few">%d года</item>
-        <item quantity="many">%d лет</item>
-        <item quantity="other">%d лет</item>
-    </plurals>
+    <string name="text_login">Вход</string>
 </resources>
