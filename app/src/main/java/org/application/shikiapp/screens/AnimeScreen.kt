@@ -35,7 +35,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Close
@@ -684,7 +684,7 @@ private fun BottomSheet(model: AnimeViewModel, state: AnimeState, rate: UserRate
         ListItem(
             headlineContent = { Text(stringResource(text_external_links)) },
             modifier = Modifier.clickable { model.showLinks() },
-            leadingContent = {Icon(Icons.AutoMirrored.Filled.List, null)}
+            leadingContent = {Icon(Icons.AutoMirrored.Outlined.List, null)}
         )
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
