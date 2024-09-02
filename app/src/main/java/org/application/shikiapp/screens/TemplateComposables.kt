@@ -68,10 +68,13 @@ import androidx.paging.LoadState.Loading
 import androidx.paging.LoadState.NotLoading
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
+import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.UserScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Comment
+import org.application.shikiapp.models.data.HistoryAnime
+import org.application.shikiapp.models.data.User
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.getImage
@@ -118,6 +121,29 @@ fun CircleImage(link: String?) = AsyncImage(
     alignment = Alignment.Center,
     contentScale = ContentScale.Crop,
     filterQuality = FilterQuality.High,
+)
+
+@Composable
+fun UserBriefItem(user: User) = ListItem(
+    headlineContent = { Text(user.lastOnline, style = MaterialTheme.typography.bodyMedium) },
+    modifier = Modifier.offset((-16).dp, (-8).dp),
+    overlineContent = { Text(user.nickname, style = MaterialTheme.typography.titleLarge) },
+    leadingContent = {
+        AsyncImage(
+            model = user.image.x80,
+            contentDescription = null,
+            modifier = Modifier
+                .size(80.dp)
+                .clip(MaterialTheme.shapes.small)
+                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.small)
+        )
+    },
+    supportingContent = {
+        Text(
+            text = fromHtml(user.commonInfo.joinToString(" / ")),
+            style = MaterialTheme.typography.bodySmall
+        )
+    }
 )
 
 @Composable
@@ -302,6 +328,29 @@ fun OneLineImage(name: String, link: String?, modifier: Modifier = Modifier) = L
             alignment = Alignment.Center,
             contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.High,
+        )
+    }
+)
+
+@Composable
+fun HistoryItem(note: HistoryAnime, navigator: DestinationsNavigator) = ListItem(
+    trailingContent = { Text(convertDate(note.createdAt)) },
+    supportingContent = { Text(fromHtml(note.description)) },
+    modifier = Modifier.clickable {
+        navigator.navigate(AnimeScreenDestination(note.target.id.toString()))
+    },
+    headlineContent = {
+        Text(text = note.target.name, maxLines = 3, overflow = TextOverflow.Ellipsis)
+    },
+    leadingContent = {
+        AsyncImage(
+            model = getImage(note.target.image.original),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .size(80.dp, 121.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
         )
     }
 )
