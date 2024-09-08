@@ -4,7 +4,8 @@ import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.text.format.DateUtils
 import android.util.Patterns
-import org.application.AnimeQuery
+import org.application.AnimeQuery.Data.Anime.Studio
+import org.application.MangaQuery.Data.Manga.Publisher
 import org.application.shikiapp.models.data.Date
 import org.application.shikiapp.models.data.Person
 import java.time.LocalDate
@@ -24,24 +25,6 @@ fun convertDate(text: String): String {
         DateUtils.DAY_IN_MILLIS
     ).toString()
 }
-
-//fun htmlFooter(text: String): List<String> {
-//    val links: ArrayList<String> = ArrayList()
-//
-//    val urls = "((https?):((//)|(\\\\))+[\\w:#@%/;$()~_?+-=\\\\.&]*)"
-//    val pattern = Pattern.compile(urls, Pattern.CASE_INSENSITIVE)
-//    val matcher = pattern.matcher(text)
-//
-//    while (matcher.find()) {
-//        val link = text.substring(matcher.start(), matcher.end())
-//
-//        if (!link.contains("user_images/preview")) {
-//            links.add(link)
-//        }
-//    }
-//
-//    return links.distinct()
-//}
 
 fun getLinks(text: String): List<String> {
     val links = ArrayList<String>()
@@ -97,31 +80,44 @@ fun getPoster(text: String?): String? {
 }
 
 fun getImage(link: String?) = "https://shikimori.one${link.orEmpty()}"
-fun getStatus(status: String?) = STATUSES[status] ?: "Неизвестно"
-fun getWatchStatus(status: String?) = WATCH_STATUSES[status] ?: "Неизвестно"
-fun getKind(kind: String?) = KINDS[kind] ?: "Неизвестно"
-fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
-fun getSex(sex: String?) = when (sex) {
-    "male" -> "Мужской"
-    "female" -> "Женский"
-    else -> "Не указан"
+fun getStatusA(status: String?) = STATUSES_A[status] ?: "Неизвестно"
+fun getStatusM(status: String?) = STATUSES_M[status] ?: "Неизвестно"
+fun getWatchStatus(status: String?, type: String) = when (type) {
+    LINKED_TYPE[0] -> WATCH_STATUSES_A[status] ?: "Неизвестно"
+    else -> WATCH_STATUSES_M[status] ?: "Неизвестно"
 }
-
-fun getSeason(text: String?) = when (text) {
-    null -> BLANK
-    "?" -> "Неизвестно"
-    else -> {
-        if (text.contains("-")) BLANK
-        else {
-            val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
-            val year = text.substringAfter("_")
-            "${SEASONS[season]} $year"
+fun getKind(kind: String?) = KINDS_A[kind] ?: KINDS_M[kind] ?: "Неизвестно"
+fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
+fun getFull(full: Int? = 0, status: String? = STATUSES_A.keys.elementAt(1)) =
+    if (status == STATUSES_A.keys.elementAt(1) && full == 0) "?" else full.toString()
+fun getSeason(text: Any?) = when (text) {
+    is String -> when (text) {
+        "?" -> "Неизвестно"
+        else -> when {
+            text.length == 10 -> LocalDate.parse(text).year.toString()
+            text.contains("-") -> BLANK
+            else -> {
+                val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
+                val year = text.substringAfter("_")
+                "${SEASONS[season]} $year"
+            }
         }
     }
+
+    else -> BLANK
 }
 
-fun getStudio(studio: List<AnimeQuery.Studio>) = try {
+fun getStudio(studio: List<Studio>) = try {
     studio.first().name
 } catch (e: NoSuchElementException) {
     "Неизвестно"
 }
+
+fun getPublisher(publisher: List<Publisher>) = try {
+    publisher.first().name
+} catch (e: NoSuchElementException) {
+    "Неизвестно"
+}
+
+fun setScore(status: List<String>, score: Float) = if (STATUSES_A.keys.elementAt(0) in status) null
+else score.toInt()
