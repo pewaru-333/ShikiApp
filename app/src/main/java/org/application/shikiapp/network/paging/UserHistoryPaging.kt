@@ -2,18 +2,18 @@ package org.application.shikiapp.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import org.application.shikiapp.models.data.HistoryAnime
+import org.application.shikiapp.models.data.History
 import org.application.shikiapp.network.NetworkClient
 
-class UserHistoryPaging(private val userId: Long) : PagingSource<Int, HistoryAnime>() {
+class UserHistoryPaging(private val userId: Long) : PagingSource<Int, History>() {
 
-    override fun getRefreshKey(state: PagingState<Int, HistoryAnime>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, History>): Int? =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, HistoryAnime> = try {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, History> = try {
         val page = params.key ?: 1
         val response = NetworkClient.user.getHistory(userId, page, params.loadSize)
 
