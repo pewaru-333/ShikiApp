@@ -47,6 +47,6 @@ data class Roles(
 @JsonClass(generateAdapter = true)
 data class Works(
     @Json(name = "anime") val anime: AnimeShort?,
-    @Json(name = "manga") val manga: Manga?,
+    @Json(name = "manga") val manga: MangaShort?,
     @Json(name = "roles") val roles: Role?
 )

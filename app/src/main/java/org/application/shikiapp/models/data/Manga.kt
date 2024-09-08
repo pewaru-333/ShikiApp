@@ -25,7 +25,7 @@ data class Manga(
     @Json(name = "description_html") val descriptionHTML: String?,
     @Json(name = "description_source") val descriptionSource: String?,
     @Json(name = "franchise") val franchise: String?,
-    @Json(name = "favoured") val favoured: Boolean?,
+    @Json(name = "favoured") val favoured: Boolean,
     @Json(name = "anons") val anons: Boolean?,
     @Json(name = "ongoing") val ongoing: Boolean?,
     @Json(name = "thread_id") val threadId: Long?,
@@ -36,7 +36,7 @@ data class Manga(
     @Json(name = "licensors") val licensors: List<String> = emptyList(),
     @Json(name = "genres") val genres: List<Genre> = emptyList(),
     @Json(name = "publishers") val publishers: List<Publisher> = emptyList(),
-    @Json(name = "user_rate") val userRate: List<UserRate> = emptyList()
+    @Json(name = "user_rate") val userRate: UserRate?
 )
 
 @JsonClass(generateAdapter = true)

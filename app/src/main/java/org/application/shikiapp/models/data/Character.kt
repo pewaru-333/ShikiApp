@@ -21,7 +21,7 @@ data class Character(
     @Json(name = "updated_at") val updatedAt: String?,
     @Json(name = "seyu") val seyu: List<CharacterPerson> = emptyList(),
     @Json(name = "animes") val animes: List<AnimeShort> = emptyList(),
-    @Json(name = "mangas") val mangas: List<Manga> = emptyList()
+    @Json(name = "mangas") val mangas: List<MangaShort> = emptyList()
 )
 
 @JsonClass(generateAdapter = true)

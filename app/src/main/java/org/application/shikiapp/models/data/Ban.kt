@@ -12,6 +12,6 @@ data class Ban(
     @Json(name = "reason") val reason: String,
     @Json(name = "created_at") val createdAt: String,
     @Json(name = "duration_minutes") val durationMinutes: Int,
-    @Json(name = "user") val user: User,
-    @Json(name = "moderator") val moderator: User
+    @Json(name = "user") val user: UserShort,
+    @Json(name = "moderator") val moderator: UserShort
 )

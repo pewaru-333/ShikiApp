@@ -12,7 +12,7 @@ data class UserRate(
     @Json(name = "score") val score: Int,
     @Json(name = "status") val status: String,
     @Json(name = "rewatches") val rewatches: Int?,
-    @Json(name = "episodes") val episodes: Int,
+    @Json(name = "episodes") val episodes: Int?,
     @Json(name = "volumes") val volumes: Int?,
     @Json(name = "chapters") val chapters: Int?,
     @Json(name = "text") val text: String?,
@@ -28,23 +28,22 @@ data class AnimeRate(
     @Json(name = "status") val status: String,
     @Json(name = "text") val text: String?,
     @Json(name = "episodes") val episodes: Int,
-    @Json(name = "chapters") val chapters: Int?,
-    @Json(name = "volumes") val volumes: Int?,
     @Json(name = "text_html") val textHtml: String?,
     @Json(name = "rewatches") val rewatches: Int,
-    @Json(name = "anime") val anime: AnimeRateInfo,
+    @Json(name = "anime") val anime: AnimeShort,
 )
 
 @JsonClass(generateAdapter = true)
-data class AnimeRateInfo(
+data class MangaRate(
     @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "russian") val russian: String?,
-    @Json(name = "image") val image: Image,
-    @Json(name = "kind") val kind: String?,
+    @Json(name = "score") val score: Int,
     @Json(name = "status") val status: String,
-    @Json(name = "episodes") val episodes: Int,
-    @Json(name = "episodes_aired") val episodesAired: Int,
+    @Json(name = "text") val text: String?,
+    @Json(name = "chapters") val chapters: Int,
+    @Json(name = "volumes") val volumes: Int,
+    @Json(name = "text_html") val textHtml: String?,
+    @Json(name = "rewatches") val rewatches: Int,
+    @Json(name = "manga") val manga: MangaShort,
 )
 
 @JsonClass(generateAdapter = true)
