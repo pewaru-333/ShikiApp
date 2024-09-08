@@ -2,19 +2,19 @@ package org.application.shikiapp.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import org.application.PeopleQuery
+import org.application.PeopleQuery.Data.Person
 import org.application.shikiapp.models.views.PeopleFilters
 import org.application.shikiapp.network.ApolloClient
 
-class PeoplePaging(private val filters: PeopleFilters) : PagingSource<Int, PeopleQuery.Person>() {
+class PeoplePaging(private val filters: PeopleFilters) : PagingSource<Int, Person>() {
 
-    override fun getRefreshKey(state: PagingState<Int, PeopleQuery.Person>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, Person>): Int? =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, PeopleQuery.Person> = try {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, Person> = try {
         val page = params.key ?: 1
         val response = ApolloClient.getPeople(
             page = page,
