@@ -5,18 +5,21 @@
     <string name="text_all_roles">Все роли</string>
     <string name="text_authors">Авторы</string>
     <string name="text_best_roles">Лучшие роли</string>
+    <string name="text_chapters">Главы: %1$s / %2$s</string>
     <string name="text_character">Персонаж</string>
     <string name="text_episodes">Эпизоды</string>
     <string name="text_external_links">На других сайтах</string>
     <string name="text_favourite">Избранное</string>
     <string name="text_image_of">Изображение %1$d из %2$d</string>
     <string name="text_in_lists">В списках</string>
+    <string name="text_publisher">Издательство</string>
     <string name="text_related">Связанное</string>
     <string name="text_screenshots">Кадры</string>
     <string name="text_similar">Похожее</string>
     <string name="text_statistics">Статистика</string>
     <string name="text_studio">Студия</string>
     <string name="text_user_rates">Оценки людей</string>
+    <string name="text_volumes">Тома</string>
 
     <!-- Каталог -->
     <string name="text_anime">Аниме</string>
@@ -49,10 +52,12 @@
     <string name="text_status">Статус</string>
 
     <!-- Оценка -->
+    <string name="text_comment">Комментарий</string>
+    <string name="text_rate_chapters">Главы</string>
     <string name="text_rate_episodes">Эпизоды: %1$s / %2$s</string>
     <string name="text_rate_score">Оценка: %1$s</string>
+    <string name="text_rereadings">Повторных чтений</string>
     <string name="text_rewatches">Повторных просмотров</string>
-    <string name="text_comment">Комментарий</string>
 
     <!-- Пользователь -->
     <string name="text_achievements">Достижения</string>
@@ -61,6 +66,7 @@
     <string name="text_comments">Комментарии</string>
     <string name="text_friends">Друзья</string>
     <string name="text_history">История</string>
+    <string name="text_manga_list">Список манги</string>
     <string name="text_profile">Профиль</string>
     <string name="text_profile_closed">Профиль закрыт</string>
 
@@ -68,10 +74,11 @@
     <string name="text_add_fav">Добавить в избранное</string>
     <string name="text_add_rate">Добавить в список</string>
     <string name="text_cancel">Отменить</string>
-    <string name="text_change_rate">Изменить оценку</string>
     <string name="text_change">Изменить</string>
+    <string name="text_change_rate">Изменить оценку</string>
     <string name="text_close">Закрыть</string>
     <string name="text_rate">Оценить</string>
+    <string name="text_remove">Удалить</string>
     <string name="text_remove_fav">Удалить из избранного</string>
     <string name="text_save">Сохранить</string>
     <string name="text_show_all_s">Показать весь</string>
