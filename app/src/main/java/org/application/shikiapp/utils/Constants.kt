@@ -6,7 +6,7 @@ import com.ramcosta.composedestinations.generated.destinations.CatalogScreenDest
 import com.ramcosta.composedestinations.generated.destinations.NewsScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.ProfileScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.SettingsScreenDestination
-import com.ramcosta.composedestinations.spec.DirectionDestinationSpec
+import com.ramcosta.composedestinations.spec.Direction
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_anime
 import org.application.shikiapp.R.drawable.vector_calendar
@@ -55,7 +55,7 @@ val FAVOURITES_ITEMS = listOf(
 )
 val LINKED_KIND = listOf("common", "seyu", "mangaka", "producer", "person")
 val LINKED_TYPE = listOf("Anime", "Manga", "Ranobe", "Person", "Character")
-val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр")
+val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
 val THEMES = listOf("Системная", "Светлая", "Тёмная")
 
 // =========================================== Maps ===============================================
@@ -101,7 +101,7 @@ val EXTERNAL_LINK_KINDS = mapOf(
     "novelupdates" to "Novel Updates"
 )
 
-val KINDS = mapOf(
+val KINDS_A = mapOf(
     "tv" to "TV-сериал",
     "tv_13" to "Короткие",
     "tv_24" to "Средние",
@@ -114,6 +114,14 @@ val KINDS = mapOf(
     "music" to "Клип",
     "pv" to "Проморолик",
     "cm" to "Реклама"
+)
+
+val KINDS_M = mapOf(
+    "manga" to "Манга",
+    "manhwa" to "Манхва",
+    "manhua" to "Маньхуа",
+    "one_shot" to "Ваншот",
+    "doujin" to "Додзинси"
 )
 
 val ORDERS = mapOf(
@@ -162,13 +170,21 @@ val SEASONS = mapOf(
     "autumn" to "Осень"
 )
 
-val STATUSES = mapOf(
+val STATUSES_A = mapOf(
     "anons" to "Анонсировано",
     "ongoing" to "Онгоинг",
     "released" to "Вышло"
 )
 
-val WATCH_STATUSES = mapOf(
+val STATUSES_M = mapOf(
+    "anons" to "Анонсировано",
+    "ongoing" to "Сейчас издаётся",
+    "released" to "Издано",
+    "paused" to "Приостановлено",
+    "discontinued" to "Прекращено"
+)
+
+val WATCH_STATUSES_A = mapOf(
     "planned" to "Запланировано",
     "watching" to "Смотрю",
     "rewatching" to "Пересматриваю",
@@ -177,9 +193,18 @@ val WATCH_STATUSES = mapOf(
     "dropped" to "Брошено"
 )
 
+val WATCH_STATUSES_M = mapOf(
+    "planned" to "Запланировано",
+    "watching" to "Читаю",
+    "rewatching" to "Перечитываю",
+    "completed" to "Прочитано",
+    "on_hold" to "Отложено",
+    "dropped" to "Брошено"
+)
+
 // =========================================== Enums ==============================================
 
-enum class BottomMenu(val route: DirectionDestinationSpec, @StringRes val title: Int, val icon: Int) {
+enum class BottomMenu(val route: Direction, @StringRes val title: Int, val icon: Int) {
     Anime(CatalogScreenDestination, R.string.text_catalog, vector_home),
     News(NewsScreenDestination, R.string.text_news, vector_news),
     Calendar(CalendarScreenDestination, R.string.text_calendar, vector_calendar),
