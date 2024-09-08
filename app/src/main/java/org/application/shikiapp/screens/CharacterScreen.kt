@@ -188,8 +188,8 @@ private fun DialogAnime(model: CharacterViewModel, list: List<AnimeShort>, navig
                         spacedBy(16.dp)
                     )
                     {
-                        RoundedAnimePoster(image.original)
-                        AnimeShortDescription(russian ?: name, kind, releasedOn)
+                        RoundedPoster(image.original)
+                        ShortDescription(russian ?: name, kind, releasedOn)
                     }
                 }
             }

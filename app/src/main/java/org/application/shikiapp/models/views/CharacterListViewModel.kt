@@ -33,7 +33,6 @@ class CharacterListViewModel : ViewModel() {
     }.cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is HttpException || attempt <= 3 }
 
-
     fun setSearch(text: String) {
         viewModelScope.launch { _search.emit(text) }
     }

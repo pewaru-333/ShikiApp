@@ -77,7 +77,10 @@ class CharacterViewModel(private val id: String) : ViewModel() {
     sealed interface Response {
         data object Error : Response
         data object Loading : Response
-        data class Success(val character: Character, val image: CharacterQuery.Character) : Response
+        data class Success(
+            val character: Character,
+            val image: CharacterQuery.Data.Character
+        ) : Response
     }
 }
 

@@ -2,7 +2,7 @@ package org.application.shikiapp.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import org.application.CharacterListQuery.Character
+import org.application.CharacterListQuery.Data.Character
 import org.application.shikiapp.network.ApolloClient
 
 class CharactersPaging(private val search: String) : PagingSource<Int, Character>() {
