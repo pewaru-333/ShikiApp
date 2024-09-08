@@ -1,0 +1,3 @@
+— Added manga catalog and search for it.
+— Added manga screen and information about it.
+— Added the ability to add manga to your list and favorites.

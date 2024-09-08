@@ -9,6 +9,7 @@ plugins {
 apollo {
     service("service") {
         packageName.set("org.application")
+        codegenModels.set("responseBased")
         generateOptionalOperationVariables = false
     }
 }
@@ -21,8 +22,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 9
-        versionName = "alpha-0.0.9"
+        versionCode = 10
+        versionName = "alpha-0.1.5"
     }
 
     dependenciesInfo {
