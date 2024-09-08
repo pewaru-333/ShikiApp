@@ -6,6 +6,7 @@ import com.squareup.moshi.Moshi
 import okhttp3.OkHttpClient
 import org.application.shikiapp.network.calls.Anime
 import org.application.shikiapp.network.calls.Clubs
+import org.application.shikiapp.network.calls.Manga
 import org.application.shikiapp.network.calls.NetworkCalls
 import org.application.shikiapp.network.calls.Profile
 import org.application.shikiapp.network.calls.User
@@ -36,6 +37,7 @@ private val retrofit = Retrofit.Builder()
 object NetworkClient {
     val anime: Anime by lazy { retrofit.create(Anime::class.java) }
     val clubs: Clubs by lazy { retrofit.create(Clubs::class.java) }
+    val manga: Manga by lazy { retrofit.create(Manga::class.java) }
     val profile: Profile by lazy { retrofit.create(Profile::class.java) }
     val rates: UserRates by lazy { retrofit.create(UserRates::class.java) }
     val user: User by lazy { retrofit.create(User::class.java) }
