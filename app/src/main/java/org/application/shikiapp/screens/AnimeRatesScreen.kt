@@ -54,34 +54,36 @@ import org.application.shikiapp.R.string.text_rate_episodes
 import org.application.shikiapp.R.string.text_rate_score
 import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.models.data.AnimeRate
-import org.application.shikiapp.models.views.NewRateEvent.SetEpisodes
-import org.application.shikiapp.models.views.NewRateEvent.SetRateId
-import org.application.shikiapp.models.views.NewRateEvent.SetRewatches
-import org.application.shikiapp.models.views.NewRateEvent.SetScore
-import org.application.shikiapp.models.views.NewRateEvent.SetStatus
-import org.application.shikiapp.models.views.NewRateEvent.SetText
+import org.application.shikiapp.models.views.AnimeRatesViewModel
+import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.Error
+import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.Loading
+import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.NoAccess
+import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.Success
 import org.application.shikiapp.models.views.UserRateViewModel
-import org.application.shikiapp.models.views.UserRatesViewModel
-import org.application.shikiapp.models.views.UserRatesViewModel.Response.Error
-import org.application.shikiapp.models.views.UserRatesViewModel.Response.Loading
-import org.application.shikiapp.models.views.UserRatesViewModel.Response.NoAccess
-import org.application.shikiapp.models.views.UserRatesViewModel.Response.Success
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetEpisodes
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRateId
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRewatches
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScore
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
 import org.application.shikiapp.models.views.factory
+import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.SCORES
-import org.application.shikiapp.utils.WATCH_STATUSES
+import org.application.shikiapp.utils.WATCH_STATUSES_A
+import org.application.shikiapp.utils.getFull
 import org.application.shikiapp.utils.getKind
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Destination<RootGraph>
 @Composable
 fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
-    val model = viewModel<UserRatesViewModel>(factory = factory { UserRatesViewModel(id) })
+    val model = viewModel<AnimeRatesViewModel>(factory = factory { AnimeRatesViewModel(id) })
     val response by model.response.collectAsStateWithLifecycle()
 
     when(val data = response) {
         NoAccess -> Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_profile_closed)) }
-        Error -> ErrorScreen(model::getUserRates)
+        Error -> ErrorScreen(model::getRates)
         Loading -> LoadingScreen()
         is Success -> {
             val userVM = if (Preferences.getUserId() == id) viewModel<UserRateViewModel>() else null
@@ -96,7 +98,7 @@ fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
             ) { values ->
                 Column(Modifier.padding(top = values.calculateTopPadding()), spacedBy(16.dp)) {
                     ScrollableTabRow(model.tab, edgePadding = 8.dp) {
-                        WATCH_STATUSES.entries.forEachIndexed { index, entry ->
+                        WATCH_STATUSES_A.entries.forEachIndexed { index, entry ->
                             Tab(model.tab == index, { model.tab = index })
                             { Text(entry.value, Modifier.padding(8.dp, 12.dp)) }
                         }
@@ -104,7 +106,7 @@ fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
 
                     AnimeRatesList(
                         data = data.rates
-                            .filter { it.status == WATCH_STATUSES.keys.elementAt(model.tab) }
+                            .filter { it.status == WATCH_STATUSES_A.keys.elementAt(model.tab) }
                             .sortedBy { it.anime.russian },
                         userVM = userVM,
                         state = model.listState,
@@ -121,7 +123,7 @@ fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
                     onDismissRequest = it::close,
                     confirmButton = {
                         TextButton(
-                            onClick = { it.updateRate(state.id); it.reload(model) },
+                            onClick = { it.update(state.id); it.reload(anime =  model) },
                             enabled = !state.status.isNullOrEmpty()
                         ) { Text(stringResource(text_save)) }
                     },
@@ -129,11 +131,11 @@ fun AnimeRatesScreen(id: Long, navigator: DestinationsNavigator) {
                     title = { Text(stringResource(text_change)) },
                     text = {
                         Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
-                            RateStatus(it, state)
-                            RateEpisodes(it, state)
-                            RateScore(it, state)
-                            RateRewatches(it, state)
-                            RateText(it, state)
+                            RateStatus(it::onEvent, state.statusName, LINKED_TYPE[0])
+                            RateEpisodes(it::onEvent, state.episodes)
+                            RateScore(it::onEvent, state.scoreName)
+                            RateRewatches(it::onEvent, state.rewatches, LINKED_TYPE[0])
+                            RateText(it::onEvent, state.text)
                         }
                     }
                 )
@@ -158,8 +160,9 @@ private fun AnimeRatesList(
     if (data.isEmpty()) item {
         Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_empty)) }
     }
-    else items(data) { (id, score, status, _, episodes, _, _, text, rewatches, anime) ->
+    else items(data) { (id, score, status, _, episodes,  text, rewatches, anime) ->
         Row(
+            horizontalArrangement = spacedBy(16.dp),
             modifier = Modifier
                 .height(175.dp)
                 .combinedClickable(
@@ -167,7 +170,7 @@ private fun AnimeRatesList(
                     onLongClick = {
                         userVM?.let { itVM ->
                             itVM.onEvent(SetRateId(id.toString()))
-                            itVM.onEvent(SetStatus(WATCH_STATUSES.entries.first { it.key == status }))
+                            itVM.onEvent(SetStatus(WATCH_STATUSES_A.entries.first { it.key == status }))
                             itVM.onEvent(SetScore(SCORES.entries.first { it.key == score }))
                             itVM.onEvent(SetEpisodes(episodes.toString()))
                             itVM.onEvent(SetRewatches(rewatches.toString()))
@@ -175,10 +178,9 @@ private fun AnimeRatesList(
                             itVM.open()
                         }
                     }
-                ),
-            horizontalArrangement = spacedBy(16.dp)
+                )
         ) {
-            RoundedAnimePoster(anime.image.original, 122.dp)
+            RoundedPoster(anime.image.original, 122.dp)
             Column(Modifier.fillMaxSize(), Arrangement.SpaceBetween) {
                 Column(verticalArrangement = spacedBy(4.dp)) {
                     Text(
@@ -192,7 +194,7 @@ private fun AnimeRatesList(
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = stringResource(text_rate_episodes, episodes, anime.episodes),
+                        text = stringResource(text_rate_episodes, episodes, getFull(anime.episodes, anime.status)),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
@@ -201,19 +203,16 @@ private fun AnimeRatesList(
                     )
                 }
                 userVM?.let {
-                    if (status == WATCH_STATUSES.keys.elementAt(1))
+                    if (status == WATCH_STATUSES_A.keys.elementAt(1))
                         Row(Modifier.fillMaxWidth(), Arrangement.End) {
                             Box(
                                 contentAlignment = Center,
+                                content = { Icon(Icons.Outlined.Add, null) },
                                 modifier = Modifier
                                     .size(48.dp)
-                                    .border(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.onSurface,
-                                        MaterialTheme.shapes.medium
-                                    )
+                                    .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
                                     .clickable { it.increment(id); reload() }
-                            ) { Icon(Icons.Outlined.Add, null) }
+                            )
                         }
                 }
             }
