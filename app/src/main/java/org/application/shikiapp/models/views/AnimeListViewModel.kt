@@ -19,7 +19,23 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.application.AnimeGenresQuery
+import org.application.AnimeGenresQuery.Data.Genre
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetCensored
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetDuration
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetFranchise
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetGenre
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetKind
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetMyList
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetOrder
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetRating
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetScore
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetSeason
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetSeasonS
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetSeasonYF
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetSeasonYS
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetStatus
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetStudio
+import org.application.shikiapp.models.views.AnimeListViewModel.FilterEvent.SetTitle
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.network.paging.AnimePaging
 import org.application.shikiapp.utils.BLANK
@@ -28,10 +44,10 @@ import retrofit2.HttpException
 import java.time.LocalDate
 
 class AnimeListViewModel : ViewModel() {
-    private val _filters = MutableStateFlow(QueryMap())
+    private val _filters = MutableStateFlow(AnimeFilters())
     val filters = _filters.asStateFlow()
 
-    private val _genres = MutableStateFlow<List<AnimeGenresQuery.Genre>>(mutableListOf())
+    private val _genres = MutableStateFlow<List<Genre>>(mutableListOf())
     val genres = _genres.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
@@ -50,37 +66,37 @@ class AnimeListViewModel : ViewModel() {
         getGenres()
     }
 
-    fun onEvent(event: QueryEvent) {
+    fun onEvent(event: FilterEvent) {
         when (event) {
-            is QueryEvent.SetOrder -> _filters.update {
+            is SetOrder -> _filters.update {
                 it.copy(order = event.order.key, orderName = event.order.value)
             }
 
-            is QueryEvent.SetStatus -> _filters.update {
+            is SetStatus -> _filters.update {
                 it.copy(status = it.status.apply {
                     if (event.status in it.status) remove(event.status) else add(event.status)
                 })
             }
 
-            is QueryEvent.SetKind -> _filters.update {
+            is SetKind -> _filters.update {
                 it.copy(kind = it.kind.apply {
                     if (event.kind in it.kind) remove(event.kind) else add(event.kind)
                 })
             }
 
-            is QueryEvent.SetSeasonYS ->
+            is SetSeasonYS ->
                 if (event.year.length <= 4) _filters.update { it.copy(seasonYS = event.year) }
 
-            is QueryEvent.SetSeasonYF ->
+            is SetSeasonYF ->
                 if (event.year.length <= 4) _filters.update { it.copy(seasonYF = event.year) }
 
-            is QueryEvent.SetSeasonS -> _filters.update {
+            is SetSeasonS -> _filters.update {
                 it.copy(season = it.seasonS.apply {
                     if (event.season in it.seasonS) remove(event.season) else add(event.season)
                 })
             }
 
-            is QueryEvent.SetSeason -> {
+            is SetSeason -> {
                 val yearS = try {
                     _filters.value.seasonYS.toInt()
                 } catch (e: NumberFormatException) {
@@ -105,31 +121,31 @@ class AnimeListViewModel : ViewModel() {
                 _filters.update { it.copy(season = seasons) }
             }
 
-            is QueryEvent.SetScore -> _filters.update { it.copy(score = event.score) }
+            is SetScore -> _filters.update { it.copy(score = event.score) }
 
-            is QueryEvent.SetDuration -> _filters.update {
+            is SetDuration -> _filters.update {
                 it.copy(duration = it.duration.apply {
                     if (event.duration in it.duration) remove(event.duration) else add(event.duration)
                 })
             }
 
-            is QueryEvent.SetRating -> _filters.update {
+            is SetRating -> _filters.update {
                 it.copy(rating = it.rating.apply {
                     if (event.rating in it.rating) remove(event.rating) else add(event.rating)
                 })
             }
 
-            is QueryEvent.SetGenre -> _filters.update {
+            is SetGenre -> _filters.update {
                 it.copy(genre = it.genre.apply {
                     if (event.genre in it.genre) remove(event.genre) else add(event.genre)
                 })
             }
 
-            is QueryEvent.SetStudio -> {}
-            is QueryEvent.SetFranchise -> {}
-            is QueryEvent.SetCensored -> {}
-            is QueryEvent.SetMyList -> {}
-            is QueryEvent.SetTitle -> _filters.update { it.copy(title = event.title) }
+            is SetStudio -> {}
+            is SetFranchise -> {}
+            is SetCensored -> {}
+            is SetMyList -> {}
+            is SetTitle -> _filters.update { it.copy(title = event.title) }
         }
     }
 
@@ -142,9 +158,28 @@ class AnimeListViewModel : ViewModel() {
             }
         }
     }
+
+    sealed interface FilterEvent {
+        data class SetOrder(val order: Map.Entry<String, String>) : FilterEvent
+        data class SetStatus(val status: String) : FilterEvent
+        data class SetKind(val kind: String) : FilterEvent
+        data class SetSeasonYS(val year: String) : FilterEvent
+        data class SetSeasonYF(val year: String) : FilterEvent
+        data class SetSeasonS(val season: String) : FilterEvent
+        data object SetSeason : FilterEvent
+        data class SetScore(val score: Float) : FilterEvent
+        data class SetDuration(val duration: String) : FilterEvent
+        data class SetRating(val rating: String) : FilterEvent
+        data class SetGenre(val genre: String) : FilterEvent
+        data class SetStudio(val studio: String) : FilterEvent
+        data class SetFranchise(val franchise: String) : FilterEvent
+        data class SetCensored(val censored: Boolean) : FilterEvent
+        data class SetMyList(val myList: String) : FilterEvent
+        data class SetTitle(val title: String) : FilterEvent
+    }
 }
 
-data class QueryMap(
+data class AnimeFilters(
     val order: String = ORDERS.keys.elementAt(2),
     val orderName: String = ORDERS.values.elementAt(2),
     val kind: SnapshotStateList<String> = mutableStateListOf(),
@@ -163,22 +198,3 @@ data class QueryMap(
     val myList: String? = null,
     val title: String = BLANK
 )
-
-sealed interface QueryEvent {
-    data class SetOrder(val order: Map.Entry<String, String>) : QueryEvent
-    data class SetStatus(val status: String) : QueryEvent
-    data class SetKind(val kind: String) : QueryEvent
-    data class SetSeasonYS(val year: String) : QueryEvent
-    data class SetSeasonYF(val year: String) : QueryEvent
-    data class SetSeasonS(val season: String) : QueryEvent
-    data object SetSeason : QueryEvent
-    data class SetScore(val score: Float) : QueryEvent
-    data class SetDuration(val duration: String) : QueryEvent
-    data class SetRating(val rating: String) : QueryEvent
-    data class SetGenre(val genre: String) : QueryEvent
-    data class SetStudio(val studio: String) : QueryEvent
-    data class SetFranchise(val franchise: String) : QueryEvent
-    data class SetCensored(val censored: Boolean) : QueryEvent
-    data class SetMyList(val myList: String) : QueryEvent
-    data class SetTitle(val title: String) : QueryEvent
-}
