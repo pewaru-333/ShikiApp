@@ -13,7 +13,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.application.AnimeQuery.Anime
+import org.application.AnimeQuery.Data.Anime
+import org.application.AnimeStatsQuery
 import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.network.ApolloClient
@@ -40,9 +41,10 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
                 val anime = ApolloClient.getAnime(animeId)
                 val similar = NetworkClient.anime.getSimilar(animeId.toLong())
                 val links = NetworkClient.anime.getLinks(animeId.toLong())
+                val stats = ApolloClient.getAnimeStats(animeId)
                 val favoured = NetworkClient.anime.getAnime(animeId.toLong()).favoured
 
-                _response.emit(Response.Success(anime, similar, links, favoured))
+                _response.emit(Response.Success(anime, similar, links, stats, favoured))
             } catch (e: Throwable) {
                 e.printStackTrace()
                 _response.emit(Response.Error)
@@ -66,109 +68,44 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         viewModelScope.launch { hideRate(); delay(300); getAnime() }
     }
 
-    fun showComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = true) } }
-    }
+    fun showComments() = _state.update { it.copy(showComments = true) }
+    fun hideComments() = _state.update { it.copy(showComments = false) }
 
-    fun hideComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = false) } }
-    }
+    fun showSheet() = _state.update { it.copy(showSheet = true) }
+    fun hideSheet() = _state.update { it.copy(showSheet = false) }
 
-    fun showSheet() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = true) } }
-    }
+    fun showRelated() = _state.update { it.copy(showRelated = true) }
+    fun hideRelated() = _state.update { it.copy(showRelated = false) }
 
-    fun hideSheet() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = false) } }
-    }
+    fun showCharacters() = _state.update { it.copy(showCharacters = true) }
+    fun hideCharacters() = _state.update { it.copy(showCharacters = false) }
 
-    fun showRelated() {
-        viewModelScope.launch { _state.update { it.copy(showRelated = true) } }
-    }
+    fun showAuthors() = _state.update { it.copy(showAuthors = true) }
+    fun hideAuthors() = _state.update { it.copy(showAuthors = false) }
 
-    fun hideRelated() {
-        viewModelScope.launch { _state.update { it.copy(showRelated = false) } }
-    }
+    fun showScreenshots() = _state.update { it.copy(showScreenshots = true) }
+    fun hideScreenshots() = _state.update { it.copy(showScreenshots = false) }
 
-    fun showCharacters() {
-        viewModelScope.launch { _state.update { it.copy(showCharacters = true) } }
-    }
+    fun showScreenshot(index: Int) =
+        _state.update { it.copy(showScreenshot = true, screenshot = index) }
 
-    fun hideCharacters() {
-        viewModelScope.launch { _state.update { it.copy(showCharacters = false) } }
-    }
+    fun hideScreenshot() = _state.update { it.copy(showScreenshot = false, screenshot = 0) }
+    fun setScreenshot(index: Int) = _state.update { it.copy(screenshot = index) }
 
-    fun showAuthors() {
-        viewModelScope.launch { _state.update { it.copy(showAuthors = true) } }
-    }
+    fun showVideo() = _state.update { it.copy(showVideo = true) }
+    fun hideVideo() = _state.update { it.copy(showVideo = false) }
 
-    fun hideAuthors() {
-        viewModelScope.launch { _state.update { it.copy(showAuthors = false) } }
-    }
+    fun showRate() = _state.update { it.copy(showRate = true, showSheet = false) }
+    fun hideRate() = _state.update { it.copy(showRate = false) }
 
-    fun showScreenshots() {
-        viewModelScope.launch { _state.update { it.copy(showScreenshots = true) } }
-    }
+    fun showSimilar() = _state.update { it.copy(showSimilar = true, showSheet = false) }
+    fun hideSimilar() = _state.update { it.copy(showSimilar = false, showSheet = true) }
 
-    fun hideScreenshots() {
-        viewModelScope.launch { _state.update { it.copy(showScreenshots = false) } }
-    }
+    fun showStats() = _state.update { it.copy(showStats = true, showSheet = false) }
+    fun hideStats() = _state.update { it.copy(showStats = false, showSheet = true) }
 
-    fun showScreenshot(index: Int) {
-        viewModelScope.launch {
-            _state.update { it.copy(showScreenshot = true, screenshot = index) }
-        }
-    }
-
-    fun hideScreenshot() {
-        viewModelScope.launch {
-            _state.update { it.copy(showScreenshot = false, screenshot = 0) }
-        }
-    }
-
-    fun setScreenshot(index: Int) {
-        viewModelScope.launch { _state.update { it.copy(screenshot = index) } }
-    }
-
-    fun showVideo() {
-        viewModelScope.launch { _state.update { it.copy(showVideo = true) } }
-    }
-
-    fun hideVideo() {
-        viewModelScope.launch { _state.update { it.copy(showVideo = false) } }
-    }
-
-    fun showRate() {
-        viewModelScope.launch { _state.update { it.copy(showRate = true, showSheet = false) } }
-    }
-
-    fun hideRate() {
-        viewModelScope.launch { _state.update { it.copy(showRate = false) } }
-    }
-
-    fun showSimilar() {
-        viewModelScope.launch { _state.update { it.copy(showSimilar = true, showSheet = false) } }
-    }
-
-    fun hideSimilar() {
-        viewModelScope.launch { _state.update { it.copy(showSimilar = false, showSheet = true) } }
-    }
-
-    fun showStats() {
-        viewModelScope.launch { _state.update { it.copy(showStats = true, showSheet = false) } }
-    }
-
-    fun hideStats() {
-        viewModelScope.launch { _state.update { it.copy(showStats = false, showSheet = true) } }
-    }
-
-    fun showLinks() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = false, showLinks = true) } }
-    }
-
-    fun hideLinks() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = true, showLinks = false) } }
-    }
+    fun showLinks() = _state.update { it.copy(showSheet = false, showLinks = true) }
+    fun hideLinks() = _state.update { it.copy(showSheet = true, showLinks = false) }
 
     sealed interface Response {
         data object Error : Response
@@ -177,6 +114,7 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
             val anime: Anime,
             val similar: List<AnimeShort>,
             val links: List<ExternalLink>,
+            val stats: AnimeStatsQuery.Data.Anime,
             val favoured: Boolean
         ) : Response
     }
