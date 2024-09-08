@@ -11,10 +11,10 @@ query AnimeList(
     $duration: DurationString,
     $rating: RatingString,
     $genre: String,
-    #$studio: String,
-    #$franchise: String,
-    #$censored: Boolean,
-    #$mylist: MylistString,
+    # $studio: String,
+    # $franchise: String,
+    # $censored: Boolean,
+    # $mylist: MylistString,
     $search: String
 ) {
     animes(
@@ -54,6 +54,7 @@ query Anime($id: String!) {
         episodes
         episodesAired
         season
+        descriptionHtml
         poster {
             originalUrl
         }
@@ -65,45 +66,13 @@ query Anime($id: String!) {
             name
         }
         related {
-            anime {
-                id
-                name
-                russian
-                poster {
-                    originalUrl
-                }
-            }
-            manga {
-                id
-                name
-                russian
-                poster {
-                    originalUrl
-                }
-            }
-            relationText
-        }
-        personRoles {
-            rolesRu
-            person {
-                id
-                name
-                russian
-                poster {
-                    originalUrl
-                }
-            }
+            ...RelatedFragment
         }
         characterRoles {
-            rolesRu
-            character {
-                id
-                name
-                russian
-                poster {
-                    originalUrl
-                }
-            }
+            ...CharacterFragment
+        }
+        personRoles {
+            ...PersonFragment
         }
         screenshots {
             originalUrl
@@ -114,31 +83,134 @@ query Anime($id: String!) {
             kind
             imageUrl
         }
-        scoresStats {
-            score
-            count
-        }
-        statusesStats {
-            status
-            count
-        }
-        descriptionHtml
         topic {
             id
         }
         userRate {
-            id
-            episodes
-            rewatches
-            score
-            status
-            text
+            ...UserRateF
+        }
+    }
+}
+
+query AnimeStats($id: String!) {
+    animes (ids: $id) {
+        scoresStats {
+            ...ScoresF
+        }
+        statusesStats {
+            ...StatsF
         }
     }
 }
 
 query AnimeGenres {
     genres(entryType: Anime) {
+        id
+        russian
+    }
+}
+
+# ============================================= Manga =============================================
+
+query MangaList(
+    $page: PositiveInt!,
+    $limit: PositiveInt!,
+    $order: OrderEnum,
+    $kind: MangaKindString,
+    $status: MangaStatusString,
+    $season: SeasonString,
+    $score: Int,
+    $genre: String,
+    # $publisher: String,
+    # $franchise: String,
+    # $censored: Boolean,
+    # $mylist: MylistString,
+    $search: String
+) {
+    mangas(
+        page: $page,
+        limit: $limit,
+        order: $order,
+        kind: $kind,
+        status: $status,
+        season: $season,
+        score: $score,
+        genre: $genre,
+        search: $search
+    ) {
+        id
+        name
+        russian
+        kind
+        airedOn {
+            date
+        }
+        poster {
+            originalUrl
+        }
+    }
+}
+
+query Manga($id: String!) {
+    mangas (ids: $id) {
+        id
+        name
+        russian
+        kind
+        score
+        status
+        volumes
+        chapters
+        descriptionHtml
+        airedOn {
+            date
+        }
+        releasedOn {
+            date
+        }
+        poster {
+            originalUrl
+        }
+        genres {
+            russian
+        }
+        publishers {
+            id
+            name
+        }
+        topic {
+            id
+        }
+        externalLinks {
+            id
+            kind
+            url
+            createdAt
+            updatedAt
+        }
+        related {
+            ...RelatedFragment
+        }
+        characterRoles {
+            ...CharacterFragment
+        }
+        personRoles {
+            ...PersonFragment
+        }
+        scoresStats {
+            ...ScoresF
+        }
+        statusesStats {
+            ...StatsF
+        }
+        userRate {
+            ...UserRateF
+        }
+    }
+}
+
+query MangaGenres {
+    genres(entryType: Manga) {
         id
         russian
     }
@@ -190,4 +262,71 @@ query People(
             originalUrl
         }
     }
+}
+
+# =========================================== Fragments ============================================
+
+fragment CharacterFragment on CharacterRole {
+    rolesRu
+    character {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+}
+
+fragment PersonFragment on PersonRole {
+    rolesRu
+    person {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+}
+
+fragment RelatedFragment on Related {
+    anime {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+    manga {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+    relationText
+}
+
+fragment ScoresF on ScoreStat {
+    score
+    count
+}
+
+fragment StatsF on StatusStat {
+    status
+    count
+}
+
+fragment UserRateF on UserRate {
+    id
+    status
+    chapters
+    episodes
+    volumes
+    score
+    rewatches
+    text
 }
