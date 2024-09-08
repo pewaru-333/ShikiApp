@@ -1,7 +1,7 @@
 package org.application.shikiapp.network.calls
 
 import org.application.shikiapp.models.data.Token
-import org.application.shikiapp.models.data.User
+import org.application.shikiapp.models.data.UserBrief
 import org.application.shikiapp.network.TOKEN_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
@@ -43,7 +43,7 @@ interface Profile {
     ): Token
 
     @GET("users/whoami")
-    suspend fun whoAmI(): User
+    suspend fun whoAmI(): UserBrief
 
     @POST("users/sign_out")
     suspend fun signOut()
