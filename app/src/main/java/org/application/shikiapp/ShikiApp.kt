@@ -16,7 +16,7 @@ class ShikiApp : Application(), ImageLoaderFactory {
         Preferences.getInstance(this)
     }
 
-    override fun newImageLoader(): ImageLoader = ImageLoader(this).newBuilder()
+    override fun newImageLoader() = ImageLoader(this).newBuilder()
         .respectCacheHeaders(false)
         .error(R.drawable.vector_bad)
         .fallback(R.drawable.vector_bad)
@@ -30,7 +30,7 @@ class ShikiApp : Application(), ImageLoaderFactory {
         .diskCachePolicy(CachePolicy.ENABLED)
         .diskCache {
             DiskCache.Builder()
-                .maxSizeBytes(Preferences.getCache() * 1048576L)
+                .maxSizeBytes(Preferences.getCache() * 1024 * 1024L)
                 .directory(cacheDir)
                 .build()
         }.build()
