@@ -23,11 +23,12 @@ import org.application.shikiapp.models.data.User
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.network.paging.UserFriendsPaging
 import org.application.shikiapp.network.paging.UserHistoryPaging
+import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.ProfileMenus.Achievements
 import org.application.shikiapp.utils.ProfileMenus.Clubs
 import org.application.shikiapp.utils.ProfileMenus.Friends
 
-class UserViewModel(private val userId: Long) : ViewModel() {
+open class UserViewModel(private val userId: Long) : ViewModel() {
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
@@ -45,7 +46,7 @@ class UserViewModel(private val userId: Long) : ViewModel() {
     ).flow.cachedIn(viewModelScope).retryWhen { _, attempt -> attempt <= 5 }
 
     init {
-        viewModelScope.launch {
+        if (Preferences.getUserId() != userId) viewModelScope.launch {
             _response.emit(Response.Loading)
 
             try {
@@ -60,41 +61,19 @@ class UserViewModel(private val userId: Long) : ViewModel() {
         }
     }
 
-    fun setMenu(menu: Int) {
-        viewModelScope.launch { _state.update { it.copy(menu = menu, showDialog = true) } }
-    }
+    fun close() = _state.update { it.copy(showDialog = false) }
 
-    fun setTab(tab: Int) {
-        viewModelScope.launch { _state.update { it.copy(tab = tab) } }
-    }
+    fun setMenu(menu: Int) = _state.update { it.copy(menu = menu, showDialog = true) }
+    fun setTab(tab: Int) = _state.update { it.copy(tab = tab) }
 
-    fun close() {
-        viewModelScope.launch { _state.update { it.copy(showDialog = false) } }
-    }
+    fun showSheet() = _state.update { it.copy(showSheet = true) }
+    fun hideSheet() = _state.update { it.copy(showSheet = false) }
 
-    fun showSheet() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = true) } }
-    }
+    fun showFavourite() = _state.update { it.copy(showFavourite = true) }
+    fun hideFavourite() = _state.update { it.copy(showFavourite = false) }
 
-    fun hideSheet() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = false) } }
-    }
-
-    fun showFavourite() {
-        viewModelScope.launch { _state.update { it.copy(showFavourite = true) } }
-    }
-
-    fun hideFavourite() {
-        viewModelScope.launch { _state.update { it.copy(showFavourite = false) } }
-    }
-
-    fun showHistory() {
-        viewModelScope.launch { _state.update { it.copy(showHistory = true) } }
-    }
-
-    fun hideHistory() {
-        viewModelScope.launch { _state.update { it.copy(showHistory = false) } }
-    }
+    fun showHistory() = _state.update { it.copy(showHistory = true) }
+    fun hideHistory() = _state.update { it.copy(showHistory = false) }
 
     fun getTitle() = when (_state.value.menu) {
         0 -> Friends.title
@@ -106,11 +85,7 @@ class UserViewModel(private val userId: Long) : ViewModel() {
     sealed interface Response {
         data object Error : Response
         data object Loading : Response
-        data class Success(
-            val user: User,
-            val clubs: List<Club>,
-            val favourites: Favourites
-        ) : Response
+        data class Success(val user: User, val clubs: List<Club>, val favourites: Favourites) : Response
     }
 }
 
@@ -123,5 +98,5 @@ data class UserState(
     val showHistory: Boolean = false,
     val stateF: LazyListState = LazyListState(),
     val stateC: LazyListState = LazyListState(),
-    val bottomState: SheetState = SheetState(false, Density(1f))
+    val sheetState: SheetState = SheetState(false, Density(1f))
 )
