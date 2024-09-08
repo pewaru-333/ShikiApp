@@ -15,7 +15,7 @@ import org.application.shikiapp.models.data.AnimeRate
 import org.application.shikiapp.network.NetworkClient
 import retrofit2.HttpException
 
-class UserRatesViewModel(private val userId: Long) : ViewModel() {
+class AnimeRatesViewModel(private val userId: Long) : ViewModel() {
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
@@ -23,10 +23,10 @@ class UserRatesViewModel(private val userId: Long) : ViewModel() {
     var tab by mutableIntStateOf(0)
 
     init {
-        getUserRates()
+        getRates()
     }
 
-    fun getUserRates() {
+    fun getRates() {
         viewModelScope.launch {
             _response.emit(Response.Loading)
 
@@ -52,14 +52,14 @@ class UserRatesViewModel(private val userId: Long) : ViewModel() {
     fun reload() {
         viewModelScope.launch {
             delay(300)
-            getUserRates()
+            getRates()
         }
     }
 
     sealed interface Response {
-        data object NoAccess : Response
         data object Error : Response
         data object Loading : Response
+        data object NoAccess : Response
         data class Success(val rates: List<AnimeRate>) : Response
     }
 }
