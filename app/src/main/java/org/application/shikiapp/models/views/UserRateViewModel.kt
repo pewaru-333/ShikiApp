@@ -11,6 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetChapters
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetEpisodes
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRateId
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRewatches
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScore
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
+import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetVolumes
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
@@ -22,39 +30,41 @@ class UserRateViewModel : ViewModel() {
     var show by mutableStateOf(false)
         private set
 
-    fun onEvent(event: NewRateEvent) = when (event) {
-        is NewRateEvent.SetRateId -> _newRate.update { it.copy(id = event.rateId) }
+    fun onEvent(event: RateEvent) = when (event) {
+        is SetRateId -> _newRate.update { it.copy(id = event.rateId) }
 
-        is NewRateEvent.SetStatus -> _newRate.update {
+        is SetStatus -> _newRate.update {
             it.copy(status = event.status.key, statusName = event.status.value)
         }
 
-        is NewRateEvent.SetScore -> _newRate.update {
+        is SetScore -> _newRate.update {
             it.copy(score = event.score.key, scoreName = event.score.value)
         }
-        is NewRateEvent.SetChapters -> _newRate.update { it.copy(chapters = event.chapters) }
+        is SetChapters -> _newRate.update { it.copy(chapters = event.chapters) }
 
-        is NewRateEvent.SetEpisodes -> event.episodes.let { episodes ->
-            if (episodes.isDigitsOnly()) _newRate.update { it.copy(episodes = episodes) }
+        is SetEpisodes -> event.episodes.let { episodes ->
+            if (episodes != null && episodes.isDigitsOnly())
+                _newRate.update { it.copy(episodes = episodes) }
         }
 
-        is NewRateEvent.SetVolumes -> _newRate.update { it.copy(volumes = event.volumes) }
+        is SetVolumes -> _newRate.update { it.copy(volumes = event.volumes) }
 
-        is NewRateEvent.SetRewatches -> event.rewatches.let { rewatches ->
-            if (rewatches.isDigitsOnly()) _newRate.update { it.copy(rewatches = rewatches) }
+        is SetRewatches -> event.rewatches.let { rewatches ->
+            if (rewatches != null && rewatches.isDigitsOnly())
+                _newRate.update { it.copy(rewatches = rewatches) }
         }
 
-        is NewRateEvent.SetText -> _newRate.update { it.copy(text = event.text ?: BLANK) }
+        is SetText -> _newRate.update { it.copy(text = event.text ?: BLANK) }
     }
 
-    fun createRate(animeId: String) {
+    fun create(id: String, targetType: String) {
         viewModelScope.launch {
             try {
                 NetworkClient.rates.createRate(
                     org.application.shikiapp.models.data.NewRate(
                         userId = Preferences.getUserId(),
-                        targetId = animeId.toLong(),
-                        targetType = "Anime",
+                        targetId = id.toLong(),
+                        targetType = targetType,
                         status = _newRate.value.status,
                         score = _newRate.value.score.toString(),
                         chapters = _newRate.value.chapters,
@@ -70,7 +80,7 @@ class UserRateViewModel : ViewModel() {
         }
     }
 
-    fun updateRate(rateId: String) {
+    fun update(rateId: String) {
         viewModelScope.launch {
             try {
                 NetworkClient.rates.updateRate(
@@ -92,7 +102,7 @@ class UserRateViewModel : ViewModel() {
         }
     }
 
-    fun deleteRate(rateId: String) {
+    fun delete(rateId: String) {
         viewModelScope.launch {
             try {
                 NetworkClient.rates.delete(rateId.toLong())
@@ -113,23 +123,35 @@ class UserRateViewModel : ViewModel() {
         }
     }
 
-    fun reload(model: UserRatesViewModel) {
+    fun reload(anime: AnimeRatesViewModel? = null, manga: MangaRatesViewModel? = null) {
         viewModelScope.launch {
             close()
-            model.reload()
+            anime?.reload()
+            manga?.reload()
         }
     }
 
     fun open() { show = true  }
 
     fun close() { show = false }
+
+    sealed interface RateEvent {
+        data class SetRateId(val rateId: String) : RateEvent
+        data class SetStatus(val status: Map.Entry<String, String>) : RateEvent
+        data class SetScore(val score: Map.Entry<Int, String>) : RateEvent
+        data class SetChapters(val chapters: String?) : RateEvent
+        data class SetEpisodes(val episodes: String?) : RateEvent
+        data class SetVolumes(val volumes: String?) : RateEvent
+        data class SetRewatches(val rewatches: String?) : RateEvent
+        data class SetText(val text: String?) : RateEvent
+    }
 }
 
 data class NewRate(
     val id: String = BLANK,
-    val userId: Long = 0L,
+    val userId: Long = Preferences.getUserId(),
     val targetId: Long = 0L,
-    val targetType: String = "Anime",
+    val targetType: String = BLANK,
     val status: String? = null,
     val statusName: String = BLANK,
     val score: Int? = null,
@@ -140,14 +162,3 @@ data class NewRate(
     val rewatches: String? = null,
     val text: String? = null
 )
-
-sealed interface NewRateEvent {
-    data class SetRateId(val rateId: String) : NewRateEvent
-    data class SetStatus(val status: Map.Entry<String, String>) : NewRateEvent
-    data class SetScore(val score: Map.Entry<Int, String>) : NewRateEvent
-    data class SetChapters(val chapters: String) : NewRateEvent
-    data class SetEpisodes(val episodes: String) : NewRateEvent
-    data class SetVolumes(val volumes: String) : NewRateEvent
-    data class SetRewatches(val rewatches: String) : NewRateEvent
-    data class SetText(val text: String?) : NewRateEvent
-}
