@@ -1,5 +1,6 @@
 package org.application.shikiapp.models.views
 
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.lifecycle.ViewModel
@@ -19,23 +20,19 @@ class CatalogViewModel : ViewModel() {
     private val _event = MutableSharedFlow<DrawerEvent>()
     val event = _event.asSharedFlow()
 
-    fun setSearch(text: String) {
-        viewModelScope.launch { _state.update { it.copy(search = text) } }
-    }
+    fun setSearch(text: String) = _state.update { it.copy(search = text) }
 
-    fun showFilters(menu: Int) {
-        viewModelScope.launch {
-            _state.update {
-                if (menu == 0) it.copy(showFiltersAnime = true)
-                else it.copy(showFiltersPeople = true)
-            }
+    fun showFilters(menu: Int) = _state.update {
+        when (menu) {
+            0 -> it.copy(showFiltersAnime = true)
+            1 -> it.copy(showFiltersManga = true)
+            4 -> it.copy(showFiltersPeople = true)
+            else -> CatalogState()
         }
     }
 
-    fun hideFilters() {
-        viewModelScope.launch {
-            _state.update { it.copy(showFiltersAnime = false, showFiltersPeople = false) }
-        }
+    fun hideFilters() = _state.update {
+        it.copy(showFiltersAnime = false, showFiltersManga = false, showFiltersPeople = false)
     }
 
     fun drawer() {
@@ -61,6 +58,11 @@ data class CatalogState(
     val menu: Int = 0,
     val search: String = BLANK,
     val showFiltersAnime: Boolean = false,
+    val showFiltersManga: Boolean = false,
     val showFiltersPeople: Boolean = false,
+    val listA: LazyListState = LazyListState(),
+    val listM: LazyListState = LazyListState(),
+    val listC: LazyListState = LazyListState(),
+    val listP: LazyListState = LazyListState(),
     val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
 )
