@@ -37,25 +37,12 @@ class NewsDetailViewModel(private val newsId: Long) : ViewModel() {
         }
     }
 
-    fun showComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = true) } }
-    }
+    fun showComments() = _state.update { it.copy(showComments = true) }
+    fun hideComments() = _state.update { it.copy(showComments = false) }
 
-    fun hideComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = false) } }
-    }
-
-    fun showImage(index: Int) {
-        viewModelScope.launch { _state.update { it.copy(showImage = true, image = index) } }
-    }
-
-    fun hideImage() {
-        viewModelScope.launch { _state.update { it.copy(showImage = false) } }
-    }
-
-    fun setImage(index: Int) {
-        viewModelScope.launch { _state.update { it.copy(image = index) } }
-    }
+    fun showImage(index: Int) = _state.update { it.copy(showImage = true, image = index) }
+    fun hideImage() = _state.update { it.copy(showImage = false) }
+    fun setImage(index: Int) = _state.update { it.copy(image = index) }
 
     sealed interface Response {
         data object Error : Response

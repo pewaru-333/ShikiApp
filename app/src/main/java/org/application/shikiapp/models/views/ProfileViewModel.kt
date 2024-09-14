@@ -12,13 +12,18 @@ import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.TokenManager
+import java.net.UnknownHostException
 
 class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
     private val _login = MutableStateFlow<LoginState>(LoginState.NotLogged)
     val login = _login.asStateFlow()
 
     init {
-        if (Preferences.isTokenExists()) viewModelScope.launch {
+        if (Preferences.isTokenExists()) getProfile()
+    }
+
+    fun getProfile() {
+        viewModelScope.launch {
             _login.emit(LoginState.Logging)
 
             try {
@@ -28,7 +33,11 @@ class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
 
                 _login.emit(LoginState.Logged(user, clubs, favourites))
             } catch (e: Throwable) {
-                _login.emit(LoginState.NotLogged)
+                e.printStackTrace()
+                when (e) {
+                    is UnknownHostException -> _login.emit(LoginState.NoNetwork)
+                    else -> _login.emit(LoginState.NotLogged)
+                }
             }
         }
     }
@@ -67,8 +76,10 @@ class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
     }
 
     sealed interface LoginState {
+        data object NoNetwork : LoginState
         data object NotLogged : LoginState
         data object Logging : LoginState
-        data class Logged(val user: User, val clubs: List<Club>, val favourites: Favourites) : LoginState
+        data class Logged(val user: User, val clubs: List<Club>, val favourites: Favourites) :
+            LoginState
     }
 }

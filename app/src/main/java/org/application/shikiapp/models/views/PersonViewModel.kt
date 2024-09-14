@@ -61,29 +61,14 @@ class PersonViewModel(private val id: Long) : ViewModel() {
         }
     }
 
-    fun showSheet() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = true) } }
-    }
+    fun showSheet() = _state.update { it.copy(showSheet = true) }
+    fun hideSheet() = _state.update { it.copy(showSheet = false) }
 
-    fun hideSheet() {
-        viewModelScope.launch { _state.update { it.copy(showSheet = false) } }
-    }
+    fun showComments() = _state.update { it.copy(showComments = true) }
+    fun hideComments() = _state.update { it.copy(showComments = false) }
 
-    fun showComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = true) } }
-    }
-
-    fun hideComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = false) } }
-    }
-
-    fun showRoles() {
-        viewModelScope.launch { _state.update { it.copy(showRoles = true) } }
-    }
-
-    fun hideRoles() {
-        viewModelScope.launch { _state.update { it.copy(showRoles = false) } }
-    }
+    fun showRoles() = _state.update { it.copy(showRoles = true) }
+    fun hideRoles() = _state.update { it.copy(showRoles = false) }
 
     sealed interface Response {
         data object Error : Response

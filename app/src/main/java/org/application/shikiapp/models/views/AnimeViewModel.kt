@@ -86,9 +86,7 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
     fun showScreenshots() = _state.update { it.copy(showScreenshots = true) }
     fun hideScreenshots() = _state.update { it.copy(showScreenshots = false) }
 
-    fun showScreenshot(index: Int) =
-        _state.update { it.copy(showScreenshot = true, screenshot = index) }
-
+    fun showScreenshot(index: Int) = _state.update { it.copy(showScreenshot = true, screenshot = index) }
     fun hideScreenshot() = _state.update { it.copy(showScreenshot = false, screenshot = 0) }
     fun setScreenshot(index: Int) = _state.update { it.copy(screenshot = index) }
 

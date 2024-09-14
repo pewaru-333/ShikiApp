@@ -50,29 +50,15 @@ class CharacterViewModel(private val id: String) : ViewModel() {
         }
     }
 
-    fun showAnime() {
-        viewModelScope.launch { _state.update { it.copy(showAnime = true) } }
-    }
+    fun showAnime() = _state.update { it.copy(showAnime = true) }
+    fun showManga() = _state.update { it.copy(showManga = true) }
+    fun hide() = _state.update { it.copy(showAnime = false, showManga = false) }
 
-    fun hideAnime() {
-        viewModelScope.launch { _state.update { it.copy(showAnime = false) } }
-    }
+    fun showSeyu() = _state.update { it.copy(showSeyu = true) }
+    fun hideSeyu() = _state.update { it.copy(showSeyu = false) }
 
-    fun showSeyu() {
-        viewModelScope.launch { _state.update { it.copy(showSeyu = true) } }
-    }
-
-    fun hideSeyu() {
-        viewModelScope.launch { _state.update { it.copy(showSeyu = false) } }
-    }
-
-    fun showComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = true) } }
-    }
-
-    fun hideComments() {
-        viewModelScope.launch { _state.update { it.copy(showComments = false) } }
-    }
+    fun showComments() = _state.update { it.copy(showComments = true) }
+    fun hideComments() = _state.update { it.copy(showComments = false) }
 
     sealed interface Response {
         data object Error : Response
@@ -86,6 +72,7 @@ class CharacterViewModel(private val id: String) : ViewModel() {
 
 data class CharacterState(
     val showAnime: Boolean = false,
+    val showManga: Boolean = false,
     val showSeyu: Boolean = false,
     val showComments: Boolean = false
 )
