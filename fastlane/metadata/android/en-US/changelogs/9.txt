@@ -1,1 +1,0 @@
-— Added the feature to view favorites and user history.

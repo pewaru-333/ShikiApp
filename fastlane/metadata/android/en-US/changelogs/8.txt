@@ -1,3 +1,0 @@
-— Added the ability to leave a comment in the anime rating dialog.
-— Added a button in the list ("Watching") of anime that allows you to quickly mark a new episode as viewed.
-— Added video display and the ability to view images on the news page.

@@ -1,0 +1,3 @@
+— Added a list of manga in the character description
+— Fixed a bug that incorrectly displayed the manga/anime release season
+— Fixed a bug that made it impossible to view the list of club members

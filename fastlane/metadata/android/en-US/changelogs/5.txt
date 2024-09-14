@@ -1,2 +1,0 @@
-— Added "Similar" to anime in anime screen.
-— Added characters searching in catalog menu.
