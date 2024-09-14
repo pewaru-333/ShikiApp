@@ -12,7 +12,7 @@ import org.application.shikiapp.utils.fromISODate
 import retrofit2.HttpException
 import java.time.LocalDate
 
-class CalendarViewModel : ViewModel() {
+object CalendarViewModel : ViewModel() {
     private val _state = MutableStateFlow<Response>(Response.Loading)
     val state = _state.asStateFlow()
 
