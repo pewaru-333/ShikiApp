@@ -57,7 +57,7 @@ import org.application.shikiapp.R
 import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.ClubImages
-import org.application.shikiapp.models.data.User
+import org.application.shikiapp.models.data.UserShort
 import org.application.shikiapp.models.views.ClubState
 import org.application.shikiapp.models.views.ClubViewModel
 import org.application.shikiapp.models.views.Menus
@@ -221,7 +221,7 @@ private fun Anime(anime: LazyPagingItems<AnimeShort>, navigator: DestinationsNav
 }
 
 @Composable
-private fun Members(members: LazyPagingItems<User>, navigator: DestinationsNavigator, padding: Dp) {
+private fun Members(members: LazyPagingItems<UserShort>, navigator: DestinationsNavigator, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (members.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }

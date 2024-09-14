@@ -434,11 +434,7 @@ private fun DialogSimilar(
                             contentDescription = null,
                             modifier = Modifier
                                 .clip(MaterialTheme.shapes.medium)
-                                .border(
-                                    (0.5).dp,
-                                    MaterialTheme.colorScheme.onSurface,
-                                    MaterialTheme.shapes.medium
-                                )
+                                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
                         )
                     }
                 )

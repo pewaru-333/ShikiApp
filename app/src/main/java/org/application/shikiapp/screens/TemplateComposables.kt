@@ -279,7 +279,7 @@ fun RoundedPoster(link: String?, width: Dp = 140.dp) = AsyncImage(
 )
 
 @Composable
-fun RoundedRelatedPoster(link: String?) = AsyncImage(
+fun RoundedRelatedPoster(link: String?, scale: ContentScale = ContentScale.FillHeight) = AsyncImage(
     model = if (link?.contains("https") == true) link else getImage(link),
     contentDescription = null,
     modifier = Modifier
@@ -287,7 +287,7 @@ fun RoundedRelatedPoster(link: String?) = AsyncImage(
         .height(187.dp)
         .clip(MaterialTheme.shapes.medium)
         .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
-    contentScale = ContentScale.FillHeight,
+    contentScale = scale,
     filterQuality = FilterQuality.High,
 )
 
@@ -343,7 +343,7 @@ fun ShortDescription(title: String, kind: String?, season: Any?) =
             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
         )
         Text(text = getKind(kind), style = MaterialTheme.typography.bodyLarge)
-        Text(text = getSeason(season), style = MaterialTheme.typography.bodyLarge)
+        Text(text = getSeason(season, kind), style = MaterialTheme.typography.bodyLarge)
     }
 
 @Composable

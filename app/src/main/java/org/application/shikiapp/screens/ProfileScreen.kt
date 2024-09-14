@@ -40,6 +40,7 @@ import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.ProfileViewModel
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.Logged
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.Logging
+import org.application.shikiapp.models.views.ProfileViewModel.LoginState.NoNetwork
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.NotLogged
 import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.network.AUTH_URL
@@ -69,6 +70,7 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
     when (val data = loginState) {
         NotLogged -> LoginPage()
         Logging -> LoadingScreen()
+        NoNetwork -> ErrorScreen(model::getProfile)
         is Logged -> {
             val user = data.user
             val state by model.state.collectAsStateWithLifecycle()
@@ -81,7 +83,9 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
                     TopAppBar(
                         title = {},
                         navigationIcon = {
-                            IconButton(model::signOut) { Icon(Icons.AutoMirrored.Outlined.ExitToApp, null) }
+                            IconButton(model::signOut) {
+                                Icon(Icons.AutoMirrored.Outlined.ExitToApp, null)
+                            }
                         },
                         actions = {
                             IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
@@ -110,6 +114,7 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
                 state.showFavourite -> DialogFavourites(
                     model::hideFavourite, model::setTab, state.tab, data.favourites, navigator
                 )
+
                 state.showHistory -> {
                     val history = model.history.collectAsLazyPagingItems()
                     DialogHistory(model::hideHistory, history, navigator)
@@ -134,6 +139,8 @@ private fun LoginPage(context: Context = LocalContext.current) {
         .build()
 
     Box(Modifier.fillMaxSize(), Alignment.Center) {
-        Button({ (context.startActivity(Intent(Intent.ACTION_VIEW, uri))) }) { Text(stringResource(text_login)) }
+        Button({ (context.startActivity(Intent(Intent.ACTION_VIEW, uri))) }) {
+            Text(stringResource(text_login))
+        }
     }
 }

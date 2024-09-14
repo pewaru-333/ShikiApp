@@ -41,20 +41,24 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
+import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_character
+import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_seyu
+import org.application.shikiapp.R.string.text_show_all_m
 import org.application.shikiapp.R.string.text_show_all_w
-import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.CharacterPerson
+import org.application.shikiapp.models.data.Content
 import org.application.shikiapp.models.views.CharacterViewModel
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Error
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Loading
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Success
 import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.factory
+import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
@@ -76,6 +80,7 @@ fun CharacterScreen(id: String, navigator: Navigator) {
 private fun CharacterView(model: CharacterViewModel, data: Success, navigator: Navigator) {
     val character = data.character
     val anime = data.character.animes
+    val manga = data.character.mangas
     val seyu = data.character.seyu
 
     val state by model.state.collectAsStateWithLifecycle()
@@ -113,37 +118,52 @@ private fun CharacterView(model: CharacterViewModel, data: Success, navigator: N
             }
 
             character.descriptionHTML?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
-            anime.let { if (it.isNotEmpty()) item { Anime(model, it, navigator) } }
+            anime.let { if (it.isNotEmpty()) item { Catalog(model::showAnime, it, navigator) } }
+            manga.let { if (it.isNotEmpty()) item { Catalog(model::showManga, it, navigator) } }
             seyu.let { if (it.isNotEmpty()) item { Seyu(model, it, navigator) } }
         }
     }
 
     when {
-        state.showAnime -> DialogAnime(model, anime, navigator)
+        state.showAnime || state.showManga ->
+            DialogCatalog(model:: hide, if(state.showAnime) anime else manga, navigator)
+//        state.showAnime -> DialogCatalog(model::hide, anime, navigator)
+//        state.showManga -> DialogManga(model, manga, navigator)
         state.showSeyu -> DialogSeyu(model, seyu, navigator)
         state.showComments -> Comments(model::hideComments, comments!!, navigator)
     }
 }
 
 @Composable
-private fun Anime(model: CharacterViewModel, list: List<AnimeShort>, navigator: Navigator) =
-    Column {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
-            ParagraphTitle(stringResource(text_anime), Modifier.padding(bottom = 4.dp))
-            TextButton(model::showAnime) { Text(stringResource(text_show_all_w)) }
-        }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp), CenterVertically) {
-            list.take(5).forEach { (id, name, russian, image) ->
-                Column(
-                    Modifier
-                        .width(120.dp)
-                        .clickable { navigator.navigate(AnimeScreenDestination(id.toString())) }) {
-                    RoundedRelatedPoster(image.original)
-                    RelatedText(russian ?: name)
-                }
+private fun Catalog(
+    show: () -> Unit,
+    list: List<Content>,
+    navigator: Navigator,
+    anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
+) = Column {
+    Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+        ParagraphTitle(stringResource(if (anime) text_anime else text_manga), Modifier.padding(bottom = 4.dp))
+        TextButton(show) { Text(stringResource(if (anime) text_show_all_w else text_show_all_m)) }
+    }
+    Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp), CenterVertically) {
+        list.take(5).forEach {
+            Column(
+                Modifier
+                    .width(120.dp)
+                    .clickable {
+                        navigator.navigate(
+                            if (anime) AnimeScreenDestination(it.id.toString())
+                            else MangaScreenDestination(it.id.toString())
+                        )
+                    }
+            ) {
+                RoundedRelatedPoster(it.image.original)
+                RelatedText(it.russian ?: it.name)
             }
         }
     }
+}
+
 
 @Composable
 private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, navigator: Navigator) =
@@ -164,37 +184,49 @@ private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, navigat
 
 // =========================================== Dialogs ===========================================
 
-@Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun DialogAnime(model: CharacterViewModel, list: List<AnimeShort>, navigator: Navigator) =
-    Dialog(model::hideAnime, DialogProperties(usePlatformDefaultWidth = false)) {
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(text_anime)) },
-                    navigationIcon = { NavigationIcon(model::hideAnime) }
+@Composable
+private fun DialogCatalog(
+    hide: () -> Unit,
+    list: List<Content>,
+    navigator: Navigator,
+    anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
+) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(if (anime) text_anime else text_manga)) },
+                navigationIcon = { NavigationIcon(hide) }
+            )
+        }
+    ) { values ->
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
+            verticalArrangement = spacedBy(16.dp)
+        ) {
+            items(list) {
+                Row(
+                    horizontalArrangement = spacedBy(16.dp),
+                    modifier = Modifier
+                        .height(198.dp)
+                        .clickable {
+                            navigator.navigate(
+                                if (anime) AnimeScreenDestination(it.id.toString())
+                                else MangaScreenDestination(it.id.toString())
+                            )
+                        }
                 )
-            }
-        ) { values ->
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-                verticalArrangement = spacedBy(16.dp)
-            ) {
-                items(list) { (id, name, russian, image, kind, releasedOn) ->
-                    Row(
-                        Modifier
-                            .height(198.dp)
-                            .clickable { navigator.navigate(AnimeScreenDestination(id.toString())) },
-                        spacedBy(16.dp)
+                {
+                    RoundedPoster(it.image.original)
+                    ShortDescription(
+                        it.russian?.let { title -> title.ifEmpty { it.name } } ?: it.name,
+                        it.kind, if (anime) it.airedOn else it.releasedOn
                     )
-                    {
-                        RoundedPoster(image.original)
-                        ShortDescription(russian ?: name, kind, releasedOn)
-                    }
                 }
             }
         }
     }
+}
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
