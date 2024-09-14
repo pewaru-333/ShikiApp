@@ -15,6 +15,8 @@ import org.application.type.OrderEnum
 
 object ApolloClient {
 
+// ============================================= Anime =============================================
+
     suspend fun getAnimeList(
         page: Int,
         limit: Int,
@@ -34,14 +36,16 @@ object ApolloClient {
         )
     ).execute().data?.animes ?: emptyList()
 
-    suspend fun getAnimeGenres() =
-        NetworkClient.apollo.query(AnimeGenresQuery()).execute().data?.genres ?: emptyList()
-
     suspend fun getAnime(id: String) =
         NetworkClient.apollo.query(AnimeQuery(id)).execute().dataOrThrow().animes.first()
 
+    suspend fun getAnimeGenres() =
+        NetworkClient.apollo.query(AnimeGenresQuery()).execute().data?.genres ?: emptyList()
+
     suspend fun getAnimeStats(id: String) =
         NetworkClient.apollo.query(AnimeStatsQuery(id)).execute().dataOrThrow().animes.first()
+
+// ============================================= Manga =============================================
 
     suspend fun getMangaList(
         page: Int,
@@ -65,12 +69,15 @@ object ApolloClient {
     suspend fun getMangaGenres() =
         NetworkClient.apollo.query(MangaGenresQuery()).execute().data?.genres ?: emptyList()
 
+// ============================================= Other =============================================
+
     suspend fun getCharacters(page: Int, limit: Int, search: String?) =
         NetworkClient.apollo.query(CharacterListQuery(page, limit, search)).execute()
             .data?.characters ?: emptyList()
 
     suspend fun getCharacter(id: String) =
-        NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute().dataOrThrow().characters.first()
+        NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute()
+            .dataOrThrow().characters.first()
 
     suspend fun getPeople(
         page: Int,
