@@ -23,9 +23,11 @@ import org.application.shikiapp.R.string.text_characters
 import org.application.shikiapp.R.string.text_clubs
 import org.application.shikiapp.R.string.text_friends
 import org.application.shikiapp.R.string.text_manga
+import org.application.shikiapp.R.string.text_mangaka
 import org.application.shikiapp.R.string.text_mangakas
 import org.application.shikiapp.R.string.text_others
 import org.application.shikiapp.R.string.text_people
+import org.application.shikiapp.R.string.text_producer
 import org.application.shikiapp.R.string.text_ranobe
 import org.application.shikiapp.R.string.text_seyu
 
@@ -216,12 +218,12 @@ enum class CatalogItems(@StringRes val title: Int, val icon: Int) {
     Anime(text_anime, vector_anime),
     Manga(text_manga, vector_manga),
     Ranobe(text_ranobe, vector_ranobe),
-    Charaters(text_characters, vector_character),
+    Characters(text_characters, vector_character),
     People(text_people, vector_person)
 }
 
-enum class PeopleFilterItems(val title: String) {
-    Seyu("Сэйю"), Producer("Продюсер"), Mangaka("Мангака")
+enum class PeopleFilterItems(@StringRes val title: Int) {
+    Seyu(text_seyu), Producer(text_producer), Mangaka(text_mangaka)
 }
 
 enum class ProfileMenus(@StringRes val title: Int) {

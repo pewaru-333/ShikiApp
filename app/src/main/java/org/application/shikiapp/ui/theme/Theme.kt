@@ -4,6 +4,7 @@ import android.app.Activity
 import android.content.Context
 import android.os.Build
 import android.view.View
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -18,7 +19,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.THEMES
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -122,9 +122,9 @@ fun Theme(
 }
 
 @Composable
-private fun isNightMode() = when (Preferences.getAppTheme()) {
-    THEMES[1] -> false
-    THEMES[2] -> true
+private fun isNightMode() = when (AppCompatDelegate.getDefaultNightMode()) {
+    AppCompatDelegate.MODE_NIGHT_NO -> false
+    AppCompatDelegate.MODE_NIGHT_YES -> true
     else -> isSystemInDarkTheme()
 }
 

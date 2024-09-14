@@ -27,11 +27,13 @@
     <string name="text_catalog">Каталог</string>
     <string name="text_characters">Персонажи</string>
     <string name="text_manga">Манга</string>
+    <string name="text_mangaka">Мангака</string>
     <string name="text_mangakas">Мангаки</string>
     <string name="text_news">Новости</string>
     <string name="text_news_one">Новость</string>
     <string name="text_others">Прочие</string>
     <string name="text_people">Персоналии</string>
+    <string name="text_producer">Продюсер</string>
     <string name="text_ranobe">Ранобэ</string>
     <string name="text_video">Видео</string>
 
@@ -81,6 +83,7 @@
     <string name="text_remove">Удалить</string>
     <string name="text_remove_fav">Удалить из избранного</string>
     <string name="text_save">Сохранить</string>
+    <string name="text_show_all_m">Показать всю</string>
     <string name="text_show_all_s">Показать весь</string>
     <string name="text_show_all_w">Показать все</string>
 
