@@ -105,8 +105,7 @@ query AnimeStats($id: String!) {
 
 query AnimeGenres {
     genres(entryType: Anime) {
-        id
-        russian
+        ...GenresF
     }
 }
 
@@ -211,8 +210,7 @@ query Manga($id: String!) {
 
 query MangaGenres {
     genres(entryType: Manga) {
-        id
-        russian
+        ...GenresF
     }
 }
 
@@ -308,6 +306,11 @@ fragment RelatedFragment on Related {
         }
     }
     relationText
+}
+
+fragment GenresF on Genre {
+    id
+    russian
 }
 
 fragment ScoresF on ScoreStat {
