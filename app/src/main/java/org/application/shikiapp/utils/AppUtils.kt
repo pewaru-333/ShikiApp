@@ -9,6 +9,18 @@ import org.application.MangaQuery.Data.Manga.Publisher
 import org.application.shikiapp.models.data.Date
 import org.application.shikiapp.models.data.Person
 import java.time.LocalDate
+import java.time.Month.APRIL
+import java.time.Month.AUGUST
+import java.time.Month.DECEMBER
+import java.time.Month.FEBRUARY
+import java.time.Month.JANUARY
+import java.time.Month.JULY
+import java.time.Month.JUNE
+import java.time.Month.MARCH
+import java.time.Month.MAY
+import java.time.Month.NOVEMBER
+import java.time.Month.OCTOBER
+import java.time.Month.SEPTEMBER
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.FormatStyle
@@ -90,17 +102,29 @@ fun getKind(kind: String?) = KINDS_A[kind] ?: KINDS_M[kind] ?: "Неизвест
 fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
 fun getFull(full: Int? = 0, status: String? = STATUSES_A.keys.elementAt(1)) =
     if (status == STATUSES_A.keys.elementAt(1) && full == 0) "?" else full.toString()
-fun getSeason(text: Any?) = when (text) {
+fun getSeason(text: Any?, kind: String?) = when (text) {
     is String -> when (text) {
         "?" -> "Неизвестно"
         else -> when {
-            text.length == 10 -> LocalDate.parse(text).year.toString()
-            text.contains("-") -> BLANK
-            else -> {
+            kind in KINDS_M -> LocalDate.parse(text).year.toString()
+            text.contains("_") -> {
                 val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
                 val year = text.substringAfter("_")
                 "${SEASONS[season]} $year"
             }
+
+            text.length == 10 -> {
+                val date = LocalDate.parse(text)
+                val season = when (date.month) {
+                    JANUARY, FEBRUARY, DECEMBER -> SEASONS.values.elementAt(0)
+                    MARCH, APRIL, MAY -> SEASONS.values.elementAt(1)
+                    JUNE, JULY, AUGUST -> SEASONS.values.elementAt(2)
+                    SEPTEMBER, OCTOBER, NOVEMBER -> SEASONS.values.elementAt(3)
+                }
+                "$season ${date.year}"
+            }
+
+            else -> BLANK
         }
     }
 
