@@ -5,7 +5,7 @@ import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.Manga
-import org.application.shikiapp.models.data.User
+import org.application.shikiapp.models.data.UserShort
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
@@ -65,7 +65,7 @@ interface Clubs {
         @Path(value = "clubId") clubId: Long,
         @Query("page") page: Int = 1,
         @Query("limit") limit: Int = 10
-    ): List<User>
+    ): List<UserShort>
 
     @GET("clubs/{clubId}/images")
     suspend fun getImages(

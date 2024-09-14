@@ -6,7 +6,6 @@ import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.History
 import org.application.shikiapp.models.data.MangaRate
 import org.application.shikiapp.models.data.User
-import org.application.shikiapp.models.data.UserBrief
 import org.application.shikiapp.models.data.UserShort
 import retrofit2.http.GET
 import retrofit2.http.Path
@@ -23,9 +22,6 @@ interface User {
 
     @GET("users/{userId}")
     suspend fun getUser(@Path(value = "userId") userId: Long): User
-
-    @GET("users/{userId}/info")
-    suspend fun getBriefInfo(@Path(value = "userId") userId: Long): UserBrief
 
     @GET("users/{userId}/friends")
     suspend fun getFriends(
