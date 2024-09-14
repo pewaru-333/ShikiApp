@@ -3,11 +3,11 @@ package org.application.shikiapp.network.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.MangaListQuery.Data.Manga
-import org.application.shikiapp.models.views.MangaFilters
+import org.application.shikiapp.models.views.CatalogFilters
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.utils.setScore
 
-class MangaPaging(private val query: MangaFilters) : PagingSource<Int, Manga>() {
+class MangaPaging(private val query: CatalogFilters) : PagingSource<Int, Manga>() {
 
     override fun getRefreshKey(state: PagingState<Int, Manga>): Int? =
         state.anchorPosition?.let { anchorPosition ->
@@ -25,7 +25,7 @@ class MangaPaging(private val query: MangaFilters) : PagingSource<Int, Manga>() 
             status = query.status.joinToString(","),
             season = query.season.joinToString(","),
             score = setScore(query.status, query.score),
-            genre = query.genre.joinToString(","),
+            genre = query.genres.joinToString(","),
             search = query.title
         )
 

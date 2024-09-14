@@ -3,10 +3,10 @@ package org.application.shikiapp.network.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.PeopleQuery.Data.Person
-import org.application.shikiapp.models.views.PeopleFilters
+import org.application.shikiapp.models.views.CatalogFilters
 import org.application.shikiapp.network.ApolloClient
 
-class PeoplePaging(private val filters: PeopleFilters) : PagingSource<Int, Person>() {
+class PeoplePaging(private val filters: CatalogFilters) : PagingSource<Int, Person>() {
 
     override fun getRefreshKey(state: PagingState<Int, Person>): Int? =
         state.anchorPosition?.let { anchorPosition ->
@@ -19,7 +19,7 @@ class PeoplePaging(private val filters: PeopleFilters) : PagingSource<Int, Perso
         val response = ApolloClient.getPeople(
             page = page,
             limit = params.loadSize,
-            search = filters.search,
+            search = filters.title,
             isSeyu = filters.isSeyu,
             isProducer = filters.isProducer,
             isMangaka = filters.isMangaka
