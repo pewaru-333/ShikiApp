@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.CatalogItems
 
 class CatalogViewModel : ViewModel() {
     private val _state = MutableStateFlow(CatalogState())
@@ -22,26 +23,26 @@ class CatalogViewModel : ViewModel() {
 
     fun setSearch(text: String) = _state.update { it.copy(search = text) }
 
-    fun showFilters(menu: Int) = _state.update {
+    fun showFilters(menu: CatalogItems) = _state.update {
         when (menu) {
-            0 -> it.copy(showFiltersAnime = true)
-            1 -> it.copy(showFiltersManga = true)
-            4 -> it.copy(showFiltersPeople = true)
+            CatalogItems.Anime -> it.copy(showFiltersA = true)
+            CatalogItems.Manga -> it.copy(showFiltersM = true)
+            CatalogItems.People -> it.copy(showFiltersP = true)
             else -> CatalogState()
         }
     }
 
     fun hideFilters() = _state.update {
-        it.copy(showFiltersAnime = false, showFiltersManga = false, showFiltersPeople = false)
+        it.copy(showFiltersA = false, showFiltersM = false, showFiltersP = false)
     }
 
     fun drawer() {
-        viewModelScope.launch { _event.emit(DrawerEvent.ClickDrawer) }
+        viewModelScope.launch { _event.emit(DrawerEvent.Click) }
     }
 
-    fun pick(menu: Int) {
+    fun pick(menu: CatalogItems) {
         viewModelScope.launch {
-            _event.emit(DrawerEvent.ClearDrawer)
+            _event.emit(DrawerEvent.Clear)
             _state.update {
                 it.copy(menu = menu, search = BLANK, drawerState = DrawerState(DrawerValue.Closed))
             }
@@ -49,17 +50,17 @@ class CatalogViewModel : ViewModel() {
     }
 
     sealed interface DrawerEvent {
-        data object ClearDrawer : DrawerEvent
-        data object ClickDrawer : DrawerEvent
+        data object Clear : DrawerEvent
+        data object Click : DrawerEvent
     }
 }
 
 data class CatalogState(
-    val menu: Int = 0,
+    val menu: CatalogItems = CatalogItems.Anime,
     val search: String = BLANK,
-    val showFiltersAnime: Boolean = false,
-    val showFiltersManga: Boolean = false,
-    val showFiltersPeople: Boolean = false,
+    val showFiltersA: Boolean = false,
+    val showFiltersM: Boolean = false,
+    val showFiltersP: Boolean = false,
     val listA: LazyListState = LazyListState(),
     val listM: LazyListState = LazyListState(),
     val listC: LazyListState = LazyListState(),
