@@ -17,13 +17,12 @@ class ShikiApp : Application(), ImageLoaderFactory {
     }
 
     override fun newImageLoader() = ImageLoader(this).newBuilder()
-        .respectCacheHeaders(false)
         .error(R.drawable.vector_bad)
         .fallback(R.drawable.vector_bad)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .memoryCache {
             MemoryCache.Builder(this)
-                .maxSizePercent(0.2)
+                .maxSizePercent(0.3)
                 .strongReferencesEnabled(true)
                 .build()
         }
