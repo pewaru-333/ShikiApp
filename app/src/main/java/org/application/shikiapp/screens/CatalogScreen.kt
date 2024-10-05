@@ -130,11 +130,14 @@ import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetSta
 import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetTitle
 import org.application.shikiapp.models.views.MangaListViewModel
 import org.application.shikiapp.models.views.PeopleViewModel
+import org.application.shikiapp.models.views.RanobeListViewModel
+import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CatalogItems
 import org.application.shikiapp.utils.CatalogItems.*
 import org.application.shikiapp.utils.DURATIONS
 import org.application.shikiapp.utils.KINDS_A
 import org.application.shikiapp.utils.KINDS_M
+import org.application.shikiapp.utils.KINDS_R
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.ORDERS
 import org.application.shikiapp.utils.PeopleFilterItems
@@ -184,14 +187,9 @@ fun CatalogScreen(navigator: Navigator) {
                             )
                         },
                         selected = state.menu == it,
-                        onClick = { if (it != Ranobe) model.pick(it) },
+                        onClick = { model.pick(it) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                        icon = { Icon(painterResource(it.icon), null) },
-                        colors = if (it == Ranobe)
-                            NavigationDrawerItemDefaults.colors(
-                                unselectedContainerColor = Color.LightGray.copy(alpha = 0.2f)
-                            )
-                        else NavigationDrawerItemDefaults.colors()
+                        icon = { Icon(painterResource(it.icon), null) }
                     )
                 }
             }
@@ -218,14 +216,16 @@ fun CatalogScreen(navigator: Navigator) {
                     )
                 },
                 modifier = Modifier.drawBehind {
-                    drawLine(Color.LightGray, Offset(0f, size.height), Offset(size.width, size.height), 4f)
+                    drawLine(
+                        Color.LightGray,
+                        Offset(0f, size.height),
+                        Offset(size.width, size.height),
+                        4f
+                    )
                 },
                 navigationIcon = { IconButton(model::drawer) { Icon(Icons.Outlined.Menu, null) } },
                 actions = {
-                    if (state.menu in listOf(
-                            Anime, Manga, People
-                        )
-                    ) IconButton({ model.showFilters(state.menu) }) {
+                    if (state.menu != Characters) IconButton({ model.showFilters(state.menu) }) {
                         Icon(painterResource(vector_filter), null)
                     }
                 }
@@ -245,7 +245,7 @@ private fun CatalogList(hide: () -> Unit, state: CatalogState, navigator: Naviga
     val model = when (state.menu) {
         Anime -> viewModel<AnimeListViewModel>()
         Manga -> viewModel<MangaListViewModel>()
-        Ranobe -> TODO()
+        Ranobe -> viewModel<RanobeListViewModel>()
         Characters -> viewModel<CharacterListViewModel>()
         People -> viewModel<PeopleViewModel>()
     }
@@ -255,10 +255,15 @@ private fun CatalogList(hide: () -> Unit, state: CatalogState, navigator: Naviga
     LaunchedEffect(state.search) { model.onEvent(SetTitle(state.search)) }
 
     when {
-        state.showFiltersA || state.showFiltersM ->
+        state.showFiltersA || state.showFiltersM || state.showFiltersR ->
             DialogFilters(
                 model::onEvent, hide, list::refresh, model.genres, filters,
-                if (model is AnimeListViewModel) LINKED_TYPE[0] else LINKED_TYPE[1]
+                when (model) {
+                    is RanobeListViewModel -> LINKED_TYPE[2]
+                    is MangaListViewModel -> LINKED_TYPE[1]
+                    is AnimeListViewModel -> LINKED_TYPE[0]
+                    else -> BLANK
+                }
             )
 
         state.showFiltersP -> DialogFiltersP(hide, model::onEvent, filters.roles)
@@ -273,7 +278,7 @@ private fun CatalogList(hide: () -> Unit, state: CatalogState, navigator: Naviga
             state = when (state.menu) {
                 Anime -> state.listA
                 Manga -> state.listM
-                Ranobe -> TODO()
+                Ranobe -> state.listR
                 Characters -> state.listC
                 People -> state.listP
             }
@@ -281,7 +286,7 @@ private fun CatalogList(hide: () -> Unit, state: CatalogState, navigator: Naviga
             when (state.menu) {
                 Anime -> animeList(list as LazyPagingItems<Anime>, navigator)
                 Manga -> mangaList(list as LazyPagingItems<Manga>, navigator)
-                Ranobe -> TODO()
+                Ranobe -> mangaList(list as LazyPagingItems<Manga>, navigator)
                 Characters -> characterList(list as LazyPagingItems<Character>, navigator)
                 People -> peopleList(list as LazyPagingItems<Person>, navigator)
             }
@@ -429,7 +434,11 @@ private fun Status(event: (FilterEvent) -> Unit, status: List<String>, type: Str
 private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: String) {
     ParagraphTitle(stringResource(text_kind))
     FlowRow(horizontalArrangement = spacedBy(8.dp)) {
-        (if (type == LINKED_TYPE[0]) KINDS_A else KINDS_M).entries.forEach { (key, value) ->
+        (when (type) {
+            LINKED_TYPE[0] -> KINDS_A
+            LINKED_TYPE[1] -> KINDS_M
+            else -> KINDS_R
+        }).entries.forEach { (key, value) ->
             ElevatedFilterChip(
                 selected = key in kind,
                 onClick = { event(SetKind(key)) },
@@ -439,7 +448,12 @@ private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: String)
 }
 
 @Composable
-private fun Season(event: (FilterEvent) -> Unit, seasonYS: String, seasonYF: String, seasonS: List<String>) {
+private fun Season(
+    event: (FilterEvent) -> Unit,
+    seasonYS: String,
+    seasonYF: String,
+    seasonS: List<String>
+) {
     ParagraphTitle(stringResource(text_season), Modifier.padding(bottom = 8.dp))
     Column {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {

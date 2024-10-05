@@ -126,6 +126,11 @@ val KINDS_M = mapOf(
     "doujin" to "Додзинси"
 )
 
+val KINDS_R = mapOf(
+    "light_novel" to "Ранобэ",
+    "novel" to "Новелла"
+)
+
 val ORDERS = mapOf(
     "id" to "По ID ↑",
     "id_desc" to "По ID ↓",

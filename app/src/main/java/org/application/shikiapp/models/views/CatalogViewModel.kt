@@ -27,13 +27,14 @@ class CatalogViewModel : ViewModel() {
         when (menu) {
             CatalogItems.Anime -> it.copy(showFiltersA = true)
             CatalogItems.Manga -> it.copy(showFiltersM = true)
+            CatalogItems.Ranobe -> it.copy(showFiltersR = true)
             CatalogItems.People -> it.copy(showFiltersP = true)
             else -> CatalogState()
         }
     }
 
     fun hideFilters() = _state.update {
-        it.copy(showFiltersA = false, showFiltersM = false, showFiltersP = false)
+        it.copy(showFiltersA = false, showFiltersM = false, showFiltersR = false, showFiltersP = false)
     }
 
     fun drawer() {
@@ -60,9 +61,11 @@ data class CatalogState(
     val search: String = BLANK,
     val showFiltersA: Boolean = false,
     val showFiltersM: Boolean = false,
+    val showFiltersR: Boolean = false,
     val showFiltersP: Boolean = false,
     val listA: LazyListState = LazyListState(),
     val listM: LazyListState = LazyListState(),
+    val listR: LazyListState = LazyListState(),
     val listC: LazyListState = LazyListState(),
     val listP: LazyListState = LazyListState(),
     val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
