@@ -13,13 +13,12 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
-import org.application.MangaListQuery
 import org.application.MangaListQuery.Data.Manga
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.network.paging.MangaPaging
 import retrofit2.HttpException
 
-class MangaListViewModel : FiltersViewModel<Manga>() {
+open class MangaListViewModel : FiltersViewModel<Manga>() {
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     override val list = filters.debounce(300).flatMapLatest { value ->
         Pager(
