@@ -11,10 +11,10 @@ import kotlinx.coroutines.flow.retryWhen
 import org.application.shikiapp.network.paging.NewsPaging
 import retrofit2.HttpException
 
-object NewsViewModel : ViewModel() {
+class NewsViewModel : ViewModel() {
     val newsList = Pager(
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),
-        pagingSourceFactory = { NewsPaging }
+        pagingSourceFactory = { NewsPaging() }
     ).flow.map { news ->
         val set = mutableSetOf<Long>()
         news.filter { if (set.contains(it.id)) false else set.add(it.id) }

@@ -5,7 +5,7 @@ import androidx.paging.PagingState
 import org.application.shikiapp.models.data.News
 import org.application.shikiapp.network.NetworkClient
 
-object NewsPaging : PagingSource<Int, News>() {
+class NewsPaging : PagingSource<Int, News>() {
 
     override fun getRefreshKey(state: PagingState<Int, News>): Int? =
         state.anchorPosition?.let { anchorPosition ->
