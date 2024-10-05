@@ -7,7 +7,7 @@ import org.application.shikiapp.models.views.CatalogFilters
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.utils.setScore
 
-class MangaPaging(private val query: CatalogFilters) : PagingSource<Int, Manga>() {
+open class MangaPaging(private val query: CatalogFilters) : PagingSource<Int, Manga>() {
 
     override fun getRefreshKey(state: PagingState<Int, Manga>): Int? =
         state.anchorPosition?.let { anchorPosition ->
