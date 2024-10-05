@@ -50,6 +50,7 @@ import org.application.shikiapp.R.string.text_genres
 import org.application.shikiapp.R.string.text_kind
 import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_publisher
+import org.application.shikiapp.R.string.text_ranobe
 import org.application.shikiapp.R.string.text_rate_chapters
 import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_similar
@@ -70,6 +71,8 @@ import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getPublisher
 import org.application.shikiapp.utils.getStatusM
+import org.application.type.MangaKindEnum.light_novel
+import org.application.type.MangaKindEnum.novel
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
 @Destination<RootGraph>
@@ -106,11 +109,21 @@ private fun MangaView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {Text(stringResource(text_manga))},
+                title = {
+                    Text(
+                        stringResource(
+                            if (manga.kind in listOf(light_novel, novel)) text_ranobe
+                            else text_manga
+                        )
+                    )
+                },
                 navigationIcon = { NavigationIcon(navigator::popBackStack) },
                 actions = {
-                    comments?.let { IconButton(model::showComments) { Icon(
-                        painterResource(vector_comments), null) } }
+                    comments?.let {
+                        IconButton(model::showComments) {
+                            Icon(painterResource(vector_comments), null)
+                        }
+                    }
                     IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
                 }
             )
@@ -242,7 +255,11 @@ private fun DialogSimilar(
                             contentDescription = null,
                             modifier = Modifier
                                 .clip(MaterialTheme.shapes.medium)
-                                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+                                .border(
+                                    (0.5).dp,
+                                    MaterialTheme.colorScheme.onSurface,
+                                    MaterialTheme.shapes.medium
+                                )
                         )
                     }
                 )
