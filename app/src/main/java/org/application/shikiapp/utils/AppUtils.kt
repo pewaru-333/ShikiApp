@@ -98,15 +98,17 @@ fun getWatchStatus(status: String?, type: String) = when (type) {
     LINKED_TYPE[0] -> WATCH_STATUSES_A[status] ?: "Неизвестно"
     else -> WATCH_STATUSES_M[status] ?: "Неизвестно"
 }
-fun getKind(kind: String?) = KINDS_A[kind] ?: KINDS_M[kind] ?: "Неизвестно"
+
+fun getKind(kind: String?) = KINDS_A[kind] ?: KINDS_M[kind] ?: KINDS_R[kind] ?: "Неизвестно"
 fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
 fun getFull(full: Int? = 0, status: String? = STATUSES_A.keys.elementAt(1)) =
     if (status == STATUSES_A.keys.elementAt(1) && full == 0) "?" else full.toString()
+
 fun getSeason(text: Any?, kind: String?) = when (text) {
     is String -> when (text) {
         "?" -> "Неизвестно"
         else -> when {
-            kind in KINDS_M -> LocalDate.parse(text).year.toString()
+            kind in KINDS_M || kind in KINDS_R -> LocalDate.parse(text).year.toString()
             text.contains("_") -> {
                 val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
                 val year = text.substringAfter("_")
