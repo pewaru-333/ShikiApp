@@ -1,0 +1,2 @@
+— Added the ranobe catalog. Now you can add ranobe to your list.
+— Changing the theme of the application and switching the "System colors" now always happen correctly.
