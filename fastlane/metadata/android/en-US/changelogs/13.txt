@@ -1,0 +1,2 @@
+— Added support for links inside the app. Now, clicking on links (for example, anime) will open a page in the application. To activate this feature, add the supported links in the "Open by default" section in the application settings.
+— Fixed a bug that in very rare cases did not load profile information when logging in.
