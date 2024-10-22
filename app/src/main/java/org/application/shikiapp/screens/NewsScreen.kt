@@ -1,6 +1,5 @@
 package org.application.shikiapp.screens
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -51,33 +50,31 @@ fun NewsScreen(navigator: DestinationsNavigator) {
 }
 
 @Composable
-private fun NewsCard(news: News, navigator: DestinationsNavigator) {
-    ElevatedCard(Modifier
-        .fillMaxWidth()
-        .clickable { navigator.navigate(NewsDetailDestination(news.id)) }
-    ) {
-        AsyncImage(
-            model = getPoster(news.htmlFooter),
-            contentDescription = null,
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(175.dp)
-                .clip(MaterialTheme.shapes.large),
-            contentScale = ContentScale.Crop,
-            filterQuality = FilterQuality.High,
-        )
-        Text(
-            text = news.topicTitle,
-            modifier = Modifier.padding(8.dp),
-            overflow = TextOverflow.Ellipsis,
-            softWrap = true,
-            maxLines = 2,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-        )
-        Text(
-            text = "${convertDate(news.createdAt)} · ${news.user.nickname}",
-            modifier = Modifier.padding(horizontal = 8.dp),
-            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-        )
-    }
+private fun NewsCard(news: News, navigator: DestinationsNavigator) = ElevatedCard(
+    onClick = { navigator.navigate(NewsDetailDestination(news.id)) },
+    modifier = Modifier.fillMaxWidth()
+) {
+    AsyncImage(
+        model = getPoster(news.htmlFooter),
+        contentDescription = null,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(175.dp)
+            .clip(MaterialTheme.shapes.large),
+        contentScale = ContentScale.Crop,
+        filterQuality = FilterQuality.High,
+    )
+    Text(
+        text = news.topicTitle,
+        modifier = Modifier.padding(8.dp),
+        overflow = TextOverflow.Ellipsis,
+        softWrap = true,
+        maxLines = 2,
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+    )
+    Text(
+        text = "${convertDate(news.createdAt)} · ${news.user.nickname}",
+        modifier = Modifier.padding(horizontal = 8.dp),
+        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+    )
 }
