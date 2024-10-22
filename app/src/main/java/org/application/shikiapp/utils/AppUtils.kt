@@ -88,7 +88,7 @@ fun getPoster(text: String?): String? {
     val embed = getLinks(text.orEmpty()).find { it.contains("img.youtube.com") }
     val poster = getLinks(text.orEmpty()).find { it.contains(".jpg") }
 
-    return (embed ?: poster)
+    return embed ?: poster
 }
 
 fun getImage(link: String?) = "https://shikimori.one${link.orEmpty()}"
