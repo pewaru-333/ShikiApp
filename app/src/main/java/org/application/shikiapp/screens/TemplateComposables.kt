@@ -64,6 +64,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
@@ -121,7 +122,6 @@ import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestin
 import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.UserScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import com.ramcosta.composedestinations.spec.Direction
 import org.application.fragment.CharacterFragment
 import org.application.fragment.PersonFragment
 import org.application.fragment.RelatedFragment
@@ -335,16 +335,15 @@ fun RelatedText(text: String) = Text(
 )
 
 @Composable
-fun ShortDescription(title: String, kind: String?, season: Any?) =
-    Column(verticalArrangement = SpaceBetween) {
-        Text(
-            text = title,
-            maxLines = 3,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
-        )
-        Text(text = getKind(kind), style = MaterialTheme.typography.bodyLarge)
-        Text(text = getSeason(season, kind), style = MaterialTheme.typography.bodyLarge)
-    }
+fun ShortDescription(title: String, kind: String?, season: Any?) = Column {
+    Text(
+        text = title,
+        maxLines = 3,
+        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+    )
+    Text(text = getKind(kind), style = MaterialTheme.typography.bodyLarge)
+    Text(text = getSeason(season, kind), style = MaterialTheme.typography.bodyLarge)
+}
 
 @Composable
 fun Description(text: String?) {
@@ -491,17 +490,18 @@ fun LazyListScope.comments(comments: LazyPagingItems<Comment>, navigator: Naviga
     if (comments.loadState.hasError) item { ErrorScreen(comments::retry) }
 }
 
-fun fromHtml(text: String?): AnnotatedString = if (text != null)
-    AnnotatedString.Companion.fromHtml(
-        htmlString = text,
-        linkStyles = TextLinkStyles(
-            SpanStyle(
-                color = Color.Blue,
-                textDecoration = TextDecoration.Underline,
-                platformStyle = PlatformSpanStyle.Default
+fun fromHtml(text: String?) = if (text != null) {
+        AnnotatedString.Companion.fromHtml(
+            htmlString = text,
+            linkStyles = TextLinkStyles(
+                SpanStyle(
+                    color = Color.Blue,
+                    textDecoration = TextDecoration.Underline,
+                    platformStyle = PlatformSpanStyle.Default
+                )
             )
         )
-    ) else AnnotatedString(BLANK)
+    } else AnnotatedString(BLANK)
 
 @Composable
 fun RoundedPersonImage(poster: String?) = AsyncImage(
@@ -810,7 +810,7 @@ fun RateStatus(event: (RateEvent) -> Unit, statusName: String, type: String) {
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(),
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
             label = { Text(stringResource(text_status)) },
             readOnly = true,
             singleLine = true,
@@ -840,7 +840,7 @@ fun RateScore(event: (RateEvent) -> Unit, scoreName: String?) {
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
-                .menuAnchor(),
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
             label = { Text(stringResource(text_score)) },
             readOnly = true,
             singleLine = true,
@@ -1130,12 +1130,11 @@ fun DialogFavourites(
                     OneLineImage(
                         name = russian.ifEmpty { name },
                         link = image,
-                        modifier = Modifier.clickable(enabled = tab != 2) {
+                        modifier = Modifier.clickable {
                             navigator.navigate(
                                 when (tab) {
                                     0 -> AnimeScreenDestination(id.toString())
-                                    1 -> MangaScreenDestination(id.toString())
-                                    2 -> Direction(BLANK)
+                                    1,2 -> MangaScreenDestination(id.toString())
                                     3 -> CharacterScreenDestination(id.toString())
                                     else -> PersonScreenDestination(id)
                                 }

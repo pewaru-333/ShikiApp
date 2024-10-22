@@ -532,6 +532,7 @@ private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
     Column {
         DURATIONS.entries.forEach { (key, value) ->
             Row(
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
@@ -539,8 +540,7 @@ private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
                         value = key in duration,
                         onValueChange = { event(SetDuration(key)) },
                         role = Role.Checkbox
-                    ),
-                verticalAlignment = Alignment.CenterVertically
+                    )
             ) {
                 Checkbox(key in duration, null)
                 Text(value, Modifier.padding(start = 16.dp))
@@ -585,10 +585,10 @@ private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, navigator: Nav
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .height(198.dp)
+                    .height(200.dp)
                     .clickable { navigator.navigate(AnimeScreenDestination(id)) }, spacedBy(16.dp)
             ) {
-                RoundedPoster(poster?.originalUrl)
+                RoundedPoster(poster?.originalUrl, 117.dp)
                 ShortDescription(russian ?: name, kind?.rawValue, season)
             }
         }
@@ -600,10 +600,10 @@ private fun LazyListScope.mangaList(list: LazyPagingItems<Manga>, navigator: Nav
             Row(
                 Modifier
                     .fillMaxWidth()
-                    .height(198.dp)
+                    .height(200.dp)
                     .clickable { navigator.navigate(MangaScreenDestination(id)) }, spacedBy(16.dp)
             ) {
-                RoundedPoster(poster?.originalUrl)
+                RoundedPoster(poster?.originalUrl, 117.dp)
                 ShortDescription(russian ?: name, kind?.rawValue, season?.date)
             }
         }
