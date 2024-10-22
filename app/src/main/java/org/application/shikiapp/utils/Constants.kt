@@ -36,7 +36,7 @@ import org.application.shikiapp.R.string.text_seyu
 const val CODE = "code"
 const val CLIENT_ID = "C0IlIBQYqt9VHjuoayfbBG9ulhBH9XWuTOxSX_6oE6g"
 const val CLIENT_SECRET = "0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM"
-const val REDIRECT_URI = "org.application.shikiapp://"
+const val REDIRECT_URI = "app://login"
 const val GRANT_TYPE = "authorization_code"
 
 const val ACCESS_TOKEN = "access_token"

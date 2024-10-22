@@ -1,6 +1,5 @@
 package org.application.shikiapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.view.Window
 import androidx.activity.ComponentActivity
@@ -25,12 +24,6 @@ class MainActivity : ComponentActivity() {
 
             Theme(theme, dynamicColors) { RootScreen(navController) }
         }
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-
-        if (intent != null) this.intent.setData(intent.data)
     }
 }
 

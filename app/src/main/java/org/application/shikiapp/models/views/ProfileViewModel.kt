@@ -2,7 +2,10 @@ package org.application.shikiapp.models.views
 
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.Favourites
@@ -17,10 +20,8 @@ import java.net.UnknownHostException
 class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
     private val _login = MutableStateFlow<LoginState>(LoginState.NotLogged)
     val login = _login.asStateFlow()
-
-    init {
-        if (Preferences.isTokenExists()) getProfile()
-    }
+        .onStart { if (Preferences.isTokenExists()) getProfile() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(3000), LoginState.NotLogged)
 
     fun getProfile() {
         viewModelScope.launch {

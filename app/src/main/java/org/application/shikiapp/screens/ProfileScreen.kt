@@ -4,25 +4,29 @@ import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.provider.Settings
 import androidx.compose.foundation.layout.Arrangement.spacedBy
-import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
+import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterHorizontally
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -34,6 +38,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.annotation.parameters.DeepLink
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.R.string.text_login
 import org.application.shikiapp.models.views.CommentViewModel
@@ -51,7 +56,7 @@ import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.REDIRECT_URI
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination<RootGraph>
+@Destination<RootGraph>(deepLinks = [DeepLink(uriPattern = REDIRECT_URI)])
 @Composable
 fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalContext.current) {
     val model = viewModel<ProfileViewModel>()
@@ -61,14 +66,14 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
     val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
 
     LaunchedEffect(lifecycleState) {
-        if (lifecycleState == Lifecycle.State.RESUMED) {
-            val code = (context as Activity).intent.data?.getQueryParameter(CODE)
-            if (code != null && Preferences.getUserId() == 0L) model.login(code)
+       if (lifecycleState == Lifecycle.State.RESUMED) {
+           val code = (context as Activity).intent.data?.getQueryParameter(CODE)
+           if (code != null && Preferences.getUserId() == 0L) model.login(code)
         }
     }
 
     when (val data = loginState) {
-        NotLogged -> LoginPage()
+        NotLogged -> LoginScreen(context)
         Logging -> LoadingScreen()
         NoNetwork -> ErrorScreen(model::getProfile)
         is Logged -> {
@@ -129,7 +134,7 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
 }
 
 @Composable
-private fun LoginPage(context: Context = LocalContext.current) {
+private fun LoginScreen(context: Context) {
     val uri = Uri.parse(AUTH_URL)
         .buildUpon()
         .appendQueryParameter("client_id", CLIENT_ID)
@@ -138,9 +143,24 @@ private fun LoginPage(context: Context = LocalContext.current) {
         .appendQueryParameter("scope", BLANK)
         .build()
 
-    Box(Modifier.fillMaxSize(), Alignment.Center) {
-        Button({ (context.startActivity(Intent(Intent.ACTION_VIEW, uri))) }) {
-            Text(stringResource(text_login))
-        }
+    Column(Modifier.fillMaxSize(), spacedBy(4.dp, CenterVertically), CenterHorizontally) {
+        Button({ context.startActivity(Intent(Intent.ACTION_VIEW, uri)) })
+        { Text(stringResource(text_login)) }
+        ListItem(
+            headlineContent = {},
+            supportingContent = { Text("Для поддержки входа добавьте поддерживаемые ссылки в настройках") },
+            trailingContent = {
+                IconButton(
+                    onClick = {
+                        context.startActivity(
+                            Intent(
+                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+                                Uri.parse("package:${context.packageName}")
+                            )
+                        )
+                    }
+                ) { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) }
+            }
+        )
     }
 }
