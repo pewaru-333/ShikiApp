@@ -15,8 +15,7 @@
         tools:targetApi="35">
         <activity
             android:name=".MainActivity"
-            android:exported="true"
-            android:launchMode="singleTop">
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
@@ -28,7 +27,23 @@
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="org.application.shikiapp" />
+                <data
+                    android:host="login"
+                    android:scheme="app" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="https" />
+                <data android:host="shikimori.one" />
+                <data android:pathPrefix="/animes" />
+                <data android:pathPrefix="/mangas" />
+                <data android:pathPrefix="/ranobe" />
+                <data android:pathPrefix="/characters" />
+                <data android:pathPrefix="/people" />
             </intent-filter>
         </activity>
     </application>
