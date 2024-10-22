@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import android.content.Intent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -43,6 +44,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.annotation.parameters.DeepLink
 import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
 import org.application.MangaQuery.Data.Manga
 import org.application.shikiapp.R.drawable.vector_comments
@@ -75,7 +77,12 @@ import org.application.type.MangaKindEnum.light_novel
 import org.application.type.MangaKindEnum.novel
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
-@Destination<RootGraph>
+@Destination<RootGraph>(
+    deepLinks = [
+        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/mangas/{id}-.*"),
+        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/ranobe/{id}-.*")
+    ]
+)
 @Composable
 fun MangaScreen(id: String, navigator: Navigator) {
     val model = viewModel<MangaViewModel>(factory = factory { MangaViewModel(id) })

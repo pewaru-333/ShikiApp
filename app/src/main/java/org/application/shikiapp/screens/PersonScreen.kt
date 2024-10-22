@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
@@ -45,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.annotation.parameters.DeepLink
 import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_comments
@@ -68,7 +70,11 @@ import org.application.shikiapp.utils.getDeathday
 import org.application.shikiapp.utils.isPersonFavoured
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
-@Destination<RootGraph>
+@Destination<RootGraph>(
+    deepLinks = [
+        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/people/{id}-.*")
+    ]
+)
 @Composable
 fun PersonScreen(id: Long, navigator: Navigator) {
     val model = viewModel<PersonViewModel>(factory = factory { PersonViewModel(id) })

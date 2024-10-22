@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
@@ -40,6 +41,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.annotation.parameters.DeepLink
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
 import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
@@ -62,7 +64,11 @@ import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
-@Destination<RootGraph>
+@Destination<RootGraph>(
+    deepLinks = [
+        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/characters/{id}-.*")
+    ]
+)
 @Composable
 fun CharacterScreen(id: String, navigator: Navigator) {
     val model = viewModel<CharacterViewModel>(factory = factory { CharacterViewModel(id) })

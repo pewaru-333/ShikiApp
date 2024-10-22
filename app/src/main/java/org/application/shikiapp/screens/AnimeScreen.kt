@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import android.content.Intent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -62,6 +63,7 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import com.ramcosta.composedestinations.annotation.Destination
 import com.ramcosta.composedestinations.annotation.RootGraph
+import com.ramcosta.composedestinations.annotation.parameters.DeepLink
 import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
@@ -103,7 +105,11 @@ import org.application.shikiapp.utils.getStudio
 import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
 
-@Destination<RootGraph>
+@Destination<RootGraph>(
+    deepLinks = [
+        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/animes/{id}-.*")
+    ]
+)
 @Composable
 fun AnimeScreen(id: String, navigator: Navigator) {
     val model = viewModel<AnimeViewModel>(factory = factory { AnimeViewModel(id) })
