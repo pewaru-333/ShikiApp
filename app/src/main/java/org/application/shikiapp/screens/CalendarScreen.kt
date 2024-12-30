@@ -1,5 +1,6 @@
 package org.application.shikiapp.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -9,8 +10,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -22,10 +21,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.models.views.CalendarViewModel
 import org.application.shikiapp.models.views.CalendarViewModel.Response.Error
 import org.application.shikiapp.models.views.CalendarViewModel.Response.Loading
@@ -33,9 +28,8 @@ import org.application.shikiapp.models.views.CalendarViewModel.Response.Success
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.toCalendarDate
 
-@Destination<RootGraph>
 @Composable
-fun CalendarScreen(navigator: DestinationsNavigator) {
+fun CalendarScreen(toAnime:(String) -> Unit) {
     val model = viewModel<CalendarViewModel>()
     val state by model.state.collectAsStateWithLifecycle()
 
@@ -54,12 +48,10 @@ fun CalendarScreen(navigator: DestinationsNavigator) {
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         items(list) { (_, _, _, anime) ->
-                            Card(
-                                modifier = Modifier.width(122.dp),
-                                onClick = { navigator.navigate(AnimeScreenDestination(anime.id.toString())) },
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(0.5f)
-                                )
+                            Column (
+                                modifier = Modifier
+                                    .width(122.dp)
+                                    .clickable { toAnime(anime.id.toString()) },
                             ) {
                                 RoundedRelatedPoster(anime.image.original, ContentScale.FillBounds)
                                 Text(
