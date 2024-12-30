@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
-import org.application.PeopleQuery
 import org.application.PeopleQuery.Data.Person
 import org.application.shikiapp.network.paging.PeoplePaging
 import retrofit2.HttpException
