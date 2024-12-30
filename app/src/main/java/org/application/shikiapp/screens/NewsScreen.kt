@@ -21,60 +21,57 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.NewsDetailDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.models.data.News
 import org.application.shikiapp.models.views.NewsViewModel
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.getPoster
 
-@Destination<RootGraph>(start = true)
 @Composable
-fun NewsScreen(navigator: DestinationsNavigator) {
-    val news = viewModel<NewsViewModel>().newsList.collectAsLazyPagingItems()
+fun NewsScreen(toDetail: (Long) -> Unit) {
+    val news = viewModel<NewsViewModel>()
+    val list = news.newsList.collectAsLazyPagingItems()
 
-    when (news.loadState.refresh) {
-        is LoadState.Error -> ErrorScreen(news::retry)
+    when (list.loadState.refresh) {
+        is LoadState.Error -> ErrorScreen(list::retry)
         is LoadState.Loading -> LoadingScreen()
         is LoadState.NotLoading -> LazyColumn(
             contentPadding = PaddingValues(16.dp),
             verticalArrangement = Arrangement.spacedBy(24.dp)
         ) {
-            items(news.itemCount) { NewsCard(news[it]!!, navigator) }
-            if (news.loadState.append == LoadState.Loading) item { LoadingScreen() }
-            if (news.loadState.hasError) item { ErrorScreen(news::retry) }
+            items(list.itemCount) { NewsCard(list[it]!!, toDetail) }
+            if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
+            if (list.loadState.hasError) item { ErrorScreen(list::retry) }
         }
     }
 }
 
 @Composable
-private fun NewsCard(news: News, navigator: DestinationsNavigator) = ElevatedCard(
-    onClick = { navigator.navigate(NewsDetailDestination(news.id)) },
-    modifier = Modifier.fillMaxWidth()
-) {
-    AsyncImage(
-        model = getPoster(news.htmlFooter),
-        contentDescription = null,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(175.dp)
-            .clip(MaterialTheme.shapes.large),
-        contentScale = ContentScale.Crop,
-        filterQuality = FilterQuality.High,
-    )
-    Text(
-        text = news.topicTitle,
-        modifier = Modifier.padding(8.dp),
-        overflow = TextOverflow.Ellipsis,
-        softWrap = true,
-        maxLines = 2,
-        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-    )
-    Text(
-        text = "${convertDate(news.createdAt)} · ${news.user.nickname}",
-        modifier = Modifier.padding(horizontal = 8.dp),
-        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
-    )
-}
+private fun NewsCard(news: News, toDetail: (Long) -> Unit) =
+    ElevatedCard(
+        onClick = { toDetail(news.id) },
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        AsyncImage(
+            model = getPoster(news.htmlFooter),
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            filterQuality = FilterQuality.High,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(175.dp)
+                .clip(MaterialTheme.shapes.large)
+        )
+        Text(
+            text = news.topicTitle,
+            modifier = Modifier.padding(8.dp),
+            overflow = TextOverflow.Ellipsis,
+            softWrap = true,
+            maxLines = 2,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+        )
+        Text(
+            text = "${convertDate(news.createdAt)} · ${news.user.nickname}",
+            modifier = Modifier.padding(horizontal = 8.dp),
+            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold)
+        )
+    }
