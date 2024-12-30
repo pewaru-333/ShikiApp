@@ -1,12 +1,7 @@
 package org.application.shikiapp.utils
 
 import androidx.annotation.StringRes
-import com.ramcosta.composedestinations.generated.destinations.CalendarScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.CatalogScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.NewsScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.ProfileScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.SettingsScreenDestination
-import com.ramcosta.composedestinations.spec.Direction
+import kotlinx.serialization.Serializable
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_anime
 import org.application.shikiapp.R.drawable.vector_calendar
@@ -45,6 +40,7 @@ const val EXPIRES_IN = "expires_in"
 const val CREATED_AT = "created_at"
 const val USER_ID = "user_id"
 
+const val BASE_PATH = "*"
 const val BLANK = ""
 
 // =========================================== Lists ==============================================
@@ -211,32 +207,75 @@ val WATCH_STATUSES_M = mapOf(
 
 // =========================================== Enums ==============================================
 
-enum class BottomMenu(val route: Direction, @StringRes val title: Int, val icon: Int) {
-    Anime(CatalogScreenDestination, R.string.text_catalog, vector_home),
-    News(NewsScreenDestination, R.string.text_news, vector_news),
-    Calendar(CalendarScreenDestination, R.string.text_calendar, vector_calendar),
-    Profile(ProfileScreenDestination, R.string.text_profile, vector_character),
-    Settings(SettingsScreenDestination, R.string.text_settings, vector_settings)
+enum class CatalogItems(@StringRes val title: Int, val icon: Int) {
+    ANIME(text_anime, vector_anime),
+    MANGA(text_manga, vector_manga),
+    RANOBE(text_ranobe, vector_ranobe),
+    CHARACTERS(text_characters, vector_character),
+    PEOPLE(text_people, vector_person)
 }
 
-enum class CatalogItems(@StringRes val title: Int, val icon: Int) {
-    Anime(text_anime, vector_anime),
-    Manga(text_manga, vector_manga),
-    Ranobe(text_ranobe, vector_ranobe),
-    Characters(text_characters, vector_character),
-    People(text_people, vector_person)
+enum class Menu(val route: Any, @StringRes val title: Int, val icon: Int) {
+    CATALOG(Catalog, R.string.text_catalog, vector_home),
+    NEWS(News, R.string.text_news, vector_news),
+    CALENDAR(Calendar, R.string.text_calendar, vector_calendar),
+    PROFILE(Profile, R.string.text_profile, vector_character),
+    SETTINGS(Settings, R.string.text_settings, vector_settings)
 }
 
 enum class PeopleFilterItems(@StringRes val title: Int) {
-    Seyu(text_seyu), Producer(text_producer), Mangaka(text_mangaka)
+    SEYU(text_seyu), PRODUCER(text_producer), MANGAKA(text_mangaka)
 }
 
 enum class ProfileMenus(@StringRes val title: Int) {
-    Friends(text_friends), Clubs(text_clubs), Achievements(text_achievements)
+    FRIENDS(text_friends), CLUBS(text_clubs), ACHIEVEMENTS(text_achievements)
 }
 
 enum class VideoKinds(val title: String, val kinds: List<String>) {
-    Video("Видео", listOf("pv", "ed", "op", "op_ed_clip", "other")),
-    Character("Трейлеры персонажей", listOf("character_trailer")),
-    Episode("Превью эпизодов", listOf("episode_preview"))
+    VIDEO("Видео", listOf("pv", "ed", "op", "op_ed_clip", "other")),
+    CHARACTER("Трейлеры персонажей", listOf("character_trailer")),
+    EPISODE("Превью эпизодов", listOf("episode_preview"))
 }
+
+// =========================================== Screens =============================================
+@Serializable
+object Catalog
+
+@Serializable
+object News
+
+@Serializable
+object Calendar
+
+@Serializable
+object Profile
+
+@Serializable
+object Settings
+
+@Serializable
+data class Anime(val id: String)
+
+@Serializable
+data class Manga(val id: String)
+
+@Serializable
+data class Character(val id: String)
+
+@Serializable
+data class Person(val id: Long)
+
+@Serializable
+data class User(val id: Long)
+
+@Serializable
+data class Club(val id: Long)
+
+@Serializable
+data class NewsDetail(val id: Long)
+
+@Serializable
+data class AnimeRates(val id: Long)
+
+@Serializable
+data class MangaRates(val id: Long)
