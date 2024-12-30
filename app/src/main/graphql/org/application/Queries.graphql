@@ -38,6 +38,7 @@ query AnimeList(
         season
         poster {
             originalUrl
+            mainUrl
         }
     }
 }
@@ -146,6 +147,7 @@ query MangaList(
         }
         poster {
             originalUrl
+            mainUrl
         }
     }
 }
@@ -223,6 +225,7 @@ query CharacterList($page: PositiveInt, $limit: PositiveInt, $search: String) {
         russian
         poster {
             originalUrl
+            mainUrl
         }
     }
 }
@@ -258,6 +261,7 @@ query People(
         russian
         poster {
             originalUrl
+            mainUrl
         }
     }
 }
