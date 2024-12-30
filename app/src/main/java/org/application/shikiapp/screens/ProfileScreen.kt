@@ -36,18 +36,12 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.annotation.parameters.DeepLink
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.R.string.text_login
-import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.ProfileViewModel
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.Logged
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.Logging
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.NoNetwork
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.NotLogged
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.network.AUTH_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
@@ -56,9 +50,17 @@ import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.REDIRECT_URI
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination<RootGraph>(deepLinks = [DeepLink(uriPattern = REDIRECT_URI)])
 @Composable
-fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalContext.current) {
+fun ProfileScreen(
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toPerson: (Long) -> Unit,
+    toUser:(Long) -> Unit,
+    toClub:(Long) ->Unit
+) {
+    val context = LocalContext.current
+
     val model = viewModel<ProfileViewModel>()
     val loginState by model.login.collectAsStateWithLifecycle()
 
@@ -79,9 +81,7 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
         is Logged -> {
             val user = data.user
             val state by model.state.collectAsStateWithLifecycle()
-            val comments = viewModel<CommentViewModel>(factory = factory {
-                CommentViewModel(user.id)
-            }).comments.collectAsLazyPagingItems()
+            val comments = data.comments.collectAsLazyPagingItems()
 
             Scaffold(
                 topBar = {
@@ -104,25 +104,25 @@ fun ProfileScreen(navigator: DestinationsNavigator, context: Context = LocalCont
                 ) {
                     item { UserBriefItem(user) }
                     item { BriefInfo(model::setMenu) }
-                    item { UserStats(user.stats, user.id, navigator) }
+                    item { UserStats(user.stats, user.id, toAnime, toManga) }
 
-                    if (comments.itemCount > 0) comments(comments, navigator)
+                    if (comments.itemCount > 0) comments(comments, toUser)
                 }
             }
 
             when {
                 state.showDialog -> {
                     val friends = model.friends.collectAsLazyPagingItems()
-                    DialogItem(model, state, friends, data.clubs, navigator)
+                    DialogItem(model, state, friends, data.clubs, toUser, toClub)
                 }
 
                 state.showFavourite -> DialogFavourites(
-                    model::hideFavourite, model::setTab, state.tab, data.favourites, navigator
+                    model::hideFavourite, model::setTab, state.tab, data.favourites, toAnime, toManga, toCharacter, toPerson
                 )
 
                 state.showHistory -> {
                     val history = model.history.collectAsLazyPagingItems()
-                    DialogHistory(model::hideHistory, history, navigator)
+                    DialogHistory(model::hideHistory, history, toAnime, toManga)
                 }
 
                 state.showSheet -> BottomSheet(
