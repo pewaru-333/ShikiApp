@@ -2,7 +2,6 @@ package org.application.shikiapp.screens
 
 import android.content.Context
 import android.graphics.Typeface
-import android.text.Html
 import android.text.style.ForegroundColorSpan
 import android.text.style.ImageSpan
 import android.text.style.StrikethroughSpan
@@ -13,9 +12,9 @@ import android.text.style.URLSpan
 import android.text.style.UnderlineSpan
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -25,6 +24,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.ParagraphStyle
@@ -36,10 +36,10 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import androidx.core.text.HtmlCompat
 import coil.compose.AsyncImage
 import coil.imageLoader
 import coil.request.ImageRequest
@@ -49,7 +49,7 @@ import org.application.shikiapp.utils.BLANK
 
 @Composable
 fun HtmlCommentBody(text: String, context: Context = LocalContext.current) {
-    val linkColor = Color.Blue
+    val linkColor = MaterialTheme.colorScheme.onSurface
 
     var string by remember { mutableStateOf(AnnotatedString(BLANK)) }
     var imageMap by remember { mutableStateOf<Map<String, LoadedImage>>(emptyMap()) }
@@ -68,11 +68,10 @@ fun HtmlCommentBody(text: String, context: Context = LocalContext.current) {
 
     val inlineContent = remember(imageMap) {
         imageMap.mapValues { (_, image) ->
-            val imageWidth = image.width.let { if (it < 256) it.sp else 256.sp }
-            val imageHeight = image.height.let { if (it < 512) it.sp else 512.sp }
+            val imageWidth = pxToSp(context, image.width)
+            val imageHeight = pxToSp(context, image.height)
 
-            InlineTextContent(Placeholder(imageWidth, imageHeight, PlaceholderVerticalAlign.Top))
-            {
+            InlineTextContent(Placeholder(imageWidth, imageHeight, PlaceholderVerticalAlign.Top)) {
                 AsyncImage(
                     model = image.source,
                     contentDescription = null,
@@ -86,14 +85,21 @@ fun HtmlCommentBody(text: String, context: Context = LocalContext.current) {
 
     if (loading) LoadingScreen() else Text(text = string, inlineContent = inlineContent)
     if (show) Dialog({ show = false }, DialogProperties(usePlatformDefaultWidth = false)) {
-        AsyncImage(bigImage, null, Modifier.size(512.dp, 256.dp))
+        AsyncImage(
+            model = bigImage,
+            contentDescription = null,
+            modifier = Modifier.fillMaxSize(),
+            filterQuality = FilterQuality.High
+        )
     }
 }
 
 private suspend fun toAnnotatedString(
-    context: Context, string: String, linkColor: Color
+    context: Context,
+    string: String,
+    linkColor: Color
 ): Pair<AnnotatedString, Map<String, LoadedImage>> {
-    val spanned = Html.fromHtml(string, Html.FROM_HTML_MODE_LEGACY)
+    val spanned = HtmlCompat.fromHtml(string, HtmlCompat.FROM_HTML_MODE_COMPACT)
 
     val images = mutableMapOf<String, LoadedImage>()
     var counter = 0
@@ -157,7 +163,7 @@ private suspend fun toAnnotatedString(
                         images[id] = image.copy(width = image.width, height = image.height)
 
                         appendInlineContent(id, image.source)
-                        addStyle(ParagraphStyle(lineHeight = image.height.sp), length, length)
+                        addStyle(ParagraphStyle(lineHeight = pxToSp(context, image.height)), length, length)
                         offset -= image.source.length
                     }
 
@@ -176,10 +182,13 @@ private suspend fun loadImage(context: Context, source: String): LoadedImage? {
         .execute(ImageRequest.Builder(context).data(source).build())
 
     return LoadedImage(
-        source,
+        source = source.replace("thumbnail", "original"),
         width = imageResult.drawable?.intrinsicWidth?.toFloat() ?: return null,
         height = imageResult.drawable?.intrinsicHeight?.toFloat() ?: return null,
     )
 }
+
+private fun pxToSp(context: Context, px: Float) =
+    (px / context.resources.displayMetrics.density).sp
 
 data class LoadedImage(val source: String, val width: Float, val height: Float)
