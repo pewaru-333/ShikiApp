@@ -47,12 +47,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.UserScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.AnimeShort
 import org.application.shikiapp.models.data.Character
@@ -63,15 +57,18 @@ import org.application.shikiapp.models.views.ClubViewModel
 import org.application.shikiapp.models.views.Menus
 import org.application.shikiapp.models.views.Response
 import org.application.shikiapp.models.views.UIEvent
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.getImage
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination<RootGraph>
 @Composable
-fun ClubScreen(clubId: Long, navigator: DestinationsNavigator) {
-    val model = viewModel<ClubViewModel>(factory = factory { ClubViewModel(clubId) })
+fun ClubScreen(
+    toAnime: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val model = viewModel<ClubViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
     when (val data = response) {
@@ -86,7 +83,7 @@ fun ClubScreen(clubId: Long, navigator: DestinationsNavigator) {
                 topBar = {
                     TopAppBar(
                         title = {},
-                        navigationIcon = { NavigationIcon(navigator::popBackStack) }
+                        navigationIcon = { NavigationIcon(back) }
                     )
                 }
             ) { paddingValues ->
@@ -115,10 +112,10 @@ fun ClubScreen(clubId: Long, navigator: DestinationsNavigator) {
                         )
                     }
 
-                    item { BriefInfo(model, state, navigator) }
+                    item { BriefInfo(model, state, toAnime, toCharacter, toUser) }
                     item { Description(club.descriptionHtml) }
 
-                    if (comments.itemCount > 0) comments(comments, navigator)
+                    if (comments.itemCount > 0) comments(comments, toUser)
                 }
             }
         }
@@ -127,7 +124,13 @@ fun ClubScreen(clubId: Long, navigator: DestinationsNavigator) {
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
-private fun BriefInfo(model: ClubViewModel, state: ClubState, navigator: DestinationsNavigator) {
+private fun BriefInfo(
+    model: ClubViewModel,
+    state: ClubState,
+    toAnime: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toUser: (Long) -> Unit
+) {
     ParagraphTitle(stringResource(R.string.text_information), Modifier.padding(bottom = 4.dp))
     FlowRow(Modifier, spacedBy(16.dp), spacedBy(8.dp), 2) {
         Menus.entries.forEach { menu ->
@@ -167,35 +170,35 @@ private fun BriefInfo(model: ClubViewModel, state: ClubState, navigator: Destina
                 }
             ) { paddingValues ->
                 val padding = paddingValues.calculateTopPadding()
-                    when (state.menu) {
-                        1 -> model.anime.collectAsLazyPagingItems().also {
-                            Anime(it, navigator, padding)
-                        }
-
-                        2 -> model.members.collectAsLazyPagingItems().also {
-                            Members(it, navigator, padding)
-                        }
-
-                        4 -> model.characters.collectAsLazyPagingItems().also {
-                            Characters(it, navigator, padding)
-                        }
-
-                        5 -> model.images.collectAsLazyPagingItems().also {
-                            Images(it, padding)
-                        }
+                when (state.menu) {
+                    1 -> model.anime.collectAsLazyPagingItems().also {
+                        Anime(it, toAnime, padding)
                     }
+
+                    2 -> model.members.collectAsLazyPagingItems().also {
+                        Members(it, toUser, padding)
+                    }
+
+                    4 -> model.characters.collectAsLazyPagingItems().also {
+                        Characters(it, toCharacter, padding)
+                    }
+
+                    5 -> model.images.collectAsLazyPagingItems().also {
+                        Images(it, padding)
+                    }
+                }
             }
         }
 }
 
 @Composable
-private fun Anime(anime: LazyPagingItems<AnimeShort>, navigator: DestinationsNavigator, padding: Dp) {
+private fun Anime(anime: LazyPagingItems<AnimeShort>, toAnime: (String) -> Unit, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (anime.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
             is LoadState.Loading -> item { LoadingScreen() }
             is LoadState.NotLoading -> {
-               items(anime.itemCount) {
+                items(anime.itemCount) {
                     anime[it]?.let { anime ->
                         ListItem(
                             headlineContent = {
@@ -206,9 +209,7 @@ private fun Anime(anime: LazyPagingItems<AnimeShort>, navigator: DestinationsNav
                                     )
                                 )
                             },
-                            modifier = Modifier.clickable {
-                                navigator.navigate(AnimeScreenDestination(anime.id.toString()))
-                            },
+                            modifier = Modifier.clickable { toAnime(anime.id.toString()) },
                             leadingContent = { ClubAnimeImage(anime.image.original) }
                         )
                     }
@@ -221,7 +222,7 @@ private fun Anime(anime: LazyPagingItems<AnimeShort>, navigator: DestinationsNav
 }
 
 @Composable
-private fun Members(members: LazyPagingItems<UserShort>, navigator: DestinationsNavigator, padding: Dp) {
+private fun Members(members: LazyPagingItems<UserShort>, toUser: (Long) -> Unit, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (members.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
@@ -232,9 +233,7 @@ private fun Members(members: LazyPagingItems<UserShort>, navigator: Destinations
                         OneLineImage(
                             name = member.nickname,
                             link = member.image.x160,
-                            modifier = Modifier.clickable {
-                                navigator.navigate(UserScreenDestination(member.id))
-                            }
+                            modifier = Modifier.clickable { toUser(member.id) }
                         )
                     }
                 }
@@ -247,7 +246,11 @@ private fun Members(members: LazyPagingItems<UserShort>, navigator: Destinations
 }
 
 @Composable
-private fun Characters(characters: LazyPagingItems<Character>, navigator: DestinationsNavigator, padding: Dp) {
+private fun Characters(
+    characters: LazyPagingItems<Character>,
+    toCharacter: (String) -> Unit,
+    padding: Dp
+) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (characters.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
@@ -258,9 +261,7 @@ private fun Characters(characters: LazyPagingItems<Character>, navigator: Destin
                         OneLineImage(
                             name = russian ?: name,
                             link = getImage(image.original),
-                            modifier = Modifier.clickable {
-                                navigator.navigate(CharacterScreenDestination(id.toString()))
-                            }
+                            modifier = Modifier.clickable { toCharacter(id.toString()) }
                         )
                     }
                 }
