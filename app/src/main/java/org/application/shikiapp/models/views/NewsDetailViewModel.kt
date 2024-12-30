@@ -1,20 +1,29 @@
 package org.application.shikiapp.models.views
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.News
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Error
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Loading
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Success
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.utils.NewsDetail
 import retrofit2.HttpException
 
 
-class NewsDetailViewModel(private val newsId: Long) : ViewModel() {
+class NewsDetailViewModel(saved: SavedStateHandle) : ViewModel() {
+    private val newsId = saved.toRoute<NewsDetail>().id
+
     private val _response = MutableStateFlow<Response>(Loading)
     val response = _response.asStateFlow()
 
@@ -30,7 +39,12 @@ class NewsDetailViewModel(private val newsId: Long) : ViewModel() {
             _response.emit(Loading)
 
             try {
-                _response.emit(Success(NetworkClient.client.getTopicById(newsId)))
+                _response.emit(
+                    Success(
+                        news = NetworkClient.client.getTopicById(newsId),
+                        comments = Comments.getComments(newsId, viewModelScope)
+                    )
+                )
             } catch (e: HttpException) {
                 _response.emit(Error)
             }
@@ -47,7 +61,7 @@ class NewsDetailViewModel(private val newsId: Long) : ViewModel() {
     sealed interface Response {
         data object Error : Response
         data object Loading : Response
-        data class Success(val news: News) : Response
+        data class Success(val news: News, val comments: Flow<PagingData<Comment>>) : Response
     }
 }
 
