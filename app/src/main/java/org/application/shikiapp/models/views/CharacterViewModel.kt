@@ -1,18 +1,26 @@
 package org.application.shikiapp.models.views
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.CharacterQuery
 import org.application.shikiapp.models.data.Character
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.LINKED_TYPE
 
-class CharacterViewModel(private val id: String) : ViewModel() {
+class CharacterViewModel(saved: SavedStateHandle) : ViewModel() {
+    private val id = saved.toRoute<org.application.shikiapp.utils.Character>().id
+
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
@@ -30,8 +38,9 @@ class CharacterViewModel(private val id: String) : ViewModel() {
             try {
                 val character = NetworkClient.client.getCharacter(id.toLong())
                 val image = ApolloClient.getCharacter(id)
+                val comments = Comments.getComments(character.topicId, viewModelScope)
 
-                _response.emit(Response.Success(character, image))
+                _response.emit(Response.Success(character, image, comments))
             } catch (e: Throwable) {
                 _response.emit(Response.Error)
             }
@@ -65,7 +74,8 @@ class CharacterViewModel(private val id: String) : ViewModel() {
         data object Loading : Response
         data class Success(
             val character: Character,
-            val image: CharacterQuery.Data.Character
+            val image: CharacterQuery.Data.Character,
+            val comments: Flow<PagingData<Comment>>
         ) : Response
     }
 }
