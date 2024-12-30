@@ -1,6 +1,5 @@
 package org.application.shikiapp.screens
 
-import android.content.Intent
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
@@ -42,10 +41,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.annotation.parameters.DeepLink
-import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
 import org.application.MangaQuery.Data.Manga
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_genres
@@ -58,15 +53,12 @@ import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_similar
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_volumes
-import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.MangaShort
-import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.MangaState
 import org.application.shikiapp.models.views.MangaViewModel
 import org.application.shikiapp.models.views.MangaViewModel.Response.Error
 import org.application.shikiapp.models.views.MangaViewModel.Response.Loading
 import org.application.shikiapp.models.views.MangaViewModel.Response.Success
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.STATUSES_M
 import org.application.shikiapp.utils.getImage
@@ -75,17 +67,17 @@ import org.application.shikiapp.utils.getPublisher
 import org.application.shikiapp.utils.getStatusM
 import org.application.type.MangaKindEnum.light_novel
 import org.application.type.MangaKindEnum.novel
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
-@Destination<RootGraph>(
-    deepLinks = [
-        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/mangas/{id}-.*"),
-        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/ranobe/{id}-.*")
-    ]
-)
 @Composable
-fun MangaScreen(id: String, navigator: Navigator) {
-    val model = viewModel<MangaViewModel>(factory = factory { MangaViewModel(id) })
+fun MangaScreen(
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toPerson: (Long) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val model = viewModel<MangaViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
@@ -93,7 +85,15 @@ fun MangaScreen(id: String, navigator: Navigator) {
         Error -> ErrorScreen(model::getManga)
         Loading -> LoadingScreen()
         is Success -> MangaView(
-            model, state, data.manga, data.similar, data.links, data.favoured, navigator
+            model = model,
+            state = state,
+            data =data,
+            toAnime = toAnime,
+            toManga = toManga,
+            toCharacter = toCharacter,
+            toPerson = toPerson,
+            toUser = toUser,
+            back = back
         )
     }
 }
@@ -103,15 +103,16 @@ fun MangaScreen(id: String, navigator: Navigator) {
 private fun MangaView(
     model: MangaViewModel,
     state: MangaState,
-    manga: Manga,
-    similar: List<MangaShort>,
-    links: List<ExternalLink>,
-    favoured: Boolean,
-    navigator: Navigator
+    data: Success,
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toPerson: (Long) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
 ) {
-    val comments = manga.topic?.id?.let {
-        viewModel<CommentViewModel>(factory = factory { CommentViewModel(it.toLong()) })
-    }?.comments?.collectAsLazyPagingItems()
+    val (manga, similar, links, _, favoured) = data
+    val comments = data.comments.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
@@ -124,13 +125,10 @@ private fun MangaView(
                         )
                     )
                 },
-                navigationIcon = { NavigationIcon(navigator::popBackStack) },
+                navigationIcon = { NavigationIcon(back) },
                 actions = {
-                    comments?.let {
-                        IconButton(model::showComments) {
-                            Icon(painterResource(vector_comments), null)
-                        }
-                    }
+                    if (comments.itemCount > 0)
+                        IconButton(model::showComments) { Icon(painterResource(vector_comments), null) }
                     IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
                 }
             )
@@ -155,13 +153,13 @@ private fun MangaView(
 
             manga.descriptionHtml?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
             manga.related?.let {
-                if (it.isNotEmpty()) item { Related(model::showRelated, it, navigator) }
+                if (it.isNotEmpty()) item { Related(model::showRelated, it, toAnime, toManga) }
             }
             manga.characterRoles?.let {
-                if (it.isNotEmpty()) item { Characters(model::showCharacters, it, navigator) }
+                if (it.isNotEmpty()) item { Characters(model::showCharacters, it, toCharacter) }
             }
             manga.personRoles?.let {
-                if (it.isNotEmpty()) item { Authors(model::showAuthors, it, navigator) }
+                if (it.isNotEmpty()) item { Authors(model::showAuthors, it, toPerson) }
             }
         }
     }
@@ -171,12 +169,12 @@ private fun MangaView(
             model::hideSheet, model::showRate, model::showSimilar, model::showStats,
             model::showLinks, model::changeFavourite, state.sheetBottom, manga.userRate, favoured
         )
-        state.showComments -> Comments(model::hideComments, comments!!, navigator)
-        state.showRelated -> DialogRelated(model::hideRelated, manga.related!!, navigator)
-        state.showCharacters -> DialogCharacters(model::hideCharacters, state.lazyCharacters, manga.characterRoles!!, navigator)
-        state.showAuthors -> DialogAuthors(model::hideAuthors, state.lazyAuthors, manga.personRoles!!, navigator)
+        state.showComments -> Comments(model::hideComments, comments, toUser)
+        state.showRelated -> DialogRelated(model::hideRelated, manga.related!!, toAnime, toManga)
+        state.showCharacters -> DialogCharacters(model::hideCharacters, state.lazyCharacters, manga.characterRoles!!, toCharacter)
+        state.showAuthors -> DialogAuthors(model::hideAuthors, state.lazyAuthors, manga.personRoles!!, toPerson)
         state.showRate -> CreateRate(model::hideRate, model::reload, LINKED_TYPE[1], manga.id, manga.userRate)
-        state.showSimilar -> DialogSimilar(model::hideSimilar, state.lazySimilar, similar, navigator)
+        state.showSimilar -> DialogSimilar(model::hideSimilar, state.lazySimilar, similar, toManga)
         state.showStats -> Statistics(model::hideStats, manga.scoresStats, manga.statusesStats, LINKED_TYPE[1])
         state.showLinks -> LinksSheet(model::hideLinks, state.sheetLinks, links)
     }
@@ -236,7 +234,7 @@ private fun DialogSimilar(
     hide: () -> Unit,
     state: LazyListState,
     list: List<MangaShort>,
-    navigator: Navigator
+    toManga: (String) -> Unit
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
@@ -253,9 +251,7 @@ private fun DialogSimilar(
             items(list) { (id, name, russian, image) ->
                 ListItem(
                     headlineContent = { Text(russian ?: name) },
-                    modifier = Modifier.clickable {
-                        navigator.navigate(MangaScreenDestination(id.toString()))
-                    },
+                    modifier = Modifier.clickable { toManga(id.toString()) },
                     leadingContent = {
                         AsyncImage(
                             model = getImage(image.original),
