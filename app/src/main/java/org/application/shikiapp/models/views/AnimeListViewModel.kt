@@ -11,8 +11,8 @@ import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.retryWhen
-import kotlinx.coroutines.launch
 import org.application.AnimeListQuery.Data.Anime
 import org.application.shikiapp.network.ApolloClient
 import org.application.shikiapp.network.paging.AnimePaging
@@ -28,16 +28,12 @@ class AnimeListViewModel : FiltersViewModel<Anime>() {
             val set = mutableSetOf<String>()
             list.filter { if (it.id in set) false else set.add(it.id) }
         }
+    }.onStart {
+        try {
+            genres.addAll(ApolloClient.getAnimeGenres())
+        } catch (e: Throwable) {
+            LoadState.Error(e)
+        }
     }.cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is HttpException || attempt <= 3 }
-
-    init {
-        viewModelScope.launch {
-            try {
-                genres.addAll(ApolloClient.getAnimeGenres())
-            } catch (e: Throwable) {
-                LoadState.Error(e)
-            }
-        }
-    }
 }
