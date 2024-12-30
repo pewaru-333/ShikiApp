@@ -2,55 +2,62 @@
 
 package org.application.shikiapp.models.views
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
-import androidx.compose.ui.unit.Density
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import androidx.paging.PagingData
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.AnimeQuery.Data.Anime
 import org.application.AnimeStatsQuery
 import org.application.shikiapp.models.data.AnimeShort
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
+import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.LINKED_TYPE
 
+class AnimeViewModel(saved: SavedStateHandle) : ViewModel() {
+    private val animeId = saved.toRoute<org.application.shikiapp.utils.Anime>().id
 
-class AnimeViewModel(private val animeId: String) : ViewModel() {
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
+        .onStart { getAnime() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Response.Loading)
 
     private val _state = MutableStateFlow(AnimeState())
     val state = _state.asStateFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), AnimeState())
 
-    init {
-        getAnime()
-    }
 
-    fun getAnime() {
-        viewModelScope.launch {
-            _response.emit(Response.Loading)
+    fun getAnime() = viewModelScope.launch {
+        _response.emit(Response.Loading)
 
-            try {
-                val anime = ApolloClient.getAnime(animeId)
-                val similar = NetworkClient.anime.getSimilar(animeId.toLong())
-                val links = NetworkClient.anime.getLinks(animeId.toLong())
-                val stats = ApolloClient.getAnimeStats(animeId)
-                val favoured = NetworkClient.anime.getAnime(animeId.toLong()).favoured
+        try {
+            val anime = ApolloClient.getAnime(animeId)
+            val similar = NetworkClient.anime.getSimilar(animeId.toLong())
+            val links = NetworkClient.anime.getLinks(animeId.toLong())
+            val comments = Comments.getComments(anime.topic?.id?.toLong(), viewModelScope)
+            val stats = ApolloClient.getAnimeStats(animeId)
+            val favoured = NetworkClient.anime.getAnime(animeId.toLong()).favoured
 
-                _response.emit(Response.Success(anime, similar, links, stats, favoured))
-            } catch (e: Throwable) {
-                e.printStackTrace()
-                _response.emit(Response.Error)
-            }
+            _response.emit(Response.Success(anime, similar, links, comments, stats, favoured))
+        } catch (e: Exception) {
+            _response.emit(Response.Error)
         }
     }
+
 
     fun changeFavourite(flag: Boolean) {
         viewModelScope.launch {
@@ -64,46 +71,23 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
         }
     }
 
-    fun reload() {
-        viewModelScope.launch { hideRate(); delay(300); getAnime() }
-    }
+    fun reload() = viewModelScope.launch { showRate(); delay(300); getAnime() }
 
-    fun showComments() = _state.update { it.copy(showComments = true) }
-    fun hideComments() = _state.update { it.copy(showComments = false) }
+    fun showComments() = _state.update { it.copy(showComments = !it.showComments) }
+    fun showSheet() = _state.update { it.copy(showSheet = !it.showSheet) }
+    fun showRelated() = _state.update { it.copy(showRelated = !it.showRelated) }
+    fun showCharacters() = _state.update { it.copy(showCharacters = !it.showCharacters) }
+    fun showAuthors() = _state.update { it.copy(showAuthors = !it.showAuthors) }
+    fun showScreenshots() = _state.update { it.copy(showScreenshots = !it.showScreenshots) }
 
-    fun showSheet() = _state.update { it.copy(showSheet = true) }
-    fun hideSheet() = _state.update { it.copy(showSheet = false) }
-
-    fun showRelated() = _state.update { it.copy(showRelated = true) }
-    fun hideRelated() = _state.update { it.copy(showRelated = false) }
-
-    fun showCharacters() = _state.update { it.copy(showCharacters = true) }
-    fun hideCharacters() = _state.update { it.copy(showCharacters = false) }
-
-    fun showAuthors() = _state.update { it.copy(showAuthors = true) }
-    fun hideAuthors() = _state.update { it.copy(showAuthors = false) }
-
-    fun showScreenshots() = _state.update { it.copy(showScreenshots = true) }
-    fun hideScreenshots() = _state.update { it.copy(showScreenshots = false) }
-
-    fun showScreenshot(index: Int) = _state.update { it.copy(showScreenshot = true, screenshot = index) }
-    fun hideScreenshot() = _state.update { it.copy(showScreenshot = false, screenshot = 0) }
+    fun showScreenshot(index: Int = 0) = _state.update { it.copy(showScreenshot = !it.showScreenshot, screenshot = index) }
     fun setScreenshot(index: Int) = _state.update { it.copy(screenshot = index) }
 
-    fun showVideo() = _state.update { it.copy(showVideo = true) }
-    fun hideVideo() = _state.update { it.copy(showVideo = false) }
-
-    fun showRate() = _state.update { it.copy(showRate = true, showSheet = false) }
-    fun hideRate() = _state.update { it.copy(showRate = false) }
-
-    fun showSimilar() = _state.update { it.copy(showSimilar = true, showSheet = false) }
-    fun hideSimilar() = _state.update { it.copy(showSimilar = false, showSheet = true) }
-
-    fun showStats() = _state.update { it.copy(showStats = true, showSheet = false) }
-    fun hideStats() = _state.update { it.copy(showStats = false, showSheet = true) }
-
-    fun showLinks() = _state.update { it.copy(showSheet = false, showLinks = true) }
-    fun hideLinks() = _state.update { it.copy(showSheet = true, showLinks = false) }
+    fun showVideo() = _state.update { it.copy(showVideo = !it.showVideo) }
+    fun showRate() = _state.update { it.copy(showRate = !it.showRate, showSheet = !it.showSheet) }
+    fun showSimilar() = _state.update { it.copy(showSimilar = !it.showSimilar, showSheet = !it.showSheet) }
+    fun showStats() = _state.update { it.copy(showStats = !it.showStats, showSheet = !it.showSheet) }
+    fun showLinks() = _state.update { it.copy(showSheet = !it.showSheet, showLinks = !it.showLinks) }
 
     sealed interface Response {
         data object Error : Response
@@ -112,29 +96,9 @@ class AnimeViewModel(private val animeId: String) : ViewModel() {
             val anime: Anime,
             val similar: List<AnimeShort>,
             val links: List<ExternalLink>,
+            val comments: Flow<PagingData<Comment>>,
             val stats: AnimeStatsQuery.Data.Anime,
             val favoured: Boolean
         ) : Response
     }
 }
-
-data class AnimeState(
-    val showComments: Boolean = false,
-    val showSheet: Boolean = false,
-    val showRelated: Boolean = false,
-    val showCharacters: Boolean = false,
-    val showAuthors: Boolean = false,
-    val showScreenshots: Boolean = false,
-    val showScreenshot: Boolean = false,
-    val showVideo: Boolean = false,
-    val showRate: Boolean = false,
-    val showSimilar: Boolean = false,
-    val showStats: Boolean = false,
-    val showLinks: Boolean = false,
-    val screenshot: Int = 0,
-    val sheetBottom: SheetState = SheetState(false, Density(1f)),
-    val sheetLinks: SheetState = SheetState(false, Density(1f)),
-    val lazyCharacters: LazyListState = LazyListState(),
-    val lazyAuthors: LazyListState = LazyListState(),
-    val lazySimilar: LazyListState = LazyListState()
-)
