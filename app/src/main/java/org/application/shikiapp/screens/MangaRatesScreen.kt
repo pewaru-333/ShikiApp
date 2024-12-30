@@ -41,10 +41,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.shikiapp.R.string.text_cancel
 import org.application.shikiapp.R.string.text_change
 import org.application.shikiapp.R.string.text_chapters
@@ -67,7 +63,6 @@ import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScor
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetVolumes
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.SCORES
@@ -77,10 +72,9 @@ import org.application.shikiapp.utils.getFull
 import org.application.shikiapp.utils.getKind
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination<RootGraph>
 @Composable
-fun MangaRatesScreen(id: Long, navigator: DestinationsNavigator) {
-    val model = viewModel<MangaRatesViewModel>(factory = factory { MangaRatesViewModel(id) })
+fun MangaRatesScreen(toManga: (String) -> Unit, back: () -> Unit) {
+    val model = viewModel<MangaRatesViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
     when(val data = response) {
@@ -88,13 +82,13 @@ fun MangaRatesScreen(id: Long, navigator: DestinationsNavigator) {
         Error -> ErrorScreen(model::getRates)
         Loading -> LoadingScreen()
         is Success -> {
-            val userVM = if (Preferences.getUserId() == id) viewModel<UserRateViewModel>() else null
+            val userVM = if (Preferences.getUserId() == model.userId) viewModel<UserRateViewModel>() else null
 
             Scaffold(
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(text_manga_list)) },
-                        navigationIcon = { NavigationIcon(navigator::popBackStack) }
+                        navigationIcon = { NavigationIcon(back) }
                     )
                 }
             ) { values ->
@@ -113,7 +107,7 @@ fun MangaRatesScreen(id: Long, navigator: DestinationsNavigator) {
                         userVM = userVM,
                         state = model.listState,
                         reload = model::reload,
-                        navigator = navigator
+                        toManga = toManga
                     )
                 }
             }
@@ -154,7 +148,7 @@ private fun MangaRatesList(
     userVM: UserRateViewModel?,
     state: LazyListState,
     reload: () -> Unit,
-    navigator: DestinationsNavigator
+    toManga: (String) -> Unit
 ) = LazyColumn(
     state = state,
     contentPadding = PaddingValues(8.dp),
@@ -169,7 +163,7 @@ private fun MangaRatesList(
             modifier = Modifier
                 .height(175.dp)
                 .combinedClickable(
-                    onClick = { navigator.navigate(MangaScreenDestination(manga.id.toString())) },
+                    onClick = { toManga(manga.id.toString()) },
                     onLongClick = {
                         userVM?.let { itVM ->
                             itVM.onEvent(SetRateId(id.toString()))
