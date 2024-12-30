@@ -1,6 +1,5 @@
 package org.application.shikiapp.screens
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
@@ -44,10 +43,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.annotation.parameters.DeepLink
-import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_add_fav
@@ -57,51 +52,53 @@ import org.application.shikiapp.R.string.text_information
 import org.application.shikiapp.R.string.text_remove_fav
 import org.application.shikiapp.models.data.Person
 import org.application.shikiapp.models.data.Roles
-import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.PersonState
 import org.application.shikiapp.models.views.PersonViewModel
 import org.application.shikiapp.models.views.PersonViewModel.Response.Error
 import org.application.shikiapp.models.views.PersonViewModel.Response.Loading
 import org.application.shikiapp.models.views.PersonViewModel.Response.Success
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.getBirthday
 import org.application.shikiapp.utils.getDeathday
 import org.application.shikiapp.utils.isPersonFavoured
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
-@Destination<RootGraph>(
-    deepLinks = [
-        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/people/{id}-.*")
-    ]
-)
 @Composable
-fun PersonScreen(id: Long, navigator: Navigator) {
-    val model = viewModel<PersonViewModel>(factory = factory { PersonViewModel(id) })
+fun PersonScreen(
+    toCharacter: (String) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val model = viewModel<PersonViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
     when (val data = response) {
         is Error -> ErrorScreen(model::getPerson)
         Loading -> LoadingScreen()
-        is Success -> PersonView(model, data.person, navigator)
+        is Success -> PersonView(model, data, toCharacter, toUser, back)
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun PersonView(model: PersonViewModel, person: Person, navigator: Navigator) {
+private fun PersonView(
+    model: PersonViewModel,
+    data: Success,
+    toCharacter: (String) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val (person, _) = data
     val state by model.state.collectAsStateWithLifecycle()
-    val comments = person.topicId?.let {
-        viewModel<CommentViewModel>(factory = factory { CommentViewModel(it) })
-    }?.comments?.collectAsLazyPagingItems()
+    val comments = data.comments.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(person.jobTitle) },
-                navigationIcon = { NavigationIcon(navigator::popBackStack) },
+                navigationIcon = { NavigationIcon(back) },
                 actions = {
-                    comments?.let { IconButton(model::showComments) { Icon( painterResource(vector_comments), null) } }
+                    if (comments.itemCount > 0)
+                        IconButton(model::showComments) { Icon( painterResource(vector_comments), null) }
                     if (Preferences.isTokenExists() || person.website.isNotEmpty())
                         IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
                 }
@@ -123,14 +120,14 @@ private fun PersonView(model: PersonViewModel, person: Person, navigator: Naviga
                 }
             }
             person.grouppedRoles?.let { item { Roles(it) } }
-            person.roles?.let { if (it.isNotEmpty()) item { Roles(model, it, navigator) } }
+            person.roles?.let { if (it.isNotEmpty()) item { Roles(model, it, toCharacter) } }
         }
     }
 
     when {
-        state.showComments -> Comments(model::hideComments, comments!!, navigator)
+        state.showComments -> Comments(model::hideComments, comments, toUser)
         state.showSheet -> BottomSheet(model, state, person)
-        state.showRoles -> DialogRoles(model, person.roles!!, navigator)
+        state.showRoles -> DialogRoles(model, person.roles!!, toCharacter)
     }
 }
 
@@ -164,7 +161,7 @@ private fun Roles(roles: List<Pair<String, Int>>) = Column(verticalArrangement =
 }
 
 @Composable
-private fun Roles(model: PersonViewModel, roles: List<Roles>?, navigator: Navigator) =
+private fun Roles(model: PersonViewModel, roles: List<Roles>?, toCharacter: (String) -> Unit) =
     Column(verticalArrangement = spacedBy(8.dp), horizontalAlignment = Alignment.Start) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_best_roles))
@@ -174,9 +171,7 @@ private fun Roles(model: PersonViewModel, roles: List<Roles>?, navigator: Naviga
             roles?.take(5)?.forEach { role ->
                 role.characters.forEach { (id, name, russian, image) ->
                     Column(
-                        modifier = Modifier.clickable {
-                            navigator.navigate(CharacterScreenDestination(id.toString()))
-                        },
+                        modifier = Modifier.clickable { toCharacter(id.toString()) },
                         verticalArrangement = spacedBy(4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
@@ -190,7 +185,7 @@ private fun Roles(model: PersonViewModel, roles: List<Roles>?, navigator: Naviga
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun DialogRoles(model: PersonViewModel, roles: List<Roles>, navigator: Navigator) =
+private fun DialogRoles(model: PersonViewModel, roles: List<Roles>, toCharacter: (String) -> Unit) =
     Dialog(model::hideRoles, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
@@ -207,9 +202,7 @@ private fun DialogRoles(model: PersonViewModel, roles: List<Roles>, navigator: N
                             OneLineImage(
                                 name = russian ?: name,
                                 link = image.original,
-                                modifier = Modifier.clickable {
-                                    navigator.navigate(CharacterScreenDestination(id.toString()))
-                                }
+                                modifier = Modifier.clickable { toCharacter(id.toString()) }
                             )
                         }
                     }
