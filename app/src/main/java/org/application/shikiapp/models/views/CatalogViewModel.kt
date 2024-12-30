@@ -1,6 +1,5 @@
 package org.application.shikiapp.models.views
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import androidx.lifecycle.ViewModel
@@ -11,6 +10,7 @@ import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CatalogItems
 
@@ -25,10 +25,10 @@ class CatalogViewModel : ViewModel() {
 
     fun showFilters(menu: CatalogItems) = _state.update {
         when (menu) {
-            CatalogItems.Anime -> it.copy(showFiltersA = true)
-            CatalogItems.Manga -> it.copy(showFiltersM = true)
-            CatalogItems.Ranobe -> it.copy(showFiltersR = true)
-            CatalogItems.People -> it.copy(showFiltersP = true)
+            CatalogItems.ANIME -> it.copy(showFiltersA = true)
+            CatalogItems.MANGA -> it.copy(showFiltersM = true)
+            CatalogItems.RANOBE -> it.copy(showFiltersR = true)
+            CatalogItems.PEOPLE -> it.copy(showFiltersP = true)
             else -> CatalogState()
         }
     }
@@ -37,16 +37,12 @@ class CatalogViewModel : ViewModel() {
         it.copy(showFiltersA = false, showFiltersM = false, showFiltersR = false, showFiltersP = false)
     }
 
-    fun drawer() {
-        viewModelScope.launch { _event.emit(DrawerEvent.Click) }
-    }
+    fun drawer() = viewModelScope.launch { _event.emit(DrawerEvent.Click) }
 
-    fun pick(menu: CatalogItems) {
-        viewModelScope.launch {
-            _event.emit(DrawerEvent.Clear)
-            _state.update {
-                it.copy(menu = menu, search = BLANK, drawerState = DrawerState(DrawerValue.Closed))
-            }
+    fun pick(menu: CatalogItems) = viewModelScope.launch {
+        _event.emit(DrawerEvent.Clear)
+        _state.update {
+            it.copy(menu = menu, search = BLANK, drawerState = DrawerState(DrawerValue.Closed))
         }
     }
 
@@ -55,18 +51,3 @@ class CatalogViewModel : ViewModel() {
         data object Click : DrawerEvent
     }
 }
-
-data class CatalogState(
-    val menu: CatalogItems = CatalogItems.Anime,
-    val search: String = BLANK,
-    val showFiltersA: Boolean = false,
-    val showFiltersM: Boolean = false,
-    val showFiltersR: Boolean = false,
-    val showFiltersP: Boolean = false,
-    val listA: LazyListState = LazyListState(),
-    val listM: LazyListState = LazyListState(),
-    val listR: LazyListState = LazyListState(),
-    val listC: LazyListState = LazyListState(),
-    val listP: LazyListState = LazyListState(),
-    val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
-)
