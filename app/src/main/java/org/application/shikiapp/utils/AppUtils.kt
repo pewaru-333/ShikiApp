@@ -1,9 +1,14 @@
 package org.application.shikiapp.utils
 
-import android.icu.text.SimpleDateFormat
+import android.icu. text.SimpleDateFormat
 import android.icu.util.Calendar
 import android.text.format.DateUtils
 import android.util.Patterns
+import androidx.navigation.NavBackStackEntry
+import androidx.navigation.NavDestination.Companion.hasRoute
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import org.application.AnimeQuery.Data.Anime.Studio
 import org.application.MangaQuery.Data.Manga.Publisher
 import org.application.shikiapp.models.data.Date
@@ -25,6 +30,7 @@ import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.FormatStyle
 import java.util.Locale
+import kotlin.reflect.KClass
 
 
 fun convertDate(text: String): String {
@@ -147,3 +153,15 @@ fun getPublisher(publisher: List<Publisher>) = try {
 
 fun setScore(status: List<String>, score: Float) = if (STATUSES_A.keys.elementAt(0) in status) null
 else score.toInt()
+
+fun <T : Any> NavBackStackEntry?.isCurrentRoute(route: KClass<T>) =
+    this?.destination?.hierarchy?.any { it.hasRoute(route) } == true
+
+fun NavHostController.toBottomBarItem(route: Any) = navigate(route) {
+    launchSingleTop = true
+    restoreState = true
+
+    popUpTo(this@toBottomBarItem.graph.findStartDestination().id) {
+        saveState = true
+    }
+}
