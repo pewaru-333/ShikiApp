@@ -5,17 +5,22 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.MangaRate
 import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.utils.MangaRates
 import retrofit2.HttpException
 
-class MangaRatesViewModel(private val userId: Long) : ViewModel() {
+class MangaRatesViewModel(saved: SavedStateHandle) : ViewModel() {
+    val userId = saved.toRoute<MangaRates>().id
+
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
