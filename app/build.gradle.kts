@@ -4,6 +4,7 @@ plugins {
     alias(libs.plugins.composeCompiler)
     alias(libs.plugins.googleKsp)
     alias(libs.plugins.jetbrainsKotlin)
+    alias(libs.plugins.kotlin.serialization)
 }
 
 apollo {
@@ -22,8 +23,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 13
-        versionName = "alpha-0.1.10"
+        versionCode = 14
+        versionName = "alpha-0.1.13"
     }
 
     dependenciesInfo {
@@ -49,14 +50,6 @@ android {
     buildFeatures {
         compose = true
     }
-    composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.14"
-    }
-    packaging {
-        resources {
-            excludes += "/META-INF/{AL2.0,LGPL2.1}"
-        }
-    }
 }
 
 dependencies {
@@ -75,8 +68,8 @@ dependencies {
     implementation(platform(libs.okhttp.bom))
 
     // ============================== Navigation ==============================
-    ksp(libs.compose.destinations.ksp)
-    implementation(libs.compose.destinations)
+    implementation(libs.androidx.navigation.compose)
+    implementation(libs.kotlinx.serialization.json)
 
     // ============================== Utilities ==============================
     implementation(libs.coil.compose)
