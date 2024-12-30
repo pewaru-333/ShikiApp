@@ -1,6 +1,8 @@
 package org.application.shikiapp.models.views
 
 import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -8,16 +10,18 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.models.data.User
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.TokenManager
 import java.net.UnknownHostException
 
-class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
+class ProfileViewModel : UserViewModel(null) {
     private val _login = MutableStateFlow<LoginState>(LoginState.NotLogged)
     val login = _login.asStateFlow()
         .onStart { if (Preferences.isTokenExists()) getProfile() }
@@ -30,9 +34,10 @@ class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
             try {
                 val user = NetworkClient.user.getUser(Preferences.getUserId())
                 val clubs = NetworkClient.user.getClubs(user.id)
+                val comments = Comments.getComments(user.id, viewModelScope)
                 val favourites = NetworkClient.user.getFavourites(user.id)
 
-                _login.emit(LoginState.Logged(user, clubs, favourites))
+                _login.emit(LoginState.Logged(user, clubs, comments, favourites))
             } catch (e: Throwable) {
                 e.printStackTrace()
                 when (e) {
@@ -51,9 +56,10 @@ class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
                 TokenManager.getToken(code)
                 val user = TokenManager.getUser()
                 val clubs = NetworkClient.user.getClubs(user.id)
+                val comments = Comments.getComments(user.id, viewModelScope)
                 val favourites = NetworkClient.user.getFavourites(user.id)
 
-                _login.emit(LoginState.Logged(user, clubs, favourites))
+                _login.emit(LoginState.Logged(user, clubs, comments, favourites))
             } catch (e: Throwable) {
                 _login.emit(LoginState.NotLogged)
             }
@@ -80,7 +86,8 @@ class ProfileViewModel : UserViewModel(Preferences.getUserId()) {
         data object NoNetwork : LoginState
         data object NotLogged : LoginState
         data object Logging : LoginState
-        data class Logged(val user: User, val clubs: List<Club>, val favourites: Favourites) :
+        data class Logged(val user: User, val clubs: List<Club>, val comments: Flow<PagingData<Comment>>,
+                          val favourites: Favourites) :
             LoginState
     }
 }
