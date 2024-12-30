@@ -5,19 +5,27 @@ package org.application.shikiapp.models.views
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.ui.unit.Density
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Person
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.LINKED_KIND
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.isPersonFavoured
 
-class PersonViewModel(private val id: Long) : ViewModel() {
+class PersonViewModel(saved: SavedStateHandle) : ViewModel() {
+    private val id = saved.toRoute<org.application.shikiapp.utils.Person>().id
+
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
@@ -34,8 +42,13 @@ class PersonViewModel(private val id: Long) : ViewModel() {
 
             try {
                 val person = NetworkClient.client.getPerson(id)
+                val comments = Comments.getComments(person.topicId, viewModelScope)
 
-                _response.emit(Response.Success(person))
+                _response.emit(
+                    Response.Success(
+                        person, comments
+                    )
+                )
             } catch (e: Throwable) {
                 _response.emit(Response.Error)
             }
@@ -73,7 +86,7 @@ class PersonViewModel(private val id: Long) : ViewModel() {
     sealed interface Response {
         data object Error : Response
         data object Loading : Response
-        data class Success(val person: Person) : Response
+        data class Success(val person: Person, val comments: Flow<PagingData<Comment>>) : Response
     }
 }
 
