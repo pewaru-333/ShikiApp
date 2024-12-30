@@ -31,9 +31,9 @@ import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetTit
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ORDERS
 import org.application.shikiapp.utils.PeopleFilterItems
-import org.application.shikiapp.utils.PeopleFilterItems.Mangaka
-import org.application.shikiapp.utils.PeopleFilterItems.Producer
-import org.application.shikiapp.utils.PeopleFilterItems.Seyu
+import org.application.shikiapp.utils.PeopleFilterItems.MANGAKA
+import org.application.shikiapp.utils.PeopleFilterItems.PRODUCER
+import org.application.shikiapp.utils.PeopleFilterItems.SEYU
 import java.time.LocalDate
 
 open class FiltersViewModel<T : Any> : ViewModel() {
@@ -125,19 +125,19 @@ open class FiltersViewModel<T : Any> : ViewModel() {
             is SetMyList -> {}
             is SetRole -> _filters.update {
                 when (event.item) {
-                    Seyu -> it.copy(
+                    SEYU -> it.copy(
                         isSeyu = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(Seyu) else remove(Seyu) }
+                        roles = it.roles.apply { if (event.flag) add(SEYU) else remove(SEYU) }
                     )
 
-                    Producer -> it.copy(
+                    PRODUCER -> it.copy(
                         isProducer = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(Producer) else remove(Producer) }
+                        roles = it.roles.apply { if (event.flag) add(PRODUCER) else remove(PRODUCER) }
                     )
 
-                    Mangaka -> it.copy(
+                    MANGAKA -> it.copy(
                         isMangaka = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(Mangaka) else remove(Mangaka) }
+                        roles = it.roles.apply { if (event.flag) add(MANGAKA) else remove(MANGAKA) }
                     )
                 }
             }
