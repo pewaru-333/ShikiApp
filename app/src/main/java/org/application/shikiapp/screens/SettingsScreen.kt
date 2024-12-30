@@ -6,8 +6,6 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.getPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
@@ -21,7 +19,6 @@ import org.application.shikiapp.utils.PREF_DYNAMIC_COLORS
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.THEMES
 
-@Destination<RootGraph>
 @Composable
 fun SettingsScreen() {
     ProvidePreferenceLocals(Preferences.app.getPreferenceFlow()) {
