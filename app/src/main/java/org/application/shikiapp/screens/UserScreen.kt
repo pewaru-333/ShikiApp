@@ -16,21 +16,23 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
-import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.UserViewModel
 import org.application.shikiapp.models.views.UserViewModel.Response.Error
 import org.application.shikiapp.models.views.UserViewModel.Response.Loading
 import org.application.shikiapp.models.views.UserViewModel.Response.Success
-import org.application.shikiapp.models.views.factory
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination<RootGraph>
 @Composable
-fun UserScreen(userId: Long, navigator: DestinationsNavigator) {
-    val model = viewModel<UserViewModel>(factory = factory { UserViewModel(userId) })
+fun UserScreen(
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toPerson: (Long) -> Unit,
+    toUser: (Long) -> Unit,
+    toClub: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val model = viewModel<UserViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
     when (val data = response) {
@@ -39,15 +41,13 @@ fun UserScreen(userId: Long, navigator: DestinationsNavigator) {
         is Success -> {
             val user = data.user
             val state by model.state.collectAsStateWithLifecycle()
-            val comments = viewModel<CommentViewModel>(factory = factory {
-                CommentViewModel(user.id)
-            }).comments.collectAsLazyPagingItems()
+            val comments = data.comments.collectAsLazyPagingItems()
 
             Scaffold(
                 topBar = {
                     TopAppBar(
                         title = {},
-                        navigationIcon = { NavigationIcon(navigator::popBackStack) },
+                        navigationIcon = { NavigationIcon(back) },
                         actions = {
                             IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
                         }
@@ -60,24 +60,32 @@ fun UserScreen(userId: Long, navigator: DestinationsNavigator) {
                 ) {
                     item { UserBriefItem(user) }
                     item { BriefInfo(model::setMenu) }
-                    item { UserStats(user.stats, user.id, navigator) }
+                    item { UserStats(user.stats, user.id, toAnime, toManga) }
 
-                    if (comments.itemCount > 0) comments(comments, navigator)
+                    if (comments.itemCount > 0) comments(comments, toUser)
                 }
             }
 
             when {
                 state.showDialog -> {
                     val friends = model.friends.collectAsLazyPagingItems()
-                    DialogItem(model, state, friends, data.clubs, navigator)
+                    DialogItem(model, state, friends, data.clubs, toUser, toClub)
                 }
 
                 state.showFavourite -> DialogFavourites(
-                    model::hideFavourite, model::setTab, state.tab, data.favourites, navigator
+                    hide = model::hideFavourite,
+                    setTab = model::setTab,
+                    tab = state.tab,
+                    favourites = data.favourites,
+                    toAnime = toAnime,
+                    toManga = toManga,
+                    toCharacter = toCharacter,
+                    toPerson = toPerson
                 )
+
                 state.showHistory -> {
                     val history = model.history.collectAsLazyPagingItems()
-                    DialogHistory(model::hideHistory, history, navigator)
+                    DialogHistory(model::hideHistory, history, toAnime, toManga)
                 }
 
                 state.showSheet -> BottomSheet(
