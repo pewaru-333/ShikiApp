@@ -6,21 +6,29 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.ui.unit.Density
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
+import androidx.paging.PagingData
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.MangaQuery.Data.Manga
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.MangaShort
 import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.utils.LINKED_TYPE
 
-class MangaViewModel(private val mangaId: String) : ViewModel() {
+class MangaViewModel(saved: SavedStateHandle) : ViewModel() {
+    private val mangaId = saved.toRoute<org.application.shikiapp.utils.Manga>().id
+
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
@@ -39,9 +47,10 @@ class MangaViewModel(private val mangaId: String) : ViewModel() {
                 val manga = ApolloClient.getManga(mangaId)
                 val similar = NetworkClient.manga.getSimilar(mangaId)
                 val links = NetworkClient.manga.getLinks(mangaId.toLong())
+                val comments = Comments.getComments(manga.topic?.id?.toLong(), viewModelScope)
                 val favoured = NetworkClient.manga.getManga(mangaId).favoured
 
-                _response.emit(Response.Success(manga, similar, links, favoured))
+                _response.emit(Response.Success(manga, similar, links, comments, favoured))
             } catch (e: Throwable) {
                 _response.emit(Response.Error)
             }
@@ -99,6 +108,7 @@ class MangaViewModel(private val mangaId: String) : ViewModel() {
             val manga: Manga,
             val similar: List<MangaShort>,
             val links: List<ExternalLink>,
+            val comments: Flow<PagingData<Comment>>,
             val favoured: Boolean
         ) : Response
     }
