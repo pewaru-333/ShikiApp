@@ -21,21 +21,20 @@ class CalendarViewModel : ViewModel() {
         .onStart { getCalendar() }
         .stateIn(viewModelScope, SharingStarted.Lazily, Response.Loading)
 
-    fun getCalendar() {
-        viewModelScope.launch {
-            _state.emit(Response.Loading)
+    fun getCalendar() = viewModelScope.launch {
+        _state.emit(Response.Loading)
 
-            try {
-                val calendar = NetworkClient.client.getCalendar()
-                    .groupBy { fromISODate(it.nextEpisodeAt) }
-                    .map { AnimeSchedule(it.key, it.value) }
+        try {
+            val calendar = NetworkClient.client.getCalendar()
+                .groupBy { fromISODate(it.nextEpisodeAt) }
+                .map { AnimeSchedule(it.key, it.value) }
 
-                _state.emit(Response.Success(calendar))
-            } catch (e: HttpException) {
-                _state.emit(Response.Error)
-            }
+            _state.emit(Response.Success(calendar))
+        } catch (e: HttpException) {
+            _state.emit(Response.Error)
         }
     }
+
 
     sealed interface Response {
         data object Error : Response
