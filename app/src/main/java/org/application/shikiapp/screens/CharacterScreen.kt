@@ -1,6 +1,5 @@
 package org.application.shikiapp.screens
 
-import android.content.Intent
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
@@ -39,12 +38,6 @@ import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.annotation.parameters.DeepLink
-import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_character
@@ -58,49 +51,54 @@ import org.application.shikiapp.models.views.CharacterViewModel
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Error
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Loading
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Success
-import org.application.shikiapp.models.views.CommentViewModel
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
-@Destination<RootGraph>(
-    deepLinks = [
-        DeepLink(action = Intent.ACTION_VIEW, uriPattern = "https://shikimori.one/characters/{id}-.*")
-    ]
-)
 @Composable
-fun CharacterScreen(id: String, navigator: Navigator) {
-    val model = viewModel<CharacterViewModel>(factory = factory { CharacterViewModel(id) })
+fun CharacterScreen(
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toPerson: (Long) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val model = viewModel<CharacterViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
     when (val data = response) {
         is Error -> ErrorScreen(model::getCharacter)
         is Loading -> LoadingScreen()
-        is Success -> CharacterView(model, data, navigator)
+        is Success -> CharacterView(model, data, toAnime, toManga, toPerson, toUser, back)
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun CharacterView(model: CharacterViewModel, data: Success, navigator: Navigator) {
-    val character = data.character
+private fun CharacterView(
+    model: CharacterViewModel,
+    data: Success,
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toPerson: (Long) -> Unit,
+    toUser: (Long) -> Unit,
+    back: () -> Unit
+) {
+    val (character, _, _) = data
     val anime = data.character.animes
     val manga = data.character.mangas
     val seyu = data.character.seyu
 
     val state by model.state.collectAsStateWithLifecycle()
-    val comments = character.topicId?.let {
-        viewModel<CommentViewModel>(factory = factory { CommentViewModel(it) })
-    }?.comments?.collectAsLazyPagingItems()
+    val comments = data.comments.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(text_character)) },
-                navigationIcon = { NavigationIcon(navigator::popBackStack)},
+                navigationIcon = { NavigationIcon(back)},
                 actions = {
-                    comments?.let { IconButton(model::showComments) { Icon(painterResource(vector_comments), null) } }
+                    if (comments.itemCount > 0)
+                        IconButton(model::showComments) { Icon(painterResource(vector_comments), null) }
                     if (Preferences.isTokenExists()) IconButton({ model.changeFavourite(data.character.favoured) }) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
@@ -124,19 +122,19 @@ private fun CharacterView(model: CharacterViewModel, data: Success, navigator: N
             }
 
             character.descriptionHTML?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
-            anime.let { if (it.isNotEmpty()) item { Catalog(model::showAnime, it, navigator) } }
-            manga.let { if (it.isNotEmpty()) item { Catalog(model::showManga, it, navigator) } }
-            seyu.let { if (it.isNotEmpty()) item { Seyu(model, it, navigator) } }
+            anime.let { if (it.isNotEmpty()) item { Catalog(model::showAnime, it, toAnime, toManga) } }
+            manga.let { if (it.isNotEmpty()) item { Catalog(model::showManga, it, toAnime, toManga) } }
+            seyu.let { if (it.isNotEmpty()) item { Seyu(model, it, toPerson) } }
         }
     }
 
     when {
         state.showAnime || state.showManga ->
-            DialogCatalog(model:: hide, if(state.showAnime) anime else manga, navigator)
+            DialogCatalog(model:: hide, if(state.showAnime) anime else manga, toAnime, toManga)
 //        state.showAnime -> DialogCatalog(model::hide, anime, navigator)
 //        state.showManga -> DialogManga(model, manga, navigator)
-        state.showSeyu -> DialogSeyu(model, seyu, navigator)
-        state.showComments -> Comments(model::hideComments, comments!!, navigator)
+        state.showSeyu -> DialogSeyu(model, seyu, toPerson)
+        state.showComments -> Comments(model::hideComments, comments, toUser)
     }
 }
 
@@ -144,7 +142,8 @@ private fun CharacterView(model: CharacterViewModel, data: Success, navigator: N
 private fun Catalog(
     show: () -> Unit,
     list: List<Content>,
-    navigator: Navigator,
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
     anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
 ) = Column {
     Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
@@ -156,12 +155,7 @@ private fun Catalog(
             Column(
                 Modifier
                     .width(120.dp)
-                    .clickable {
-                        navigator.navigate(
-                            if (anime) AnimeScreenDestination(it.id.toString())
-                            else MangaScreenDestination(it.id.toString())
-                        )
-                    }
+                    .clickable { if (anime) toAnime(it.id.toString()) else toManga(it.id.toString()) }
             ) {
                 RoundedRelatedPoster(it.image.original)
                 RelatedText(it.russian ?: it.name)
@@ -172,7 +166,7 @@ private fun Catalog(
 
 
 @Composable
-private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, navigator: Navigator) =
+private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, toPerson: (Long) -> Unit) =
     Column(verticalArrangement = spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_seyu))
@@ -180,7 +174,7 @@ private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, navigat
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(16.dp), CenterVertically) {
             list.take(3).forEach { (id, name, russian, image) ->
-                Column(Modifier.clickable { navigator.navigate(PersonScreenDestination(id)) }) {
+                Column(Modifier.clickable { toPerson(id) }) {
                     CircleImage(image.original)
                     TextCircleImage(russian ?: name)
                 }
@@ -195,7 +189,8 @@ private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, navigat
 private fun DialogCatalog(
     hide: () -> Unit,
     list: List<Content>,
-    navigator: Navigator,
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
     anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
@@ -215,12 +210,7 @@ private fun DialogCatalog(
                     horizontalArrangement = spacedBy(16.dp),
                     modifier = Modifier
                         .height(198.dp)
-                        .clickable {
-                            navigator.navigate(
-                                if (anime) AnimeScreenDestination(it.id.toString())
-                                else MangaScreenDestination(it.id.toString())
-                            )
-                        }
+                        .clickable { if (anime) toAnime(it.id.toString()) else toManga(it.id.toString()) }
                 )
                 {
                     RoundedPoster(it.image.original)
@@ -239,7 +229,7 @@ private fun DialogCatalog(
 private fun DialogSeyu(
     model: CharacterViewModel,
     list: List<CharacterPerson>,
-    navigator: Navigator
+    toPerson: (Long) -> Unit
 ) = Dialog(model::hideSeyu, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
@@ -257,7 +247,7 @@ private fun DialogSeyu(
                 OneLineImage(
                     name = russian ?: name,
                     link = image.original,
-                    modifier = Modifier.clickable { navigator.navigate(PersonScreenDestination(id)) }
+                    modifier = Modifier.clickable { toPerson(id) }
                 )
             }
         }
