@@ -11,7 +11,6 @@ import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
-import org.application.CharacterListQuery
 import org.application.CharacterListQuery.Data.Character
 import org.application.shikiapp.network.paging.CharactersPaging
 import retrofit2.HttpException
