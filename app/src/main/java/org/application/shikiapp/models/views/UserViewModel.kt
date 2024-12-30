@@ -6,11 +6,15 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.SheetState
 import androidx.compose.ui.unit.Density
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.retryWhen
@@ -18,17 +22,21 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R.string.blank
 import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.User
+import org.application.shikiapp.network.Comments
 import org.application.shikiapp.network.NetworkClient
 import org.application.shikiapp.network.paging.UserFriendsPaging
 import org.application.shikiapp.network.paging.UserHistoryPaging
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.ProfileMenus.Achievements
-import org.application.shikiapp.utils.ProfileMenus.Clubs
-import org.application.shikiapp.utils.ProfileMenus.Friends
+import org.application.shikiapp.utils.ProfileMenus.ACHIEVEMENTS
+import org.application.shikiapp.utils.ProfileMenus.CLUBS
+import org.application.shikiapp.utils.ProfileMenus.FRIENDS
 
-open class UserViewModel(private val userId: Long) : ViewModel() {
+open class UserViewModel(saved: SavedStateHandle?) : ViewModel() {
+    private val userId = saved?.toRoute<org.application.shikiapp.utils.User>()?.id ?: Preferences.getUserId()
+
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
@@ -52,9 +60,10 @@ open class UserViewModel(private val userId: Long) : ViewModel() {
             try {
                 val user = NetworkClient.user.getUser(userId)
                 val clubs = NetworkClient.user.getClubs(userId)
+                val comments = Comments.getComments(user.id, viewModelScope)
                 val favourites = NetworkClient.user.getFavourites(userId)
 
-                _response.emit(Response.Success(user, clubs, favourites))
+                _response.emit(Response.Success(user, clubs, comments, favourites))
             } catch (e: Throwable) {
                 _response.emit(Response.Error)
             }
@@ -76,16 +85,17 @@ open class UserViewModel(private val userId: Long) : ViewModel() {
     fun hideHistory() = _state.update { it.copy(showHistory = false) }
 
     fun getTitle() = when (_state.value.menu) {
-        0 -> Friends.title
-        1 -> Clubs.title
-        2 -> Achievements.title
+        0 -> FRIENDS.title
+        1 -> CLUBS.title
+        2 -> ACHIEVEMENTS.title
         else -> blank
     }
 
     sealed interface Response {
         data object Error : Response
         data object Loading : Response
-        data class Success(val user: User, val clubs: List<Club>, val favourites: Favourites) : Response
+        data class Success(val user: User, val clubs: List<Club>, val comments: Flow<PagingData<Comment>>,
+                           val favourites: Favourites) : Response
     }
 }
 
