@@ -1,7 +1,9 @@
 package org.application.shikiapp.models.views
 
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
@@ -21,7 +23,9 @@ import org.application.shikiapp.network.paging.ClubMembersPaging
 import org.application.shikiapp.network.paging.CommentsPaging
 import retrofit2.HttpException
 
-class ClubViewModel(private val clubId: Long) : ViewModel() {
+class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
+    private val clubId = saved.toRoute<org.application.shikiapp.utils.Club>().id
+
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
 
