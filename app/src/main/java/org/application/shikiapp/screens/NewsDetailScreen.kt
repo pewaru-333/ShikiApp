@@ -45,29 +45,22 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
-import com.ramcosta.composedestinations.annotation.Destination
-import com.ramcosta.composedestinations.annotation.RootGraph
-import com.ramcosta.composedestinations.generated.destinations.UserScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_image_of
-import org.application.shikiapp.models.views.CommentViewModel
 import org.application.shikiapp.models.views.NewsDetailState
 import org.application.shikiapp.models.views.NewsDetailViewModel
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Error
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Loading
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Success
-import org.application.shikiapp.models.views.factory
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.getLinks
 
 @OptIn(ExperimentalMaterial3Api::class)
-@Destination<RootGraph>
 @Composable
-fun NewsDetail(newsId: Long, navigator: DestinationsNavigator) {
-    val model = viewModel<NewsDetailViewModel>(factory = factory { NewsDetailViewModel(newsId) })
+fun NewsDetail(toUser: (Long) -> Unit, back: () -> Unit) {
+    val model = viewModel<NewsDetailViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
     when (val data = response) {
@@ -75,8 +68,7 @@ fun NewsDetail(newsId: Long, navigator: DestinationsNavigator) {
         is Loading -> LoadingScreen()
         is Success -> {
             val state by model.state.collectAsStateWithLifecycle()
-            val comments = viewModel<CommentViewModel>(factory = factory { CommentViewModel(newsId) })
-                .comments.collectAsLazyPagingItems()
+            val comments = data.comments.collectAsLazyPagingItems()
             val news = data.news
             val links = getLinks(news.htmlFooter)
             val video = links.filter { it.contains("youtu") }
@@ -86,7 +78,7 @@ fun NewsDetail(newsId: Long, navigator: DestinationsNavigator) {
                 topBar = {
                     TopAppBar(
                         title = { Text(stringResource(R.string.text_news_one)) },
-                        navigationIcon = { NavigationIcon(navigator::popBackStack) },
+                        navigationIcon = { NavigationIcon(back) },
                         actions = {
                             if (news.commentsCount > 0) IconButton(model::showComments) {
                                 Icon(painterResource(vector_comments), null)
@@ -132,7 +124,7 @@ fun NewsDetail(newsId: Long, navigator: DestinationsNavigator) {
                                     modifier = Modifier
                                         .size(56.dp)
                                         .clip(CircleShape)
-                                        .clickable { navigator.navigate(UserScreenDestination(news.user.id)) },
+                                        .clickable { toUser(news.user.id) },
                                     contentScale = ContentScale.Crop,
                                     filterQuality = FilterQuality.High
                                 )
@@ -172,7 +164,7 @@ fun NewsDetail(newsId: Long, navigator: DestinationsNavigator) {
             }
 
             when {
-                state.showComments -> Comments(model::hideComments, comments, navigator)
+                state.showComments -> Comments(model::hideComments, comments, toUser)
                 state.showImage -> DialogImage(model, state, images)
             }
         }
