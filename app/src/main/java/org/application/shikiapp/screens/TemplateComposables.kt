@@ -5,7 +5,6 @@ import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.Center
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -30,6 +29,7 @@ import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
@@ -76,6 +76,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -113,15 +114,6 @@ import androidx.paging.LoadState.Loading
 import androidx.paging.LoadState.NotLoading
 import androidx.paging.compose.LazyPagingItems
 import coil.compose.AsyncImage
-import com.ramcosta.composedestinations.generated.destinations.AnimeRatesScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.AnimeScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.CharacterScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.ClubScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.MangaRatesScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.MangaScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.PersonScreenDestination
-import com.ramcosta.composedestinations.generated.destinations.UserScreenDestination
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator
 import org.application.fragment.CharacterFragment
 import org.application.fragment.PersonFragment
 import org.application.fragment.RelatedFragment
@@ -198,7 +190,6 @@ import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getSeason
 import org.application.shikiapp.utils.getWatchStatus
-import com.ramcosta.composedestinations.navigation.DestinationsNavigator as Navigator
 
 @Composable
 fun LoadingScreen() = Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
@@ -261,6 +252,38 @@ fun UserBriefItem(user: User) = ListItem(
         Text(
             text = fromHtml(user.commonInfo.joinToString(" / ")),
             style = MaterialTheme.typography.bodySmall
+        )
+    }
+)
+
+@Composable
+fun CatalogItem(
+    title: String,
+    kind: String?,
+    season: Any?,
+    image: String?,
+    isBig: Boolean,
+    click: () -> Unit
+) = ListItem(
+    modifier = Modifier.clickable(onClick = click),
+    headlineContent = kind?.let { { Text(getKind(it)) } } ?: {},
+    supportingContent = season?.let { { Text(getSeason(it, kind)) } } ?: { if (isBig) Text(BLANK) },
+    overlineContent = {
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+        )
+    },
+    leadingContent = {
+        AsyncImage(
+            model = image,
+            contentDescription = null,
+            contentScale = ContentScale.FillBounds,
+            filterQuality = FilterQuality.High,
+            modifier = Modifier
+                .size(121.dp, 170.dp)
+                .clip(MaterialTheme.shapes.medium)
+                .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
         )
     }
 )
@@ -353,15 +376,31 @@ fun Description(text: String?) {
     val spoiler = if (hasSpoiler) full.substringAfter("спойлер") else BLANK
 
     var show by remember { mutableStateOf(false) }
+    var lines by remember { mutableIntStateOf(8) }
 
     Column(Modifier.animateContentSize()) {
-        ParagraphTitle("Описание", Modifier.padding(bottom = 4.dp))
-        Text(main)
-        if (hasSpoiler) Row(Modifier.clickable { show = !show }) {
+        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+            ParagraphTitle("Описание", Modifier.padding(bottom = 4.dp))
+            IconButton(
+                onClick = { lines = if(lines == 8) Int.MAX_VALUE else 8 }
+            ) {
+                Icon(
+                    contentDescription = null,
+                    imageVector = if (lines == 8) Icons.Outlined.KeyboardArrowDown
+                    else Icons.Outlined.KeyboardArrowUp,
+                )
+            }
+        }
+        Text(
+            text = main,
+            maxLines = lines,
+            overflow = TextOverflow.Ellipsis
+        )
+        if (hasSpoiler && lines != 8) Row(Modifier.clickable { show = !show }) {
             Text("Спойлер")
             Icon(if (show) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, null)
         }
-        if (show) ElevatedCard { Text(spoiler) }
+        if (show && lines != 8) ElevatedCard { Text(spoiler) }
         HorizontalDivider(Modifier.padding(top = 4.dp))
     }
 }
@@ -381,7 +420,7 @@ fun ClubAnimeImage(link: String) {
 }
 
 @Composable
-fun Comment(comment: Comment, navigator: Navigator) {
+fun Comment(comment: Comment, toUser: (Long) -> Unit) {
     ListItem(
         headlineContent = { Text(comment.user.nickname) },
         modifier = Modifier.offset(x = (-8).dp),
@@ -393,7 +432,7 @@ fun Comment(comment: Comment, navigator: Navigator) {
                     .size(56.dp)
                     .clip(CircleShape)
                     .border(1.dp, Color.LightGray, CircleShape)
-                    .clickable { navigator.navigate(UserScreenDestination(comment.userId)) },
+                    .clickable { toUser(comment.userId) },
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.High,
             )
@@ -406,7 +445,7 @@ fun Comment(comment: Comment, navigator: Navigator) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Comments(hide: () -> Unit, list: LazyPagingItems<Comment>, navigator: Navigator) =
+fun Comments(hide: () -> Unit, list: LazyPagingItems<Comment>, toUser: (Long) -> Unit) =
     Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
@@ -420,7 +459,7 @@ fun Comments(hide: () -> Unit, list: LazyPagingItems<Comment>, navigator: Naviga
                 when (list.loadState.refresh) {
                     is Error -> item { ErrorScreen(list::retry) }
                     Loading -> item { LoadingScreen() }
-                    is NotLoading -> items(list.itemCount) { Comment(list[it]!!, navigator) }
+                    is NotLoading -> items(list.itemCount) { Comment(list[it]!!, toUser) }
                 }
                 if (list.loadState.append == Loading) item { LoadingScreen() }
                 if (list.loadState.hasError) item { ErrorScreen(list::retry) }
@@ -448,43 +487,49 @@ fun OneLineImage(name: String, link: String?, modifier: Modifier = Modifier) = L
 )
 
 @Composable
-fun HistoryItem(note: History, navigator: Navigator) = ListItem(
-    trailingContent = { Text(convertDate(note.createdAt)) },
-    supportingContent = { Text(fromHtml(note.description)) },
-    modifier = Modifier.clickable {
-        note.target?.let { (id, _, _, _, _, kind) ->
-            navigator.navigate(
-                if (kind == LINKED_TYPE[1].lowercase()) MangaScreenDestination(id.toString())
-                else AnimeScreenDestination(id.toString())
+fun HistoryItem(note: History, toAnime: (String) -> Unit, toManga: (String) -> Unit) =
+    ListItem(
+        trailingContent = { Text(convertDate(note.createdAt)) },
+        supportingContent = { Text(fromHtml(note.description)) },
+        modifier = Modifier.clickable {
+            note.target?.let { (id, _, _, _, _, kind) ->
+                if (kind == LINKED_TYPE[1].lowercase()) toManga(id.toString())
+                else toAnime(id.toString())
+            }
+        },
+        headlineContent = {
+            note.target?.let {
+                Text(text = it.name, maxLines = 3, overflow = TextOverflow.Ellipsis)
+            }
+        },
+        leadingContent = {
+            AsyncImage(
+                model = note.target?.let { getImage(it.image.original) }
+                    ?: R.drawable.vector_website,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(80.dp, 121.dp)
+                    .clip(MaterialTheme.shapes.medium)
+                    .border(
+                        (0.5).dp,
+                        MaterialTheme.colorScheme.onSurface,
+                        MaterialTheme.shapes.medium
+                    )
             )
         }
-    },
-    headlineContent = {
-        note.target?.let { Text(text = it.name, maxLines = 3, overflow = TextOverflow.Ellipsis) }
-    },
-    leadingContent = {
-        AsyncImage(
-            model = note.target?.let { getImage(it.image.original) } ?: R.drawable.vector_website,
-            contentDescription = null,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier
-                .size(80.dp, 121.dp)
-                .clip(MaterialTheme.shapes.medium)
-                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
-        )
-    }
-)
+    )
 
 @Composable
 fun NavigationIcon(onClick: () -> Unit) =
     IconButton(onClick) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) }
 
-fun LazyListScope.comments(comments: LazyPagingItems<Comment>, navigator: Navigator) {
+fun LazyListScope.comments(comments: LazyPagingItems<Comment>, toUser: (Long) -> Unit) {
     item { ParagraphTitle(stringResource(text_comments), Modifier.offset(y = 8.dp)) }
     when (comments.loadState.refresh) {
         is Error -> item { ErrorScreen() }
         Loading -> item { LoadingScreen() }
-        is NotLoading -> items(comments.itemCount) { Comment(comments[it]!!, navigator) }
+        is NotLoading -> items(comments.itemCount) { Comment(comments[it]!!, toUser) }
     }
     if (comments.loadState.append == Loading) item { LoadingScreen() }
     if (comments.loadState.hasError) item { ErrorScreen(comments::retry) }
@@ -504,32 +549,20 @@ fun fromHtml(text: String?) = if (text != null) {
     } else AnnotatedString(BLANK)
 
 @Composable
-fun RoundedPersonImage(poster: String?) = AsyncImage(
-    model = poster,
-    contentDescription = null,
-    modifier = Modifier
-        .size(127.dp, 180.dp)
-        .clip(MaterialTheme.shapes.medium)
-        .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
-    contentScale = ContentScale.FillBounds,
-    filterQuality = FilterQuality.High
-)
-
-@Composable
-fun Related(showFull: () -> Unit, list: List<RelatedFragment>, navigator: Navigator) =
+fun Related(showFull: () -> Unit, list: List<RelatedFragment>, toAnime: (String) -> Unit, toManga: (String) -> Unit) =
     Column(verticalArrangement = spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_related), Modifier.padding(bottom = 4.dp))
             TextButton(showFull) { Text(stringResource(text_show_all_w)) }
         }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp)) {
-            list.take(4).forEach { related ->
+        LazyRow(horizontalArrangement = spacedBy(12.dp)) {
+            items(list.take(4)) { related->
                 Column(
-                    Modifier
+                    modifier = Modifier
                         .width(120.dp)
                         .clickable {
-                            related.anime?.let { navigator.navigate(AnimeScreenDestination(it.id)) }
-                            related.manga?.let { navigator.navigate(MangaScreenDestination(it.id)) }
+                            related.anime?.let { toAnime(it.id) }
+                            related.manga?.let { toManga(it.id) }
                         }
                 ) {
                     RoundedRelatedPoster(related.anime?.poster?.originalUrl ?: related.manga?.poster?.originalUrl)
@@ -540,24 +573,25 @@ fun Related(showFull: () -> Unit, list: List<RelatedFragment>, navigator: Naviga
     }
 
 @Composable
-fun Characters(show: () -> Unit, roles: List<CharacterFragment>, navigator: Navigator) =
+fun Characters(show: () -> Unit, roles: List<CharacterFragment>, toCharacter: (String) -> Unit) =
     Column(verticalArrangement = spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_characters))
             IconButton(show) { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
         }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp), CenterVertically) {
-            roles.filter { it.rolesRu.contains("Main") }.forEach { role ->
-                role.character.let { character ->
+        LazyRow(
+            horizontalArrangement = spacedBy(12.dp),
+            verticalAlignment = CenterVertically
+        ) {
+            items(roles.filter { it.rolesRu.contains("Main") }) { role ->
+                role.character.let {
                     Column(
-                        modifier = Modifier.clickable {
-                            navigator.navigate(CharacterScreenDestination(character.id))
-                        },
+                        modifier = Modifier.clickable { toCharacter(it.id) },
                         verticalArrangement = spacedBy(4.dp),
                         horizontalAlignment = CenterHorizontally
                     ) {
-                        CircleImage(character.poster?.originalUrl)
-                        TextCircleImage(character.russian ?: character.name)
+                        CircleImage(it.poster?.originalUrl)
+                        TextCircleImage(it.russian ?: it.name)
                     }
                 }
             }
@@ -565,24 +599,25 @@ fun Characters(show: () -> Unit, roles: List<CharacterFragment>, navigator: Navi
     }
 
 @Composable
-fun Authors(show: () -> Unit, roles: List<PersonFragment>, navigator: Navigator) =
+fun Authors(show: () -> Unit, roles: List<PersonFragment>, toPerson: (Long) -> Unit) =
     Column(verticalArrangement = spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_authors))
             IconButton(show) { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
         }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(8.dp), CenterVertically) {
-            roles.filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }.forEach { role ->
-                role.person.let { person ->
+        LazyRow(
+            horizontalArrangement = spacedBy(8.dp),
+            verticalAlignment = CenterVertically
+        ) {
+            items(roles.filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }) { role ->
+                role.person.let {
                     Column(
-                        modifier = Modifier.clickable {
-                            navigator.navigate(PersonScreenDestination(person.id.toLong()))
-                        },
+                        modifier = Modifier.clickable { toPerson(it.id.toLong()) },
                         verticalArrangement = spacedBy(4.dp),
                         horizontalAlignment = CenterHorizontally
                     ) {
-                        CircleImage(person.poster?.originalUrl)
-                        TextCircleImage(person.russian ?: person.name)
+                        CircleImage(it.poster?.originalUrl)
+                        TextCircleImage(it.russian ?: it.name)
                     }
                 }
             }
@@ -591,7 +626,7 @@ fun Authors(show: () -> Unit, roles: List<PersonFragment>, navigator: Navigator)
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun DialogRelated(hide: () -> Unit, list: List<RelatedFragment>, navigator: Navigator) =
+fun DialogRelated(hide: () -> Unit, list: List<RelatedFragment>, toAnime: (String) -> Unit, toManga: (String) -> Unit) =
     Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
@@ -612,8 +647,8 @@ fun DialogRelated(hide: () -> Unit, list: List<RelatedFragment>, navigator: Navi
                             )
                         },
                         modifier = Modifier.clickable {
-                            related.anime?.let { navigator.navigate(AnimeScreenDestination(it.id)) }
-                            related.manga?.let { navigator.navigate(MangaScreenDestination(it.id)) }
+                            related.anime?.let { toAnime(it.id) }
+                            related.manga?.let { toManga(it.id) }
                         },
                         leadingContent = {
                             AsyncImage(
@@ -642,7 +677,7 @@ fun DialogCharacters(
     hide: () -> Unit,
     state: LazyListState,
     roles: List<CharacterFragment>,
-    navigator: Navigator
+    toCharacter: (String) -> Unit
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
@@ -657,9 +692,7 @@ fun DialogCharacters(
                 OneLineImage(
                     name = role.character.russian ?: role.character.name,
                     link = role.character.poster?.originalUrl,
-                    modifier = Modifier.clickable {
-                        navigator.navigate(CharacterScreenDestination(role.character.id))
-                    }
+                    modifier = Modifier.clickable { toCharacter(role.character.id) }
                 )
             }
         }
@@ -672,7 +705,7 @@ fun DialogAuthors(
     hide: () -> Unit,
     state: LazyListState,
     roles: List<PersonFragment>,
-    navigator: Navigator
+    toPerson: (Long) -> Unit
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
@@ -687,9 +720,7 @@ fun DialogAuthors(
                 OneLineImage(
                     name = role.person.russian ?: role.person.name,
                     link = role.person.poster?.originalUrl,
-                    modifier = Modifier.clickable {
-                        navigator.navigate(PersonScreenDestination(role.person.id.toLong()))
-                    }
+                    modifier = Modifier.clickable { toPerson(role.person.id.toLong()) }
                 )
             }
         }
@@ -1035,30 +1066,25 @@ fun LinksSheet(
 }
 
 @Composable
-fun UserStats(stats: Stats, id: Long, navigator: DestinationsNavigator) {
+fun UserStats(stats: Stats, id: Long, toAnime: (String) -> Unit, toManga: (String) -> Unit) {
     Column(Modifier.fillMaxWidth(), spacedBy(12.dp)) {
         if (stats.statuses.anime.sumOf { it.size } > 0)
-            Stats(id, stats.statuses.anime, LINKED_TYPE[0], navigator)
+            Stats(id, stats.statuses.anime, LINKED_TYPE[0], toAnime, toManga)
         if (stats.statuses.manga.sumOf { it.size } > 0) {
             HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
-            Stats(id, stats.statuses.manga, LINKED_TYPE[1], navigator)
+            Stats(id, stats.statuses.manga, LINKED_TYPE[1], toAnime, toManga)
         }
     }
 }
 
 @Composable
-fun Stats(id: Long, stats: List<ShortInfo>, type: String, navigator: Navigator) {
+fun Stats(id: Long, stats: List<ShortInfo>, type: String, toAnime: (String) -> Unit, toManga: (String) -> Unit) {
     val sum = stats.sumOf { it.size }.takeIf { it != 0L } ?: 1
 
     Column(verticalArrangement = spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(if (type == LINKED_TYPE[0]) text_anime_list else text_manga_list))
-            TextButton({
-                navigator.navigate(
-                    if (type == LINKED_TYPE[0]) AnimeRatesScreenDestination(id)
-                    else MangaRatesScreenDestination(id)
-                )
-            })
+            TextButton({ if (type == LINKED_TYPE[0]) toAnime(id.toString()) else toManga(id.toString()) })
             { Text(stringResource(text_show_all_s)) }
         }
         stats.filter { it.size > 0 }.forEach { (_, _, name, size) ->
@@ -1096,7 +1122,10 @@ fun DialogFavourites(
     setTab: (Int) -> Unit,
     tab: Int,
     favourites: Favourites,
-    navigator: DestinationsNavigator
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit,
+    toCharacter: (String) -> Unit,
+    toPerson:(Long) -> Unit
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
@@ -1131,14 +1160,12 @@ fun DialogFavourites(
                         name = russian.ifEmpty { name },
                         link = image,
                         modifier = Modifier.clickable {
-                            navigator.navigate(
-                                when (tab) {
-                                    0 -> AnimeScreenDestination(id.toString())
-                                    1,2 -> MangaScreenDestination(id.toString())
-                                    3 -> CharacterScreenDestination(id.toString())
-                                    else -> PersonScreenDestination(id)
-                                }
-                            )
+                            when (tab) {
+                                0 -> toAnime(id.toString())
+                                1, 2 -> toManga(id.toString())
+                                3 -> toCharacter(id.toString())
+                                else -> toPerson(id)
+                            }
                         }
                     )
                 }
@@ -1149,7 +1176,7 @@ fun DialogFavourites(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DialogHistory(hide: () -> Unit, history: LazyPagingItems<History>, navigator: Navigator) =
+fun DialogHistory(hide: () -> Unit, history: LazyPagingItems<History>, toAnime: (String) -> Unit, toManga: (String) -> Unit) =
     Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
         Scaffold(
             topBar = {
@@ -1161,7 +1188,7 @@ fun DialogHistory(hide: () -> Unit, history: LazyPagingItems<History>, navigator
         ) { values ->
             LazyColumn(contentPadding = PaddingValues(top = values.calculateTopPadding())) {
                 items(history.itemCount) { index ->
-                    history[index]?.let { HistoryItem(it, navigator) }
+                    history[index]?.let { HistoryItem(it, toAnime, toManga) }
                 }
             }
         }
@@ -1216,7 +1243,8 @@ fun DialogItem(
     state: UserState,
     friends: LazyPagingItems<UserShort>,
     clubs: List<Club>,
-    navigator: Navigator
+    toUser: (Long) -> Unit,
+    toClub: (Long) -> Unit
 ) = Dialog(model::close, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
         topBar = {
@@ -1227,16 +1255,16 @@ fun DialogItem(
         }
     ) { values ->
         LazyColumn(
+            contentPadding = PaddingValues(top = values.calculateTopPadding()),
             state = when (state.menu) {
                 0 -> state.stateF
                 1 -> state.stateC
                 else -> rememberLazyListState()
-            },
-            contentPadding = PaddingValues(top = values.calculateTopPadding())
+            }
         ) {
             when (state.menu) {
-                0 -> friends(friends, navigator)
-                1 -> clubs(clubs, navigator)
+                0 -> friends(friends, toUser)
+                1 -> clubs(clubs, toClub)
             }
         }
     }
@@ -1244,7 +1272,7 @@ fun DialogItem(
 
 // ========================================== Extensions ===========================================
 
-fun LazyListScope.friends(list: LazyPagingItems<UserShort>, navigator: Navigator) {
+fun LazyListScope.friends(list: LazyPagingItems<UserShort>, toUser: (Long) -> Unit) {
     when (list.loadState.refresh) {
         is Error -> item { ErrorScreen(list::retry) }
         is Loading -> item { LoadingScreen() }
@@ -1254,7 +1282,7 @@ fun LazyListScope.friends(list: LazyPagingItems<UserShort>, navigator: Navigator
                     OneLineImage(
                         name = nickname,
                         link = image.x160,
-                        modifier = Modifier.clickable { navigator.navigate(UserScreenDestination(id)) }
+                        modifier = Modifier.clickable { toUser(id) }
                     )
                 }
             }
@@ -1264,13 +1292,13 @@ fun LazyListScope.friends(list: LazyPagingItems<UserShort>, navigator: Navigator
     }
 }
 
-fun LazyListScope.clubs(list: List<Club>, navigator: Navigator) = if (list.isEmpty()) item {
+fun LazyListScope.clubs(list: List<Club>, toClub: (Long) -> Unit) = if (list.isEmpty()) item {
     Box(Modifier.fillMaxSize(), Alignment.Center) { Text(stringResource(text_empty)) }
 }
 else items(list) { (id, name, logo) ->
     OneLineImage(
         name = name,
         link = getImage(logo.original),
-        modifier = Modifier.clickable { navigator.navigate(ClubScreenDestination(id)) }
+        modifier = Modifier.clickable { toClub(id) }
     )
 }
