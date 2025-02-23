@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.androidApplication)
     alias(libs.plugins.apolloGraphQL)
     alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.googleKsp)
     alias(libs.plugins.jetbrainsKotlin)
     alias(libs.plugins.kotlin.serialization)
 }
@@ -23,8 +22,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 14
-        versionName = "alpha-0.1.13"
+        versionCode = 15
+        versionName = "alpha-0.1.15"
     }
 
     dependenciesInfo {
@@ -61,11 +60,11 @@ dependencies {
     implementation(platform(libs.kotlin.bom))
 
     // ============================== Network ==============================
-    ksp(libs.moshi.kotlin.codegen)
+    implementation(libs.apollo.engine.ktor)
     implementation(libs.apollo.runtime)
-    implementation(libs.converter.moshi)
-    implementation(libs.retrofit)
-    implementation(platform(libs.okhttp.bom))
+    implementation(libs.ktor.client.content.negotiation)
+    implementation(libs.ktor.client.core)
+    implementation(libs.ktor.serialization.kotlinx.json)
 
     // ============================== Navigation ==============================
     implementation(libs.androidx.navigation.compose)
