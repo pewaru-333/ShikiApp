@@ -1,44 +1,90 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
+import org.application.shikiapp.utils.BLANK
 
-@JsonClass(generateAdapter = true)
-data class Club(
-    @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "logo") val logo: ClubImage,
-    @Json(name = "is_censored") val isCensored: Boolean,
-    @Json(name = "join_policy") val joinPolicy: String?,
-    @Json(name = "comment_Policy") val commentPolicy: String?,
-    @Json(name = "description") val description: String?,
-    @Json(name = "description_html") val descriptionHtml: String?,
-    @Json(name = "thread_id") val threadId: Long?,
-    @Json(name = "topic_id") val topicId: Long?,
-    @Json(name = "user_role") val userRole: String?,
-    @Json(name = "style_id") val styleId: Long?,
-    @Json(name = "images") val images: List<ClubImages> = emptyList(),
-    @Json(name = "members") val members: List<UserShort> = emptyList(),
-    @Json(name = "animes") val animes: List<AnimeShort> = emptyList(),
-    @Json(name = "mangas") val mangas: List<MangaShort> = emptyList(),
-    @Json(name = "characters") val characters: List<Character> = emptyList()
-)
 
-@JsonClass(generateAdapter = true)
+enum class ClubJoinPolicy {
+    FREE, MEMBER_INVITE, ADMIN_INVITE, OWNER_INVITE
+}
+
+enum class ClubCommentPolicy {
+    FREE, MEMBERS, ADMINS
+}
+
+@Serializable
+class Club : ClubBasic() {
+    @SerialName("description")
+    val description: String? = null
+
+    @SerialName("description_html")
+    val descriptionHtml: String? = null
+
+    @SerialName("thread_id")
+    val threadId: Long = 0L
+
+    @SerialName("topic_id")
+    val topicId: Long = 0L
+
+    @SerialName("user_role")
+    val userRole: String? = null
+
+    @SerialName("style_id")
+    val styleId: Long? = null
+
+    @SerialName("images")
+    val images: List<ClubImages> = emptyList()
+
+    @SerialName("members")
+    val members: List<UserBasic> = emptyList()
+
+    @SerialName("animes")
+    val animes: List<AnimeBasic> = emptyList()
+
+    @SerialName("mangas")
+    val mangas: List<MangaBasic> = emptyList()
+
+    @SerialName("characters")
+    val characters: List<BasicInfo> = emptyList()
+}
+
+@Serializable
+open class ClubBasic {
+    @SerialName("id")
+    val id: Long = 0L
+
+    @SerialName("name")
+    val name: String = BLANK
+
+    @SerialName("logo")
+    val logo: ClubImage = ClubImage()
+
+    @SerialName("is_censored")
+    val isCensored: Boolean = false
+
+    @SerialName("join_policy")
+    val joinPolicy: ClubJoinPolicy = ClubJoinPolicy.FREE
+
+    @SerialName("comment_Policy")
+    val commentPolicy: ClubCommentPolicy = ClubCommentPolicy.FREE
+}
+
+@Serializable
 data class ClubImage(
-    @Json(name = "original") val original: String?,
-    @Json(name = "main") val main: String?,
-    @Json(name = "x96") val x96: String?,
-    @Json(name = "x73") val x73: String?,
-    @Json(name = "x48") val x48: String?
+    val original: String? = null,
+    val main: String? = null,
+    val x96: String? = null,
+    val x73: String? = null,
+    val x48: String? = null
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ClubImages(
-    @Json(name = "id") val id: Long,
-    @Json(name = "original_url") val originalUrl: String?,
-    @Json(name = "main_url") val mainUrl: String?,
-    @Json(name = "preview_url") val previewUrl: String?,
-    @Json(name = "can_destroy") val canDestroy: Boolean?,
-    @Json(name = "user_id") val userId: Long
+    @SerialName("id") val id: Long,
+    @SerialName("original_url") val originalUrl: String?,
+    @SerialName("main_url") val mainUrl: String?,
+    @SerialName("preview_url") val previewUrl: String?,
+    @SerialName("can_destroy") val canDestroy: Boolean?,
+    @SerialName("user_id") val userId: Long
 )
