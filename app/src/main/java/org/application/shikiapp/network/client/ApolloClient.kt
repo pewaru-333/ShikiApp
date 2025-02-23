@@ -1,4 +1,4 @@
-package org.application.shikiapp.network
+package org.application.shikiapp.network.client
 
 import org.application.AnimeGenresQuery
 import org.application.AnimeListQuery
