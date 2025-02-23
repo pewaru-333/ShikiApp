@@ -1,11 +1,11 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class AbuseRequest(
-    @Json(name = "kind") val kind: String,
-    @Json(name = "value") val value: Boolean,
-    @Json(name = "affected_ids") val affectedIds: List<Int>
+    @SerialName("kind") val kind: String,
+    @SerialName("value") val value: Boolean,
+    @SerialName("affected_ids") val affectedIds: List<Int>
 )
