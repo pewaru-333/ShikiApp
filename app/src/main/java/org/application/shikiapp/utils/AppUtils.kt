@@ -1,13 +1,16 @@
 package org.application.shikiapp.utils
 
-import android.icu. text.SimpleDateFormat
+import android.content.Context
+import android.content.pm.verify.domain.DomainVerificationManager
+import android.content.pm.verify.domain.DomainVerificationUserState
+import android.icu.text.SimpleDateFormat
 import android.icu.util.Calendar
+import android.os.Build
 import android.text.format.DateUtils
 import android.util.Patterns
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import org.application.AnimeQuery.Data.Anime.Studio
 import org.application.MangaQuery.Data.Manga.Publisher
@@ -154,14 +157,23 @@ fun getPublisher(publisher: List<Publisher>) = try {
 fun setScore(status: List<String>, score: Float) = if (STATUSES_A.keys.elementAt(0) in status) null
 else score.toInt()
 
+fun Context.isDomainVerified() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) true
+    else {
+        val manager = getSystemService(DomainVerificationManager::class.java)
+        val userState = manager.getDomainVerificationUserState(packageName)!!
+
+        userState.hostToStateMap.all { it.value == DomainVerificationUserState.DOMAIN_STATE_SELECTED }
+    }
+
 fun <T : Any> NavBackStackEntry?.isCurrentRoute(route: KClass<T>) =
     this?.destination?.hierarchy?.any { it.hasRoute(route) } == true
 
-fun NavHostController.toBottomBarItem(route: Any) = navigate(route) {
-    launchSingleTop = true
-    restoreState = true
-
-    popUpTo(this@toBottomBarItem.graph.findStartDestination().id) {
-        saveState = true
+fun NavHostController.toBottomBarItem(route: Any) = currentBackStackEntry?.destination?.route?.let {
+    if (!route.toString().contains(it)) {
+        navigate(route) {
+            launchSingleTop = true
+            restoreState = true
+            popBackStack(route, true)
+        }
     }
 }
