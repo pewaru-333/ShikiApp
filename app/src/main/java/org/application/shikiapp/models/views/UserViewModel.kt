@@ -21,12 +21,12 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R.string.blank
-import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.User
 import org.application.shikiapp.network.Comments
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.network.paging.UserFriendsPaging
 import org.application.shikiapp.network.paging.UserHistoryPaging
 import org.application.shikiapp.utils.Preferences
@@ -35,7 +35,7 @@ import org.application.shikiapp.utils.ProfileMenus.CLUBS
 import org.application.shikiapp.utils.ProfileMenus.FRIENDS
 
 open class UserViewModel(saved: SavedStateHandle?) : ViewModel() {
-    private val userId = saved?.toRoute<org.application.shikiapp.utils.User>()?.id ?: Preferences.getUserId()
+    private var userId = saved?.toRoute<org.application.shikiapp.utils.User>()?.id ?: Preferences.getUserId()
 
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
@@ -70,6 +70,10 @@ open class UserViewModel(saved: SavedStateHandle?) : ViewModel() {
         }
     }
 
+    fun updateOnLogin(id: Long) {
+        userId = id
+    }
+
     fun close() = _state.update { it.copy(showDialog = false) }
 
     fun setMenu(menu: Int) = _state.update { it.copy(menu = menu, showDialog = true) }
@@ -94,8 +98,12 @@ open class UserViewModel(saved: SavedStateHandle?) : ViewModel() {
     sealed interface Response {
         data object Error : Response
         data object Loading : Response
-        data class Success(val user: User, val clubs: List<Club>, val comments: Flow<PagingData<Comment>>,
-                           val favourites: Favourites) : Response
+        data class Success(
+            val user: User,
+            val clubs: List<ClubBasic>,
+            val comments: Flow<PagingData<Comment>>,
+            val favourites: Favourites
+        ) : Response
     }
 }
 

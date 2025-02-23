@@ -41,7 +41,7 @@ open class FiltersViewModel<T : Any> : ViewModel() {
     val filters = _filters.asStateFlow()
 
     open val list = emptyFlow<PagingData<T>>()
-    val genres = mutableListOf<GenresF>()
+    var genres = listOf<GenresF>()
 
     fun onEvent(event: FilterEvent) {
         when (event) {

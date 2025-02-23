@@ -19,7 +19,7 @@ import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScor
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetVolumes
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
 

@@ -19,13 +19,13 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.AnimeQuery.Data.Anime
 import org.application.AnimeStatsQuery
-import org.application.shikiapp.models.data.AnimeShort
+import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.states.AnimeState
-import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.Comments
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.LINKED_TYPE
 
 class AnimeViewModel(saved: SavedStateHandle) : ViewModel() {
@@ -94,7 +94,7 @@ class AnimeViewModel(saved: SavedStateHandle) : ViewModel() {
         data object Loading : Response
         data class Success(
             val anime: Anime,
-            val similar: List<AnimeShort>,
+            val similar: List<AnimeBasic>,
             val links: List<ExternalLink>,
             val comments: Flow<PagingData<Comment>>,
             val stats: AnimeStatsQuery.Data.Anime,

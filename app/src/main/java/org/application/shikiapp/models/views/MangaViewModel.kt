@@ -20,10 +20,10 @@ import kotlinx.coroutines.launch
 import org.application.MangaQuery.Data.Manga
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
-import org.application.shikiapp.models.data.MangaShort
-import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.models.data.MangaBasic
+import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.Comments
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.LINKED_TYPE
 
 class MangaViewModel(saved: SavedStateHandle) : ViewModel() {
@@ -52,6 +52,7 @@ class MangaViewModel(saved: SavedStateHandle) : ViewModel() {
 
                 _response.emit(Response.Success(manga, similar, links, comments, favoured))
             } catch (e: Throwable) {
+                e.printStackTrace()
                 _response.emit(Response.Error)
             }
         }
@@ -106,7 +107,7 @@ class MangaViewModel(saved: SavedStateHandle) : ViewModel() {
         data object Loading : Response
         data class Success(
             val manga: Manga,
-            val similar: List<MangaShort>,
+            val similar: List<MangaBasic>,
             val links: List<ExternalLink>,
             val comments: Flow<PagingData<Comment>>,
             val favoured: Boolean
