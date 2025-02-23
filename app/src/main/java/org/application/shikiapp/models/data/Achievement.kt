@@ -1,17 +1,15 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Achievement(
-    @Json(name = "id") val id: Long,
-    @Json(name = "neko_id") val nekoId: String,
-    @Json(name = "level") val level: Int,
-    @Json(name = "progress") val progress: Int,
-    @Json(name = "user_id") val userId: Int,
-    @Json(name = "created_at") val createdAt: String,
-    @Json(name = "updated_at") val updatedAt: String
+    @SerialName("id") val id: Long,
+    @SerialName("neko_id") val nekoId: String,
+    @SerialName("level") val level: Int,
+    @SerialName("progress") val progress: Int,
+    @SerialName("user_id") val userId: Long,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("updated_at") val updatedAt: String
 )
-
-
