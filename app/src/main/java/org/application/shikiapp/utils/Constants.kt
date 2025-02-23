@@ -215,6 +215,11 @@ enum class CatalogItems(@StringRes val title: Int, val icon: Int) {
     PEOPLE(text_people, vector_person)
 }
 
+enum class ListView(@StringRes val title: Int) {
+    COLUMN(R.string.text_column),
+    GRID(R.string.text_grid)
+}
+
 enum class Menu(val route: Any, @StringRes val title: Int, val icon: Int) {
     CATALOG(Catalog, R.string.text_catalog, vector_home),
     NEWS(News, R.string.text_news, vector_news),
@@ -252,6 +257,9 @@ object Profile
 
 @Serializable
 object Settings
+
+@Serializable
+data class Login(val code: String? = null)
 
 @Serializable
 data class Anime(val id: String)
