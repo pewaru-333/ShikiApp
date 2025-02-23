@@ -1,10 +1,11 @@
 package org.application.shikiapp.screens
 
-import android.app.Activity
-import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -23,16 +24,16 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -42,12 +43,12 @@ import org.application.shikiapp.models.views.ProfileViewModel.LoginState.Logged
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.Logging
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.NoNetwork
 import org.application.shikiapp.models.views.ProfileViewModel.LoginState.NotLogged
-import org.application.shikiapp.network.AUTH_URL
+import org.application.shikiapp.network.client.AUTH_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CODE
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.REDIRECT_URI
+import org.application.shikiapp.utils.isDomainVerified
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,23 +60,11 @@ fun ProfileScreen(
     toUser:(Long) -> Unit,
     toClub:(Long) ->Unit
 ) {
-    val context = LocalContext.current
-
     val model = viewModel<ProfileViewModel>()
     val loginState by model.login.collectAsStateWithLifecycle()
 
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val lifecycleState by lifecycleOwner.lifecycle.currentStateFlow.collectAsStateWithLifecycle()
-
-    LaunchedEffect(lifecycleState) {
-       if (lifecycleState == Lifecycle.State.RESUMED) {
-           val code = (context as Activity).intent.data?.getQueryParameter(CODE)
-           if (code != null && Preferences.getUserId() == 0L) model.login(code)
-        }
-    }
-
     when (val data = loginState) {
-        NotLogged -> LoginScreen(context)
+        NotLogged -> LoginScreen()
         Logging -> LoadingScreen()
         NoNetwork -> ErrorScreen(model::getProfile)
         is Logged -> {
@@ -134,7 +123,15 @@ fun ProfileScreen(
 }
 
 @Composable
-private fun LoginScreen(context: Context) {
+private fun LoginScreen() {
+    val context = LocalContext.current
+
+    var selected by remember { mutableStateOf(context.isDomainVerified()) }
+
+    val launcher = rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
+        selected = context.isDomainVerified()
+    }
+
     val uri = Uri.parse(AUTH_URL)
         .buildUpon()
         .appendQueryParameter("client_id", CLIENT_ID)
@@ -144,23 +141,34 @@ private fun LoginScreen(context: Context) {
         .build()
 
     Column(Modifier.fillMaxSize(), spacedBy(4.dp, CenterVertically), CenterHorizontally) {
-        Button({ context.startActivity(Intent(Intent.ACTION_VIEW, uri)) })
-        { Text(stringResource(text_login)) }
-        ListItem(
-            headlineContent = {},
-            supportingContent = { Text("Для поддержки входа добавьте поддерживаемые ссылки в настройках") },
-            trailingContent = {
-                IconButton(
-                    onClick = {
-                        context.startActivity(
-                            Intent(
-                                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                                Uri.parse("package:${context.packageName}")
-                            )
-                        )
+        Button(
+            enabled = selected,
+            onClick = {
+                context.startActivity(
+                    Intent(Intent.ACTION_VIEW, uri).apply {
+                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
                     }
-                ) { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) }
+                )
             }
         )
+        { Text(stringResource(text_login)) }
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
+            ListItem(
+                headlineContent = {},
+                supportingContent = { Text("Для поддержки входа добавьте поддерживаемые ссылки в настройках") },
+                trailingContent = {
+                    IconButton(
+                        onClick = {
+                            launcher.launch(
+                                Intent(
+                                    Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
+                                    Uri.parse("package:${context.packageName}")
+                                )
+                            )
+                        }
+                    ) { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) }
+                }
+            )
     }
 }
