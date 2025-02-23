@@ -114,12 +114,12 @@ private fun PersonView(
                     Poster(person.image.original)
                     Column(verticalArrangement = spacedBy(16.dp)) {
                         Names(listOf(person.russian, person.name, person.japanese))
-                        getBirthday(person.birthday)?.let { Birthday(it) }
-                        getDeathday(person.deceasedOn)?.let { Deathday(it) }
+                        person.birthday?.let { getBirthday(it)?.let { Birthday(it) } }
+                        person.deceasedOn?.let { getDeathday(it)?.let { Deathday(it) } }
                     }
                 }
             }
-            person.grouppedRoles?.let { item { Roles(it) } }
+            person.grouppedRoles.let { item { Roles(it) } }
             person.roles?.let { if (it.isNotEmpty()) item { Roles(model, it, toCharacter) } }
         }
     }
@@ -155,7 +155,7 @@ private fun BottomSheet(
 }
 
 @Composable
-private fun Roles(roles: List<Pair<String, Int>>) = Column(verticalArrangement = spacedBy(8.dp)) {
+private fun Roles(roles: List<List<String>>) = Column(verticalArrangement = spacedBy(8.dp)) {
     ParagraphTitle(stringResource(text_information))
     Column { roles.let { it.forEach { (first, second) -> Text("$first: $second") } } }
 }
@@ -169,14 +169,14 @@ private fun Roles(model: PersonViewModel, roles: List<Roles>?, toCharacter: (Str
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(16.dp)) {
             roles?.take(5)?.forEach { role ->
-                role.characters.forEach { (id, name, russian, image) ->
+                role.characters.forEach {
                     Column(
-                        modifier = Modifier.clickable { toCharacter(id.toString()) },
+                        modifier = Modifier.clickable { toCharacter(it.id.toString()) },
                         verticalArrangement = spacedBy(4.dp),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
-                        CircleImage(image.original)
-                        TextCircleImage(russian ?: name)
+                        CircleImage(it.image.original)
+                        TextCircleImage(it.russian.orEmpty().ifEmpty(it::name))
                     }
                 }
             }
@@ -197,12 +197,12 @@ private fun DialogRoles(model: PersonViewModel, roles: List<Roles>, toCharacter:
         ) { values ->
             LazyColumn(contentPadding = PaddingValues(top = values.calculateTopPadding())) {
                 roles.forEach { (characters) ->
-                    characters.forEach { (id, name, russian, image) ->
+                    characters.forEach {
                         item {
                             OneLineImage(
-                                name = russian ?: name,
-                                link = image.original,
-                                modifier = Modifier.clickable { toCharacter(id.toString()) }
+                                name = it.russian.orEmpty().ifEmpty(it::name),
+                                link = it.image.original,
+                                modifier = Modifier.clickable { toCharacter(it.id.toString()) }
                             )
                         }
                     }

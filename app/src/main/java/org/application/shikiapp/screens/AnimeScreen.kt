@@ -77,7 +77,7 @@ import org.application.shikiapp.R.string.text_similar
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_studio
 import org.application.shikiapp.R.string.text_video
-import org.application.shikiapp.models.data.AnimeShort
+import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.models.views.AnimeViewModel
 import org.application.shikiapp.models.views.AnimeViewModel.Response.Error
@@ -422,7 +422,7 @@ private fun DialogVideo(
 @Composable
 private fun DialogSimilar(
     state: LazyListState,
-    list: List<AnimeShort>,
+    list: List<AnimeBasic>,
     toAnime: (String) -> Unit,
     hide: () -> Unit
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
@@ -438,13 +438,13 @@ private fun DialogSimilar(
             contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
             verticalArrangement = spacedBy(8.dp)
         ) {
-            items(list) { (id, name, russian, image) ->
+            items(list) {
                 ListItem(
-                    headlineContent = { Text(russian ?: name) },
-                    modifier = Modifier.clickable { toAnime(id.toString()) },
+                    headlineContent = { Text(it.russian ?: it.name) },
+                    modifier = Modifier.clickable { toAnime(it.id.toString()) },
                     leadingContent = {
                         AsyncImage(
-                            model = getImage(image.original),
+                            model = getImage(it.image.original),
                             contentDescription = null,
                             modifier = Modifier
                                 .clip(MaterialTheme.shapes.medium)

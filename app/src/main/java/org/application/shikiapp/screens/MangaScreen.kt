@@ -53,7 +53,7 @@ import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_similar
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_volumes
-import org.application.shikiapp.models.data.MangaShort
+import org.application.shikiapp.models.data.MangaBasic
 import org.application.shikiapp.models.views.MangaState
 import org.application.shikiapp.models.views.MangaViewModel
 import org.application.shikiapp.models.views.MangaViewModel.Response.Error
@@ -233,7 +233,7 @@ private fun ShortInfo(manga: Manga) {
 private fun DialogSimilar(
     hide: () -> Unit,
     state: LazyListState,
-    list: List<MangaShort>,
+    list: List<MangaBasic>,
     toManga: (String) -> Unit
 ) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
@@ -248,13 +248,13 @@ private fun DialogSimilar(
             contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
             verticalArrangement = spacedBy(8.dp)
         ) {
-            items(list) { (id, name, russian, image) ->
+            items(list) {
                 ListItem(
-                    headlineContent = { Text(russian ?: name) },
-                    modifier = Modifier.clickable { toManga(id.toString()) },
+                    headlineContent = { Text(it.russian ?: it.name) },
+                    modifier = Modifier.clickable { toManga(it.id.toString()) },
                     leadingContent = {
                         AsyncImage(
-                            model = getImage(image.original),
+                            model = getImage(it.image.original),
                             contentDescription = null,
                             modifier = Modifier
                                 .clip(MaterialTheme.shapes.medium)

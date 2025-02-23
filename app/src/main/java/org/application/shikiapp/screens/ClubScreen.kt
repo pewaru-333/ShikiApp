@@ -48,10 +48,10 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import org.application.shikiapp.R
-import org.application.shikiapp.models.data.AnimeShort
-import org.application.shikiapp.models.data.Character
+import org.application.shikiapp.models.data.AnimeBasic
+import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.ClubImages
-import org.application.shikiapp.models.data.UserShort
+import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.views.ClubState
 import org.application.shikiapp.models.views.ClubViewModel
 import org.application.shikiapp.models.views.Menus
@@ -192,7 +192,7 @@ private fun BriefInfo(
 }
 
 @Composable
-private fun Anime(anime: LazyPagingItems<AnimeShort>, toAnime: (String) -> Unit, padding: Dp) {
+private fun Anime(anime: LazyPagingItems<AnimeBasic>, toAnime: (String) -> Unit, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (anime.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
@@ -222,7 +222,7 @@ private fun Anime(anime: LazyPagingItems<AnimeShort>, toAnime: (String) -> Unit,
 }
 
 @Composable
-private fun Members(members: LazyPagingItems<UserShort>, toUser: (Long) -> Unit, padding: Dp) {
+private fun Members(members: LazyPagingItems<UserBasic>, toUser: (Long) -> Unit, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (members.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
@@ -247,7 +247,7 @@ private fun Members(members: LazyPagingItems<UserShort>, toUser: (Long) -> Unit,
 
 @Composable
 private fun Characters(
-    characters: LazyPagingItems<Character>,
+    characters: LazyPagingItems<BasicInfo>,
     toCharacter: (String) -> Unit,
     padding: Dp
 ) {
@@ -257,11 +257,11 @@ private fun Characters(
             is LoadState.Loading -> item { LoadingScreen() }
             is LoadState.NotLoading -> {
                 items(characters.itemCount) {
-                    characters[it]?.let { (id, name, russian, image) ->
+                    characters[it]?.let { character ->
                         OneLineImage(
-                            name = russian ?: name,
-                            link = getImage(image.original),
-                            modifier = Modifier.clickable { toCharacter(id.toString()) }
+                            name = character.russian.orEmpty().ifEmpty(character::name),
+                            link = getImage(character.image.original),
+                            modifier = Modifier.clickable { toCharacter(character.id.toString()) }
                         )
                     }
                 }

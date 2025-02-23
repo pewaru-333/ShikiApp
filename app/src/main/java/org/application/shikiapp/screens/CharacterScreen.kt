@@ -45,8 +45,8 @@ import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_seyu
 import org.application.shikiapp.R.string.text_show_all_m
 import org.application.shikiapp.R.string.text_show_all_w
-import org.application.shikiapp.models.data.CharacterPerson
-import org.application.shikiapp.models.data.Content
+import org.application.shikiapp.models.data.BasicContent
+import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.views.CharacterViewModel
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Error
 import org.application.shikiapp.models.views.CharacterViewModel.Response.Loading
@@ -141,7 +141,7 @@ private fun CharacterView(
 @Composable
 private fun Catalog(
     show: () -> Unit,
-    list: List<Content>,
+    list: List<BasicContent>,
     toAnime: (String) -> Unit,
     toManga: (String) -> Unit,
     anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
@@ -166,17 +166,17 @@ private fun Catalog(
 
 
 @Composable
-private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, toPerson: (Long) -> Unit) =
+private fun Seyu(model: CharacterViewModel, list: List<BasicInfo>, toPerson: (Long) -> Unit) =
     Column(verticalArrangement = spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_seyu))
             IconButton(model::showSeyu) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
         }
         Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(16.dp), CenterVertically) {
-            list.take(3).forEach { (id, name, russian, image) ->
-                Column(Modifier.clickable { toPerson(id) }) {
-                    CircleImage(image.original)
-                    TextCircleImage(russian ?: name)
+            list.take(3).forEach {
+                Column(Modifier.clickable { toPerson(it.id) }) {
+                    CircleImage(it.image.original)
+                    TextCircleImage(it.russian.orEmpty().ifEmpty(it::name))
                 }
             }
         }
@@ -188,7 +188,7 @@ private fun Seyu(model: CharacterViewModel, list: List<CharacterPerson>, toPerso
 @Composable
 private fun DialogCatalog(
     hide: () -> Unit,
-    list: List<Content>,
+    list: List<BasicContent>,
     toAnime: (String) -> Unit,
     toManga: (String) -> Unit,
     anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
@@ -228,7 +228,7 @@ private fun DialogCatalog(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun DialogSeyu(
     model: CharacterViewModel,
-    list: List<CharacterPerson>,
+    list: List<BasicInfo>,
     toPerson: (Long) -> Unit
 ) = Dialog(model::hideSeyu, DialogProperties(usePlatformDefaultWidth = false)) {
     Scaffold(
@@ -243,11 +243,11 @@ private fun DialogSeyu(
             contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
             verticalArrangement = spacedBy(16.dp)
         ) {
-            items(list) { (id, name, russian, image) ->
+            items(list) {
                 OneLineImage(
-                    name = russian ?: name,
-                    link = image.original,
-                    modifier = Modifier.clickable { toPerson(id) }
+                    name = it.russian.orEmpty().ifEmpty(it::name),
+                    link = it.image.original,
+                    modifier = Modifier.clickable { toPerson(it.id) }
                 )
             }
         }
