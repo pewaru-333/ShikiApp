@@ -1,12 +1,12 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Calendar(
-    @Json(name = "next_episode") val nextEpisode: Int,
-    @Json(name = "next_episode_at") val nextEpisodeAt: String,
-    @Json(name = "duration") val duration: Int?,
-    @Json(name = "anime") val anime: AnimeShort
+    @SerialName("next_episode") val nextEpisode: Int,
+    @SerialName("next_episode_at") val nextEpisodeAt: String,
+    @SerialName("duration") val duration: Int?,
+    @SerialName("anime") val anime: AnimeBasic
 )
