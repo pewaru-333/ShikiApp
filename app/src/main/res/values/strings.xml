@@ -89,6 +89,8 @@
 
     <!-- Настройки -->
     <string name="text_settings">Настройки</string>
+    <string name="text_column">Столбец</string>
+    <string name="text_grid">Сетка</string>
 
     <!-- Другое -->
     <string name="blank" />
