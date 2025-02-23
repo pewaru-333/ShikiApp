@@ -2,13 +2,14 @@ package org.application.shikiapp
 
 import android.content.Intent
 import android.os.Bundle
-import android.view.Window
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -16,7 +17,11 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -47,6 +52,7 @@ import org.application.shikiapp.utils.Calendar
 import org.application.shikiapp.utils.Catalog
 import org.application.shikiapp.utils.Character
 import org.application.shikiapp.utils.Club
+import org.application.shikiapp.utils.Login
 import org.application.shikiapp.utils.Manga
 import org.application.shikiapp.utils.MangaRates
 import org.application.shikiapp.utils.Menu
@@ -63,11 +69,10 @@ import org.application.shikiapp.utils.toBottomBarItem
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
-        requestWindowFeature(Window.FEATURE_NO_TITLE)
         super.onCreate(savedInstanceState)
 
         actionBar?.hide()
-
+        enableEdgeToEdge()
         setContent {
             val navigator = rememberNavController()
             val backStack by navigator.currentBackStackEntryAsState()
@@ -75,8 +80,14 @@ class MainActivity : ComponentActivity() {
             val theme by Preferences.theme.collectAsStateWithLifecycle()
             val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle()
 
+            val initial = MaterialTheme.typography.labelMedium
+
+            var style by remember { mutableStateOf(initial) }
+            var draw by remember { mutableStateOf(false) }
+
             Theme(theme, dynamicColors) {
                 Scaffold(
+                    modifier = Modifier.safeDrawingPadding(),
                     bottomBar = {
                         AnimatedVisibility(
                             visible = Menu.entries.any { backStack.isCurrentRoute(it.route::class) },
@@ -93,7 +104,13 @@ class MainActivity : ComponentActivity() {
                                         label = {
                                             Text(
                                                 text = stringResource(screen.title),
-                                                style = MaterialTheme.typography.labelSmall
+                                                softWrap = false,
+                                                modifier = Modifier.drawWithContent { if (draw) drawContent() },
+                                                style = style,
+                                                onTextLayout = {
+                                                    if (!it.didOverflowWidth) draw = true
+                                                    else style = style.copy(fontSize = style.fontSize * 0.95)
+                                                }
                                             )
                                         }
                                     )
@@ -119,11 +136,15 @@ class MainActivity : ComponentActivity() {
                             CalendarScreen { navigator.navigate(Anime(it)) }
                         }
                         composable<Profile>(
-                            deepLinks = listOf(navDeepLink<Profile>(REDIRECT_URI))
+                            deepLinks = listOf(
+                                navDeepLink<Login>(BASE_PATH) {
+                                    uriPattern = "$REDIRECT_URI?code={code}"
+                                }
+                            )
                         ) {
                             ProfileScreen(
-                                toAnime = { navigator.navigate(Anime(it)) },
-                                toManga = { navigator.navigate(Manga(it)) },
+                                toAnime = { navigator.navigate(AnimeRates(it.toLong())) },
+                                toManga = { navigator.navigate(MangaRates(it.toLong())) },
                                 toCharacter = { navigator.navigate(Character(it)) },
                                 toPerson = { navigator.navigate(Person(it)) },
                                 toUser = { navigator.navigate(User(it)) },
@@ -205,8 +226,8 @@ class MainActivity : ComponentActivity() {
                         }
                         composable<User> {
                             UserScreen(
-                                toAnime = { navigator.navigate(Anime(it)) },
-                                toManga = { navigator.navigate(Manga(it)) },
+                                toAnime = { navigator.navigate(AnimeRates(it.toLong())) },
+                                toManga = { navigator.navigate(MangaRates(it.toLong())) },
                                 toCharacter = { navigator.navigate(Character(it)) },
                                 toPerson = { navigator.navigate(Person(it)) },
                                 toUser = { navigator.navigate(User(it)) },
