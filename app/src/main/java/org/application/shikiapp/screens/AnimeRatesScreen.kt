@@ -117,7 +117,7 @@ fun AnimeRatesScreen(toAnime: (String) -> Unit, back: () -> Unit) {
                     onDismissRequest = it::close,
                     confirmButton = {
                         TextButton(
-                            onClick = { it.update(state.id); it.reload(anime =  model) },
+                            onClick = { it.update(state.id); it.reload(anime = model) },
                             enabled = !state.status.isNullOrEmpty()
                         ) { Text(stringResource(text_save)) }
                     },
