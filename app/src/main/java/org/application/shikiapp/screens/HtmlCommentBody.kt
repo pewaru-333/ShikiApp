@@ -14,7 +14,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -27,10 +26,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.ParagraphStyle
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
+import androidx.compose.ui.text.PlatformSpanStyle
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -49,7 +51,7 @@ import org.application.shikiapp.utils.BLANK
 
 @Composable
 fun HtmlCommentBody(text: String, context: Context = LocalContext.current) {
-    val linkColor = MaterialTheme.colorScheme.onSurface
+    val linkColor = Color.Blue
 
     var string by remember { mutableStateOf(AnnotatedString(BLANK)) }
     var imageMap by remember { mutableStateOf<Map<String, LoadedImage>>(emptyMap()) }
@@ -137,7 +139,20 @@ private suspend fun toAnnotatedString(
                     }
                     style?.let { addStyle(it, spanStart, spanEnd) }
                     when (span) {
-                        is URLSpan -> addStringAnnotation("url", span.url, spanStart, spanEnd)
+                        is URLSpan -> addLink(
+                            start = spanStart,
+                            end = spanEnd,
+                            url = LinkAnnotation.Url(
+                                url = span.url,
+                                styles = TextLinkStyles(
+                                    SpanStyle(
+                                        color = Color.Blue,
+                                        textDecoration = TextDecoration.Underline,
+                                        platformStyle = PlatformSpanStyle.Default
+                                    )
+                                )
+                            )
+                        )
                     }
                 }
         }
