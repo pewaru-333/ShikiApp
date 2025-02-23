@@ -18,6 +18,7 @@ import org.application.shikiapp.models.data.Token
 const val PREF_APP_THEME = "app_theme"
 const val PREF_APP_CACHE = "app_cache"
 const val PREF_DYNAMIC_COLORS = "dynamic_colors"
+const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
 
 object Preferences : ViewModel() {
 
@@ -36,6 +37,8 @@ object Preferences : ViewModel() {
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
     }
 
+    fun getListView() = app.getString(PREF_CATALOG_LIST_VIEW, ListView.COLUMN.name) ?: ListView.COLUMN.name
+
     fun getCache() = app.getInt(PREF_APP_CACHE, 16)
 
     fun saveToken(token: Token) = auth.edit {
@@ -47,16 +50,9 @@ object Preferences : ViewModel() {
 
     fun setUserId(userId: Long) = auth.edit { putLong(USER_ID, userId).apply() }
 
+    fun isTokenExists() = auth.contains(ACCESS_TOKEN) && auth.getString(ACCESS_TOKEN, BLANK) != BLANK
     fun getToken() = auth.getString(ACCESS_TOKEN, BLANK) ?: BLANK
-    fun isTokenExists() =
-        auth.contains(ACCESS_TOKEN) && auth.getString(ACCESS_TOKEN, BLANK) != BLANK
-
-    fun isTokenExpired() = auth.getLong(CREATED_AT, 0L) + auth.getLong(
-        EXPIRES_IN,
-        0L
-    ) < System.currentTimeMillis() / 1000
-
-    fun refreshToken() = auth.getString(REFRESH_TOKEN, BLANK) ?: BLANK
+    fun getRefreshToken() = auth.getString(REFRESH_TOKEN, BLANK) ?: BLANK
     fun getUserId() = auth.getLong(USER_ID, 0L)
 }
 
