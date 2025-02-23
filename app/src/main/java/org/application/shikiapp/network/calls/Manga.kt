@@ -1,19 +1,14 @@
 package org.application.shikiapp.network.calls
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.Manga
-import org.application.shikiapp.models.data.MangaShort
-import retrofit2.http.GET
-import retrofit2.http.Path
+import org.application.shikiapp.models.data.MangaBasic
 
-interface Manga {
-
-    @GET("mangas/{mangaId}")
-    suspend fun getManga(@Path("mangaId") mangaId: String): Manga
-
-    @GET("mangas/{mangaId}/similar")
-    suspend fun getSimilar(@Path("mangaId") mangaId: String): List<MangaShort>
-
-    @GET("mangas/{mangaId}/external_links")
-    suspend fun getLinks(@Path("mangaId") mangaId: Long): List<ExternalLink>
+class Manga(private val client: HttpClient) {
+    suspend fun getManga(id: Any) = client.get("mangas/$id").body<Manga>()
+    suspend fun getSimilar(id: Any) = client.get("mangas/$id/similar").body<List<MangaBasic>>()
+    suspend fun getLinks(id: Any) = client.get("mangas/$id/external_links").body<List<ExternalLink>>()
 }

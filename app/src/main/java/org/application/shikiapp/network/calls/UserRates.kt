@@ -1,24 +1,23 @@
 package org.application.shikiapp.network.calls
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.delete
+import io.ktor.client.request.patch
+import io.ktor.client.request.post
+import io.ktor.client.request.setBody
 import org.application.shikiapp.models.data.NewRate
 import org.application.shikiapp.models.data.UserRate
-import retrofit2.http.Body
-import retrofit2.http.DELETE
-import retrofit2.http.PATCH
-import retrofit2.http.POST
-import retrofit2.http.Path
 
-interface UserRates {
+class UserRates(private val client: HttpClient) {
+    suspend fun createRate(newRate: NewRate) = client.post("v2/user_rates") {
+        setBody(newRate)
+    }.body<UserRate>()
 
-    @POST("v2/user_rates")
-    suspend fun createRate(@Body newRate: NewRate): UserRate
+    suspend fun updateRate(id: Long, newRate: NewRate) = client.patch("v2/user_rates/$id") {
+        setBody(newRate)
+    }.body<UserRate>()
 
-    @PATCH("v2/user_rates/{id}")
-    suspend fun updateRate(@Path("id") id: Long, @Body newRate: NewRate): UserRate
-
-    @POST("v2/user_rates/{id}/increment")
-    suspend fun increment(@Path("id") id: Long)
-
-    @DELETE("v2/user_rates/{id}")
-    suspend fun delete(@Path("id") id: Long)
+    suspend fun increment(id: Long) = client.post("v2/user_rates/$id/increment")
+    suspend fun delete(id: Long) = client.delete("v2/user_rates/$id")
 }

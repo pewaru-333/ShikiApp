@@ -1,64 +1,72 @@
 package org.application.shikiapp.network.calls
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import org.application.shikiapp.models.data.AnimeRate
-import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.History
 import org.application.shikiapp.models.data.MangaRate
 import org.application.shikiapp.models.data.User
-import org.application.shikiapp.models.data.UserShort
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
+import org.application.shikiapp.models.data.UserBasic
 
-interface User {
+class User(private val client: HttpClient) {
 
-    @GET("users")
-    suspend fun getList(
-        @Query("search") search: String? = null,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 5,
-    ): List<User>
+//    @GET("users")
+//    suspend fun getList(
+//        @Query("search") search: String? = null,
+//        @Query("page") page: Int = 1,
+//        @Query("limit") limit: Int = 5,
+//    ): List<User>
 
-    @GET("users/{userId}")
-    suspend fun getUser(@Path(value = "userId") userId: Long): User
+    suspend fun getUser(id: Long) = client.get("users/$id").body<User>()
 
-    @GET("users/{userId}/friends")
-    suspend fun getFriends(
-        @Path(value = "userId") userId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 5
-    ): List<UserShort>
+    suspend fun getFriends(id: Long, page: Int = 1, limit: Int = 5) =
+        client.get("users/$id/friends") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body<List<UserBasic>>()
 
-    @GET("users/{userId}/clubs")
-    suspend fun getClubs(@Path(value = "userId") userId: Long): List<Club>
+    suspend fun getClubs(id: Long) = client.get("users/$id/clubs").body<List<ClubBasic>>()
 
-    @GET("users/{userId}/anime_rates")
+    suspend fun getFavourites(id: Long) = client.get("users/$id/favourites").body<Favourites>()
+
     suspend fun getAnimeRates(
-        @Path(value = "userId") userId: Long,
-        @Query("status") status: String? = null,
-        @Query("censored") censored: Boolean? = null,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 5000
-    ): List<AnimeRate>
+        id: Long,
+        status: String? = null,
+        censored: Boolean? = null,
+        page: Int = 1,
+        limit: Int = 5000
+    ) = client.get("users/$id/anime_rates") {
+        parameter("status", status)
+        parameter("censored", censored)
+        parameter("page", page)
+        parameter("limit", limit)
+    }.body<List<AnimeRate>>()
 
-    @GET("users/{userId}/manga_rates")
     suspend fun getMangaRates(
-        @Path(value = "userId") userId: Long,
-        @Query("status") status: String? = null,
-        @Query("censored") censored: Boolean? = null,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 5000
-    ): List<MangaRate>
+        id: Long,
+        status: String? = null,
+        censored: Boolean? = null,
+        page: Int = 1,
+        limit: Int = 5000
+    ) = client.get("users/$id/manga_rates") {
+        parameter("status", status)
+        parameter("censored", censored)
+        parameter("page", page)
+        parameter("limit", limit)
+    }.body<List<MangaRate>>()
 
-    @GET("users/{userId}/favourites")
-    suspend fun getFavourites(@Path(value = "userId") userId: Long): Favourites
-
-    @GET("users/{userId}/history")
     suspend fun getHistory(
-        @Path(value = "userId") userId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 20,
-        @Query("target_type") targetType: String? = null
-    ): List<History>
+        id: Long,
+        page: Int = 1,
+        limit: Int = 20,
+        targetType: String? = null
+    ) = client.get("users/$id/history") {
+        parameter("page", page)
+        parameter("limit", limit)
+        parameter("target_type", targetType)
+    }.body<List<History>>()
 }

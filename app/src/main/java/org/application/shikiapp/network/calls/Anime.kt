@@ -1,19 +1,14 @@
 package org.application.shikiapp.network.calls
 
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 import org.application.shikiapp.models.data.Anime
-import org.application.shikiapp.models.data.AnimeShort
+import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.ExternalLink
-import retrofit2.http.GET
-import retrofit2.http.Path
 
-interface Anime {
-
-    @GET("animes/{animeId}")
-    suspend fun getAnime(@Path("animeId") animeId: Long): Anime
-
-    @GET("animes/{animeId}/similar")
-    suspend fun getSimilar(@Path("animeId") animeId: Long): List<AnimeShort>
-
-    @GET("animes/{animeId}/external_links")
-    suspend fun getLinks(@Path("animeId") animeId: Long): List<ExternalLink>
+class Anime(private val client: HttpClient) {
+    suspend fun getAnime(id: Long) = client.get("animes/$id").body<Anime>()
+    suspend fun getSimilar(id: Long) = client.get("animes/$id/similar").body<List<AnimeBasic>>()
+    suspend fun getLinks(id: Long) = client.get("animes/$id/external_links").body<List<ExternalLink>>()
 }

@@ -1,50 +1,43 @@
 package org.application.shikiapp.network.calls
 
-import org.application.shikiapp.models.data.AnimeShort
-import org.application.shikiapp.models.data.Character
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import org.application.shikiapp.models.data.AnimeBasic
+import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.ClubImages
-import org.application.shikiapp.models.data.Manga
-import org.application.shikiapp.models.data.UserShort
-import retrofit2.http.GET
-import retrofit2.http.Path
-import retrofit2.http.Query
+import org.application.shikiapp.models.data.UserBasic
 
-interface Clubs {
+class Clubs(private val client: HttpClient) {
 
-    @GET("clubs")
-    suspend fun getClubs(): List<Club>
+    //suspend fun getClubs() = client.get("clubs").body<List<Club>>()
+    suspend fun getClub(id: Any) = client.get("clubs/$id").body<Club>()
 
-    @GET("clubs/{clubId}")
-    suspend fun getClub(@Path(value = "clubId") clubId: Long): Club
+    suspend fun getAnime(id: Long, page: Int = 1, limit: Int = 10) =
+        client.get("clubs/$id/animes") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body<List<AnimeBasic>>()
 
-    @GET("clubs/{clubId}/animes")
-    suspend fun getAnime(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<AnimeShort>
+//    suspend fun getManga(id: Long, page: Int = 1, limit: Int = 10) =
+//        client.get("clubs/$id/mangas") {
+//            parameter("page", page)
+//            parameter("limit", limit)
+//        }.body<List<MangaBasic>>()
+//
+//    suspend fun getRanobe(id: Long, page: Int = 1, limit: Int = 10) =
+//        client.get("clubs/$id/ranobe") {
+//            parameter("page", page)
+//            parameter("limit", limit)
+//        }.body<List<MangaBasic>>()
 
-    @GET("clubs/{clubId}/mangas")
-    suspend fun getManga(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<Manga>
-
-    @GET("clubs/{clubId}/ranobe")
-    suspend fun getRanobe(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<Manga>
-
-    @GET("clubs/{clubId}/characters")
-    suspend fun getCharacters(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<Character>
+    suspend fun getCharacters(id: Long, page: Int = 1, limit: Int = 10) =
+        client.get("clubs/$id/characters") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body<List<BasicInfo>>()
 
 //    @GET("clubs/{clubId}/collections")
 //    suspend fun getClubCollections(
@@ -53,24 +46,21 @@ interface Clubs {
 //        @Query("limit") limit: Int = 10
 //    ): List<Collections>
 
-    @GET("clubs/{clubId}/clubs")
-    suspend fun getClubClubs(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<Club>
+//    suspend fun getClubClubs(id: Long, page: Int = 1, limit: Int = 10) =
+//        client.get("clubs/$id/clubs") {
+//            parameter("page", page)
+//            parameter("limit", limit)
+//        }.body<List<Club>>()
 
-    @GET("clubs/{clubId}/members")
-    suspend fun getMembers(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<UserShort>
+    suspend fun getMembers(id: Long, page: Int = 1, limit: Int = 10) =
+        client.get("clubs/$id/members") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body<List<UserBasic>>()
 
-    @GET("clubs/{clubId}/images")
-    suspend fun getImages(
-        @Path(value = "clubId") clubId: Long,
-        @Query("page") page: Int = 1,
-        @Query("limit") limit: Int = 10
-    ): List<ClubImages>
+    suspend fun getImages(id: Long, page: Int = 1, limit: Int = 10) =
+        client.get("clubs/$id/images") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body<List<ClubImages>>()
 }
