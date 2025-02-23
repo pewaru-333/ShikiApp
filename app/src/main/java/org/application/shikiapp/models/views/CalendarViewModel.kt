@@ -10,9 +10,8 @@ import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Calendar
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.fromISODate
-import retrofit2.HttpException
 import java.time.LocalDate
 
 class CalendarViewModel : ViewModel() {
@@ -25,12 +24,12 @@ class CalendarViewModel : ViewModel() {
         _state.emit(Response.Loading)
 
         try {
-            val calendar = NetworkClient.client.getCalendar()
+            val calendar = NetworkClient.content.getCalendar()
                 .groupBy { fromISODate(it.nextEpisodeAt) }
                 .map { AnimeSchedule(it.key, it.value) }
 
             _state.emit(Response.Success(calendar))
-        } catch (e: HttpException) {
+        } catch (e: Throwable) {
             _state.emit(Response.Error)
         }
     }

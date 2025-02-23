@@ -9,14 +9,14 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.MangaRate
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.MangaRates
-import retrofit2.HttpException
 
 class MangaRatesViewModel(saved: SavedStateHandle) : ViewModel() {
     val userId = saved.toRoute<MangaRates>().id
@@ -40,15 +40,15 @@ class MangaRatesViewModel(saved: SavedStateHandle) : ViewModel() {
                 var page = 1
 
                 while (true) {
-                    val response = NetworkClient.user.getMangaRates(userId = userId, page = page)
+                    val response = NetworkClient.user.getMangaRates(id = userId, page = page)
                     rates.addAll(response)
                     page++
                     if (response.size < 5000) break
                 }
 
                 _response.emit(Response.Success(rates))
-            } catch (e: HttpException) {
-                if (e.code() == 403) _response.emit(Response.NoAccess)
+            } catch (e: ClientRequestException) {
+                if (e.response.status.value == 403) _response.emit(Response.NoAccess)
                 else _response.emit(Response.Error)
             }
         }

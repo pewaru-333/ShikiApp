@@ -16,9 +16,8 @@ import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Error
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Loading
 import org.application.shikiapp.models.views.NewsDetailViewModel.Response.Success
 import org.application.shikiapp.network.Comments
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.NewsDetail
-import retrofit2.HttpException
 
 
 class NewsDetailViewModel(saved: SavedStateHandle) : ViewModel() {
@@ -41,11 +40,11 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ViewModel() {
             try {
                 _response.emit(
                     Success(
-                        news = NetworkClient.client.getTopicById(newsId),
+                        news = NetworkClient.news.getTopic(newsId),
                         comments = Comments.getComments(newsId, viewModelScope)
                     )
                 )
-            } catch (e: HttpException) {
+            } catch (e: Throwable) {
                 _response.emit(Error)
             }
         }

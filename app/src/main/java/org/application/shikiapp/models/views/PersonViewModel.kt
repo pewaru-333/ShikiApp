@@ -18,7 +18,7 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Person
 import org.application.shikiapp.network.Comments
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.LINKED_KIND
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.isPersonFavoured
@@ -41,15 +41,12 @@ class PersonViewModel(saved: SavedStateHandle) : ViewModel() {
             _response.emit(Response.Loading)
 
             try {
-                val person = NetworkClient.client.getPerson(id)
+                val person = NetworkClient.content.getPerson(id)
                 val comments = Comments.getComments(person.topicId, viewModelScope)
 
-                _response.emit(
-                    Response.Success(
-                        person, comments
-                    )
-                )
+                _response.emit(Response.Success(person, comments))
             } catch (e: Throwable) {
+                e.printStackTrace()
                 _response.emit(Response.Error)
             }
         }

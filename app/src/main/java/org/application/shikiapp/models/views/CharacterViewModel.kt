@@ -13,9 +13,9 @@ import kotlinx.coroutines.launch
 import org.application.CharacterQuery
 import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.Comments
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.LINKED_TYPE
 
 class CharacterViewModel(saved: SavedStateHandle) : ViewModel() {
@@ -36,7 +36,7 @@ class CharacterViewModel(saved: SavedStateHandle) : ViewModel() {
             _response.emit(Response.Loading)
 
             try {
-                val character = NetworkClient.client.getCharacter(id.toLong())
+                val character = NetworkClient.content.getCharacter(id.toLong())
                 val image = ApolloClient.getCharacter(id)
                 val comments = Comments.getComments(character.topicId, viewModelScope)
 

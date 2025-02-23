@@ -6,18 +6,18 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.paging.filter
+import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import org.application.shikiapp.network.paging.NewsPaging
-import retrofit2.HttpException
 
 class NewsViewModel : ViewModel() {
     val newsList = Pager(
-        config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+        config = PagingConfig(pageSize = 10),
         pagingSourceFactory = { NewsPaging() }
     ).flow.map { news ->
         val set = mutableSetOf<Long>()
         news.filter { if (set.contains(it.id)) false else set.add(it.id) }
     }.cachedIn(viewModelScope)
-        .retryWhen { cause, attempt -> cause is HttpException || attempt <= 3 }
+        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 }
