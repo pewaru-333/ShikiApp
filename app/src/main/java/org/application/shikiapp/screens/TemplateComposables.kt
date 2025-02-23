@@ -22,6 +22,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
@@ -154,7 +155,7 @@ import org.application.shikiapp.R.string.text_statistics
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_user_rates
 import org.application.shikiapp.R.string.text_volumes
-import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.Favourites
@@ -162,7 +163,7 @@ import org.application.shikiapp.models.data.History
 import org.application.shikiapp.models.data.ShortInfo
 import org.application.shikiapp.models.data.Stats
 import org.application.shikiapp.models.data.User
-import org.application.shikiapp.models.data.UserShort
+import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.views.UserRateViewModel
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent
 import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetChapters
@@ -235,7 +236,7 @@ fun CircleImage(link: String?) = AsyncImage(
 
 @Composable
 fun UserBriefItem(user: User) = ListItem(
-    headlineContent = { Text(user.lastOnline, style = MaterialTheme.typography.bodyMedium) },
+    headlineContent = { user.lastOnline?.let { Text(it, style = MaterialTheme.typography.bodyMedium) } },
     modifier = Modifier.offset((-16).dp, (-8).dp),
     overlineContent = { Text(user.nickname, style = MaterialTheme.typography.titleLarge) },
     leadingContent = {
@@ -257,7 +258,7 @@ fun UserBriefItem(user: User) = ListItem(
 )
 
 @Composable
-fun CatalogItem(
+fun CatalogListItem(
     title: String,
     kind: String?,
     season: Any?,
@@ -287,6 +288,37 @@ fun CatalogItem(
         )
     }
 )
+
+@Composable
+fun CatalogGridItem(
+    title: String,
+    image: String?,
+    click: () -> Unit
+) = Column(Modifier.clickable(onClick = click)) {
+    AsyncImage(
+        model = image,
+        contentDescription = null,
+        contentScale = ContentScale.FillBounds,
+        filterQuality = FilterQuality.High,
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(180.dp)
+            .clip(MaterialTheme.shapes.medium)
+            .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+    )
+
+    Text(
+        minLines = 3,
+        maxLines = 3,
+        text = title,
+        textAlign = TextAlign.Center,
+        overflow = TextOverflow.Ellipsis,
+        style = MaterialTheme.typography.titleSmall,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp)
+    )
+}
 
 @Composable
 fun RoundedPoster(link: String?, width: Dp = 140.dp) = AsyncImage(
@@ -443,11 +475,13 @@ fun Comment(comment: Comment, toUser: (Long) -> Unit) {
     HorizontalDivider(Modifier.padding(top = 8.dp))
 }
 
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Comments(hide: () -> Unit, list: LazyPagingItems<Comment>, toUser: (Long) -> Unit) =
-    Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
+    Dialog(hide, DialogProperties(usePlatformDefaultWidth = false, decorFitsSystemWindows = false)) {
         Scaffold(
+            modifier = Modifier.safeDrawingPadding(),
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(text_comments)) },
@@ -492,9 +526,9 @@ fun HistoryItem(note: History, toAnime: (String) -> Unit, toManga: (String) -> U
         trailingContent = { Text(convertDate(note.createdAt)) },
         supportingContent = { Text(fromHtml(note.description)) },
         modifier = Modifier.clickable {
-            note.target?.let { (id, _, _, _, _, kind) ->
-                if (kind == LINKED_TYPE[1].lowercase()) toManga(id.toString())
-                else toAnime(id.toString())
+            note.target?.let {
+                if (it.kind == LINKED_TYPE[1].lowercase()) toManga(it.id.toString())
+                else toAnime(it.id.toString())
             }
         },
         headlineContent = {
@@ -1078,7 +1112,13 @@ fun UserStats(stats: Stats, id: Long, toAnime: (String) -> Unit, toManga: (Strin
 }
 
 @Composable
-fun Stats(id: Long, stats: List<ShortInfo>, type: String, toAnime: (String) -> Unit, toManga: (String) -> Unit) {
+fun Stats(
+    id: Long,
+    stats: List<ShortInfo>,
+    type: String,
+    toAnime: (String) -> Unit,
+    toManga: (String) -> Unit
+) {
     val sum = stats.sumOf { it.size }.takeIf { it != 0L } ?: 1
 
     Column(verticalArrangement = spacedBy(8.dp)) {
@@ -1157,7 +1197,7 @@ fun DialogFavourites(
                     }
                 ) { (id, name, russian, image) ->
                     OneLineImage(
-                        name = russian.ifEmpty { name },
+                        name = russian.orEmpty().ifEmpty { name },
                         link = image,
                         modifier = Modifier.clickable {
                             when (tab) {
@@ -1241,8 +1281,8 @@ fun BriefInfo(setMenu: (Int) -> Unit) {
 fun DialogItem(
     model: UserViewModel,
     state: UserState,
-    friends: LazyPagingItems<UserShort>,
-    clubs: List<Club>,
+    friends: LazyPagingItems<UserBasic>,
+    clubs: List<ClubBasic>,
     toUser: (Long) -> Unit,
     toClub: (Long) -> Unit
 ) = Dialog(model::close, DialogProperties(usePlatformDefaultWidth = false)) {
@@ -1272,17 +1312,17 @@ fun DialogItem(
 
 // ========================================== Extensions ===========================================
 
-fun LazyListScope.friends(list: LazyPagingItems<UserShort>, toUser: (Long) -> Unit) {
+fun LazyListScope.friends(list: LazyPagingItems<UserBasic>, toUser: (Long) -> Unit) {
     when (list.loadState.refresh) {
         is Error -> item { ErrorScreen(list::retry) }
         is Loading -> item { LoadingScreen() }
         is NotLoading -> {
             items(list.itemCount) { index ->
-                list[index]?.let { (id, nickname, _, image) ->
+                list[index]?.let {
                     OneLineImage(
-                        name = nickname,
-                        link = image.x160,
-                        modifier = Modifier.clickable { toUser(id) }
+                        name = it.nickname,
+                        link = it.image.x160,
+                        modifier = Modifier.clickable { toUser(it.id) }
                     )
                 }
             }
@@ -1292,13 +1332,13 @@ fun LazyListScope.friends(list: LazyPagingItems<UserShort>, toUser: (Long) -> Un
     }
 }
 
-fun LazyListScope.clubs(list: List<Club>, toClub: (Long) -> Unit) = if (list.isEmpty()) item {
+fun LazyListScope.clubs(list: List<ClubBasic>, toClub: (Long) -> Unit) = if (list.isEmpty()) item {
     Box(Modifier.fillMaxSize(), Alignment.Center) { Text(stringResource(text_empty)) }
 }
-else items(list) { (id, name, logo) ->
+else items(list) {
     OneLineImage(
-        name = name,
-        link = getImage(logo.original),
-        modifier = Modifier.clickable { toClub(id) }
+        name = it.name,
+        link = getImage(it.logo.original),
+        modifier = Modifier.clickable { toClub(it.id) }
     )
 }
