@@ -4,11 +4,11 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.PeopleQuery.Data.Person
 import org.application.shikiapp.models.views.CatalogFilters
-import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.client.ApolloClient
 
 class PeoplePaging(private val filters: CatalogFilters) : PagingSource<Int, Person>() {
 
-    override fun getRefreshKey(state: PagingState<Int, Person>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, Person>) =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
@@ -25,8 +25,8 @@ class PeoplePaging(private val filters: CatalogFilters) : PagingSource<Int, Pers
             isMangaka = filters.isMangaka
         )
 
-        val prevKey = if (page > 1) page.minus(1) else null
-        val nextKey = if (response.isNotEmpty()) page.plus(1) else null
+        val prevKey = if (page == 1) null else page - 1
+        val nextKey = if (response.isEmpty()) null else page + 1
 
         LoadResult.Page(response, prevKey, nextKey)
     } catch (e: Throwable) {

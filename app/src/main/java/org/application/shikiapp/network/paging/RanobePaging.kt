@@ -2,7 +2,7 @@ package org.application.shikiapp.network.paging
 
 import org.application.MangaListQuery.Data.Manga
 import org.application.shikiapp.models.views.CatalogFilters
-import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.utils.setScore
 import org.application.type.MangaKindEnum
 
@@ -22,10 +22,10 @@ class RanobePaging(private val query: CatalogFilters) : MangaPaging(query) {
             search = query.title
         )
 
-        val prevKey = if (page > 1) page.minus(1) else null
-        val nextKey = if (response.isNotEmpty()) page.plus(1) else null
+        val prevKey = if (page == 1) null else page - 1
+        val nextKey = if (response.isEmpty()) null else page + 1
 
-        LoadResult.Page(data = response, prevKey = prevKey, nextKey = nextKey)
+        LoadResult.Page(response, prevKey, nextKey)
     } catch (e: Throwable) {
         LoadResult.Error(e)
     }

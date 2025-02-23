@@ -2,23 +2,23 @@ package org.application.shikiapp.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
-import org.application.shikiapp.models.data.AnimeShort
-import org.application.shikiapp.network.NetworkClient
+import org.application.shikiapp.models.data.AnimeBasic
+import org.application.shikiapp.network.client.NetworkClient
 
-class ClubAnimePaging(private val clubId: Long) : PagingSource<Int, AnimeShort>() {
+class ClubAnimePaging(private val clubId: Long) : PagingSource<Int, AnimeBasic>() {
 
-    override fun getRefreshKey(state: PagingState<Int, AnimeShort>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, AnimeBasic>) =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
 
-    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, AnimeShort> = try {
+    override suspend fun load(params: LoadParams<Int>): LoadResult<Int, AnimeBasic> = try {
         val page = params.key ?: 1
         val response = NetworkClient.clubs.getAnime(clubId, page, params.loadSize)
 
-        val prevKey = if (page > 0) page.minus(1) else null
-        val nextKey = if (response.isNotEmpty()) page.plus(1) else null
+        val prevKey = if (page == 1) null else page - 1
+        val nextKey = if (response.isEmpty()) null else page + 1
 
         LoadResult.Page(response, prevKey, nextKey)
     } catch (e: Throwable) {

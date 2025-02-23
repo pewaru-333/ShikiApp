@@ -4,12 +4,12 @@ import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.MangaListQuery.Data.Manga
 import org.application.shikiapp.models.views.CatalogFilters
-import org.application.shikiapp.network.ApolloClient
+import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.utils.setScore
 
 open class MangaPaging(private val query: CatalogFilters) : PagingSource<Int, Manga>() {
 
-    override fun getRefreshKey(state: PagingState<Int, Manga>): Int? =
+    override fun getRefreshKey(state: PagingState<Int, Manga>) =
         state.anchorPosition?.let { anchorPosition ->
             val anchorPage = state.closestPageToPosition(anchorPosition)
             anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
@@ -29,10 +29,10 @@ open class MangaPaging(private val query: CatalogFilters) : PagingSource<Int, Ma
             search = query.title
         )
 
-        val prevKey = if (page > 1) page.minus(1) else null
-        val nextKey = if (response.isNotEmpty()) page.plus(1) else null
+        val prevKey = if (page == 1) null else page - 1
+        val nextKey = if (response.isEmpty()) null else page + 1
 
-        LoadResult.Page(data = response, prevKey = prevKey, nextKey = nextKey)
+        LoadResult.Page(response, prevKey, nextKey)
     } catch (e: Throwable) {
         LoadResult.Error(e)
     }
