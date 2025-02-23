@@ -1,17 +1,17 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ExternalLink(
-    @Json(name = "id") val id: Long?,
-    @Json(name = "kind") val kind: String,
-    @Json(name = "url") val url: String,
-    @Json(name = "source") val source: String,
-    @Json(name = "entry_id") val entryId: Long,
-    @Json(name = "entry_type") val entryType: String,
-    @Json(name = "created_at") val createdAt: String?,
-    @Json(name = "updated_at") val updatedAt: String?,
-    @Json(name = "imported_at") val importedAt: String?
+    @SerialName("id") val id: Long?,
+    @SerialName("kind") val kind: String,
+    @SerialName("url") val url: String,
+    @SerialName("source") val source: String,
+    @SerialName("entry_id") val entryId: Long,
+    @SerialName("entry_type") val entryType: String,
+    @SerialName("created_at") val createdAt: String?,
+    @SerialName("updated_at") val updatedAt: String?,
+    @SerialName("imported_at") val importedAt: String?
 )

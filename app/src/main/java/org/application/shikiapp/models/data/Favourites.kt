@@ -1,25 +1,25 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
+import org.application.shikiapp.utils.BLANK
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Favourites(
-    @Json(name = "animes") val animes: List<Favourite>,
-    @Json(name = "mangas") val mangas: List<Favourite>,
-    @Json(name = "ranobe") val ranobe: List<Favourite>,
-    @Json(name = "characters") val characters: List<Favourite>,
-    @Json(name = "people") val people: List<Favourite>,
-    @Json(name = "mangakas") val mangakas: List<Favourite>,
-    @Json(name = "seyu") val seyu: List<Favourite>,
-    @Json(name = "producers") val producers: List<Favourite>
+    val animes: List<Favourite>,
+    val mangas: List<Favourite>,
+    val ranobe: List<Favourite>,
+    val characters: List<Favourite>,
+    val people: List<Favourite>,
+    val mangakas: List<Favourite>,
+    val seyu: List<Favourite>,
+    val producers: List<Favourite>
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Favourite(
-    @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "russian") val russian: String,
-    @Json(name = "image") val image: String,
-    @Json(name = "url") val url: String?,
+    val id: Long = 0L,
+    val name: String = BLANK,
+    val russian: String? = null,
+    val image: String = BLANK,
+    val url: String? = null
 )

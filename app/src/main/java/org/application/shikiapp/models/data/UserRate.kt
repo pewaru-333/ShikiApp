@@ -1,61 +1,61 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class UserRate(
-    @Json(name = "id") val id: Long,
-    @Json(name = "user_id") val userId: Long?,
-    @Json(name = "target_id") val targetId: Long?,
-    @Json(name = "target_type") val targetType: String?,
-    @Json(name = "score") val score: Int,
-    @Json(name = "status") val status: String,
-    @Json(name = "rewatches") val rewatches: Int?,
-    @Json(name = "episodes") val episodes: Int?,
-    @Json(name = "volumes") val volumes: Int?,
-    @Json(name = "chapters") val chapters: Int?,
-    @Json(name = "text") val text: String?,
-    @Json(name = "text_html") val textHtml: String?,
-    @Json(name = "created_at") val createdAt: String?,
-    @Json(name = "updated_at") val updatedAt: String?
+    @SerialName("id") val id: Long,
+    @SerialName("user_id") val userId: Long?,
+    @SerialName("target_id") val targetId: Long?,
+    @SerialName("target_type") val targetType: String?,
+    @SerialName("score") val score: Int,
+    @SerialName("status") val status: String,
+    @SerialName("rewatches") val rewatches: Int?,
+    @SerialName("episodes") val episodes: Int?,
+    @SerialName("volumes") val volumes: Int?,
+    @SerialName("chapters") val chapters: Int?,
+    @SerialName("text") val text: String?,
+    @SerialName("text_html") val textHtml: String?,
+    @SerialName("created_at") val createdAt: String?,
+    @SerialName("updated_at") val updatedAt: String?
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class AnimeRate(
-    @Json(name = "id") val id: Long,
-    @Json(name = "score") val score: Int,
-    @Json(name = "status") val status: String,
-    @Json(name = "text") val text: String?,
-    @Json(name = "episodes") val episodes: Int,
-    @Json(name = "text_html") val textHtml: String?,
-    @Json(name = "rewatches") val rewatches: Int,
-    @Json(name = "anime") val anime: AnimeShort,
+    @SerialName("id") val id: Long,
+    @SerialName("score") val score: Int,
+    @SerialName("status") val status: String,
+    @SerialName("text") val text: String?,
+    @SerialName("episodes") val episodes: Int,
+    @SerialName("text_html") val textHtml: String?,
+    @SerialName("rewatches") val rewatches: Int,
+    @SerialName("anime") val anime: AnimeBasic,
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class MangaRate(
-    @Json(name = "id") val id: Long,
-    @Json(name = "score") val score: Int,
-    @Json(name = "status") val status: String,
-    @Json(name = "text") val text: String?,
-    @Json(name = "chapters") val chapters: Int,
-    @Json(name = "volumes") val volumes: Int,
-    @Json(name = "text_html") val textHtml: String?,
-    @Json(name = "rewatches") val rewatches: Int,
-    @Json(name = "manga") val manga: MangaShort,
+    @SerialName("id") val id: Long,
+    @SerialName("score") val score: Int,
+    @SerialName("status") val status: String,
+    @SerialName("text") val text: String?,
+    @SerialName("chapters") val chapters: Int,
+    @SerialName("volumes") val volumes: Int,
+    @SerialName("text_html") val textHtml: String?,
+    @SerialName("rewatches") val rewatches: Int,
+    @SerialName("manga") val manga: MangaBasic,
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class NewRate(
-    @Json(name = "user_id") val userId: Long? = null,
-    @Json(name = "target_id") val targetId: Long? = null,
-    @Json(name = "target_type") val targetType: String? = null,
-    @Json(name = "status") val status: String? = null,
-    @Json(name = "score") val score: String? = null,
-    @Json(name = "chapters") val chapters: String? = null,
-    @Json(name = "episodes") val episodes: String? = null,
-    @Json(name = "volumes") val volumes: String? = null,
-    @Json(name = "rewatches") val rewatches: String? = null,
-    @Json(name = "text") val text: String? = null
+    @SerialName("user_id") val userId: Long? = null,
+    @SerialName("target_id") val targetId: Long? = null,
+    @SerialName("target_type") val targetType: String? = null,
+    @SerialName("status") val status: String? = null,
+    @SerialName("score") val score: String? = null,
+    @SerialName("chapters") val chapters: String? = null,
+    @SerialName("episodes") val episodes: String? = null,
+    @SerialName("volumes") val volumes: String? = null,
+    @SerialName("rewatches") val rewatches: String? = null,
+    @SerialName("text") val text: String? = null
 )

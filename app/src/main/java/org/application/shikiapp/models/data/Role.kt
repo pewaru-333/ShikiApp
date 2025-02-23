@@ -1,12 +1,12 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Role(
-    @Json(name = "roles") val roles: List<String>,
-    @Json(name = "roles_russian") val rolesRussian: List<String>,
-    @Json(name = "character") val character: Character?,
-    @Json(name = "person") val person: Person?,
+    @SerialName("roles") val roles: List<String>,
+    @SerialName("roles_russian") val rolesRussian: List<String>,
+    @SerialName("character") val character: Character?,
+    @SerialName("person") val person: Person?,
 )

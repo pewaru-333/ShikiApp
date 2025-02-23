@@ -1,12 +1,12 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Related(
-    @Json(name = "relation") val relation: String,
-    @Json(name = "relation_russian") val relationRussian: String,
-    @Json(name = "anime") val anime: AnimeShort?,
-    @Json(name = "manga") val manga: MangaShort?
+    @SerialName("relation") val relation: String,
+    @SerialName("relation_russian") val relationRussian: String,
+    @SerialName("anime") val anime: AnimeBasic?,
+    @SerialName("manga") val manga: MangaBasic?
 )

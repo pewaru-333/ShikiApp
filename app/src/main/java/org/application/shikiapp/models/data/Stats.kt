@@ -1,25 +1,25 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Stats(
-    @Json(name = "statuses") val statuses: Statuses,
-    @Json(name = "full_statuses") val fullStatuses: Statuses,
-    @Json(name = "scores") val scores: Scores,
-    @Json(name = "types") val types: Types,
-    @Json(name = "ratings") val ratings: Ratings,
-    @Json(name = "has_anime?") val hasAnime: Boolean,
-    @Json(name = "has_manga?") val hasManga: Boolean,
-    @Json(name = "genres") val genres: List<Genre>,
-    @Json(name = "studios") val studios: List<Studio>,
-    @Json(name = "publishers") val publishers: List<Publisher>,
-  //  @Json(name = "activity") val activity: List<Activity>
+    @SerialName("statuses") val statuses: Statuses = Statuses(),
+    @SerialName("full_statuses") val fullStatuses: Statuses = Statuses(),
+    @SerialName("scores") val scores: Scores = Scores(),
+    @SerialName("types") val types: Types = Types(),
+    @SerialName("ratings") val ratings: Ratings = Ratings(),
+    @SerialName("has_anime?") val hasAnime: Boolean = false,
+    @SerialName("has_manga?") val hasManga: Boolean = false,
+    @SerialName("genres") val genres: List<Genre> = emptyList(),
+    @SerialName("studios") val studios: List<Studio> = emptyList(),
+    @SerialName("publishers") val publishers: List<Publisher> = emptyList(),
+    //  @SerialName("activity") val activity: List<Activity>
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Activity(
-    @Json(name = "name") val name: Pair<Long, Long>,
-    @Json(name = "value") val value: Long
+    val name: Pair<Long, Long>,
+    val value: Long
 )

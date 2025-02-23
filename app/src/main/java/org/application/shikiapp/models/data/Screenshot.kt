@@ -1,10 +1,9 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Screenshot(
-    @Json(name = "original") val original: String,
-    @Json(name = "preview") val preview: String
+    val original: String,
+    val preview: String
 )

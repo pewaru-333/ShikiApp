@@ -1,10 +1,9 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Publisher(
-    @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String
+    val id: Long,
+    val name: String
 )

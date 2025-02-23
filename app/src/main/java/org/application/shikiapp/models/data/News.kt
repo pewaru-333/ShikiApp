@@ -1,16 +1,16 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class News(
-    @Json(name = "id") val id: Long,
-    @Json(name = "topic_title") val topicTitle: String,
-    @Json(name = "body") val body: String,
-    @Json(name = "html_body") val htmlBody: String,
-    @Json(name = "html_footer") val htmlFooter: String,
-    @Json(name = "created_at") val createdAt: String,
-    @Json(name = "comments_count") val commentsCount: Int,
-    @Json(name = "user") val user: UserShort
+    @SerialName("id") val id: Long,
+    @SerialName("topic_title") val topicTitle: String,
+    @SerialName("body") val body: String,
+    @SerialName("html_body") val htmlBody: String,
+    @SerialName("html_footer") val htmlFooter: String,
+    @SerialName("created_at") val createdAt: String,
+    @SerialName("comments_count") val commentsCount: Int,
+    @SerialName("user") val user: UserBasic
 )

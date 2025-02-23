@@ -1,36 +1,36 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Statuses(
-    @Json(name = "anime") val anime: List<ShortInfo>,
-    @Json(name = "manga") val manga: List<ShortInfo>
+    val anime: List<ShortInfo> = emptyList(),
+    val manga: List<ShortInfo> = emptyList()
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Scores(
-    @Json(name = "anime") val anime: List<RatesScores>,
-    @Json(name = "manga") val manga: List<RatesScores>
+    val anime: List<RatesScores> = emptyList(),
+    val manga: List<RatesScores> = emptyList()
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Types(
-    @Json(name = "anime") val anime: List<RatesScores>,
-    @Json(name = "manga") val manga: List<RatesScores>
+    val anime: List<RatesScores> = emptyList(),
+    val manga: List<RatesScores> = emptyList()
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Ratings(
-    @Json(name = "anime") val anime: List<RatesScores>
+    val anime: List<RatesScores> = emptyList()
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class ShortInfo(
-    @Json(name = "id") val id: Long,
-    @Json(name = "grouped_id") val groupedId: String,
-    @Json(name = "name") val name: String,
-    @Json(name = "size") val size: Long,
-    @Json(name = "type") val type: String
+    @SerialName("id") val id: Long,
+    @SerialName("grouped_id") val groupedId: String,
+    @SerialName("name") val name: String,
+    @SerialName("size") val size: Long,
+    @SerialName("type") val type: String
 )

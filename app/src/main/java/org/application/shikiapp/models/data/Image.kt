@@ -1,12 +1,12 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.Serializable
+import org.application.shikiapp.utils.BLANK
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Image(
-    @Json(name = "original") val original: String,
-    @Json(name = "preview") val preview: String?,
-    @Json(name = "x96") val x96: String?,
-    @Json(name = "x48") val x48: String?,
+    val original: String = BLANK,
+    val preview: String? = null,
+    val x96: String? = null,
+    val x48: String? = null
 )

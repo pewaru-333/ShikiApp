@@ -1,34 +1,34 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Franchise(
-    @Json(name = "links") val links: List<Link>,
-    @Json(name = "nodes") val nodes: List<Node>,
-    @Json(name = "current_id") val currentId: Long
+    @SerialName("links") val links: List<Link>,
+    @SerialName("nodes") val nodes: List<Node>,
+    @SerialName("current_id") val currentId: Long
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Link(
-    @Json(name = "id") val id: Long,
-    @Json(name = "source_id") val sourceId: Long,
-    @Json(name = "target_id") val targetId: Long,
-    @Json(name = "source") val source: Long,
-    @Json(name = "target") val target: Long,
-    @Json(name = "weight") val weight: Int,
-    @Json(name = "relation") val relation: String
+    @SerialName("id") val id: Long,
+    @SerialName("source_id") val sourceId: Long,
+    @SerialName("target_id") val targetId: Long,
+    @SerialName("source") val source: Long,
+    @SerialName("target") val target: Long,
+    @SerialName("weight") val weight: Int,
+    @SerialName("relation") val relation: String
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Node(
-    @Json(name = "id") val id: Long,
-    @Json(name = "date") val date: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "image_url") val imageUrl: String,
-    @Json(name = "url") val url: String,
-    @Json(name = "year") val year: Int?,
-    @Json(name = "kind") val kind: String,
-    @Json(name = "weight") val weight: Int
+    @SerialName("id") val id: Long,
+    @SerialName("date") val date: Long,
+    @SerialName("name") val name: String,
+    @SerialName("image_url") val imageUrl: String,
+    @SerialName("url") val url: String,
+    @SerialName("year") val year: Int?,
+    @SerialName("kind") val kind: String,
+    @SerialName("weight") val weight: Int
 )

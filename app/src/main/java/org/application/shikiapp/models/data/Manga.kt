@@ -1,56 +1,46 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Manga(
-    @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "russian") val russian: String,
-    @Json(name = "image") val image: Image,
-    @Json(name = "url") val url: String,
-    @Json(name = "kind") val kind: String,
-    @Json(name = "score") val score: String,
-    @Json(name = "status") val status: String,
-    @Json(name = "volumes") val volumes: Int,
-    @Json(name = "chapters") val chapters: Int,
-    @Json(name = "aired_on") val airedOn: String?,
-    @Json(name = "released_on") val releasedOn: String?,
-    @Json(name = "english") val english: List<String> = emptyList(),
-    @Json(name = "japanese") val japanese: List<String> = emptyList(),
-    @Json(name = "synonyms") val synonyms: List<String> = emptyList(),
-    @Json(name = "license_name_ru") val licenseNameRu: String?,
-    @Json(name = "description") val description: String?,
-    @Json(name = "description_html") val descriptionHTML: String?,
-    @Json(name = "description_source") val descriptionSource: String?,
-    @Json(name = "franchise") val franchise: String?,
-    @Json(name = "favoured") val favoured: Boolean,
-    @Json(name = "anons") val anons: Boolean?,
-    @Json(name = "ongoing") val ongoing: Boolean?,
-    @Json(name = "thread_id") val threadId: Long?,
-    @Json(name = "topic_id") val topicId: Long?,
-    @Json(name = "myanimelist_id") val myAnimeListId: Long?,
-    @Json(name = "rates_scores_stats") val ratesScoresStats: List<RatesScores> = emptyList(),
-    @Json(name = "rates_statuses_stats") val ratesStatusesStats: List<RatesStatuses> = emptyList(),
-    @Json(name = "licensors") val licensors: List<String> = emptyList(),
-    @Json(name = "genres") val genres: List<Genre> = emptyList(),
-    @Json(name = "publishers") val publishers: List<Publisher> = emptyList(),
-    @Json(name = "user_rate") val userRate: UserRate?
+    @SerialName("id") val id: Long,
+    @SerialName("name") val name: String,
+    @SerialName("russian") val russian: String,
+    @SerialName("image") val image: Image,
+    @SerialName("url") val url: String,
+    @SerialName("kind") val kind: String,
+    @SerialName("score") val score: String,
+    @SerialName("status") val status: String,
+    @SerialName("volumes") val volumes: Int,
+    @SerialName("chapters") val chapters: Int,
+    @SerialName("aired_on") val airedOn: String?,
+    @SerialName("released_on") val releasedOn: String?,
+    @SerialName("english") val english: List<String?> = emptyList(),
+    @SerialName("japanese") val japanese: List<String> = emptyList(),
+    @SerialName("synonyms") val synonyms: List<String> = emptyList(),
+    @SerialName("license_name_ru") val licenseNameRu: String?,
+    @SerialName("description") val description: String?,
+    @SerialName("description_html") val descriptionHTML: String?,
+    @SerialName("description_source") val descriptionSource: String?,
+    @SerialName("franchise") val franchise: String?,
+    @SerialName("favoured") val favoured: Boolean,
+    @SerialName("anons") val anons: Boolean?,
+    @SerialName("ongoing") val ongoing: Boolean?,
+    @SerialName("thread_id") val threadId: Long?,
+    @SerialName("topic_id") val topicId: Long?,
+    @SerialName("myanimelist_id") val myAnimeListId: Long?,
+    @SerialName("rates_scores_stats") val ratesScoresStats: List<RatesScores> = emptyList(),
+    @SerialName("rates_statuses_stats") val ratesStatusesStats: List<RatesStatuses> = emptyList(),
+    @SerialName("licensors") val licensors: List<String> = emptyList(),
+    @SerialName("genres") val genres: List<Genre> = emptyList(),
+    @SerialName("publishers") val publishers: List<Publisher> = emptyList(),
+    @SerialName("user_rate") val userRate: UserRate?
 )
 
-@JsonClass(generateAdapter = true)
-data class MangaShort(
-    @Json(name = "id") override val id: Long,
-    @Json(name = "name") override val name: String,
-    @Json(name = "russian") override val russian: String?,
-    @Json(name = "image") override val image: Image,
-    @Json(name = "url") override val url: String,
-    @Json(name = "kind") override val kind: String?,
-    @Json(name = "score") val score: String?,
-    @Json(name = "status") val status: String?,
-    @Json(name = "volumes") val volumes: Int?,
-    @Json(name = "chapters") val chapters: Int?,
-    @Json(name = "aired_on") override val airedOn: String?,
-    @Json(name = "released_on") override val releasedOn: String?,
-) : Content()
+@Serializable
+class MangaBasic : BasicContent() {
+    val volumes: Int? = null
+    val chapters: Int? = null
+}

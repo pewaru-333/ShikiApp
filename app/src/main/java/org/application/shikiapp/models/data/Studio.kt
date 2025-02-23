@@ -1,13 +1,13 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Studio(
-    @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "filtered_name") val filteredName: String,
-    @Json(name = "real") val real: Boolean,
-    @Json(name = "image") val image: String?
+    @SerialName("id") val id: Long,
+    @SerialName("name") val name: String,
+    @SerialName("filtered_name") val filteredName: String,
+    @SerialName("real") val real: Boolean,
+    @SerialName("image") val image: String?
 )

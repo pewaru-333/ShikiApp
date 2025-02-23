@@ -1,52 +1,52 @@
 package org.application.shikiapp.models.data
 
-import com.squareup.moshi.Json
-import com.squareup.moshi.JsonClass
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 
-@JsonClass(generateAdapter = true)
-data class Person(
-    @Json(name = "id") val id: Long,
-    @Json(name = "name") val name: String,
-    @Json(name = "russian") val russian: String?,
-    @Json(name = "image") val image: Image,
-    @Json(name = "url") val url: String,
-    @Json(name = "japanese") val japanese: String?,
-    @Json(name = "job_title") val jobTitle: String,
-    @Json(name = "birth_on") val birthOn: Date = Date(),
-    @Json(name = "deceased_on") val deceasedOn: Date = Date(),
-    @Json(name = "website") val website: String,
-    @Json(name = "groupped_roles") val grouppedRoles: List<Pair<String, Int>>?,
-    @Json(name = "roles") val roles: List<Roles>?,
-    @Json(name = "works") val works: List<Works>?,
-    @Json(name = "topic_id") val topicId: Long?,
-    @Json(name = "person_favoured") val personFavoured: Boolean,
-    @Json(name = "producer") val producer: Boolean,
-    @Json(name = "producer_favoured") val producerFavoured: Boolean,
-    @Json(name = "mangaka") val mangaka: Boolean,
-    @Json(name = "mangaka_favoured") val mangakaFavoured: Boolean,
-    @Json(name = "seyu") val seyu: Boolean,
-    @Json(name = "seyu_favoured") val seyuFavoured: Boolean,
-    @Json(name = "updated_at") val updatedAt: String?,
-    @Json(name = "thread_id") val threadId: Long?,
-    @Json(name = "birthday") val birthday: Date = Date()
+@Serializable
+class Person(
+    @SerialName("id") val id: Long,
+    @SerialName("name") val name: String,
+    @SerialName("russian") val russian: String?,
+    @SerialName("image") val image: Image,
+    @SerialName("url") val url: String,
+    @SerialName("japanese") val japanese: String,
+    @SerialName("job_title") val jobTitle: String,
+    @SerialName("birth_on") val birthOn: Date? = null,
+    @SerialName("deceased_on") val deceasedOn: Date? = null,
+    @SerialName("website") val website: String,
+    @SerialName("groupped_roles") val grouppedRoles: List<List<String>>,
+    @SerialName("roles") val roles: List<Roles>?,
+    @SerialName("works") val works: List<Works>?,
+    @SerialName("topic_id") val topicId: Long?,
+    @SerialName("person_favoured") val personFavoured: Boolean,
+    @SerialName("producer") val producer: Boolean,
+    @SerialName("producer_favoured") val producerFavoured: Boolean,
+    @SerialName("mangaka") val mangaka: Boolean,
+    @SerialName("mangaka_favoured") val mangakaFavoured: Boolean,
+    @SerialName("seyu") val seyu: Boolean,
+    @SerialName("seyu_favoured") val seyuFavoured: Boolean,
+    @SerialName("updated_at") val updatedAt: String,
+    @SerialName("thread_id") val threadId: Long?,
+    @SerialName("birthday") val birthday: Date? = null
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Date(
-    @Json(name = "day") val day: Int? = null,
-    @Json(name = "month") val month: Int? = null,
-    @Json(name = "year") val year: Int? = null
+    val day: Int? = null,
+    val month: Int? = null,
+    val year: Int? = null
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Roles(
-    @Json(name = "characters") val characters: List<CharacterPerson>,
-    @Json(name = "animes") val animes: List<AnimeShort>
+    val characters: List<BasicInfo>,
+    val animes: List<AnimeBasic>
 )
 
-@JsonClass(generateAdapter = true)
+@Serializable
 data class Works(
-    @Json(name = "anime") val anime: AnimeShort?,
-    @Json(name = "manga") val manga: MangaShort?,
-    @Json(name = "roles") val roles: Role?
+    val anime: AnimeBasic?,
+    val manga: MangaBasic?,
+    val roles: Role?
 )
