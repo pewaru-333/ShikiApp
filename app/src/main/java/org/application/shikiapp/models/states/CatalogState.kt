@@ -1,6 +1,7 @@
 package org.application.shikiapp.models.states
 
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import org.application.shikiapp.utils.BLANK
@@ -18,5 +19,10 @@ data class CatalogState(
     val listR: LazyListState = LazyListState(),
     val listC: LazyListState = LazyListState(),
     val listP: LazyListState = LazyListState(),
+    val gridA: LazyGridState = LazyGridState(),
+    val gridM: LazyGridState = LazyGridState(),
+    val gridR: LazyGridState = LazyGridState(),
+    val gridC: LazyGridState = LazyGridState(),
+    val gridP: LazyGridState = LazyGridState(),
     val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
 )
