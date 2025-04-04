@@ -50,28 +50,29 @@ import org.application.shikiapp.R.string.text_rate_episodes
 import org.application.shikiapp.R.string.text_rate_score
 import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.models.data.AnimeRate
-import org.application.shikiapp.models.views.AnimeRatesViewModel
-import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.Error
-import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.Loading
-import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.NoAccess
-import org.application.shikiapp.models.views.AnimeRatesViewModel.Response.Success
-import org.application.shikiapp.models.views.UserRateViewModel
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetEpisodes
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRateId
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRewatches
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScore
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
+import org.application.shikiapp.models.viewModels.AnimeRatesViewModel
+import org.application.shikiapp.models.viewModels.AnimeRatesViewModel.Response.Error
+import org.application.shikiapp.models.viewModels.AnimeRatesViewModel.Response.Loading
+import org.application.shikiapp.models.viewModels.AnimeRatesViewModel.Response.NoAccess
+import org.application.shikiapp.models.viewModels.AnimeRatesViewModel.Response.Success
+import org.application.shikiapp.models.viewModels.UserRateViewModel
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetEpisodes
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRateId
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRewatches
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetScore
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetStatus
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetText
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.SCORES
 import org.application.shikiapp.utils.WATCH_STATUSES_A
 import org.application.shikiapp.utils.getFull
 import org.application.shikiapp.utils.getKind
+import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AnimeRatesScreen(toAnime: (String) -> Unit, back: () -> Unit) {
+fun AnimeRatesScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val model = viewModel<AnimeRatesViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
@@ -105,7 +106,7 @@ fun AnimeRatesScreen(toAnime: (String) -> Unit, back: () -> Unit) {
                         userVM = userVM,
                         state = model.listState,
                         reload = model::reload,
-                        toAnime = toAnime
+                        onNavigate = onNavigate
                     )
                 }
             }
@@ -145,7 +146,7 @@ private fun AnimeRatesList(
     userVM: UserRateViewModel?,
     state: LazyListState,
     reload: () -> Unit,
-    toAnime: (String) -> Unit
+    onNavigate: (Screen) -> Unit
 ) = LazyColumn(
     state = state,
     contentPadding = PaddingValues(8.dp),
@@ -154,50 +155,50 @@ private fun AnimeRatesList(
     if (data.isEmpty()) item {
         Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_empty)) }
     }
-    else items(data) { (id, score, status, _, episodes,  text, rewatches, anime) ->
+    else items(data) { anime ->
         Row(
             horizontalArrangement = spacedBy(16.dp),
             modifier = Modifier
                 .height(175.dp)
                 .combinedClickable(
-                    onClick = { toAnime(anime.id.toString()) },
+                    onClick = { onNavigate(Screen.Anime(anime.anime.id.toString())) },
                     onLongClick = {
                         userVM?.let { itVM ->
-                            itVM.onEvent(SetRateId(id.toString()))
-                            itVM.onEvent(SetStatus(WATCH_STATUSES_A.entries.first { it.key == status }))
-                            itVM.onEvent(SetScore(SCORES.entries.first { it.key == score }))
-                            itVM.onEvent(SetEpisodes(episodes.toString()))
-                            itVM.onEvent(SetRewatches(rewatches.toString()))
-                            itVM.onEvent(SetText(text))
+                            itVM.onEvent(SetRateId(anime.id.toString()))
+                            itVM.onEvent(SetStatus(WATCH_STATUSES_A.entries.first { it.key == anime.status }))
+                            itVM.onEvent(SetScore(SCORES.entries.first { it.key == anime.score }))
+                            itVM.onEvent(SetEpisodes(anime.episodes.toString()))
+                            itVM.onEvent(SetRewatches(anime.rewatches.toString()))
+                            itVM.onEvent(SetText(anime.text))
                             itVM.open()
                         }
                     }
                 )
         ) {
-            RoundedPoster(anime.image.original, 122.dp)
+            RoundedPoster(anime.anime.image.original, 122.dp)
             Column(Modifier.fillMaxSize(), Arrangement.SpaceBetween) {
                 Column(verticalArrangement = spacedBy(4.dp)) {
                     Text(
-                        text = if (anime.russian.isNullOrEmpty()) anime.name else anime.russian,
+                        text = if (anime.anime.russian.isNullOrEmpty()) anime.anime.name else anime.anime.russian,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = getKind(anime.kind),
+                        text = getKind(anime.anime.kind),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = stringResource(text_rate_episodes, episodes, getFull(anime.episodes, anime.status)),
+                        text = stringResource(text_rate_episodes, anime.episodes, getFull(anime.episodes, anime.status)),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = stringResource(text_rate_score, score.let { if (it != 0) it else '-' }),
+                        text = stringResource(text_rate_score, anime.score.let { if (it != 0) it else '-' }),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 userVM?.let {
-                    if (status == WATCH_STATUSES_A.keys.elementAt(1))
+                    if (anime.status == WATCH_STATUSES_A.keys.elementAt(1))
                         Row(Modifier.fillMaxWidth(), Arrangement.End) {
                             Box(
                                 contentAlignment = Center,
@@ -205,7 +206,7 @@ private fun AnimeRatesList(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
-                                    .clickable { it.increment(id); reload() }
+                                    .clickable { it.increment(anime.id); reload() }
                             )
                         }
                 }

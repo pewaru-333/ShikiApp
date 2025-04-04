@@ -1,8 +1,5 @@
 package org.application.shikiapp.screens
 
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
@@ -11,172 +8,220 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
-import org.application.MangaQuery.Data.Manga
 import org.application.shikiapp.R.drawable.vector_comments
-import org.application.shikiapp.R.string.text_genres
 import org.application.shikiapp.R.string.text_kind
-import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_publisher
-import org.application.shikiapp.R.string.text_ranobe
 import org.application.shikiapp.R.string.text_rate_chapters
 import org.application.shikiapp.R.string.text_score
-import org.application.shikiapp.R.string.text_similar
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_volumes
-import org.application.shikiapp.models.data.MangaBasic
-import org.application.shikiapp.models.views.MangaState
-import org.application.shikiapp.models.views.MangaViewModel
-import org.application.shikiapp.models.views.MangaViewModel.Response.Error
-import org.application.shikiapp.models.views.MangaViewModel.Response.Loading
-import org.application.shikiapp.models.views.MangaViewModel.Response.Success
+import org.application.shikiapp.events.ContentDetailEvent
+import org.application.shikiapp.events.MangaDetailEvent
+import org.application.shikiapp.models.states.MangaState
+import org.application.shikiapp.models.ui.Manga
+import org.application.shikiapp.models.viewModels.MangaViewModel
+import org.application.shikiapp.network.Response
 import org.application.shikiapp.utils.LINKED_TYPE
-import org.application.shikiapp.utils.STATUSES_M
-import org.application.shikiapp.utils.getImage
-import org.application.shikiapp.utils.getKind
-import org.application.shikiapp.utils.getPublisher
-import org.application.shikiapp.utils.getStatusM
-import org.application.type.MangaKindEnum.light_novel
-import org.application.type.MangaKindEnum.novel
+import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
-fun MangaScreen(
-    toAnime: (String) -> Unit,
-    toManga: (String) -> Unit,
-    toCharacter: (String) -> Unit,
-    toPerson: (Long) -> Unit,
-    toUser: (Long) -> Unit,
-    back: () -> Unit
-) {
+fun MangaScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val model = viewModel<MangaViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = response) {
-        Error -> ErrorScreen(model::getManga)
-        Loading -> LoadingScreen()
-        is Success -> MangaView(
-            model = model,
-            state = state,
-            data =data,
-            toAnime = toAnime,
-            toManga = toManga,
-            toCharacter = toCharacter,
-            toPerson = toPerson,
-            toUser = toUser,
-            back = back
-        )
+        is Response.Error -> ErrorScreen(model::loadData)
+        is Response.Loading -> LoadingScreen()
+        is Response.Success -> MangaView(data.data, state, model::onEvent, onNavigate, back)
+        else -> Unit
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MangaView(
-    model: MangaViewModel,
+    manga: Manga,
     state: MangaState,
-    data: Success,
-    toAnime: (String) -> Unit,
-    toManga: (String) -> Unit,
-    toCharacter: (String) -> Unit,
-    toPerson: (Long) -> Unit,
-    toUser: (Long) -> Unit,
+    onEvent: (MangaDetailEvent) -> Unit,
+    onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
-    val (manga, similar, links, _, favoured) = data
-    val comments = data.comments.collectAsLazyPagingItems()
+    val comments = manga.comments.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {
-                    Text(
-                        stringResource(
-                            if (manga.kind in listOf(light_novel, novel)) text_ranobe
-                            else text_manga
-                        )
-                    )
-                },
+                title = { Text(stringResource(manga.kindTitle)) },
                 navigationIcon = { NavigationIcon(back) },
                 actions = {
-                    if (comments.itemCount > 0)
-                        IconButton(model::showComments) { Icon(painterResource(vector_comments), null) }
-                    IconButton(model::showSheet) { Icon(Icons.Outlined.MoreVert, null) }
+                    if (comments.itemCount > 0) IconButton(
+                        onClick = { onEvent(ContentDetailEvent.ShowComments) }) {
+                        Icon(painterResource(vector_comments), null)
+                    }
+                    IconButton(
+                        onClick = { onEvent(ContentDetailEvent.ShowSheet) }) {
+                        Icon(Icons.Outlined.MoreVert, null)
+                    }
                 }
             )
         }
-    ) { values->
+    ) { values ->
         LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = spacedBy(16.dp)
+            verticalArrangement = spacedBy(16.dp),
+            contentPadding = PaddingValues(
+                start = 8.dp,
+                top = values.calculateTopPadding(),
+                end = 8.dp,
+                bottom = 0.dp
+            )
         ) {
             item {
                 Text(
-                    text = manga.russian?.let { "$it / ${manga.name}" } ?: manga.name,
+                    text = manga.title,
                     style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                 )
             }
             item {
                 Row(horizontalArrangement = spacedBy(8.dp)) {
-                    Poster(manga.poster?.originalUrl)
+                    Poster(manga.poster)
                     ShortInfo(manga)
                 }
             }
 
-            manga.descriptionHtml?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
-            manga.related?.let {
-                if (it.isNotEmpty()) item { Related(model::showRelated, it, toAnime, toManga) }
+            manga.genres?.let {
+                item {
+                    LazyRow(horizontalArrangement = spacedBy(4.dp)) {
+                        items(it) { (russian) ->
+                            SuggestionChip(onClick = {}, label = { Text(russian) })
+                        }
+                    }
+                }
             }
-            manga.characterRoles?.let {
-                if (it.isNotEmpty()) item { Characters(model::showCharacters, it, toCharacter) }
+
+            manga.description?.let {
+                if (it.isNotEmpty()) item { Description(it) }
             }
-            manga.personRoles?.let {
-                if (it.isNotEmpty()) item { Authors(model::showAuthors, it, toPerson) }
+            manga.related.let {
+                if (it.isNotEmpty()) item {
+                    Related(
+                        list = it,
+                        hide = { onEvent(ContentDetailEvent.ShowRelated) },
+                        onNavigate = onNavigate
+                    )
+                }
+            }
+            manga.characterMain.let {
+                if (it.isNotEmpty()) item {
+                    Characters(
+                        list = it,
+                        show = { onEvent(MangaDetailEvent.ShowCharacters) },
+                        onNavigate = onNavigate
+                    )
+                }
+            }
+            manga.personMain.let {
+                if (it.isNotEmpty()) item {
+                    Authors(
+                        list = it,
+                        show = { onEvent(MangaDetailEvent.ShowAuthors) },
+                        onNavigate = onNavigate
+                    )
+                }
             }
         }
     }
 
+    Comments(
+        list = comments,
+        visible = state.showComments,
+        hide = { onEvent(ContentDetailEvent.ShowComments) },
+        onNavigate = onNavigate
+    )
+
+    RelatedFull(
+        list = manga.related,
+        visible = state.showRelated,
+        hide = { onEvent(ContentDetailEvent.ShowRelated) },
+        onNavigate = onNavigate
+    )
+
+    AuthorsFull(
+        roles = manga.personAll,
+        state = state.lazyAuthors,
+        visible = state.showAuthors,
+        hide = { onEvent(MangaDetailEvent.ShowAuthors) },
+        onNavigate = onNavigate
+    )
+
+    CharactersFull(
+        list = manga.charactersAll,
+        state = state.lazyCharacters,
+        visible = state.showCharacters,
+        hide = { onEvent(MangaDetailEvent.ShowCharacters) },
+        onNavigate = onNavigate
+    )
+
+    SimilarFull(
+        hide = { onEvent(ContentDetailEvent.ShowSimilar) },
+        listState = state.lazySimilar,
+        visible = state.showSimilar,
+        list = manga.similar,
+        onNavigate = { onNavigate(Screen.Manga(it)) })
+
+    Statistics(
+        visible = state.showStats,
+        hide = { onEvent(ContentDetailEvent.ShowStats) },
+        scores = manga.scoresStats,
+        stats = manga.statusesStats,
+        type = LINKED_TYPE[1]
+    )
+
     when {
         state.showSheet -> BottomSheet(
-            model::hideSheet, model::showRate, model::showSimilar, model::showStats,
-            model::showLinks, model::changeFavourite, state.sheetBottom, manga.userRate, favoured
+            state = state.sheetBottom,
+            rate = manga.userRate,
+            favoured = manga.favoured,
+            onEvent = onEvent as (ContentDetailEvent) -> Unit,
+            toggleFavourite = { onEvent(MangaDetailEvent.ToggleFavourite(manga.kindEnum, manga.favoured)) }
         )
-        state.showComments -> Comments(model::hideComments, comments, toUser)
-        state.showRelated -> DialogRelated(model::hideRelated, manga.related!!, toAnime, toManga)
-        state.showCharacters -> DialogCharacters(model::hideCharacters, state.lazyCharacters, manga.characterRoles!!, toCharacter)
-        state.showAuthors -> DialogAuthors(model::hideAuthors, state.lazyAuthors, manga.personRoles!!, toPerson)
-        state.showRate -> CreateRate(model::hideRate, model::reload, LINKED_TYPE[1], manga.id, manga.userRate)
-        state.showSimilar -> DialogSimilar(model::hideSimilar, state.lazySimilar, similar, toManga)
-        state.showStats -> Statistics(model::hideStats, manga.scoresStats, manga.statusesStats, LINKED_TYPE[1])
-        state.showLinks -> LinksSheet(model::hideLinks, state.sheetLinks, links)
+
+        state.showRate -> CreateRate(
+            id = manga.id,
+            type = LINKED_TYPE[1],
+            rateF = manga.userRate,
+            reload = { onEvent(MangaDetailEvent.Reload) },
+            hide = { onEvent(MangaDetailEvent.ShowRate) })
+
+        state.showLinks -> LinksSheet(
+            list = manga.links,
+            state = state.sheetLinks,
+            hide = { onEvent(ContentDetailEvent.ShowLinks) })
     }
 }
 
@@ -188,84 +233,31 @@ private fun ShortInfo(manga: Manga) {
     Column(Modifier.height(300.dp), SpaceBetween) {
         Column {
             Text(stringResource(text_kind), style = name)
-            Text(getKind(manga.kind?.rawValue), style = info)
+            Text(manga.kindString, style = info)
         }
-        manga.status?.rawValue?.let {
-            if (it != STATUSES_M.keys.elementAt(1)) {
-                Column {
-                    Text(stringResource(text_volumes), style = name)
-                    Text(manga.volumes.toString(), style = info)
-                }
-                Column {
-                    Text(stringResource(text_rate_chapters), style = name)
-                    Text(manga.chapters.toString(), style = info)
-                }
+        if (manga.showChapters) {
+            Column {
+                Text(stringResource(text_volumes), style = name)
+                Text(manga.volumes, style = info)
+            }
+            Column {
+                Text(stringResource(text_rate_chapters), style = name)
+                Text(manga.chapters, style = info)
             }
         }
         Column {
             Text(stringResource(text_status), style = name)
-            Text(getStatusM(manga.status?.rawValue), style = info)
-        }
-        manga.genres?.let { genres ->
-            Column {
-                Text(stringResource(text_genres), style = name)
-                Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(6.dp)) {
-                    genres.forEach { (russian) -> Text(russian, style = info) }
-                }
-            }
+            Text(manga.status, style = info)
         }
         Column {
             Text(stringResource(text_publisher), style = name)
-            Text(getPublisher(manga.publishers), style = info)
+            Text(manga.publisher, style = info)
         }
         Column {
             Text(stringResource(text_score), style = name)
             Row(horizontalArrangement = spacedBy(4.dp), verticalAlignment = CenterVertically) {
                 Icon(Icons.Default.Star, null, Modifier.size(16.dp), Color(0xFFFFC319))
-                Text(manga.score.toString(), style = info)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun DialogSimilar(
-    hide: () -> Unit,
-    state: LazyListState,
-    list: List<MangaBasic>,
-    toManga: (String) -> Unit
-) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(text_similar)) },
-                navigationIcon = { NavigationIcon(hide) })
-        }
-    ) { values ->
-        LazyColumn(
-            state = state,
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
-            verticalArrangement = spacedBy(8.dp)
-        ) {
-            items(list) {
-                ListItem(
-                    headlineContent = { Text(it.russian ?: it.name) },
-                    modifier = Modifier.clickable { toManga(it.id.toString()) },
-                    leadingContent = {
-                        AsyncImage(
-                            model = getImage(it.image.original),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .clip(MaterialTheme.shapes.medium)
-                                .border(
-                                    (0.5).dp,
-                                    MaterialTheme.colorScheme.onSurface,
-                                    MaterialTheme.shapes.medium
-                                )
-                        )
-                    }
-                )
+                Text(manga.score, style = info)
             }
         }
     }

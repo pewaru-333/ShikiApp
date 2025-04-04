@@ -52,20 +52,19 @@ import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.UserBasic
-import org.application.shikiapp.models.views.ClubState
-import org.application.shikiapp.models.views.ClubViewModel
-import org.application.shikiapp.models.views.Menus
-import org.application.shikiapp.models.views.Response
-import org.application.shikiapp.models.views.UIEvent
+import org.application.shikiapp.models.viewModels.ClubState
+import org.application.shikiapp.models.viewModels.ClubViewModel
+import org.application.shikiapp.models.viewModels.Menus
+import org.application.shikiapp.models.viewModels.Response
+import org.application.shikiapp.models.viewModels.UIEvent
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.getImage
+import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClubScreen(
-    toAnime: (String) -> Unit,
-    toCharacter: (String) -> Unit,
-    toUser: (Long) -> Unit,
+    onNavigate:(Screen) -> Unit,
     back: () -> Unit
 ) {
     val model = viewModel<ClubViewModel>()
@@ -112,10 +111,10 @@ fun ClubScreen(
                         )
                     }
 
-                    item { BriefInfo(model, state, toAnime, toCharacter, toUser) }
+                    item { BriefInfo(model, state, onNavigate) }
                     item { Description(club.descriptionHtml) }
 
-                    if (comments.itemCount > 0) comments(comments, toUser)
+                    if (comments.itemCount > 0) comments(comments, onNavigate)
                 }
             }
         }
@@ -127,9 +126,7 @@ fun ClubScreen(
 private fun BriefInfo(
     model: ClubViewModel,
     state: ClubState,
-    toAnime: (String) -> Unit,
-    toCharacter: (String) -> Unit,
-    toUser: (Long) -> Unit
+    onNavigate: (Screen) -> Unit
 ) {
     ParagraphTitle(stringResource(R.string.text_information), Modifier.padding(bottom = 4.dp))
     FlowRow(Modifier, spacedBy(16.dp), spacedBy(8.dp), 2) {
@@ -172,15 +169,15 @@ private fun BriefInfo(
                 val padding = paddingValues.calculateTopPadding()
                 when (state.menu) {
                     1 -> model.anime.collectAsLazyPagingItems().also {
-                        Anime(it, toAnime, padding)
+                        Anime(it, onNavigate, padding)
                     }
 
                     2 -> model.members.collectAsLazyPagingItems().also {
-                        Members(it, toUser, padding)
+                        Members(it, onNavigate, padding)
                     }
 
                     4 -> model.characters.collectAsLazyPagingItems().also {
-                        Characters(it, toCharacter, padding)
+                        Characters(it, onNavigate, padding)
                     }
 
                     5 -> model.images.collectAsLazyPagingItems().also {
@@ -192,7 +189,7 @@ private fun BriefInfo(
 }
 
 @Composable
-private fun Anime(anime: LazyPagingItems<AnimeBasic>, toAnime: (String) -> Unit, padding: Dp) {
+private fun Anime(anime: LazyPagingItems<AnimeBasic>, onNavigate: (Screen) -> Unit, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (anime.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
@@ -209,7 +206,7 @@ private fun Anime(anime: LazyPagingItems<AnimeBasic>, toAnime: (String) -> Unit,
                                     )
                                 )
                             },
-                            modifier = Modifier.clickable { toAnime(anime.id.toString()) },
+                            modifier = Modifier.clickable { onNavigate(Screen.Anime(anime.id.toString())) },
                             leadingContent = { ClubAnimeImage(anime.image.original) }
                         )
                     }
@@ -222,7 +219,7 @@ private fun Anime(anime: LazyPagingItems<AnimeBasic>, toAnime: (String) -> Unit,
 }
 
 @Composable
-private fun Members(members: LazyPagingItems<UserBasic>, toUser: (Long) -> Unit, padding: Dp) {
+private fun Members(members: LazyPagingItems<UserBasic>, onNavigate: (Screen) -> Unit, padding: Dp) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
         when (members.loadState.refresh) {
             is LoadState.Error -> item { ErrorScreen() }
@@ -233,7 +230,7 @@ private fun Members(members: LazyPagingItems<UserBasic>, toUser: (Long) -> Unit,
                         OneLineImage(
                             name = member.nickname,
                             link = member.image.x160,
-                            modifier = Modifier.clickable { toUser(member.id) }
+                            modifier = Modifier.clickable { onNavigate(Screen.User(member.id)) }
                         )
                     }
                 }
@@ -248,7 +245,7 @@ private fun Members(members: LazyPagingItems<UserBasic>, toUser: (Long) -> Unit,
 @Composable
 private fun Characters(
     characters: LazyPagingItems<BasicInfo>,
-    toCharacter: (String) -> Unit,
+    onNavigate: (Screen) -> Unit,
     padding: Dp
 ) {
     LazyColumn(contentPadding = PaddingValues(top = padding)) {
@@ -261,7 +258,7 @@ private fun Characters(
                         OneLineImage(
                             name = character.russian.orEmpty().ifEmpty(character::name),
                             link = getImage(character.image.original),
-                            modifier = Modifier.clickable { toCharacter(character.id.toString()) }
+                            modifier = Modifier.clickable { onNavigate(Screen.Character(character.id.toString())) }
                         )
                     }
                 }

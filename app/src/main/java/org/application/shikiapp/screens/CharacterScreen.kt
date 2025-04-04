@@ -1,19 +1,21 @@
 package org.application.shikiapp.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Favorite
@@ -33,8 +35,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -45,51 +45,43 @@ import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_seyu
 import org.application.shikiapp.R.string.text_show_all_m
 import org.application.shikiapp.R.string.text_show_all_w
+import org.application.shikiapp.events.CharacterDetailEvent
+import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.data.BasicContent
 import org.application.shikiapp.models.data.BasicInfo
-import org.application.shikiapp.models.views.CharacterViewModel
-import org.application.shikiapp.models.views.CharacterViewModel.Response.Error
-import org.application.shikiapp.models.views.CharacterViewModel.Response.Loading
-import org.application.shikiapp.models.views.CharacterViewModel.Response.Success
+import org.application.shikiapp.models.states.CharacterState
+import org.application.shikiapp.models.ui.Character
+import org.application.shikiapp.models.viewModels.CharacterViewModel
+import org.application.shikiapp.network.Response
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.getImage
+import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
-fun CharacterScreen(
-    toAnime: (String) -> Unit,
-    toManga: (String) -> Unit,
-    toPerson: (Long) -> Unit,
-    toUser: (Long) -> Unit,
-    back: () -> Unit
-) {
+fun CharacterScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val model = viewModel<CharacterViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
+    val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = response) {
-        is Error -> ErrorScreen(model::getCharacter)
-        is Loading -> LoadingScreen()
-        is Success -> CharacterView(model, data, toAnime, toManga, toPerson, toUser, back)
+        is Response.Error -> ErrorScreen(model::loadData)
+        is Response.Loading -> LoadingScreen()
+        is Response.Success -> CharacterView(data.data, state, model::onEvent, onNavigate, back)
+        else -> Unit
     }
 }
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun CharacterView(
-    model: CharacterViewModel,
-    data: Success,
-    toAnime: (String) -> Unit,
-    toManga: (String) -> Unit,
-    toPerson: (Long) -> Unit,
-    toUser: (Long) -> Unit,
+    character: Character,
+    state: CharacterState,
+    onEvent: (CharacterDetailEvent) -> Unit,
+    onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
-    val (character, _, _) = data
-    val anime = data.character.animes
-    val manga = data.character.mangas
-    val seyu = data.character.seyu
-
-    val state by model.state.collectAsStateWithLifecycle()
-    val comments = data.comments.collectAsLazyPagingItems()
+    val comments = character.comments.collectAsLazyPagingItems()
 
     Scaffold(
         topBar = {
@@ -98,12 +90,21 @@ private fun CharacterView(
                 navigationIcon = { NavigationIcon(back)},
                 actions = {
                     if (comments.itemCount > 0)
-                        IconButton(model::showComments) { Icon(painterResource(vector_comments), null) }
-                    if (Preferences.isTokenExists()) IconButton({ model.changeFavourite(data.character.favoured) }) {
+                        IconButton(
+                            onClick = {onEvent(ContentDetailEvent.ShowComments)}
+                        ) {
+                            Icon(painterResource(vector_comments), null)
+                        }
+                    if (Preferences.isTokenExists())
+                        IconButton(
+                        onClick = {
+                            onEvent(CharacterDetailEvent.ToggleFavourite(character.favoured))
+                        }
+                        ) {
                         Icon(
                             imageVector = Icons.Default.Favorite,
                             contentDescription = null,
-                            tint = if (data.character.favoured) Color.Red else LocalContentColor.current
+                            tint = if (character.favoured) Color.Red else LocalContentColor.current
                         )
                     }
                 }
@@ -116,65 +117,106 @@ private fun CharacterView(
         ) {
             item {
                 Row(horizontalArrangement = spacedBy(8.dp)) {
-                    Poster(data.image.poster?.originalUrl)
+                    Poster(character.poster)
                     Names(listOf(character.russian, character.japanese, character.altName))
                 }
             }
 
-            character.descriptionHTML?.let { if (fromHtml(it).isNotEmpty()) item { Description(it) } }
-            anime.let { if (it.isNotEmpty()) item { Catalog(model::showAnime, it, toAnime, toManga) } }
-            manga.let { if (it.isNotEmpty()) item { Catalog(model::showManga, it, toAnime, toManga) } }
-            seyu.let { if (it.isNotEmpty()) item { Seyu(model, it, toPerson) } }
+            character.description.let {
+                if (it.isNotEmpty()) item { Description(it) }
+            }
+            character.anime.let {
+                if (it.isNotEmpty()) item {
+                    Catalog(
+                        show = { onEvent(CharacterDetailEvent.ShowAnime) },
+                        list = it,
+                        onNavigate = onNavigate
+                    )
+                }
+            }
+            character.manga.let {
+                if (it.isNotEmpty()) item {
+                    Catalog(
+                        show = { onEvent(CharacterDetailEvent.ShowManga) },
+                        list = it,
+                        onNavigate = onNavigate
+                    )
+                }
+            }
+            character.seyu.let {
+                if (it.isNotEmpty()) item {
+                    Seyu(
+                        list = it,
+                        hide = { onEvent(CharacterDetailEvent.ShowSeyu) },
+                        onNavigate = onNavigate
+                    )
+                }
+            }
         }
     }
 
-    when {
-        state.showAnime || state.showManga ->
-            DialogCatalog(model:: hide, if(state.showAnime) anime else manga, toAnime, toManga)
-//        state.showAnime -> DialogCatalog(model::hide, anime, navigator)
-//        state.showManga -> DialogManga(model, manga, navigator)
-        state.showSeyu -> DialogSeyu(model, seyu, toPerson)
-        state.showComments -> Comments(model::hideComments, comments, toUser)
-    }
+    Comments(
+        list = comments,
+        visible = state.showComments,
+        hide = { onEvent(ContentDetailEvent.ShowComments) },
+        onNavigate = onNavigate
+    )
+
+    CatalogFull(
+        hide = { onEvent(CharacterDetailEvent.HideAll) },
+        list = if (state.showAnime) character.anime else character.manga,
+        visible = state.showAnime || state.showManga,
+        onNavigate = onNavigate
+    )
+
+    SeyuFull(
+        list = character.seyu,
+        visible = state.showSeyu,
+        hide = { onEvent(CharacterDetailEvent.ShowSeyu) },
+        onNavigate = onNavigate
+    )
 }
 
 @Composable
 private fun Catalog(
     show: () -> Unit,
     list: List<BasicContent>,
-    toAnime: (String) -> Unit,
-    toManga: (String) -> Unit,
+    onNavigate: (Screen) -> Unit,
     anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
-) = Column {
+) = Column(verticalArrangement = spacedBy(4.dp)) {
     Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
         ParagraphTitle(stringResource(if (anime) text_anime else text_manga), Modifier.padding(bottom = 4.dp))
         TextButton(show) { Text(stringResource(if (anime) text_show_all_w else text_show_all_m)) }
     }
-    Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(12.dp), CenterVertically) {
-        list.take(5).forEach {
+    LazyRow(horizontalArrangement = spacedBy(12.dp)) {
+        items(list.take(5)) {
             Column(
-                Modifier
+                modifier = Modifier
                     .width(120.dp)
-                    .clickable { if (anime) toAnime(it.id.toString()) else toManga(it.id.toString()) }
+                    .clickable {
+                        onNavigate(
+                            if (anime) Screen.Anime(it.id.toString())
+                            else Screen.Manga(it.id.toString())
+                        )
+                    }
             ) {
                 RoundedRelatedPoster(it.image.original)
-                RelatedText(it.russian ?: it.name)
+                RelatedText(it.russian.orEmpty().ifEmpty(it::name))
             }
         }
     }
 }
 
-
 @Composable
-private fun Seyu(model: CharacterViewModel, list: List<BasicInfo>, toPerson: (Long) -> Unit) =
+private fun Seyu(list: List<BasicInfo>, hide: () -> Unit, onNavigate: (Screen) -> Unit) =
     Column(verticalArrangement = spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_seyu))
-            IconButton(model::showSeyu) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
+            IconButton(hide) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
         }
-        Row(Modifier.horizontalScroll(rememberScrollState()), spacedBy(16.dp), CenterVertically) {
-            list.take(3).forEach {
-                Column(Modifier.clickable { toPerson(it.id) }) {
+        LazyRow(horizontalArrangement = spacedBy(12.dp)) {
+            items(list.take(3)) {
+                Column(Modifier.clickable { onNavigate(Screen.Person(it.id)) }) {
                     CircleImage(it.image.original)
                     TextCircleImage(it.russian.orEmpty().ifEmpty(it::name))
                 }
@@ -182,17 +224,20 @@ private fun Seyu(model: CharacterViewModel, list: List<BasicInfo>, toPerson: (Lo
         }
     }
 
-// =========================================== Dialogs ===========================================
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun DialogCatalog(
+private fun CatalogFull(
     hide: () -> Unit,
     list: List<BasicContent>,
-    toAnime: (String) -> Unit,
-    toManga: (String) -> Unit,
+    visible: Boolean,
+    onNavigate: (Screen) -> Unit,
     anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
-) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -202,23 +247,23 @@ private fun DialogCatalog(
         }
     ) { values ->
         LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = spacedBy(16.dp)
+            contentPadding = values,
+            verticalArrangement = spacedBy(8.dp)
         ) {
             items(list) {
-                Row(
-                    horizontalArrangement = spacedBy(16.dp),
-                    modifier = Modifier
-                        .height(198.dp)
-                        .clickable { if (anime) toAnime(it.id.toString()) else toManga(it.id.toString()) }
+                CatalogListItem(
+                    title = it.russian.orEmpty().ifEmpty(it::name),
+                    kind = it.kind,
+                    season = it.releasedOn,
+                    image = getImage(it.image.original),
+                    isBig = false,
+                    click = {
+                        onNavigate(
+                            if (anime) Screen.Anime(it.id.toString())
+                            else Screen.Manga(it.id.toString())
+                        )
+                    }
                 )
-                {
-                    RoundedPoster(it.image.original)
-                    ShortDescription(
-                        it.russian?.let { title -> title.ifEmpty { it.name } } ?: it.name,
-                        it.kind, if (anime) it.airedOn else it.releasedOn
-                    )
-                }
             }
         }
     }
@@ -226,28 +271,31 @@ private fun DialogCatalog(
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-private fun DialogSeyu(
-    model: CharacterViewModel,
+private fun SeyuFull(
     list: List<BasicInfo>,
-    toPerson: (Long) -> Unit
-) = Dialog(model::hideSeyu, DialogProperties(usePlatformDefaultWidth = false)) {
+    visible: Boolean,
+    hide: () -> Unit,
+    onNavigate: (Screen) -> Unit
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(text_seyu)) },
-                navigationIcon = { NavigationIcon(model::hideSeyu) }
+                navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
-            verticalArrangement = spacedBy(16.dp)
-        ) {
+        LazyColumn(contentPadding = values) {
             items(list) {
                 OneLineImage(
                     name = it.russian.orEmpty().ifEmpty(it::name),
                     link = it.image.original,
-                    modifier = Modifier.clickable { toPerson(it.id) }
+                    modifier = Modifier.clickable { onNavigate(Screen.Person(it.id)) }
                 )
             }
         }

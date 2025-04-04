@@ -33,12 +33,13 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil.compose.AsyncImage
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.News
-import org.application.shikiapp.models.views.NewsViewModel
+import org.application.shikiapp.models.viewModels.NewsViewModel
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.getPoster
+import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
-fun NewsScreen(toDetail: (Long) -> Unit) {
+fun NewsScreen(onNavigate: (Screen) -> Unit) {
     val scope = rememberCoroutineScope()
     val news = viewModel<NewsViewModel>()
     val list = news.newsList.collectAsLazyPagingItems()
@@ -58,22 +59,31 @@ fun NewsScreen(toDetail: (Long) -> Unit) {
         when (list.loadState.refresh) {
             is LoadState.Error -> ErrorScreen(list::retry)
             is LoadState.Loading -> LoadingScreen()
-            is LoadState.NotLoading -> LazyColumn(
-                contentPadding = PaddingValues(16.dp),
-                verticalArrangement = Arrangement.spacedBy(24.dp)
-            ) {
-                items(list.itemCount) { NewsCard(list[it]!!, toDetail) }
-                if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (list.loadState.hasError) item { ErrorScreen(list::retry) }
-            }
+            is LoadState.NotLoading ->
+                LazyColumn(
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(24.dp)
+                ) {
+                    items(list.itemCount) {
+                        list[it]?.let { NewsCard(it, onNavigate) }
+                    }
+                    if (list.loadState.append == LoadState.Loading)
+                        item {
+                            LoadingScreen()
+                        }
+                    if (list.loadState.hasError)
+                        item {
+                            ErrorScreen(list::retry)
+                        }
+                }
         }
     }
 }
 
 @Composable
-private fun NewsCard(news: News, toDetail: (Long) -> Unit) =
+private fun NewsCard(news: News, onNavigate: (Screen) -> Unit) =
     ElevatedCard(
-        onClick = { toDetail(news.id) },
+        onClick = { onNavigate(Screen.NewsDetail(news.id)) },
         modifier = Modifier.fillMaxWidth()
     ) {
         AsyncImage(

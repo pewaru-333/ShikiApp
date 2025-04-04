@@ -50,19 +50,19 @@ import org.application.shikiapp.R.string.text_profile_closed
 import org.application.shikiapp.R.string.text_rate_score
 import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.models.data.MangaRate
-import org.application.shikiapp.models.views.MangaRatesViewModel
-import org.application.shikiapp.models.views.MangaRatesViewModel.Response.Error
-import org.application.shikiapp.models.views.MangaRatesViewModel.Response.Loading
-import org.application.shikiapp.models.views.MangaRatesViewModel.Response.NoAccess
-import org.application.shikiapp.models.views.MangaRatesViewModel.Response.Success
-import org.application.shikiapp.models.views.UserRateViewModel
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetChapters
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRateId
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRewatches
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScore
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetVolumes
+import org.application.shikiapp.models.viewModels.MangaRatesViewModel
+import org.application.shikiapp.models.viewModels.MangaRatesViewModel.Response.Error
+import org.application.shikiapp.models.viewModels.MangaRatesViewModel.Response.Loading
+import org.application.shikiapp.models.viewModels.MangaRatesViewModel.Response.NoAccess
+import org.application.shikiapp.models.viewModels.MangaRatesViewModel.Response.Success
+import org.application.shikiapp.models.viewModels.UserRateViewModel
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetChapters
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRateId
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRewatches
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetScore
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetStatus
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetText
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetVolumes
 import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.SCORES
@@ -70,10 +70,11 @@ import org.application.shikiapp.utils.WATCH_STATUSES_A
 import org.application.shikiapp.utils.WATCH_STATUSES_M
 import org.application.shikiapp.utils.getFull
 import org.application.shikiapp.utils.getKind
+import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MangaRatesScreen(toManga: (String) -> Unit, back: () -> Unit) {
+fun MangaRatesScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val model = viewModel<MangaRatesViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
 
@@ -107,7 +108,7 @@ fun MangaRatesScreen(toManga: (String) -> Unit, back: () -> Unit) {
                         userVM = userVM,
                         state = model.listState,
                         reload = model::reload,
-                        toManga = toManga
+                        onNavigate = onNavigate
                     )
                 }
             }
@@ -148,7 +149,7 @@ private fun MangaRatesList(
     userVM: UserRateViewModel?,
     state: LazyListState,
     reload: () -> Unit,
-    toManga: (String) -> Unit
+    onNavigate: (Screen) -> Unit
 ) = LazyColumn(
     state = state,
     contentPadding = PaddingValues(8.dp),
@@ -157,51 +158,51 @@ private fun MangaRatesList(
     if (data.isEmpty()) item {
         Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_empty)) }
     }
-    else items(data) { (id, score, status, _, chapters, volumes, text, rewatches, manga) ->
+    else items(data) { manga ->
         Row(
             horizontalArrangement = spacedBy(16.dp),
             modifier = Modifier
                 .height(175.dp)
                 .combinedClickable(
-                    onClick = { toManga(manga.id.toString()) },
+                    onClick = { onNavigate(Screen.Manga(manga.id.toString())) },
                     onLongClick = {
                         userVM?.let { itVM ->
-                            itVM.onEvent(SetRateId(id.toString()))
-                            itVM.onEvent(SetStatus(WATCH_STATUSES_M.entries.first { it.key == status }))
-                            itVM.onEvent(SetScore(SCORES.entries.first { it.key == score }))
-                            itVM.onEvent(SetChapters(chapters.toString()))
-                            itVM.onEvent(SetVolumes(volumes.toString()))
-                            itVM.onEvent(SetRewatches(rewatches.toString()))
-                            itVM.onEvent(SetText(text))
+                            itVM.onEvent(SetRateId(manga.id.toString()))
+                            itVM.onEvent(SetStatus(WATCH_STATUSES_M.entries.first { it.key == manga.status }))
+                            itVM.onEvent(SetScore(SCORES.entries.first { it.key == manga.score }))
+                            itVM.onEvent(SetChapters(manga.chapters.toString()))
+                            itVM.onEvent(SetVolumes(manga.volumes.toString()))
+                            itVM.onEvent(SetRewatches(manga.rewatches.toString()))
+                            itVM.onEvent(SetText(manga.text))
                             itVM.open()
                         }
                     }
                 )
         ) {
-            RoundedPoster(manga.image.original, 122.dp)
+            RoundedPoster(manga.manga.image.original, 122.dp)
             Column(Modifier.fillMaxSize(), Arrangement.SpaceBetween) {
                 Column(verticalArrangement = spacedBy(4.dp)) {
                     Text(
-                        text = if (manga.russian.isNullOrEmpty()) manga.name else manga.russian,
+                        text = if (manga.manga.russian.isNullOrEmpty()) manga.manga.name else manga.manga.russian,
                         overflow = TextOverflow.Ellipsis,
                         maxLines = 2,
                         style = MaterialTheme.typography.titleMedium
                     )
                     Text(
-                        text = getKind(manga.kind),
+                        text = getKind(manga.manga.kind),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = stringResource(text_chapters, chapters, getFull(manga.chapters, manga.status)),
+                        text = stringResource(text_chapters, manga.chapters, getFull(manga.chapters, manga.status)),
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Text(
-                        text = stringResource(text_rate_score, score.let { if (it != 0) it else '-' }),
+                        text = stringResource(text_rate_score, manga.score.let { if (it != 0) it else '-' }),
                         style = MaterialTheme.typography.bodyMedium
                     )
                 }
                 userVM?.let {
-                    if (status == WATCH_STATUSES_A.keys.elementAt(1))
+                    if (manga.status == WATCH_STATUSES_A.keys.elementAt(1))
                         Row(Modifier.fillMaxWidth(), Arrangement.End) {
                             Box(
                                 contentAlignment = Center,
@@ -209,7 +210,7 @@ private fun MangaRatesList(
                                 modifier = Modifier
                                     .size(48.dp)
                                     .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
-                                    .clickable { it.increment(id); reload() }
+                                    .clickable { it.increment(manga.id); reload() }
                             )
                         }
                 }
