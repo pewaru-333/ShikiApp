@@ -3,7 +3,7 @@ package org.application.shikiapp.network.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.PeopleQuery.Data.Person
-import org.application.shikiapp.models.views.CatalogFilters
+import org.application.shikiapp.models.viewModels.CatalogFilters
 import org.application.shikiapp.network.client.ApolloClient
 
 class PeoplePaging(private val filters: CatalogFilters) : PagingSource<Int, Person>() {

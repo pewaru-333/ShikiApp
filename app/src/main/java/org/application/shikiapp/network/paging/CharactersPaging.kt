@@ -3,7 +3,7 @@ package org.application.shikiapp.network.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.CharacterListQuery.Data.Character
-import org.application.shikiapp.models.views.CatalogFilters
+import org.application.shikiapp.models.viewModels.CatalogFilters
 import org.application.shikiapp.network.client.ApolloClient
 
 class CharactersPaging(private val query: CatalogFilters) : PagingSource<Int, Character>() {

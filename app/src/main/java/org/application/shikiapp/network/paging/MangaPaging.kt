@@ -3,7 +3,7 @@ package org.application.shikiapp.network.paging
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 import org.application.MangaListQuery.Data.Manga
-import org.application.shikiapp.models.views.CatalogFilters
+import org.application.shikiapp.models.viewModels.CatalogFilters
 import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.utils.setScore
 
