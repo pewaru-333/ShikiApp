@@ -1,7 +1,11 @@
 package org.application.shikiapp.ui.theme
 
-import android.content.Context
+import android.graphics.Color
+import android.graphics.Color.argb
 import android.os.Build
+import androidx.activity.ComponentActivity
+import androidx.activity.SystemBarStyle
+import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.darkColorScheme
@@ -9,8 +13,12 @@ import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.ui.platform.LocalContext
-import org.application.shikiapp.utils.THEMES
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.enums.Themes
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -89,27 +97,44 @@ private val darkScheme = darkColorScheme(
 )
 
 @Composable
-fun Theme(
-    theme: String = THEMES[0],
-    dynamicColors: Boolean = false,
-    context: Context = LocalContext.current,
-    content: @Composable () -> Unit
-) {
-    val darkTheme = when (theme) {
-        THEMES[1] -> false
-        THEMES[2] -> true
+fun Theme(content: @Composable () -> Unit) {
+    val activity = LocalContext.current as ComponentActivity
+
+    val darkState by Preferences.theme.collectAsStateWithLifecycle()
+    val dynamicColor by Preferences.dynamicColors.collectAsStateWithLifecycle()
+
+    val darkTheme = when (darkState) {
+        Themes.LIGHT -> false
+        Themes.DARK -> true
         else -> isSystemInDarkTheme()
     }
 
     val colors = when {
-        isDynamicColorAvailable() && dynamicColors ->
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+        isDynamicColorAvailable() && dynamicColor ->
+            if (darkTheme) dynamicDarkColorScheme(activity) else dynamicLightColorScheme(activity)
 
         darkTheme -> darkScheme
         else -> lightScheme
     }
 
-    MaterialTheme(colorScheme = colors, typography = AppTypography, content = content)
+    DisposableEffect(darkTheme) {
+        activity.enableEdgeToEdge(
+            statusBarStyle = SystemBarStyle.auto(
+                lightScrim = Color.TRANSPARENT,
+                darkScrim = Color.TRANSPARENT,
+                detectDarkMode = { darkTheme }
+            ),
+            navigationBarStyle = SystemBarStyle.auto(
+                lightScrim = argb(0xe6, 0xFF, 0xFF, 0xFF),
+                darkScrim = argb(0x80, 0x1b, 0x1b, 0x1b),
+                detectDarkMode = { darkTheme }
+            )
+        )
+
+        onDispose { }
+    }
+
+    MaterialTheme(colorScheme = colors, content = content)
 }
 
 fun isDynamicColorAvailable() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
