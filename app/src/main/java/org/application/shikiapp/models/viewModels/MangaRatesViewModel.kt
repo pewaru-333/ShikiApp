@@ -1,4 +1,4 @@
-package org.application.shikiapp.models.views
+package org.application.shikiapp.models.viewModels
 
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.runtime.getValue
@@ -14,12 +14,12 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import org.application.shikiapp.models.data.AnimeRate
+import org.application.shikiapp.models.data.MangaRate
 import org.application.shikiapp.network.client.NetworkClient
-import org.application.shikiapp.utils.AnimeRates
+import org.application.shikiapp.utils.navigation.Screen.MangaRates
 
-class AnimeRatesViewModel(saved: SavedStateHandle) : ViewModel() {
-    val userId = saved.toRoute<AnimeRates>().id
+class MangaRatesViewModel(saved: SavedStateHandle) : ViewModel() {
+    val userId = saved.toRoute<MangaRates>().id
 
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
@@ -36,11 +36,11 @@ class AnimeRatesViewModel(saved: SavedStateHandle) : ViewModel() {
             _response.emit(Response.Loading)
 
             try {
-                val rates = mutableListOf<AnimeRate>()
+                val rates = mutableListOf<MangaRate>()
                 var page = 1
 
                 while (true) {
-                    val response = NetworkClient.user.getAnimeRates(id = userId, page = page)
+                    val response = NetworkClient.user.getMangaRates(id = userId, page = page)
                     rates.addAll(response)
                     page++
                     if (response.size < 5000) break
@@ -65,6 +65,6 @@ class AnimeRatesViewModel(saved: SavedStateHandle) : ViewModel() {
         data object Error : Response
         data object Loading : Response
         data object NoAccess : Response
-        data class Success(val rates: List<AnimeRate>) : Response
+        data class Success(val rates: List<MangaRate>) : Response
     }
 }

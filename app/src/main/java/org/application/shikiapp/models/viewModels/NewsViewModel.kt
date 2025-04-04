@@ -1,4 +1,4 @@
-package org.application.shikiapp.models.views
+package org.application.shikiapp.models.viewModels
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope

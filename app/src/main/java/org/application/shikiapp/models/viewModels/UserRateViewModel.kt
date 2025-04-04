@@ -1,4 +1,4 @@
-package org.application.shikiapp.models.views
+package org.application.shikiapp.models.viewModels
 
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -11,14 +11,14 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetChapters
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetEpisodes
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRateId
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetRewatches
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetScore
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetStatus
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetText
-import org.application.shikiapp.models.views.UserRateViewModel.RateEvent.SetVolumes
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetChapters
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetEpisodes
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRateId
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRewatches
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetScore
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetStatus
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetText
+import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetVolumes
 import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences

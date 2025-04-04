@@ -1,4 +1,4 @@
-package org.application.shikiapp.models.views
+package org.application.shikiapp.models.viewModels
 
 import androidx.compose.runtime.Stable
 import androidx.compose.runtime.mutableStateListOf
@@ -10,30 +10,30 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.update
 import org.application.fragment.GenresF
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetCensored
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetDuration
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetFranchise
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetGenre
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetKind
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetMyList
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetOrder
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetPublisher
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetRating
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetRole
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetScore
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetSeason
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetSeasonS
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetSeasonYF
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetSeasonYS
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetStatus
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetStudio
-import org.application.shikiapp.models.views.FiltersViewModel.FilterEvent.SetTitle
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetCensored
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetDuration
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetFranchise
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetGenre
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetKind
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetMyList
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetOrder
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetPublisher
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetRating
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetRole
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetScore
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeason
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeasonS
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeasonYF
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeasonYS
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetStatus
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetStudio
+import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetTitle
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ORDERS
-import org.application.shikiapp.utils.PeopleFilterItems
-import org.application.shikiapp.utils.PeopleFilterItems.MANGAKA
-import org.application.shikiapp.utils.PeopleFilterItems.PRODUCER
-import org.application.shikiapp.utils.PeopleFilterItems.SEYU
+import org.application.shikiapp.utils.enums.PeopleFilterItems
+import org.application.shikiapp.utils.enums.PeopleFilterItems.MANGAKA
+import org.application.shikiapp.utils.enums.PeopleFilterItems.PRODUCER
+import org.application.shikiapp.utils.enums.PeopleFilterItems.SEYU
 import java.time.LocalDate
 
 open class FiltersViewModel<T : Any> : ViewModel() {
@@ -41,7 +41,7 @@ open class FiltersViewModel<T : Any> : ViewModel() {
     val filters = _filters.asStateFlow()
 
     open val list = emptyFlow<PagingData<T>>()
-    var genres = listOf<GenresF>()
+    open val genres = MutableStateFlow<List<GenresF>>(emptyList()).asStateFlow()
 
     fun onEvent(event: FilterEvent) {
         when (event) {
@@ -145,7 +145,6 @@ open class FiltersViewModel<T : Any> : ViewModel() {
             is SetTitle -> _filters.update { it.copy(title = event.title) }
         }
     }
-
 
     sealed interface FilterEvent {
         data class SetOrder(val order: Map.Entry<String, String>) : FilterEvent

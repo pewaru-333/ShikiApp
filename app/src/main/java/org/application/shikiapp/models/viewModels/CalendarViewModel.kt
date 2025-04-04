@@ -1,22 +1,21 @@
-package org.application.shikiapp.models.views
+package org.application.shikiapp.models.viewModels
 
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Calendar
 import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.fromISODate
-import java.time.LocalDate
+import org.application.shikiapp.utils.toCalendarDate
 
 class CalendarViewModel : ViewModel() {
     private val _state = MutableStateFlow<Response>(Response.Loading)
-    val state = _state.asStateFlow()
+    val state = _state
         .onStart { getCalendar() }
         .stateIn(viewModelScope, SharingStarted.Lazily, Response.Loading)
 
@@ -26,7 +25,7 @@ class CalendarViewModel : ViewModel() {
         try {
             val calendar = NetworkClient.content.getCalendar()
                 .groupBy { fromISODate(it.nextEpisodeAt) }
-                .map { AnimeSchedule(it.key, it.value) }
+                .map { AnimeSchedule(toCalendarDate(it.key), it.value) }
 
             _state.emit(Response.Success(calendar))
         } catch (e: Throwable) {
@@ -44,6 +43,6 @@ class CalendarViewModel : ViewModel() {
 
 @Stable
 data class AnimeSchedule(
-    val date: LocalDate,
+    val date: String,
     val list: List<Calendar>
 )

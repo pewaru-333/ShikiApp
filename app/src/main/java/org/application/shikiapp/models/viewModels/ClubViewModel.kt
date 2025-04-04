@@ -1,4 +1,4 @@
-package org.application.shikiapp.models.views
+package org.application.shikiapp.models.viewModels
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -22,9 +22,10 @@ import org.application.shikiapp.network.paging.ClubCharactersPaging
 import org.application.shikiapp.network.paging.ClubImagesPaging
 import org.application.shikiapp.network.paging.ClubMembersPaging
 import org.application.shikiapp.network.paging.CommentsPaging
+import org.application.shikiapp.utils.navigation.Screen
 
 class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
-    private val clubId = saved.toRoute<org.application.shikiapp.utils.Club>().id
+    private val clubId = saved.toRoute<Screen.Club>().id
 
     private val _response = MutableStateFlow<Response>(Response.Loading)
     val response = _response.asStateFlow()
@@ -54,7 +55,7 @@ class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
     val comments = Pager(PagingConfig(pageSize = 10, enablePlaceholders = false))
-    { CommentsPaging(_state.value.topicId) }.flow.map { comment ->
+    { CommentsPaging(_state.value.topicId, "Topic") }.flow.map { comment ->
         val set = mutableSetOf<Long>()
         comment.filter { if (set.contains(it.id)) false else set.add(it.id) }
     }.cachedIn(viewModelScope)
