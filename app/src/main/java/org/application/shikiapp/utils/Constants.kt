@@ -1,31 +1,5 @@
 package org.application.shikiapp.utils
 
-import androidx.annotation.StringRes
-import kotlinx.serialization.Serializable
-import org.application.shikiapp.R
-import org.application.shikiapp.R.drawable.vector_anime
-import org.application.shikiapp.R.drawable.vector_calendar
-import org.application.shikiapp.R.drawable.vector_character
-import org.application.shikiapp.R.drawable.vector_home
-import org.application.shikiapp.R.drawable.vector_manga
-import org.application.shikiapp.R.drawable.vector_news
-import org.application.shikiapp.R.drawable.vector_person
-import org.application.shikiapp.R.drawable.vector_ranobe
-import org.application.shikiapp.R.drawable.vector_settings
-import org.application.shikiapp.R.string.text_achievements
-import org.application.shikiapp.R.string.text_anime
-import org.application.shikiapp.R.string.text_characters
-import org.application.shikiapp.R.string.text_clubs
-import org.application.shikiapp.R.string.text_friends
-import org.application.shikiapp.R.string.text_manga
-import org.application.shikiapp.R.string.text_mangaka
-import org.application.shikiapp.R.string.text_mangakas
-import org.application.shikiapp.R.string.text_others
-import org.application.shikiapp.R.string.text_people
-import org.application.shikiapp.R.string.text_producer
-import org.application.shikiapp.R.string.text_ranobe
-import org.application.shikiapp.R.string.text_seyu
-
 // =========================================== Strings ============================================
 
 const val CODE = "code"
@@ -47,14 +21,9 @@ const val BLANK = ""
 
 val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
 val DATE_FORMATS = listOf("d.M.yyyy", "d.M", "yyyy")
-val FAVOURITES_ITEMS = listOf(
-    text_anime, text_manga, text_ranobe, text_characters, text_people,
-    text_mangakas, text_seyu, text_others
-)
 val LINKED_KIND = listOf("common", "seyu", "mangaka", "producer", "person")
 val LINKED_TYPE = listOf("Anime", "Manga", "Ranobe", "Person", "Character")
 val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
-val THEMES = listOf("Системная", "Светлая", "Тёмная")
 
 // =========================================== Maps ===============================================
 
@@ -204,86 +173,3 @@ val WATCH_STATUSES_M = mapOf(
     "on_hold" to "Отложено",
     "dropped" to "Брошено"
 )
-
-// =========================================== Enums ==============================================
-
-enum class CatalogItems(@StringRes val title: Int, val icon: Int) {
-    ANIME(text_anime, vector_anime),
-    MANGA(text_manga, vector_manga),
-    RANOBE(text_ranobe, vector_ranobe),
-    CHARACTERS(text_characters, vector_character),
-    PEOPLE(text_people, vector_person)
-}
-
-enum class ListView(@StringRes val title: Int) {
-    COLUMN(R.string.text_column),
-    GRID(R.string.text_grid)
-}
-
-enum class Menu(val route: Any, @StringRes val title: Int, val icon: Int) {
-    CATALOG(Catalog, R.string.text_catalog, vector_home),
-    NEWS(News, R.string.text_news, vector_news),
-    CALENDAR(Calendar, R.string.text_calendar, vector_calendar),
-    PROFILE(Profile, R.string.text_profile, vector_character),
-    SETTINGS(Settings, R.string.text_settings, vector_settings)
-}
-
-enum class PeopleFilterItems(@StringRes val title: Int) {
-    SEYU(text_seyu), PRODUCER(text_producer), MANGAKA(text_mangaka)
-}
-
-enum class ProfileMenus(@StringRes val title: Int) {
-    FRIENDS(text_friends), CLUBS(text_clubs), ACHIEVEMENTS(text_achievements)
-}
-
-enum class VideoKinds(val title: String, val kinds: List<String>) {
-    VIDEO("Видео", listOf("pv", "ed", "op", "op_ed_clip", "other")),
-    CHARACTER("Трейлеры персонажей", listOf("character_trailer")),
-    EPISODE("Превью эпизодов", listOf("episode_preview"))
-}
-
-// =========================================== Screens =============================================
-@Serializable
-object Catalog
-
-@Serializable
-object News
-
-@Serializable
-object Calendar
-
-@Serializable
-object Profile
-
-@Serializable
-object Settings
-
-@Serializable
-data class Login(val code: String? = null)
-
-@Serializable
-data class Anime(val id: String)
-
-@Serializable
-data class Manga(val id: String)
-
-@Serializable
-data class Character(val id: String)
-
-@Serializable
-data class Person(val id: Long)
-
-@Serializable
-data class User(val id: Long)
-
-@Serializable
-data class Club(val id: Long)
-
-@Serializable
-data class NewsDetail(val id: Long)
-
-@Serializable
-data class AnimeRates(val id: Long)
-
-@Serializable
-data class MangaRates(val id: Long)

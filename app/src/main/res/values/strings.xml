@@ -2,9 +2,7 @@
     <string name="app_name">ShikiApp</string>
 
     <!-- Описание -->
-    <string name="text_all_roles">Все роли</string>
     <string name="text_authors">Авторы</string>
-    <string name="text_best_roles">Лучшие роли</string>
     <string name="text_chapters">Главы: %1$s / %2$s</string>
     <string name="text_character">Персонаж</string>
     <string name="text_episodes">Эпизоды</string>
@@ -91,9 +89,11 @@
     <string name="text_settings">Настройки</string>
     <string name="text_column">Столбец</string>
     <string name="text_grid">Сетка</string>
+    <string name="preference_theme_system">Системная</string>
+    <string name="preference_theme_light">Светлая</string>
+    <string name="preference_theme_dark">Тёмная</string>
 
     <!-- Другое -->
-    <string name="blank" />
     <string name="text_empty">Пусто</string>
     <string name="text_login">Вход</string>
 </resources>

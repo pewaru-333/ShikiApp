@@ -1,4 +1,0 @@
-— Added a grid view to the Catalog menu.
-— Implemented the "Pull to refresh" feature on the news screen (experimental).
-— Enabled the ability to follow supported links in the comments.
-— Fixed an issue that caused the user's anime and manga lists to not load properly.

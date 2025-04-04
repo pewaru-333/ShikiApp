@@ -15,7 +15,6 @@ import androidx.navigation.NavHostController
 import org.application.AnimeQuery.Data.Anime.Studio
 import org.application.MangaQuery.Data.Manga.Publisher
 import org.application.shikiapp.models.data.Date
-import org.application.shikiapp.models.data.Person
 import java.time.LocalDate
 import java.time.Month.APRIL
 import java.time.Month.AUGUST
@@ -68,10 +67,10 @@ fun getLinks(text: String): List<String> {
 fun fromISODate(date: String) = LocalDate.parse(date, DateTimeFormatter.ISO_DATE_TIME)
 fun toCalendarDate(date: LocalDate) = date.format(DateTimeFormatter.ofPattern("d MMMM, E"))
 
-fun getBirthday(birthday: Date) = DATE_FORMATS.firstNotNullOfOrNull {
+fun getBirthday(birthday: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
     try {
         LocalDate.parse(
-            "${birthday.day}.${birthday.month}.${birthday.year}"
+            "${birthday?.day}.${birthday?.month}.${birthday?.year}"
                 .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
         ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
     } catch (e: DateTimeParseException) {
@@ -79,19 +78,16 @@ fun getBirthday(birthday: Date) = DATE_FORMATS.firstNotNullOfOrNull {
     }
 }
 
-fun getDeathday(deceasedOn: Date) = DATE_FORMATS.firstNotNullOfOrNull {
+fun getDeathday(deceasedOn: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
     try {
         LocalDate.parse(
-            "${deceasedOn.day}.${deceasedOn.month}.${deceasedOn.year}"
+            "${deceasedOn?.day}.${deceasedOn?.month}.${deceasedOn?.year}"
                 .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
         ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
     } catch (e: DateTimeParseException) {
         null
     }
 }
-
-fun isPersonFavoured(person: Person) = person.personFavoured || person.producerFavoured
-        || person.mangakaFavoured || person.seyuFavoured
 
 fun getPoster(text: String?): String? {
     val embed = getLinks(text.orEmpty()).find { it.contains("img.youtube.com") }

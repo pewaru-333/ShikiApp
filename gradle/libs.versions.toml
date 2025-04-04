@@ -1,37 +1,46 @@
 [versions]
 apolloEngineKtor = "0.1.1"
 apolloRuntime = "4.1.1"
-coilCompose = "2.7.0"
-composeBom = "2025.02.00"
-composeNavigation = "2.8.7"
+composeCoil = "2.7.0"
+composeLifecycle = "2.8.7"
+composeNavigation = "2.8.9"
+composePaging = "3.3.6"
 composePreferences = "1.1.1"
-gradle = "8.8.1"
+gradle = "8.9.1"
 kotlin = "2.1.10"
-kotlinxSerializationJson = "1.8.0"
-ktor = "3.1.0"
-lifecycleRuntimeKtx = "2.8.7"
+kotlinxSerializationJson = "1.8.1"
+ktor = "3.1.2"
 material3 = "1.3.1"
-pagingCompose = "3.3.6"
 
 [libraries]
-androidx-compose-bom = { module = "androidx.compose:compose-bom", version.ref = "composeBom" }
-androidx-lifecycle-runtime-ktx = { module = "androidx.lifecycle:lifecycle-runtime-ktx", version.ref = "lifecycleRuntimeKtx" }
-androidx-material3 = { module = "androidx.compose.material3:material3", version.ref = "material3" }
-androidx-navigation-compose = { module = "androidx.navigation:navigation-compose", version.ref = "composeNavigation" }
-androidx-paging-compose = { module = "androidx.paging:paging-compose", version.ref = "pagingCompose" }
-apollo-engine-ktor = { module = "com.apollographql.ktor:apollo-engine-ktor", version.ref = "apolloEngineKtor" }
-apollo-runtime = { module = "com.apollographql.apollo:apollo-runtime", version.ref = "apolloRuntime" }
-coil-compose = { module = "io.coil-kt:coil-compose", version.ref = "coilCompose" }
-kotlin-bom = { module = "org.jetbrains.kotlin:kotlin-bom", version.ref = "kotlin" }
-kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
-ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation", version.ref = "ktor" }
-ktor-client-core = { module = "io.ktor:ktor-client-core", version.ref = "ktor" }
-ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json", version.ref = "ktor" }
-preference-library = { module = "me.zhanghai.compose.preference:library", version.ref = "composePreferences" }
+androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "composeLifecycle" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
+androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "composeNavigation" }
+androidx-paging = { group = "androidx.paging", name = "paging-compose", version.ref = "composePaging" }
+
+apollo-engine-ktor = { group = "com.apollographql.ktor", name = "apollo-engine-ktor", version.ref = "apolloEngineKtor" }
+apollo-runtime = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apolloRuntime" }
+
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "composeCoil" }
+
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+
+ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
+ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
+
+material-preferences = { group = "me.zhanghai.compose.preference", name = "library", version.ref = "composePreferences" }
+
+[bundles]
+ktor = [
+    "ktor-client-content-negotiation",
+    "ktor-client-core",
+    "ktor-serialization-kotlinx-json"
+]
 
 [plugins]
-androidApplication = { id = "com.android.application", version.ref = "gradle" }
-apolloGraphQL = { id = "com.apollographql.apollo", version.ref = "apolloRuntime" }
-composeCompiler = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-jetbrainsKotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
+android = { id = "com.android.application", version.ref = "gradle" }
+apollo = { id = "com.apollographql.apollo", version.ref = "apolloRuntime" }
+compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
+kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

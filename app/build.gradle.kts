@@ -1,8 +1,8 @@
 plugins {
-    alias(libs.plugins.androidApplication)
-    alias(libs.plugins.apolloGraphQL)
-    alias(libs.plugins.composeCompiler)
-    alias(libs.plugins.jetbrainsKotlin)
+    alias(libs.plugins.android)
+    alias(libs.plugins.apollo)
+    alias(libs.plugins.compose)
+    alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -22,8 +22,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 15
-        versionName = "alpha-0.1.15"
+        versionCode = 16
+        versionName = "alpha-0.2.1"
     }
 
     dependenciesInfo {
@@ -53,24 +53,20 @@ android {
 
 dependencies {
     // ============================== Android ==============================
-    implementation(libs.androidx.lifecycle.runtime.ktx)
+    implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.material3)
-    implementation(libs.androidx.paging.compose)
-    implementation(platform(libs.androidx.compose.bom))
-    implementation(platform(libs.kotlin.bom))
+    implementation(libs.androidx.paging)
 
     // ============================== Network ==============================
     implementation(libs.apollo.engine.ktor)
     implementation(libs.apollo.runtime)
-    implementation(libs.ktor.client.content.negotiation)
-    implementation(libs.ktor.client.core)
-    implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.bundles.ktor)
 
     // ============================== Navigation ==============================
-    implementation(libs.androidx.navigation.compose)
+    implementation(libs.androidx.navigation)
     implementation(libs.kotlinx.serialization.json)
 
     // ============================== Utilities ==============================
     implementation(libs.coil.compose)
-    implementation(libs.preference.library)
+    implementation(libs.material.preferences)
 }

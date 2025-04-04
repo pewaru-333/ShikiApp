@@ -29,7 +29,7 @@ class ShikiApp : Application(), ImageLoaderFactory {
         .diskCachePolicy(CachePolicy.ENABLED)
         .diskCache {
             DiskCache.Builder()
-                .maxSizeBytes(Preferences.getCache() * 1024 * 1024L)
+                .maxSizeBytes(Preferences.cache * 1024 * 1024L)
                 .directory(cacheDir)
                 .build()
         }.build()
