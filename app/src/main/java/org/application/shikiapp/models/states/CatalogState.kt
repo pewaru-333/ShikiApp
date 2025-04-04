@@ -5,7 +5,7 @@ import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.CatalogItems
+import org.application.shikiapp.utils.enums.CatalogItems
 
 data class CatalogState(
     val menu: CatalogItems = CatalogItems.ANIME,
