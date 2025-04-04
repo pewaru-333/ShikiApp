@@ -9,6 +9,6 @@ import org.application.shikiapp.models.data.Person
 
 class Content(private val client: HttpClient) {
     suspend fun getCalendar() = client.get("calendar").body<List<Calendar>>()
-    suspend fun getCharacter(id: Long) = client.get("characters/$id").body<Character>()
-    suspend fun getPerson(id: Long) = client.get("people/$id").body<Person>()
+    suspend fun getCharacter(id: Any) = client.get("characters/$id").body<Character>()
+    suspend fun getPerson(id: Any) = client.get("people/$id").body<Person>()
 }

@@ -32,9 +32,9 @@ class Profile(private val client: HttpClient) {
 
     suspend fun signOut() = client.post("users/sign_out")
 
-    suspend fun addFavourite(linkedType: String, linkedId: Long, kind: String = BLANK) =
+    suspend fun addFavourite(linkedType: String, linkedId: Any, kind: String = BLANK) =
         client.post("favorites/$linkedType/$linkedId/$kind")
 
-    suspend fun deleteFavourite(linkedType: String, linkedId: Long) =
+    suspend fun deleteFavourite(linkedType: String, linkedId: Any) =
         client.delete("favorites/$linkedType/$linkedId")
 }
