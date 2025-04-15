@@ -38,12 +38,13 @@ import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CODE
 import org.application.shikiapp.utils.REDIRECT_URI
+import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.isDomainVerified
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onNavigate: (Screen) -> Unit) {
+fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibility) {
     val model = viewModel<ProfileViewModel>()
     val loginState by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
@@ -52,7 +53,7 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
         is LoginResponse.NotLogged -> LoginScreen()
         is LoginResponse.Logging -> LoadingScreen()
         is LoginResponse.NetworkError -> ErrorScreen(model::loadData)
-        is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut)
+        is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut, visibility)
         else -> Unit
     }
 }

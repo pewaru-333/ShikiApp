@@ -12,12 +12,14 @@ import androidx.paging.cachedIn
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.UserDetailEvent
+import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.states.UserState
+import org.application.shikiapp.models.ui.History
 import org.application.shikiapp.models.ui.User
+import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.Response
 import org.application.shikiapp.network.client.NetworkClient
-import org.application.shikiapp.network.paging.UserFriendsPaging
-import org.application.shikiapp.network.paging.UserHistoryPaging
+import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.utils.navigation.Screen
 
 open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailViewModel<User, UserState, UserDetailEvent>() {
@@ -26,13 +28,26 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
 
     val friends = Pager(
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),
-        pagingSourceFactory = { UserFriendsPaging(userId) }
-    ).flow.cachedIn(viewModelScope).retryWhen { _, attempt -> attempt <= 5 }
+        pagingSourceFactory = {
+            CommonPaging<UserBasic>(UserBasic::id) { page, params ->
+                NetworkClient.user.getFriends(userId, page, params.loadSize)
+            }
+        }
+    ).flow
+        .cachedIn(viewModelScope)
+        .retryWhen { _, attempt -> attempt <= 5 }
 
     val history = Pager(
         config = PagingConfig(pageSize = 20, enablePlaceholders = false),
-        pagingSourceFactory = { UserHistoryPaging(userId) }
-    ).flow.cachedIn(viewModelScope).retryWhen { _, attempt -> attempt <= 5 }
+        pagingSourceFactory = {
+            CommonPaging<History>(History::id) { page, params ->
+                NetworkClient.user.getHistory(userId, page, params.loadSize)
+                    .map(org.application.shikiapp.models.data.History::mapper)
+            }
+        }
+    ).flow
+        .cachedIn(viewModelScope)
+        .retryWhen { _, attempt -> attempt <= 5 }
 
     override fun initState() = UserState()
 

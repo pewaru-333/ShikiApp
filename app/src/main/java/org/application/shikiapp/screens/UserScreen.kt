@@ -12,6 +12,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
@@ -25,6 +26,7 @@ import org.application.shikiapp.models.ui.User
 import org.application.shikiapp.models.viewModels.UserViewModel
 import org.application.shikiapp.network.Response
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -49,7 +51,8 @@ fun UserView(
     state: UserState,
     onEvent: (UserDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
-    back: () -> Unit
+    back: () -> Unit,
+    visibility: NavigationBarVisibility? = null
 ) {
     val friends = user.friends.collectAsLazyPagingItems()
     val history = user.history.collectAsLazyPagingItems()
@@ -100,6 +103,13 @@ fun UserView(
                     onNavigate = onNavigate
                 )
             }
+        }
+    }
+
+    LaunchedEffect(state.showFavourite, state.showHistory, state.showDialog) {
+        if (visibility != null) {
+            if (state.showFavourite || state.showHistory || state.showDialog) visibility.hide()
+            else visibility.show()
         }
     }
 
