@@ -2,15 +2,14 @@ package org.application.shikiapp.utils
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.request.forms.submitForm
 import io.ktor.http.parameters
 import io.ktor.serialization.kotlinx.json.json
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.Json
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.models.data.User
@@ -31,40 +30,52 @@ object TokenManager {
         return user
     }
 
-    fun refreshToken() = CoroutineScope(Dispatchers.IO).launch {
-        try {
-            val client = HttpClient(OkHttp) {
-                expectSuccess = true
+    suspend fun refreshToken(): Token? {
+        val client = HttpClient {
+            expectSuccess = true
 
-                install(UserAgent) {
-                    agent = "ShikiApp"
-                }
-                install(ContentNegotiation) {
-                    json(
-                        Json {
-                            isLenient = true
-                            explicitNulls = false
-                            ignoreUnknownKeys = true
+            install(UserAgent) {
+                agent = "ShikiApp"
+            }
+
+            install(ContentNegotiation) {
+                json(
+                    Json {
+                        isLenient = true
+                        explicitNulls = false
+                        ignoreUnknownKeys = true
+                        decodeEnumsCaseInsensitive = true
+                    }
+                )
+            }
+        }
+
+        return Mutex().withLock {
+            repeat(3) { attempt ->
+                try {
+                    val token = client.submitForm(
+                        url = TOKEN_URL,
+                        formParameters = parameters {
+                            append("grant_type", REFRESH_TOKEN)
+                            append("client_id", CLIENT_ID)
+                            append("client_secret", CLIENT_SECRET)
+                            append("refresh_token", Preferences.getRefreshToken())
                         }
-                    )
+                    ).body<Token>()
+
+                    Preferences.saveToken(token)
+                    return@withLock token
+                } catch (_: Throwable) {
+                    if (attempt < 2) {
+                        delay(2000L)
+                    }
                 }
             }
 
-            val token = client.submitForm(
-                url = TOKEN_URL,
-                formParameters = parameters {
-                    append("grant_type", REFRESH_TOKEN)
-                    append("client_id", CLIENT_ID)
-                    append("client_secret", CLIENT_SECRET)
-                    append("refresh_token", Preferences.getRefreshToken())
-                }
-            ).body<Token>()
-
+            val token = Token(BLANK, BLANK, 0, BLANK, BLANK, 0)
             Preferences.saveToken(token)
-        } catch (e: Throwable) {
-            val token = Token(BLANK, BLANK, 0L, BLANK, BLANK, 0L)
 
-            Preferences.saveToken(token)
+            return@withLock null
         }
     }
 }

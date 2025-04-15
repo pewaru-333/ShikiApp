@@ -3,24 +3,24 @@
 package org.application.shikiapp.network.client
 
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.ktor.http.KtorHttpEngine
 import com.apollographql.ktor.ktorClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
-import io.ktor.http.HttpHeaders.Authorization
+import io.ktor.http.HttpHeaders
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.application.shikiapp.network.calls.Anime
 import org.application.shikiapp.network.calls.Clubs
 import org.application.shikiapp.network.calls.Content
 import org.application.shikiapp.network.calls.Manga
-import org.application.shikiapp.network.calls.News
 import org.application.shikiapp.network.calls.Profile
+import org.application.shikiapp.network.calls.Topics
 import org.application.shikiapp.network.calls.User
 import org.application.shikiapp.network.calls.UserRates
 import org.application.shikiapp.utils.Preferences
@@ -36,29 +36,32 @@ object NetworkClient {
         expectSuccess = true
 
         engine {
-            dispatcher = Dispatchers.IO
-            clientCacheSize = 0
-
             config {
-                addInterceptor { chain ->
-                    val original = chain.request()
-                    val builder = original.newBuilder()
+                dispatcher = Dispatchers.IO
 
-                    if (Preferences.isTokenExists()) {
-                        builder.header(Authorization, "Bearer ${Preferences.getToken()}")
+                addInterceptor { chain ->
+                    val originalRequest = chain.request()
+                    val newBuilder = originalRequest.newBuilder()
+
+                    Preferences.getToken().let { token ->
+                        if (token.isNotBlank())
+                            newBuilder.header(HttpHeaders.Authorization, "Bearer $token")
                     }
 
-                    val request = builder.build()
-                    chain.proceed(request)
+                    val newRequest = newBuilder.build()
+                    chain.proceed(newRequest)
                 }
-                authenticator { _, response ->
+
+                authenticator { route, response ->
                     synchronized(this) {
-                        TokenManager.refreshToken()
+                        val newToken = runBlocking { TokenManager.refreshToken() }
+                        val newBuilder = response.request.newBuilder()
 
+                        if (newToken != null) {
+                            newBuilder.header(HttpHeaders.Authorization, "Bearer ${newToken.accessToken}")
+                        }
 
-                        response.request.newBuilder()
-                            .header(Authorization, "Bearer ${Preferences.getToken()}")
-                            .build()
+                        newBuilder.build()
                     }
                 }
             }
@@ -86,7 +89,7 @@ object NetworkClient {
 
     val apollo = ApolloClient.Builder()
         .serverUrl(GRAPH_URL)
-        .httpEngine(KtorHttpEngine())
+        .dispatcher(Dispatchers.IO)
         .ktorClient(client)
         .build()
 
@@ -96,6 +99,6 @@ object NetworkClient {
     val rates = UserRates(client)
     val user = User(client)
     val profile = Profile(client)
-    val news = News(client)
+    val topics = Topics(client)
     val content = Content(client)
 }
