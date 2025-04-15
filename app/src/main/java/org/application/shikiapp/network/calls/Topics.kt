@@ -6,8 +6,9 @@ import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.News
+import org.application.shikiapp.models.data.Topic
 
-class News(private val client: HttpClient) {
+class Topics(private val client: HttpClient) {
     suspend fun getNewsList(page: Int, limit: Int) = client.get("topics") {
         parameter("forum", "news")
         parameter("page", page)
@@ -15,6 +16,11 @@ class News(private val client: HttpClient) {
     }.body<List<News>>()
 
     suspend fun getTopic(id: Long) = client.get("topics/$id").body<News>()
+
+    suspend fun getTopicsUpdates(page: Int, limit: Int) = client.get("topics/updates") {
+        parameter("page", page)
+        parameter("limit", limit)
+    }.body<List<Topic>>()
 
     suspend fun getComments(
         id: Long,
