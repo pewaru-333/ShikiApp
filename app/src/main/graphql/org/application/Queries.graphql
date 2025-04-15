@@ -43,6 +43,17 @@ query AnimeList(
     }
 }
 
+query AnimeAiring($season: SeasonString) {
+    animes(kind: "tv", status: "ongoing", season: $season, order: popularity, limit: 12) {
+        id
+        name
+        russian
+        poster {
+            originalUrl
+        }
+    }
+}
+
 query Anime($id: String!) {
     animes (ids: $id) {
         id
