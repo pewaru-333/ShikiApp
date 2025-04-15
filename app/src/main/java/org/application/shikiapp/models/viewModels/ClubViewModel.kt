@@ -16,12 +16,13 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.network.paging.ClubAnimePaging
 import org.application.shikiapp.network.paging.ClubCharactersPaging
 import org.application.shikiapp.network.paging.ClubImagesPaging
 import org.application.shikiapp.network.paging.ClubMembersPaging
-import org.application.shikiapp.network.paging.CommentsPaging
+import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.utils.navigation.Screen
 
 class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
@@ -54,8 +55,14 @@ class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
     }.cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
-    val comments = Pager(PagingConfig(pageSize = 10, enablePlaceholders = false))
-    { CommentsPaging(_state.value.topicId, "Topic") }.flow.map { comment ->
+    val comments = Pager(
+        config = PagingConfig(pageSize = 10, enablePlaceholders = false),
+        pagingSourceFactory = {
+            CommonPaging<Comment>(Comment::id) { page, params ->
+                NetworkClient.topics.getComments(_state.value.topicId, "Topic", page, params.loadSize)
+            }
+        }
+    ).flow.map { comment ->
         val set = mutableSetOf<Long>()
         comment.filter { if (set.contains(it.id)) false else set.add(it.id) }
     }.cachedIn(viewModelScope)
