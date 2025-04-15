@@ -7,7 +7,7 @@ import org.application.shikiapp.utils.BLANK
 @Serializable
 class User : UserBrief() {
     @SerialName("last_online")
-    val lastOnline: String?= null
+    val lastOnline: String? = null
 
     @SerialName("location")
     val location: String? = null

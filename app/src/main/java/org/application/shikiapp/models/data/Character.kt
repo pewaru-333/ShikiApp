@@ -24,11 +24,11 @@ class Character : BasicInfo() {
     @SerialName("favoured")
     val favoured: Boolean = false
 
-    @SerialName("thread_id")
-    val threadId: Long = 0L
+//    @SerialName("thread_id")
+//    val threadId: Long = 0L
 
     @SerialName("topic_id")
-    val topicId: Long = 0L
+    val topicId: Long? = null
 
     @SerialName("updated_at")
     val updatedAt: String = BLANK
