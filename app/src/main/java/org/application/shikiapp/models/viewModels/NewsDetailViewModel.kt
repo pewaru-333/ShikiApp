@@ -24,7 +24,7 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
             emit(Response.Loading)
 
             try {
-                val news = NetworkClient.news.getTopic(newsId)
+                val news = NetworkClient.topics.getTopic(newsId)
                 val comments = getComments(newsId)
 
                 emit(Response.Success(news.mapper(comments)))
