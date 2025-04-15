@@ -64,8 +64,8 @@ fun getLinks(text: String): List<String> {
     return links
 }
 
-fun fromISODate(date: String) = LocalDate.parse(date, DateTimeFormatter.ISO_DATE_TIME)
-fun toCalendarDate(date: LocalDate) = date.format(DateTimeFormatter.ofPattern("d MMMM, E"))
+//fun fromISODate(date: String) = LocalDate.parse(date, DateTimeFormatter.ISO_DATE_TIME)
+//fun toCalendarDate(date: LocalDate) = date.format(DateTimeFormatter.ofPattern("d MMMM, E"))
 
 fun getBirthday(birthday: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
     try {
@@ -108,6 +108,30 @@ fun getKind(kind: String?) = KINDS_A[kind] ?: KINDS_M[kind] ?: KINDS_R[kind] ?: 
 fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
 fun getFull(full: Int? = 0, status: String? = STATUSES_A.keys.elementAt(1)) =
     if (status == STATUSES_A.keys.elementAt(1) && full == 0) "?" else full.toString()
+
+fun getOngoingSeason() : String {
+    val currentDate = LocalDate.now()
+
+    val currentSeason = when (currentDate.month) {
+        JANUARY, FEBRUARY, DECEMBER -> "winter"
+        MARCH, APRIL, MAY -> "spring"
+        JUNE, JULY, AUGUST -> "summer"
+        SEPTEMBER, OCTOBER, NOVEMBER -> "fall"
+    }
+
+    val previousSeason = when(currentSeason) {
+        "winter" -> "fall"
+        "fall" -> "summer"
+        "summer" -> "spring"
+        "spring" -> "winter"
+        else -> BLANK
+    }
+
+    val previousYear = if (currentSeason == "winter") currentDate.year - 1 else currentDate.year
+
+
+    return "${currentSeason}_${currentDate.year},${previousSeason}_$previousYear"
+}
 
 fun getSeason(text: Any?, kind: String?) = when (text) {
     is String -> when (text) {
