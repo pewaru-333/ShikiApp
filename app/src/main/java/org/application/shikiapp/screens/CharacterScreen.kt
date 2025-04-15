@@ -253,8 +253,8 @@ private fun CatalogFull(
             items(list) {
                 CatalogListItem(
                     title = it.russian.orEmpty().ifEmpty(it::name),
-                    kind = it.kind,
-                    season = it.releasedOn,
+                    kind = it.kind.orEmpty().ifEmpty { "Не указано" },
+                    season = it.releasedOn.orEmpty().ifEmpty { "Неизвестно" },
                     image = getImage(it.image.original),
                     isBig = false,
                     click = {
