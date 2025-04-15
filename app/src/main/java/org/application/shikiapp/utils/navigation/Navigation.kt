@@ -43,6 +43,7 @@ import org.application.shikiapp.screens.UserScreen
 import org.application.shikiapp.utils.BASE_PATH
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.enums.Menu
+import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.isCurrentRoute
 import org.application.shikiapp.utils.navigation.Screen.Anime
 import org.application.shikiapp.utils.navigation.Screen.AnimeRates
@@ -60,11 +61,11 @@ import org.application.shikiapp.utils.navigation.Screen.Settings
 import org.application.shikiapp.utils.navigation.Screen.User
 
 @Composable
-fun Navigation(navigator: NavHostController, modifier: Modifier) {
+fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility, modifier: Modifier) {
     NavHost(navigator, News, modifier.consumeWindowInsets(WindowInsets.systemBars)) {
         // Bottom menu items //
         composable<Catalog> {
-            CatalogScreen(navigator::navigate)
+            CatalogScreen(visibility, navigator::navigate)
         }
         composable<News> {
             NewsScreen(navigator::navigate)
@@ -79,7 +80,7 @@ fun Navigation(navigator: NavHostController, modifier: Modifier) {
                 }
             )
         ) {
-            ProfileScreen(navigator::navigate)
+            ProfileScreen(navigator::navigate, visibility)
         }
         composable<Settings> {
             SettingsScreen()
@@ -149,14 +150,14 @@ fun Navigation(navigator: NavHostController, modifier: Modifier) {
 }
 
 @Composable
-fun BottomNavigationBar(backStack: NavBackStackEntry?, onClick: (Screen) -> Unit) {
+fun BottomNavigationBar(backStack: NavBackStackEntry?, visible: Boolean, onClick: (Screen) -> Unit) {
     val initial = MaterialTheme.typography.labelMedium
 
     var style by remember { mutableStateOf(initial) }
     var draw by remember { mutableStateOf(false) }
 
     AnimatedVisibility(
-        visible = Menu.entries.any { backStack.isCurrentRoute(it.route::class) },
+        visible = Menu.entries.any { backStack.isCurrentRoute(it.route::class) } && visible,
         enter = expandVertically(),
         exit = shrinkVertically()
     ) {

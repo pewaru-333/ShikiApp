@@ -10,6 +10,7 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import org.application.shikiapp.ui.theme.Theme
+import org.application.shikiapp.utils.extensions.rememberNavigationBarVisibility
 import org.application.shikiapp.utils.navigation.BottomNavigationBar
 import org.application.shikiapp.utils.navigation.Navigation
 import org.application.shikiapp.utils.toBottomBarItem
@@ -21,11 +22,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             val navigator = rememberNavController()
             val backStack by navigator.currentBackStackEntryAsState()
+            val barVisibility = rememberNavigationBarVisibility()
 
             Theme {
                 Scaffold(
-                    bottomBar = { BottomNavigationBar(backStack, navigator::toBottomBarItem) },
-                    content = { Navigation(navigator, Modifier.padding(it)) }
+                    bottomBar = { BottomNavigationBar(backStack, barVisibility.isVisible, navigator::toBottomBarItem) },
+                    content = { Navigation(navigator, barVisibility, Modifier.padding(it)) }
                 )
             }
         }
