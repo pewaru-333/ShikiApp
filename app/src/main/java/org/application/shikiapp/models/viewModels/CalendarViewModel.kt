@@ -1,48 +1,63 @@
 package org.application.shikiapp.models.viewModels
 
-import androidx.compose.runtime.Stable
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.stateIn
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
-import org.application.shikiapp.models.data.Calendar
+import org.application.shikiapp.events.CalendarEvent
+import org.application.shikiapp.models.data.Topic
+import org.application.shikiapp.models.states.AnimeCalendarState
+import org.application.shikiapp.models.ui.AnimeCalendar
+import org.application.shikiapp.models.ui.mappers.toAnimeContent
+import org.application.shikiapp.network.Response
+import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.client.NetworkClient
-import org.application.shikiapp.utils.fromISODate
-import org.application.shikiapp.utils.toCalendarDate
+import org.application.shikiapp.network.paging.CommonPaging
 
-class CalendarViewModel : ViewModel() {
-    private val _state = MutableStateFlow<Response>(Response.Loading)
-    val state = _state
-        .onStart { getCalendar() }
-        .stateIn(viewModelScope, SharingStarted.Lazily, Response.Loading)
+class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, CalendarEvent>() {
+    override fun initState() = AnimeCalendarState()
 
-    fun getCalendar() = viewModelScope.launch {
-        _state.emit(Response.Loading)
+    override fun loadData() {
+        viewModelScope.launch(Dispatchers.IO) {
+            emit(Response.Loading)
 
-        try {
-            val calendar = NetworkClient.content.getCalendar()
-                .groupBy { fromISODate(it.nextEpisodeAt) }
-                .map { AnimeSchedule(toCalendarDate(it.key), it.value) }
+            try {
+                val trending = ApolloClient.getTrending()
+                val topicsUpdates = getTopicsUpdates()
 
-            _state.emit(Response.Success(calendar))
-        } catch (e: Throwable) {
-            _state.emit(Response.Error)
+                emit(Response.Success(AnimeCalendar(trending, topicsUpdates)))
+            } catch (e: Throwable) {
+                e.printStackTrace()
+                emit(Response.Error(e))
+            }
         }
     }
 
-
-    sealed interface Response {
-        data object Error : Response
-        data object Loading : Response
-        data class Success(val calendar: List<AnimeSchedule>) : Response
+    override fun onEvent(event: CalendarEvent) {
+        when (event) {
+            CalendarEvent.ShowFullUpdates -> updateState { it.copy(showFullUpdates = !it.showFullUpdates) }
+        }
     }
-}
 
-@Stable
-data class AnimeSchedule(
-    val date: String,
-    val list: List<Calendar>
-)
+    private fun getTopicsUpdates() = Pager(
+        config = PagingConfig(
+            pageSize = 10,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = {
+            CommonPaging<Topic>(Topic::id) { page, params ->
+                NetworkClient.topics.getTopicsUpdates(page, params.loadSize)
+            }
+        }
+    ).flow
+        .flowOn(Dispatchers.IO)
+        .map(PagingData<Topic>::toAnimeContent)
+        .cachedIn(viewModelScope)
+        .retryWhen { _, attempt -> attempt <= 3 }
+}
