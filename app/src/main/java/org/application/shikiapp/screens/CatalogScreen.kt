@@ -1,5 +1,9 @@
 package org.application.shikiapp.screens
 
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -11,7 +15,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
@@ -21,10 +24,8 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Check
@@ -35,10 +36,10 @@ import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedFilterChip
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Label
@@ -76,22 +77,14 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.zIndex
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
-import androidx.paging.PagingData
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import com.apollographql.apollo.api.Operation
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import org.application.AnimeListQuery.Data.Anime
-import org.application.CharacterListQuery.Data.Character
-import org.application.MangaListQuery.Data.Manga
-import org.application.PeopleQuery.Data.Person
 import org.application.fragment.GenresF
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_catalog
@@ -108,31 +101,26 @@ import org.application.shikiapp.R.string.text_season
 import org.application.shikiapp.R.string.text_sorting
 import org.application.shikiapp.R.string.text_start_year
 import org.application.shikiapp.R.string.text_status
+import org.application.shikiapp.events.DrawerEvent
+import org.application.shikiapp.events.FilterEvent
+import org.application.shikiapp.events.FilterEvent.SetDuration
+import org.application.shikiapp.events.FilterEvent.SetGenre
+import org.application.shikiapp.events.FilterEvent.SetKind
+import org.application.shikiapp.events.FilterEvent.SetOrder
+import org.application.shikiapp.events.FilterEvent.SetRating
+import org.application.shikiapp.events.FilterEvent.SetRole
+import org.application.shikiapp.events.FilterEvent.SetScore
+import org.application.shikiapp.events.FilterEvent.SetSeason
+import org.application.shikiapp.events.FilterEvent.SetSeasonS
+import org.application.shikiapp.events.FilterEvent.SetSeasonYF
+import org.application.shikiapp.events.FilterEvent.SetSeasonYS
+import org.application.shikiapp.events.FilterEvent.SetStatus
+import org.application.shikiapp.events.FilterEvent.SetTitle
 import org.application.shikiapp.models.data.LinkedType
 import org.application.shikiapp.models.states.CatalogState
-import org.application.shikiapp.models.viewModels.AnimeListViewModel
-import org.application.shikiapp.models.viewModels.CatalogFilters
+import org.application.shikiapp.models.states.FiltersState
+import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CatalogViewModel
-import org.application.shikiapp.models.viewModels.CatalogViewModel.DrawerEvent.Clear
-import org.application.shikiapp.models.viewModels.CatalogViewModel.DrawerEvent.Click
-import org.application.shikiapp.models.viewModels.CharacterListViewModel
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetDuration
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetGenre
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetKind
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetOrder
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetRating
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetRole
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetScore
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeason
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeasonS
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeasonYF
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetSeasonYS
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetStatus
-import org.application.shikiapp.models.viewModels.FiltersViewModel.FilterEvent.SetTitle
-import org.application.shikiapp.models.viewModels.MangaListViewModel
-import org.application.shikiapp.models.viewModels.PeopleViewModel
-import org.application.shikiapp.models.viewModels.RanobeListViewModel
 import org.application.shikiapp.utils.DURATIONS
 import org.application.shikiapp.utils.KINDS_A
 import org.application.shikiapp.utils.KINDS_M
@@ -151,24 +139,34 @@ import org.application.shikiapp.utils.enums.CatalogItems.PEOPLE
 import org.application.shikiapp.utils.enums.CatalogItems.RANOBE
 import org.application.shikiapp.utils.enums.ListView
 import org.application.shikiapp.utils.enums.PeopleFilterItems
+import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CatalogScreen(onNavigate: (Screen) -> Unit) {
+fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit) {
     val model = viewModel<CatalogViewModel>()
     val state by model.state.collectAsStateWithLifecycle()
+    val catalogList = model.list.collectAsLazyPagingItems()
+    val filters by model.currentFilters.collectAsStateWithLifecycle()
+    val genres by model.genres.collectAsStateWithLifecycle()
 
     val focus = LocalFocusManager.current
 
     LaunchedEffect(Unit) {
         model.event.collectLatest {
             when (it) {
-                Clear -> focus.clearFocus()
-                Click -> if (state.drawerState.isOpen) state.drawerState.close()
+                DrawerEvent.Clear -> focus.clearFocus()
+                DrawerEvent.Click -> if (state.drawerState.isOpen) state.drawerState.close()
                 else state.drawerState.open()
                 null -> Unit
             }
+        }
+    }
+
+    LaunchedEffect(Unit) {
+        model.navEvent.collectLatest {
+            if (it) model.onEvent(SetStatus("ongoing"))
         }
     }
 
@@ -205,7 +203,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
                     title = {
                         TextField(
                             value = state.search,
-                            onValueChange = model::setSearch,
+                            onValueChange = { model.onEvent(SetTitle(it)) },
                             modifier = Modifier.fillMaxWidth(),
                             placeholder = { Text(stringResource(text_search)) },
                             singleLine = true,
@@ -239,105 +237,92 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
             }
         ) { values ->
             CatalogList(
+                list = catalogList,
                 state = state,
                 paddingValues = values,
-                onNavigate = onNavigate,
-                hide = model::hideFilters
+                onNavigate = onNavigate
             )
+
+            DialogFilters(
+                genres = genres,
+                filters = filters,
+                visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
+                event = model::onEvent,
+                refresh = catalogList::refresh,
+                hide = model::hideFilters,
+                type = when (state.menu) {
+                    RANOBE -> LinkedType.RANOBE
+                    MANGA -> LinkedType.MANGA
+                    ANIME -> LinkedType.ANIME
+                    else -> null
+                }
+            )
+
+            if (state.showFiltersP) {
+                DialogFiltersP(filters.roles, model::onEvent, model::hideFilters)
+            }
+
+            LaunchedEffect(state.showFiltersA, state.showFiltersM, state.showFiltersR) {
+                if (state.showFiltersA || state.showFiltersM || state.showFiltersR) visibility.hide()
+                else visibility.show()
+            }
         }
     }
 }
 
 // ============================================= Lists =============================================
 
-@Suppress("UNCHECKED_CAST")
 @Composable
 private fun CatalogList(
+    list: LazyPagingItems<Content>,
     state: CatalogState,
     paddingValues: PaddingValues,
-    onNavigate: (Screen) -> Unit,
-    hide: () -> Unit
-) {
-    val model = when (state.menu) {
-        ANIME -> viewModel<AnimeListViewModel>()
-        MANGA -> viewModel<MangaListViewModel>()
-        RANOBE -> viewModel<RanobeListViewModel>()
-        CHARACTERS -> viewModel<CharacterListViewModel>()
-        PEOPLE -> viewModel<PeopleViewModel>()
-    }
-    val list = (model.list as Flow<PagingData<Operation.Data>>).collectAsLazyPagingItems()
-    val filters by model.filters.collectAsStateWithLifecycle()
-    val genres by model.genres.collectAsStateWithLifecycle()
-
-    LaunchedEffect(state.search) { model.onEvent(SetTitle(state.search)) }
-
-    if (state.showFiltersA || state.showFiltersM || state.showFiltersR) DialogFilters(
-        genres = genres,
-        filters = filters,
-        event = model::onEvent,
-        refresh = list::refresh,
-        hide = hide,
-        type = when (model) {
-            is RanobeListViewModel -> LinkedType.RANOBE
-            is MangaListViewModel -> LinkedType.MANGA
-            is AnimeListViewModel -> LinkedType.ANIME
-            else -> null
-        }
-    )
-    else if (state.showFiltersP) DialogFiltersP(hide, model::onEvent, filters.roles)
-
-    when (list.loadState.refresh) {
-        LoadState.Loading -> LoadingScreen()
-        is LoadState.Error -> ErrorScreen(list::retry)
-        is LoadState.NotLoading -> if (Preferences.listView == ListView.COLUMN)
-            LazyColumn(
-                contentPadding = paddingValues,
-                state = when (state.menu) {
-                    ANIME -> state.listA
-                    MANGA -> state.listM
-                    RANOBE -> state.listR
-                    CHARACTERS -> state.listC
-                    PEOPLE -> state.listP
-                }
-            ) {
-                when (state.menu) {
-                    ANIME -> animeList(list as LazyPagingItems<Anime>, onNavigate)
-                    MANGA -> mangaList(list as LazyPagingItems<Manga>, onNavigate)
-                    RANOBE -> mangaList(list as LazyPagingItems<Manga>, onNavigate)
-                    CHARACTERS -> characterList(list as LazyPagingItems<Character>, onNavigate)
-                    PEOPLE -> peopleList(list as LazyPagingItems<Person>, onNavigate)
-                }
-                if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (list.loadState.hasError) item { ErrorScreen(list::retry) }
-            }
-        else LazyVerticalGrid(
-            columns = GridCells.FixedSize(116.dp),
-            contentPadding = PaddingValues(0.dp, paddingValues.calculateTopPadding().plus(8.dp)),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalArrangement = spacedBy(4.dp),
-            state = when (state.menu) {
-                ANIME -> state.gridA
-                MANGA -> state.gridM
-                RANOBE -> state.gridR
-                CHARACTERS -> state.gridC
-                PEOPLE -> state.gridP
-            }
+    onNavigate: (Screen) -> Unit
+) = when (list.loadState.refresh) {
+    LoadState.Loading -> LoadingScreen()
+    is LoadState.Error -> ErrorScreen(list::retry)
+    is LoadState.NotLoading -> if (Preferences.listView == ListView.COLUMN)
+        LazyColumn(
+            contentPadding = paddingValues,
+            state = state.listStates.getValue(state.menu)
         ) {
-            when (state.menu) {
-                ANIME -> animeList(list as LazyPagingItems<Anime>, onNavigate)
-                MANGA -> mangaList(list as LazyPagingItems<Manga>, onNavigate)
-                RANOBE -> mangaList(list as LazyPagingItems<Manga>, onNavigate)
-                CHARACTERS -> characterList(list as LazyPagingItems<Character>, onNavigate)
-                PEOPLE -> peopleList(list as LazyPagingItems<Person>, onNavigate)
+            contentList(list) {
+                onNavigate(
+                    when (state.menu) {
+                        ANIME -> Screen.Anime(it)
+                        MANGA, RANOBE -> Screen.Manga(it)
+                        CHARACTERS -> Screen.Character(it)
+                        PEOPLE -> Screen.Person(it.toLong())
+                    }
+                )
             }
-            if (list.loadState.append == LoadState.Loading)
-                item(
-                    span = { GridItemSpan(maxLineSpan) }
-                ) {
-                    LoadingScreen()
-                }
+            if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
             if (list.loadState.hasError) item { ErrorScreen(list::retry) }
         }
+    else LazyVerticalGrid(
+        columns = GridCells.FixedSize(116.dp),
+        contentPadding = PaddingValues(0.dp, paddingValues.calculateTopPadding().plus(8.dp)),
+        horizontalArrangement = Arrangement.SpaceAround,
+        verticalArrangement = spacedBy(4.dp),
+        state = state.gridStates.getValue(state.menu)
+    ) {
+        contentList(list) {
+            onNavigate(
+                when (state.menu) {
+                    ANIME -> Screen.Anime(it)
+                    MANGA, RANOBE -> Screen.Manga(it)
+                    CHARACTERS -> Screen.Character(it)
+                    PEOPLE -> Screen.Person(it.toLong())
+                }
+            )
+        }
+        if (list.loadState.append == LoadState.Loading)
+            item(
+                span = { GridItemSpan(maxLineSpan) }
+            ) {
+                LoadingScreen()
+            }
+        if (list.loadState.hasError) item { ErrorScreen(list::retry) }
     }
 }
 
@@ -347,14 +332,20 @@ private fun CatalogList(
 @OptIn(ExperimentalMaterial3Api::class)
 private fun DialogFilters(
     genres: List<GenresF>,
-    filters: CatalogFilters,
+    filters: FiltersState,
+    visible: Boolean,
     type: LinkedType?,
     event: (FilterEvent) -> Unit,
     refresh: () -> Unit,
     hide: () -> Unit
-) = Dialog(hide, DialogProperties(usePlatformDefaultWidth = false)) {
+) = AnimatedVisibility(
+    modifier = Modifier.zIndex(10f),
+    visible = visible,
+    enter = scaleIn(),
+    exit = scaleOut()
+) {
+    BackHandler(onBack = hide)
     Scaffold(
-        modifier = Modifier.safeDrawingPadding(),
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(text_filters)) },
@@ -369,47 +360,34 @@ private fun DialogFilters(
             )
         }
     ) { values ->
-        Column(
+        LazyColumn(
             verticalArrangement = spacedBy(16.dp),
-            modifier = Modifier
-                .padding(8.dp, values.calculateTopPadding())
-                .verticalScroll(rememberScrollState())
+            contentPadding = PaddingValues(
+                start = 8.dp,
+                top = values.calculateTopPadding(),
+                end = 8.dp,
+                bottom = 16.dp
+            )
         ) {
-            Sorting(event, filters.orderName)
-            Status(event, filters.status, type)
-            Kind(event, filters.kind, type)
-            Season(event, filters.seasonYS, filters.seasonYF, filters.seasonS)
-            Score(event, filters.score)
+            item { Sorting(event, filters.orderName) }
+            item { Status(event, filters.status, type) }
+            item { Kind(event, filters.kind, type) }
+            item { Season(filters.seasonYS, filters.seasonYF, filters.seasonS, event) }
+            item { Score(event, filters.score) }
             if (type == LinkedType.ANIME) {
-                Duration(event, filters.duration)
-                Rating(event, filters.rating)
+                item { Duration(event, filters.duration) }
+                item { Rating(event, filters.rating) }
             }
-            Genres(event, genres, filters.genres)
+            item { Genres(event, genres, filters.genres) }
         }
-
-//        LazyColumn(
-//            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-//            verticalArrangement = spacedBy(16.dp)
-//        ) {
-//            item { Sorting(event, filters.orderName) }
-//            item { Status(event, filters.status, type) }
-//            item { Kind(event, filters.kind, type) }
-//            item { Season(event, filters.seasonYS, filters.seasonYF, filters.seasonS) }
-//            item { Score(event, filters.score) }
-//            if (type == LinkedType.ANIME) {
-//                item { Duration(event, filters.duration) }
-//                item { Rating(event, filters.rating) }
-//            }
-//            item { Genres(event, genres, filters.genres) }
-//        }
     }
 }
 
 @Composable
 private fun DialogFiltersP(
-    hide: () -> Unit,
+    roles: List<PeopleFilterItems>,
     event: (FilterEvent) -> Unit,
-    roles: List<PeopleFilterItems>
+    hide: () -> Unit
 ) = AlertDialog(
     onDismissRequest = hide,
     confirmButton = {},
@@ -451,7 +429,8 @@ private fun Sorting(event: (FilterEvent) -> Unit, orderName: String) {
     ParagraphTitle(stringResource(text_sorting))
     ExposedDropdownMenuBox(
         expanded = flag,
-        onExpandedChange = { flag = it }
+        onExpandedChange = { flag = it },
+        modifier = Modifier.padding(top = 8.dp)
     ) {
         OutlinedTextField(
             value = orderName,
@@ -511,14 +490,15 @@ private fun Status(event: (FilterEvent) -> Unit, status: List<String>, type: Lin
 @Composable
 private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: LinkedType?) {
     ParagraphTitle(stringResource(text_kind))
-    FlowRow(horizontalArrangement = spacedBy(8.dp)) {
+    FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         (when (type) {
             LinkedType.ANIME -> KINDS_A
             LinkedType.MANGA -> KINDS_M
             LinkedType.RANOBE -> KINDS_R
             else -> null
         })?.entries?.forEach { (key, value) ->
-            ElevatedFilterChip(
+            FilterChip(
+                modifier = Modifier.height(36.dp),
                 selected = key in kind,
                 onClick = { event(SetKind(key)) },
                 label = { Text(value) })
@@ -528,13 +508,13 @@ private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: LinkedT
 
 @Composable
 private fun Season(
-    event: (FilterEvent) -> Unit,
     seasonYS: String,
     seasonYF: String,
-    seasonS: List<String>
+    seasonS: List<String>,
+    event: (FilterEvent) -> Unit
 ) {
     ParagraphTitle(stringResource(text_season), Modifier.padding(bottom = 8.dp))
-    Column {
+    Column(Modifier, spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
             OutlinedTextField(
                 value = seasonYS,
@@ -562,7 +542,8 @@ private fun Season(
 
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
             SEASONS.entries.forEach { (key, value) ->
-                ElevatedFilterChip(
+                FilterChip(
+                    modifier = Modifier.height(36.dp),
                     selected = key in seasonS,
                     onClick = { event(SetSeasonS(key)); event(SetSeason) },
                     label = { Text(value) })
@@ -632,9 +613,10 @@ private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
 @Composable
 private fun Rating(event: (FilterEvent) -> Unit, rating: List<String>) {
     ParagraphTitle(stringResource(text_rating))
-    FlowRow(horizontalArrangement = spacedBy(8.dp)) {
+    FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         RATINGS.entries.forEach { (key, value) ->
-            ElevatedFilterChip(
+            FilterChip(
+                modifier = Modifier.height(36.dp),
                 selected = key in rating,
                 onClick = { event(SetRating(key)) },
                 label = { Text(value) })
@@ -646,10 +628,11 @@ private fun Rating(event: (FilterEvent) -> Unit, rating: List<String>) {
 @Composable
 private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genres: List<String>) {
     ParagraphTitle(stringResource(text_genres))
-    FlowRow(Modifier, spacedBy(8.dp)) {
+    FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         allGenres.forEach { genre ->
             key(genre.id) {
-                ElevatedFilterChip(
+                FilterChip(
+                    modifier = Modifier.height(36.dp),
                     selected = genre.id in genres,
                     onClick = { event(SetGenre(genre.id)) },
                     label = { Text(genre.russian) }
@@ -661,134 +644,35 @@ private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genre
 
 // ========================================== Extensions ===========================================
 
-private fun LazyListScope.animeList(list: LazyPagingItems<Anime>, onNavigate: (Screen) -> Unit) =
+private fun LazyListScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
     items(
         count = list.itemCount,
-        key = { it }
+        key = { list.peek(it)?.id ?: it }
     ) { index ->
         list[index]?.let {
             CatalogListItem(
-                title = it.russian ?: it.name,
-                kind = it.kind?.rawValue,
+                title = it.title,
+                kind = it.kind,
                 modifier = Modifier.animateItem(),
                 season = it.season,
-                image = it.poster?.mainUrl,
+                image = it.poster,
                 isBig = true,
-                click = { onNavigate(Screen.Anime(it.id)) }
+                click = { onNavigate(it.id) }
             )
         }
     }
 
-private fun LazyListScope.mangaList(list: LazyPagingItems<Manga>, onNavigate: (Screen) -> Unit) =
+private fun LazyGridScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
     items(
         count = list.itemCount,
-        key = { it }
-    ) { index ->
-        list[index]?.let {
-            CatalogListItem(
-                title = it.russian ?: it.name,
-                kind = it.kind?.rawValue,
-                modifier = Modifier.animateItem(),
-                season = null,
-                image = it.poster?.mainUrl,
-                isBig = true,
-                click = { onNavigate(Screen.Manga(it.id)) }
-            )
-        }
-    }
-
-private fun LazyListScope.characterList(list: LazyPagingItems<Character>, onNavigate: (Screen) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { it }
-    ) { index ->
-        list[index]?.let {
-            CatalogListItem(
-                title = it.russian ?: it.name,
-                kind = null,
-                modifier = Modifier.animateItem(),
-                season = null,
-                image = it.poster?.mainUrl,
-                isBig = false,
-                click = { onNavigate(Screen.Character(it.id)) }
-            )
-        }
-    }
-
-private fun LazyListScope.peopleList(list: LazyPagingItems<Person>, onNavigate: (Screen) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { it }
-    ) { index ->
-        list[index]?.let {
-            CatalogListItem(
-                title = it.russian ?: it.name,
-                kind = null,
-                modifier = Modifier.animateItem(),
-                season = null,
-                image = it.poster?.mainUrl,
-                isBig = false,
-                click = { onNavigate(Screen.Person(it.id.toLong())) }
-            )
-        }
-    }
-
-private fun LazyGridScope.animeList(list: LazyPagingItems<Anime>, onNavigate: (Screen) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { it }
+        key = { list.peek(it)?.id ?: it }
     ) { index ->
         list[index]?.let {
             CatalogGridItem(
-                title = it.russian ?: it.name,
-                image = it.poster?.mainUrl,
+                title = it.title,
+                image = it.poster,
                 modifier = Modifier.animateItem(),
-                click = { onNavigate(Screen.Anime(it.id)) }
-            )
-        }
-    }
-
-private fun LazyGridScope.mangaList(list: LazyPagingItems<Manga>, onNavigate: (Screen) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { it }
-    ) { index ->
-        list[index]?.let {
-            CatalogGridItem(
-                title = it.russian ?: it.name,
-                image = it.poster?.mainUrl,
-                modifier = Modifier.animateItem(),
-                click = { onNavigate(Screen.Manga(it.id)) }
-            )
-        }
-    }
-
-private fun LazyGridScope.characterList(list: LazyPagingItems<Character>, onNavigate: (Screen) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { it }
-    ) { index ->
-        list[index]?.let {
-            CatalogGridItem(
-                title = it.russian ?: it.name,
-                image = it.poster?.mainUrl,
-                modifier = Modifier.animateItem(),
-                click = { onNavigate(Screen.Character(it.id)) }
-            )
-        }
-    }
-
-private fun LazyGridScope.peopleList(list: LazyPagingItems<Person>, onNavigate: (Screen) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { it }
-    ) { index ->
-        list[index]?.let {
-            CatalogGridItem(
-                title = it.russian ?: it.name,
-                image = it.poster?.mainUrl,
-                modifier = Modifier.animateItem(),
-                click = { onNavigate(Screen.Person(it.id.toLong())) }
+                click = { onNavigate(it.id) }
             )
         }
     }

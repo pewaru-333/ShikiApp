@@ -14,15 +14,7 @@ data class CatalogState(
     val showFiltersM: Boolean = false,
     val showFiltersR: Boolean = false,
     val showFiltersP: Boolean = false,
-    val listA: LazyListState = LazyListState(),
-    val listM: LazyListState = LazyListState(),
-    val listR: LazyListState = LazyListState(),
-    val listC: LazyListState = LazyListState(),
-    val listP: LazyListState = LazyListState(),
-    val gridA: LazyGridState = LazyGridState(),
-    val gridM: LazyGridState = LazyGridState(),
-    val gridR: LazyGridState = LazyGridState(),
-    val gridC: LazyGridState = LazyGridState(),
-    val gridP: LazyGridState = LazyGridState(),
+    val listStates: Map<CatalogItems, LazyListState> = CatalogItems.entries.associateWith { LazyListState() },
+    val gridStates: Map<CatalogItems, LazyGridState> = CatalogItems.entries.associateWith { LazyGridState() },
     val drawerState: DrawerState = DrawerState(DrawerValue.Closed)
 )
