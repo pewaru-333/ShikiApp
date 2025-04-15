@@ -50,7 +50,9 @@ import kotlinx.coroutines.withContext
 import org.application.shikiapp.utils.BLANK
 
 @Composable
-fun HtmlCommentBody(text: String, context: Context = LocalContext.current) {
+fun HtmlCommentBody(text: String) {
+    val context = LocalContext.current
+
     val linkColor = Color.Blue
 
     var string by remember { mutableStateOf(AnnotatedString(BLANK)) }
