@@ -4,7 +4,7 @@ import kotlinx.serialization.Serializable
 
 sealed interface Screen {
     @Serializable
-    object Catalog : Screen
+    data class Catalog(val showOngoing: Boolean = false) : Screen
 
     @Serializable
     object News : Screen
