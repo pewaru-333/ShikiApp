@@ -2,10 +2,13 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import org.application.PeopleQuery
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Person
 import org.application.shikiapp.models.data.Roles
 import org.application.shikiapp.models.ui.CharacterMain
+import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.LINKED_KIND
 import org.application.shikiapp.utils.getBirthday
 import org.application.shikiapp.utils.getDeathday
@@ -36,4 +39,12 @@ fun Person.mapper(comments: Flow<PagingData<Comment>>) = org.application.shikiap
         producer -> LINKED_KIND[3]
         else -> LINKED_KIND[4]
     }
+)
+
+fun PeopleQuery.Data.Person.mapper() = Content(
+    id = id,
+    title = russian.orEmpty().ifEmpty(::name),
+    kind = BLANK,
+    season = BLANK,
+    poster = poster?.mainUrl
 )

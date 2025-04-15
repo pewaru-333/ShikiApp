@@ -1,17 +1,23 @@
 package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
+import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
+import org.application.AnimeAiringQuery
+import org.application.AnimeListQuery
 import org.application.AnimeQuery
 import org.application.AnimeStatsQuery
 import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
+import org.application.shikiapp.models.data.Topic
 import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.ui.CharacterMain
 import org.application.shikiapp.models.ui.PersonMain
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Similar
+import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.models.ui.list.ShortContent
 import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ROLES_RUSSIAN
@@ -20,6 +26,7 @@ import org.application.shikiapp.utils.getFull
 import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getRating
+import org.application.shikiapp.utils.getSeason
 import org.application.shikiapp.utils.getStatusA
 import org.application.shikiapp.utils.getStudio
 
@@ -98,3 +105,27 @@ fun AnimeQuery.Data.Anime.mapper(
     stats = stats,
     userRate = userRate
 )
+
+fun AnimeListQuery.Data.Anime.mapper() = Content(
+    id = id,
+    title = russian.orEmpty().ifEmpty(::name),
+    kind = getKind(kind?.rawValue),
+    season = getSeason(season, kind?.rawValue),
+    poster = poster?.mainUrl
+)
+
+fun AnimeAiringQuery.Data.Anime.mapper() = ShortContent(
+    id = id,
+    title = russian.orEmpty().ifEmpty(::name),
+    poster = poster?.originalUrl
+)
+
+fun PagingData<Topic>.toAnimeContent() = map {
+    Content(
+        id = it.linked.id.toString(),
+        title = it.linked.russian.orEmpty().ifEmpty(it.linked::name),
+        kind = getKind(it.linked.kind),
+        season = getSeason(it.linked.releasedOn, it.linked.kind),
+        poster = getImage(it.linked.image.original)
+    )
+}

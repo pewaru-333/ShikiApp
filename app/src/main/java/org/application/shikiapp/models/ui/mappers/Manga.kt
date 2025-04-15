@@ -2,6 +2,7 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import org.application.MangaListQuery
 import org.application.MangaQuery
 import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_ranobe
@@ -13,6 +14,7 @@ import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.ui.PersonMain
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Similar
+import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ROLES_RUSSIAN
@@ -20,6 +22,7 @@ import org.application.shikiapp.utils.STATUSES_M
 import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getKind
 import org.application.shikiapp.utils.getPublisher
+import org.application.shikiapp.utils.getSeason
 import org.application.shikiapp.utils.getStatusM
 import org.application.type.MangaKindEnum.light_novel
 import org.application.type.MangaKindEnum.novel
@@ -95,4 +98,12 @@ fun MangaQuery.Data.Manga.mapper(
     statusesStats = statusesStats,
     comments = comments,
     userRate = userRate
+)
+
+fun MangaListQuery.Data.Manga.mapper() = Content(
+    id = id,
+    title = russian.orEmpty().ifEmpty(::name),
+    kind = getKind(kind?.rawValue),
+    season = getSeason(airedOn, kind?.rawValue),
+    poster = poster?.mainUrl
 )
