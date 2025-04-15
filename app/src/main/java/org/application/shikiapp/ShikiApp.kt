@@ -19,6 +19,7 @@ class ShikiApp : Application(), ImageLoaderFactory {
     override fun newImageLoader() = ImageLoader(this).newBuilder()
         .error(R.drawable.vector_bad)
         .fallback(R.drawable.vector_bad)
+        .crossfade(200)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .memoryCache {
             MemoryCache.Builder(this)
