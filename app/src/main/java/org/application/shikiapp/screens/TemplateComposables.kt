@@ -166,7 +166,6 @@ import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.Favourites
-import org.application.shikiapp.models.data.History
 import org.application.shikiapp.models.data.ShortInfo
 import org.application.shikiapp.models.data.Stats
 import org.application.shikiapp.models.data.User
@@ -197,8 +196,6 @@ import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.enums.FavouriteItems
 import org.application.shikiapp.utils.enums.ProfileMenus
 import org.application.shikiapp.utils.getImage
-import org.application.shikiapp.utils.getKind
-import org.application.shikiapp.utils.getSeason
 import org.application.shikiapp.utils.getWatchStatus
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -270,16 +267,16 @@ fun UserBriefItem(user: User) = ListItem(
 @Composable
 fun CatalogListItem(
     title: String,
-    kind: String?,
+    kind: String,
     modifier: Modifier = Modifier,
-    season: Any?,
+    season: String,
     image: String?,
     isBig: Boolean,
     click: () -> Unit
 ) = ListItem(
     modifier = modifier.clickable(onClick = click),
-    headlineContent = kind?.let { { Text(getKind(it)) } } ?: {},
-    supportingContent = season?.let { { Text(getSeason(it, kind)) } } ?: { if (isBig) Text(BLANK) },
+    headlineContent = { Text(kind) },
+    supportingContent = season.let { { Text(it) } } ?: { if (isBig) Text(BLANK) },
     overlineContent = {
         Text(
             text = title,
@@ -530,25 +527,26 @@ fun OneLineImage(name: String, link: String?, modifier: Modifier = Modifier) = L
 )
 
 @Composable
-fun HistoryItem(note: History, onNavigate: (Screen) -> Unit) =
+fun HistoryItem(note: org.application.shikiapp.models.ui.History, onNavigate: (Screen) -> Unit) =
     ListItem(
-        trailingContent = { Text(convertDate(note.createdAt)) },
-        supportingContent = { Text(fromHtml(note.description)) },
+        trailingContent = { Text(note.date) },
+        supportingContent = { Text(note.description) },
         modifier = Modifier.clickable {
-            note.target?.let {
-                if (it.kind == LINKED_TYPE[1].lowercase()) onNavigate(Screen.Manga(it.id.toString()))
-                else onNavigate(Screen.Anime(it.id.toString()))
+            note.kind?.let {
+                if (it == LINKED_TYPE[1].lowercase()) onNavigate(Screen.Manga(note.id))
+                else onNavigate(Screen.Anime(note.id))
             }
         },
         headlineContent = {
-            note.target?.let {
-                Text(text = it.name, maxLines = 3, overflow = TextOverflow.Ellipsis)
-            }
+            Text(
+                text = note.title,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
+            )
         },
         leadingContent = {
             AsyncImage(
-                model = note.target?.let { getImage(it.image.original) }
-                    ?: R.drawable.vector_website,
+                model = note.image,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
@@ -1366,7 +1364,7 @@ fun DialogFavourites(
 fun DialogHistory(
     hide: () -> Unit,
     visible: Boolean,
-    history: LazyPagingItems<History>,
+    history: LazyPagingItems<org.application.shikiapp.models.ui.History>,
     onNavigate: (Screen) -> Unit
 ) = AnimatedVisibility(
     visible = visible,
