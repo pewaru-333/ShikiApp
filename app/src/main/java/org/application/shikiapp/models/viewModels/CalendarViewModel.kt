@@ -15,23 +15,23 @@ import org.application.shikiapp.models.data.Topic
 import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
 import org.application.shikiapp.models.ui.mappers.toAnimeContent
-import org.application.shikiapp.network.Response
 import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.network.paging.CommonPaging
+import org.application.shikiapp.network.response.Response
 
 class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, CalendarEvent>() {
     override fun initState() = AnimeCalendarState()
 
     override fun loadData() {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             emit(Response.Loading)
 
             try {
-                val trending = ApolloClient.getTrending()
+                val trending = asyncLoad { ApolloClient.getTrending() }
                 val topicsUpdates = getTopicsUpdates()
 
-                emit(Response.Success(AnimeCalendar(trending, topicsUpdates)))
+                emit(Response.Success(AnimeCalendar(trending.await(), topicsUpdates)))
             } catch (e: Throwable) {
                 e.printStackTrace()
                 emit(Response.Error(e))

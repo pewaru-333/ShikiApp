@@ -9,10 +9,10 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.Response
 import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.client.NetworkClient
-import org.application.shikiapp.utils.LINKED_TYPE
+import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Character, CharacterState, CharacterDetailEvent>(){
@@ -25,11 +25,12 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
             emit(Response.Loading)
 
             try {
-                val character = NetworkClient.content.getCharacter(id)
-                val image = ApolloClient.getCharacter(id)
-                val comments = getComments(character.topicId)
+                val character = asyncLoad { NetworkClient.content.getCharacter(id) }
+                val characterLoaded = character.await()
+                val image = asyncLoad { ApolloClient.getCharacter(id) }
+                val comments = getComments(characterLoaded.topicId)
 
-                emit(Response.Success(character.mapper(image, comments)))
+                emit(Response.Success(characterLoaded.mapper(image.await(), comments)))
             } catch (e: Throwable) {
                 emit(Response.Error(e))
             }
@@ -45,7 +46,11 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
 
             is ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
 
-            is CharacterDetailEvent.ToggleFavourite -> toggleFavourite(id, LINKED_TYPE[4], event.favoured)
+            is CharacterDetailEvent.ToggleFavourite -> toggleFavourite(
+                id = id,
+                type = LinkedType.CHARACTER,
+                favoured = event.favoured
+            )
         }
     }
 }

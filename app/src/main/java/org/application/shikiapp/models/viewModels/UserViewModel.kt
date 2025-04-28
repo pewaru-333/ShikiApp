@@ -17,7 +17,7 @@ import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.ui.History
 import org.application.shikiapp.models.ui.User
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.Response
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.utils.navigation.Screen
@@ -26,7 +26,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
     open val userId: Long
         get() = saved.toRoute<Screen.User>().id
 
-    val friends = Pager(
+    protected val friends = Pager(
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),
         pagingSourceFactory = {
             CommonPaging<UserBasic>(UserBasic::id) { page, params ->
@@ -37,7 +37,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         .cachedIn(viewModelScope)
         .retryWhen { _, attempt -> attempt <= 5 }
 
-    val history = Pager(
+    protected val history = Pager(
         config = PagingConfig(pageSize = 20, enablePlaceholders = false),
         pagingSourceFactory = {
             CommonPaging<History>(History::id) { page, params ->
@@ -49,6 +49,11 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         .cachedIn(viewModelScope)
         .retryWhen { _, attempt -> attempt <= 5 }
 
+    protected val user = asyncLoad { NetworkClient.user.getUser(userId) }
+    protected val clubs = asyncLoad { NetworkClient.user.getClubs(userId) }
+    protected val favourites = asyncLoad { NetworkClient.user.getFavourites(userId) }
+    protected val comments = getComments(userId, "User")
+
     override fun initState() = UserState()
 
     override fun loadData() {
@@ -56,12 +61,18 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             emit(Response.Loading)
 
             try {
-                val user = NetworkClient.user.getUser(userId)
-                val clubs = NetworkClient.user.getClubs(userId)
-                val comments = getComments(user.id, "User")
-                val favourites = NetworkClient.user.getFavourites(userId)
-
-                emit(Response.Success(User(user, clubs, comments, friends, history, favourites)))
+                emit(
+                    Response.Success(
+                        User(
+                            user = user.await(),
+                            clubs = clubs.await(),
+                            comments = comments,
+                            friends = friends,
+                            history = history,
+                            favourites = favourites.await()
+                        )
+                    )
+                )
             } catch (e: Throwable) {
                 emit(Response.Error(e))
             }

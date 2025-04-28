@@ -6,17 +6,16 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.AnimeDetailEvent
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.Response
 import org.application.shikiapp.network.client.ApolloClient
 import org.application.shikiapp.network.client.NetworkClient
-import org.application.shikiapp.utils.LINKED_TYPE
+import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, AnimeState, AnimeDetailEvent>() {
@@ -29,14 +28,25 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
             emit(Response.Loading)
 
             try {
-                val anime = ApolloClient.getAnime(animeId)
-                val similar = NetworkClient.anime.getSimilar(animeId)
-                val links = NetworkClient.anime.getLinks(animeId)
-                val comments = getComments(anime.topic?.id?.toLong())
-                val stats = ApolloClient.getAnimeStats(animeId)
+                val anime = asyncLoad { ApolloClient.getAnime(animeId) }
+                val animeLoaded = anime.await()
+                val similar = asyncLoad { NetworkClient.anime.getSimilar(animeId) }
+                val links = asyncLoad { NetworkClient.anime.getLinks(animeId) }
+                val stats = asyncLoad { ApolloClient.getAnimeStats(animeId) }
                 val favoured = NetworkClient.anime.getAnime(animeId).favoured
+                val comments = getComments(animeLoaded.topic?.id?.toLong())
 
-                emit(Response.Success(anime.mapper(similar, links, stats, comments, favoured)))
+                emit(
+                    Response.Success(
+                        animeLoaded.mapper(
+                            similar = similar.await(),
+                            links = links.await(),
+                            stats = stats.await(),
+                            comments = comments,
+                            favoured = favoured
+                        )
+                    )
+                )
             } catch (e: Exception) {
                 emit(Response.Error(e))
             }
@@ -52,7 +62,6 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
                         showSheet = !it.showSheet
                     )
                 }
-                delay(300)
                 loadData()
             }
 
@@ -70,7 +79,7 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
             AnimeDetailEvent.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
             AnimeDetailEvent.ShowScreenshots -> updateState { it.copy(showScreenshots = !it.showScreenshots) }
             AnimeDetailEvent.ShowVideo -> updateState { it.copy(showVideo = !it.showVideo) }
-            AnimeDetailEvent.ShowRate -> updateState {
+            AnimeDetailEvent.ShowRate, ContentDetailEvent.ShowRate -> updateState {
                 it.copy(
                     showRate = !it.showRate,
                     showSheet = !it.showSheet
@@ -101,7 +110,11 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
 
             is AnimeDetailEvent.SetScreenshot -> updateState { it.copy(screenshot = event.index) }
 
-            is AnimeDetailEvent.ToggleFavourite -> toggleFavourite(animeId, LINKED_TYPE[0], event.favoured)
+            is AnimeDetailEvent.ToggleFavourite -> toggleFavourite(
+                id = animeId,
+                type = LinkedType.ANIME,
+                favoured = event.favoured
+            )
         }
     }
 }

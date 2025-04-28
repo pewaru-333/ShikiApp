@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.models.ui.User
-import org.application.shikiapp.network.LoginResponse
+import org.application.shikiapp.network.response.LoginResponse
 import org.application.shikiapp.network.client.NetworkClient
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
@@ -34,12 +34,18 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
             emit(LoginResponse.Logging)
 
             try {
-                val user = NetworkClient.user.getUser(Preferences.getUserId())
-                val clubs = NetworkClient.user.getClubs(user.id)
-                val comments = getComments(user.id)
-                val favourites = NetworkClient.user.getFavourites(user.id)
-
-                emit(LoginResponse.Logged(User(user, clubs, comments, friends, history, favourites)))
+                emit(
+                    LoginResponse.Logged(
+                        User(
+                            user = user.await(),
+                            clubs = clubs.await(),
+                            comments = comments,
+                            friends = friends,
+                            history = history,
+                            favourites = favourites.await()
+                        )
+                    )
+                )
             } catch (e: Throwable) {
                 when (e) {
                     is UnknownHostException -> emit(LoginResponse.NetworkError)

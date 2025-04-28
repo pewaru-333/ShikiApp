@@ -12,9 +12,9 @@ import org.application.shikiapp.events.PersonDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.Response
 import org.application.shikiapp.network.client.NetworkClient
-import org.application.shikiapp.utils.LINKED_TYPE
+import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, PersonState, PersonDetailEvent>() {
@@ -27,10 +27,11 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
             emit(Response.Loading)
 
             try {
-                val person = NetworkClient.content.getPerson(id)
-                val comments = getComments(person.topicId)
+                val person = asyncLoad { NetworkClient.content.getPerson(id) }
+                val personLoaded = person.await()
+                val comments = getComments(personLoaded.topicId)
 
-                emit(Response.Success(person.mapper(comments)))
+                emit(Response.Success(personLoaded.mapper(comments)))
             } catch (e: Throwable) {
                 emit(Response.Error(e))
             }
@@ -42,7 +43,12 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
             is PersonDetailEvent.ShowRoles -> updateState { it.copy(showRoles = !it.showRoles) }
             is PersonDetailEvent.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
 
-            is PersonDetailEvent.ToggleFavourite -> toggleFavourite(id, LINKED_TYPE[3], event.favoured, event.kind)
+            is PersonDetailEvent.ToggleFavourite -> toggleFavourite(
+                id = id,
+                type = LinkedType.PERSON,
+                favoured = event.favoured,
+                kind = event.kind
+            )
 
             is ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
             is ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
