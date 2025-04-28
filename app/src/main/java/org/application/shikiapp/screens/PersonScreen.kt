@@ -43,7 +43,7 @@ import org.application.shikiapp.events.PersonDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.viewModels.PersonViewModel
-import org.application.shikiapp.network.Response
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.navigation.Screen
 

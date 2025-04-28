@@ -32,7 +32,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import org.application.shikiapp.R.string.text_login
 import org.application.shikiapp.models.viewModels.ProfileViewModel
-import org.application.shikiapp.network.LoginResponse
+import org.application.shikiapp.network.response.LoginResponse
 import org.application.shikiapp.network.client.AUTH_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
