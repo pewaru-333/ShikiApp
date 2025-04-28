@@ -7,6 +7,7 @@ import org.application.AnimeAiringQuery
 import org.application.AnimeListQuery
 import org.application.AnimeQuery
 import org.application.AnimeStatsQuery
+import org.application.shikiapp.R
 import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
@@ -21,13 +22,13 @@ import org.application.shikiapp.models.ui.list.ShortContent
 import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ROLES_RUSSIAN
-import org.application.shikiapp.utils.STATUSES_A
+import org.application.shikiapp.utils.enums.Kind
+import org.application.shikiapp.utils.enums.Rating
+import org.application.shikiapp.utils.enums.Status
+import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.getFull
 import org.application.shikiapp.utils.getImage
-import org.application.shikiapp.utils.getKind
-import org.application.shikiapp.utils.getRating
 import org.application.shikiapp.utils.getSeason
-import org.application.shikiapp.utils.getStatusA
 import org.application.shikiapp.utils.getStudio
 
 fun AnimeQuery.Data.Anime.mapper(
@@ -39,18 +40,18 @@ fun AnimeQuery.Data.Anime.mapper(
 ) = Anime(
     id = id,
     title = russian?.let { "$it / $name" } ?: name,
-    poster = poster?.originalUrl,
-    description = fromHtml(descriptionHtml).toString(),
-    status = getStatusA(status?.rawValue),
-    kind = getKind(kind?.rawValue),
-    episodes = when (status?.rawValue) {
-        STATUSES_A.keys.elementAt(1) -> "$episodesAired / ${getFull(episodes)}"
-        STATUSES_A.keys.elementAt(2) -> "$episodes / $episodes"
+    poster = poster?.originalUrl ?: BLANK,
+    description = fromHtml(descriptionHtml),
+    status = Enum.safeValueOf<Status>(status?.rawValue).animeTitle ?: R.string.text_unknown,
+    kind = Enum.safeValueOf<Kind>(kind?.rawValue).title,
+    episodes = when (status?.rawValue?.uppercase()) {
+        Status.ONGOING.name -> "$episodesAired / ${getFull(episodes)}"
+        Status.RELEASED.name -> "$episodes / $episodes"
         else -> "$episodesAired / $episodes"
     },
     studio = getStudio(studios),
     score = score.toString(),
-    rating = getRating(rating?.rawValue),
+    rating = Enum.safeValueOf<Rating>(rating?.rawValue).title,
     genres = genres,
     related = related?.map {
         Related(
@@ -58,7 +59,7 @@ fun AnimeQuery.Data.Anime.mapper(
             mangaId = it.manga?.id,
             title = it.anime?.russian ?: it.anime?.name ?: it.manga?.russian ?: it.manga?.name
             ?: BLANK,
-            poster = it.anime?.poster?.originalUrl ?: it.manga?.poster?.originalUrl,
+            poster = it.anime?.poster?.originalUrl ?: it.manga?.poster?.originalUrl ?: BLANK,
             relationText = it.relationText
         )
     } ?: emptyList(),
@@ -66,28 +67,28 @@ fun AnimeQuery.Data.Anime.mapper(
         CharacterMain(
             id = it.character.id,
             name = it.character.russian ?: it.character.name,
-            poster = it.character.poster?.originalUrl
+            poster = it.character.poster?.originalUrl ?: BLANK
         )
     } ?: emptyList(),
     charactersAll = characterRoles?.map {
         CharacterMain(
             id = it.character.id,
             name = it.character.russian ?: it.character.name,
-            poster = it.character.poster?.originalUrl
+            poster = it.character.poster?.originalUrl ?: BLANK
         )
     } ?: emptyList(),
     personAll = personRoles?.map {
         PersonMain(
             id = it.person.id.toLong(),
             name = it.person.russian ?: it.person.name,
-            poster = it.person.poster?.originalUrl
+            poster = it.person.poster?.originalUrl ?: BLANK
         )
     } ?: emptyList(),
     personMain = personRoles?.filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }?.map {
         PersonMain(
             id = it.person.id.toLong(),
             name = it.person.russian ?: it.person.name,
-            poster = it.person.poster?.originalUrl
+            poster = it.person.poster?.originalUrl ?: BLANK
         )
     } ?: emptyList(),
     favoured = favoured,
@@ -109,9 +110,9 @@ fun AnimeQuery.Data.Anime.mapper(
 fun AnimeListQuery.Data.Anime.mapper() = Content(
     id = id,
     title = russian.orEmpty().ifEmpty(::name),
-    kind = getKind(kind?.rawValue),
+    kind = Enum.safeValueOf<Kind>(kind?.rawValue).title,
     season = getSeason(season, kind?.rawValue),
-    poster = poster?.mainUrl
+    poster = poster?.mainUrl ?: BLANK
 )
 
 fun AnimeAiringQuery.Data.Anime.mapper() = ShortContent(
@@ -124,7 +125,7 @@ fun PagingData<Topic>.toAnimeContent() = map {
     Content(
         id = it.linked.id.toString(),
         title = it.linked.russian.orEmpty().ifEmpty(it.linked::name),
-        kind = getKind(it.linked.kind),
+        kind = Enum.safeValueOf<Kind>(it.linked.kind).title,
         season = getSeason(it.linked.releasedOn, it.linked.kind),
         poster = getImage(it.linked.image.original)
     )
