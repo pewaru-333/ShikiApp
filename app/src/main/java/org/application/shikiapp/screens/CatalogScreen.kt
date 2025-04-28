@@ -86,6 +86,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
 import org.application.fragment.GenresF
+import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_catalog
 import org.application.shikiapp.R.string.text_close
@@ -116,29 +117,26 @@ import org.application.shikiapp.events.FilterEvent.SetSeasonYF
 import org.application.shikiapp.events.FilterEvent.SetSeasonYS
 import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetTitle
-import org.application.shikiapp.models.data.LinkedType
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CatalogViewModel
-import org.application.shikiapp.utils.DURATIONS
-import org.application.shikiapp.utils.KINDS_A
-import org.application.shikiapp.utils.KINDS_M
-import org.application.shikiapp.utils.KINDS_R
-import org.application.shikiapp.utils.ORDERS
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.RATINGS
-import org.application.shikiapp.utils.SEASONS
-import org.application.shikiapp.utils.STATUSES_A
-import org.application.shikiapp.utils.STATUSES_M
 import org.application.shikiapp.utils.enums.CatalogItems
 import org.application.shikiapp.utils.enums.CatalogItems.ANIME
 import org.application.shikiapp.utils.enums.CatalogItems.CHARACTERS
 import org.application.shikiapp.utils.enums.CatalogItems.MANGA
 import org.application.shikiapp.utils.enums.CatalogItems.PEOPLE
 import org.application.shikiapp.utils.enums.CatalogItems.RANOBE
+import org.application.shikiapp.utils.enums.Duration
+import org.application.shikiapp.utils.enums.Kind
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.ListView
+import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.enums.PeopleFilterItems
+import org.application.shikiapp.utils.enums.Rating
+import org.application.shikiapp.utils.enums.Season
+import org.application.shikiapp.utils.enums.Status
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -369,7 +367,7 @@ private fun DialogFilters(
                 bottom = 16.dp
             )
         ) {
-            item { Sorting(event, filters.orderName) }
+            item { Sorting(event, filters.order) }
             item { Status(event, filters.status, type) }
             item { Kind(event, filters.kind, type) }
             item { Season(filters.seasonYS, filters.seasonYF, filters.seasonS, event) }
@@ -423,7 +421,7 @@ private fun DialogFiltersP(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Sorting(event: (FilterEvent) -> Unit, orderName: String) {
+private fun Sorting(event: (FilterEvent) -> Unit, order: Order) {
     var flag by remember { mutableStateOf(false) }
 
     ParagraphTitle(stringResource(text_sorting))
@@ -433,7 +431,7 @@ private fun Sorting(event: (FilterEvent) -> Unit, orderName: String) {
         modifier = Modifier.padding(top = 8.dp)
     ) {
         OutlinedTextField(
-            value = orderName,
+            value = stringResource(order.title),
             onValueChange = {},
             readOnly = true,
             singleLine = true,
@@ -447,13 +445,13 @@ private fun Sorting(event: (FilterEvent) -> Unit, orderName: String) {
             expanded = flag,
             onDismissRequest = { flag = false }
         ) {
-            ORDERS.entries.forEach { entry ->
+            Order.entries.forEach { entry ->
                 DropdownMenuItem(
                     onClick = { event(SetOrder(entry)); flag = false },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     text = {
                         Text(
-                            text = entry.value,
+                            text = stringResource(entry.title),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
@@ -467,20 +465,26 @@ private fun Sorting(event: (FilterEvent) -> Unit, orderName: String) {
 private fun Status(event: (FilterEvent) -> Unit, status: List<String>, type: LinkedType?) {
     ParagraphTitle(stringResource(text_status))
     Column {
-        (if (type == LinkedType.ANIME) STATUSES_A else STATUSES_M).entries.forEach { (key, value) ->
+        Status.entries.filter { type in it.types }.forEach { entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
                     .toggleable(
-                        value = key in status,
-                        onValueChange = { event(SetStatus(key)) },
+                        value = entry.name.lowercase() in status,
+                        onValueChange = { event(SetStatus(entry.name.lowercase())) },
                         role = Role.Checkbox
                     )
             ) {
-                Checkbox(key in status, null)
-                Text(value, Modifier.padding(start = 16.dp))
+                Checkbox(entry.name.lowercase() in status, null)
+                Text(
+                    modifier = Modifier.padding(start = 16.dp),
+                    text = stringResource(
+                        if (type == LinkedType.ANIME) entry.animeTitle ?: R.string.text_unknown
+                        else entry.mangaTitle
+                    )
+                )
             }
         }
     }
@@ -491,17 +495,12 @@ private fun Status(event: (FilterEvent) -> Unit, status: List<String>, type: Lin
 private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: LinkedType?) {
     ParagraphTitle(stringResource(text_kind))
     FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
-        (when (type) {
-            LinkedType.ANIME -> KINDS_A
-            LinkedType.MANGA -> KINDS_M
-            LinkedType.RANOBE -> KINDS_R
-            else -> null
-        })?.entries?.forEach { (key, value) ->
+        Kind.entries.filter { it.linkedType == type }.forEach {
             FilterChip(
                 modifier = Modifier.height(36.dp),
-                selected = key in kind,
-                onClick = { event(SetKind(key)) },
-                label = { Text(value) })
+                selected = it.name.lowercase() in kind,
+                onClick = { event(SetKind(it.name.lowercase())) },
+                label = { Text(stringResource(it.title)) })
         }
     }
 }
@@ -541,12 +540,12 @@ private fun Season(
         }
 
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-            SEASONS.entries.forEach { (key, value) ->
+            Season.entries.forEach {
                 FilterChip(
                     modifier = Modifier.height(36.dp),
-                    selected = key in seasonS,
-                    onClick = { event(SetSeasonS(key)); event(SetSeason) },
-                    label = { Text(value) })
+                    selected = it.name.lowercase() in seasonS,
+                    onClick = { event(SetSeasonS(it.name.lowercase())); event(SetSeason) },
+                    label = { Text(stringResource(it.title)) })
             }
         }
     }
@@ -590,20 +589,20 @@ private fun Score(event: (FilterEvent) -> Unit, score: Float) {
 private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
     ParagraphTitle(stringResource(text_episode_duration))
     Column {
-        DURATIONS.entries.forEach { (key, value) ->
+        Duration.entries.forEach { entry ->
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp)
                     .toggleable(
-                        value = key in duration,
-                        onValueChange = { event(SetDuration(key)) },
+                        value = entry.name.lowercase() in duration,
+                        onValueChange = { event(SetDuration(entry.name.lowercase())) },
                         role = Role.Checkbox
                     )
             ) {
-                Checkbox(key in duration, null)
-                Text(value, Modifier.padding(start = 16.dp))
+                Checkbox(entry.name.lowercase() in duration, null)
+                Text(stringResource(entry.title), Modifier.padding(start = 16.dp))
             }
         }
     }
@@ -614,12 +613,12 @@ private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
 private fun Rating(event: (FilterEvent) -> Unit, rating: List<String>) {
     ParagraphTitle(stringResource(text_rating))
     FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
-        RATINGS.entries.forEach { (key, value) ->
+        Rating.entries.forEach {
             FilterChip(
                 modifier = Modifier.height(36.dp),
-                selected = key in rating,
-                onClick = { event(SetRating(key)) },
-                label = { Text(value) })
+                selected = it.name.lowercase() in rating,
+                onClick = { event(SetRating(it.name.lowercase())) },
+                label = { Text(stringResource(it.title)) })
         }
     }
 }
@@ -656,7 +655,6 @@ private fun LazyListScope.contentList(list: LazyPagingItems<Content>, onNavigate
                 modifier = Modifier.animateItem(),
                 season = it.season,
                 image = it.poster,
-                isBig = true,
                 click = { onNavigate(it.id) }
             )
         }

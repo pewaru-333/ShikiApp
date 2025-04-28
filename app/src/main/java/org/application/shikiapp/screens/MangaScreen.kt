@@ -45,8 +45,8 @@ import org.application.shikiapp.events.MangaDetailEvent
 import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.viewModels.MangaViewModel
-import org.application.shikiapp.network.Response
-import org.application.shikiapp.utils.LINKED_TYPE
+import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
@@ -124,7 +124,7 @@ private fun MangaView(
                 }
             }
 
-            manga.description?.let {
+            manga.description.let {
                 if (it.isNotEmpty()) item { Description(it) }
             }
             manga.related.let {
@@ -199,7 +199,7 @@ private fun MangaView(
         hide = { onEvent(ContentDetailEvent.ShowStats) },
         scores = manga.scoresStats,
         stats = manga.statusesStats,
-        type = LINKED_TYPE[1]
+        type = LinkedType.MANGA
     )
 
     when {
@@ -213,7 +213,7 @@ private fun MangaView(
 
         state.showRate -> CreateRate(
             id = manga.id,
-            type = LINKED_TYPE[1],
+            type = LinkedType.MANGA,
             rateF = manga.userRate,
             reload = { onEvent(MangaDetailEvent.Reload) },
             hide = { onEvent(MangaDetailEvent.ShowRate) })
@@ -233,7 +233,7 @@ private fun ShortInfo(manga: Manga) {
     Column(Modifier.height(300.dp), SpaceBetween) {
         Column {
             Text(stringResource(text_kind), style = name)
-            Text(manga.kindString, style = info)
+            Text(stringResource(manga.kindString), style = info)
         }
         if (manga.showChapters) {
             Column {
@@ -247,7 +247,7 @@ private fun ShortInfo(manga: Manga) {
         }
         Column {
             Text(stringResource(text_status), style = name)
-            Text(manga.status, style = info)
+            Text(stringResource(manga.status), style = info)
         }
         Column {
             Text(stringResource(text_publisher), style = name)

@@ -24,7 +24,7 @@ import org.application.shikiapp.events.UserDetailEvent
 import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.ui.User
 import org.application.shikiapp.models.viewModels.UserViewModel
-import org.application.shikiapp.network.Response
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen

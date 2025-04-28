@@ -42,7 +42,7 @@ import org.application.shikiapp.events.NewsDetailEvent
 import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.viewModels.NewsDetailViewModel
-import org.application.shikiapp.network.Response
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)

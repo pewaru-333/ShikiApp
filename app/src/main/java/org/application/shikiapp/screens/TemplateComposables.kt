@@ -1,6 +1,7 @@
 package org.application.shikiapp.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.fadeIn
@@ -21,7 +22,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -112,7 +112,6 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -162,6 +161,15 @@ import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_user_rates
 import org.application.shikiapp.R.string.text_volumes
 import org.application.shikiapp.events.ContentDetailEvent
+import org.application.shikiapp.events.RateEvent
+import org.application.shikiapp.events.RateEvent.SetChapters
+import org.application.shikiapp.events.RateEvent.SetEpisodes
+import org.application.shikiapp.events.RateEvent.SetRateId
+import org.application.shikiapp.events.RateEvent.SetRewatches
+import org.application.shikiapp.events.RateEvent.SetScore
+import org.application.shikiapp.events.RateEvent.SetStatus
+import org.application.shikiapp.events.RateEvent.SetText
+import org.application.shikiapp.events.RateEvent.SetVolumes
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
@@ -176,25 +184,18 @@ import org.application.shikiapp.models.ui.PersonMain
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Similar
 import org.application.shikiapp.models.viewModels.UserRateViewModel
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetChapters
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetEpisodes
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRateId
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRewatches
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetScore
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetStatus
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetText
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetVolumes
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
-import org.application.shikiapp.utils.LINKED_TYPE
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.SCORES
-import org.application.shikiapp.utils.WATCH_STATUSES_A
-import org.application.shikiapp.utils.WATCH_STATUSES_M
+import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.enums.FavouriteItems
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.ProfileMenus
+import org.application.shikiapp.utils.enums.Score
+import org.application.shikiapp.utils.enums.WatchStatus
+import org.application.shikiapp.utils.extensions.safeEquals
+import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getWatchStatus
 import org.application.shikiapp.utils.navigation.Screen
@@ -217,8 +218,8 @@ fun ParagraphTitle(text: String, modifier: Modifier = Modifier) = Text(
 )
 
 @Composable
-fun Poster(link: String?) = AsyncImage(
-    model = if (link?.contains("https") == true) link else getImage(link),
+fun Poster(link: String) = AsyncImage(
+    model = link,
     modifier = Modifier
         .size(175.dp, 300.dp)
         .clip(MaterialTheme.shapes.medium)
@@ -229,8 +230,8 @@ fun Poster(link: String?) = AsyncImage(
 )
 
 @Composable
-fun CircleImage(link: String?) = AsyncImage(
-    model = if (link?.contains("https") == true) link else getImage(link),
+fun CircleImage(link: String) = AsyncImage(
+    model = link,
     contentDescription = null,
     modifier = Modifier
         .size(64.dp)
@@ -267,30 +268,32 @@ fun UserBriefItem(user: User) = ListItem(
 @Composable
 fun CatalogListItem(
     title: String,
-    kind: String,
+    @StringRes kind: Int,
     modifier: Modifier = Modifier,
-    season: String,
+    season: ResourceText,
     image: String?,
-    isBig: Boolean,
     click: () -> Unit
 ) = ListItem(
     modifier = modifier.clickable(onClick = click),
-    headlineContent = { Text(kind) },
-    supportingContent = season.let { { Text(it) } } ?: { if (isBig) Text(BLANK) },
+    headlineContent = { Text(stringResource(kind)) },
+    supportingContent = season.let { { Text(it.asString()) } } ,
     overlineContent = {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.W500
+            )
         )
     },
     leadingContent = {
         AsyncImage(
             model = image,
             contentDescription = null,
-            contentScale = ContentScale.FillBounds,
+            contentScale = ContentScale.Crop,
             filterQuality = FilterQuality.High,
             modifier = Modifier
-                .size(121.dp, 170.dp)
+                .size(120.dp, 180.dp)
                 .clip(MaterialTheme.shapes.medium)
                 .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
         )
@@ -300,7 +303,7 @@ fun CatalogListItem(
 @Composable
 fun CatalogGridItem(
     title: String,
-    image: String?,
+    image: String,
     modifier: Modifier,
     click: () -> Unit
 ) = Column(modifier.clickable(onClick = click)) {
@@ -330,28 +333,27 @@ fun CatalogGridItem(
 }
 
 @Composable
-fun RoundedPoster(link: String?, width: Dp = 140.dp) = AsyncImage(
-    model = if (link?.contains("https") == true) link else getImage(link),
+fun RoundedPoster(link: String) = AsyncImage(
+    model = link,
     contentDescription = null,
-    modifier = Modifier
-        .width(width)
-        .fillMaxHeight()
-        .clip(MaterialTheme.shapes.medium)
-        .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
     contentScale = ContentScale.FillBounds,
-    filterQuality = FilterQuality.High
+    filterQuality = FilterQuality.High,
+    modifier = Modifier
+        .size(120.dp, 180.dp)
+        .clip(MaterialTheme.shapes.medium)
+        .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
 )
 
 @Composable
-fun RoundedRelatedPoster(link: String?, scale: ContentScale = ContentScale.FillHeight) = AsyncImage(
-    model = if (link?.contains("https") == true) link else getImage(link),
+fun RoundedRelatedPoster(link: String) = AsyncImage(
+    model = link,
     contentDescription = null,
     modifier = Modifier
         .fillMaxWidth()
-        .height(187.dp)
+        .height(180.dp)
         .clip(MaterialTheme.shapes.medium)
         .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
-    contentScale = scale,
+    contentScale = ContentScale.Crop,
     filterQuality = FilterQuality.High,
 )
 
@@ -399,38 +401,59 @@ fun RelatedText(text: String) = Text(
 )
 
 @Composable
-fun Description(text: String?) {
-    val full = fromHtml(text).text
-    val hasSpoiler = full.contains("спойлер")
-    val main = if (hasSpoiler) full.substringBefore("спойлер") else full
-    val spoiler = if (hasSpoiler) full.substringAfter("спойлер") else BLANK
+fun Description(description: AnnotatedString) {
+    val hasSpoiler = description.text.contains("спойлер")
+    val main = if (hasSpoiler) description.text.substringBefore("спойлер") else description.text
+    val spoiler = if (hasSpoiler) description.text.substringAfter("спойлер") else BLANK
 
-    var show by remember { mutableStateOf(false) }
-    var lines by remember { mutableIntStateOf(8) }
+    var showSpoiler by remember { mutableStateOf(false) }
+    var hasOverflow by remember { mutableStateOf(false) }
+    var currentLines by remember { mutableIntStateOf(8) }
 
     Column(Modifier.animateContentSize()) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle("Описание", Modifier.padding(bottom = 4.dp))
-            IconButton(
-                onClick = { lines = if(lines == 8) Int.MAX_VALUE else 8 }
-            ) {
-                Icon(
-                    contentDescription = null,
-                    imageVector = if (lines == 8) Icons.Outlined.KeyboardArrowDown
-                    else Icons.Outlined.KeyboardArrowUp,
-                )
+            if (hasOverflow || currentLines > 8) {
+                IconButton(
+                    onClick = {
+                        currentLines = if (currentLines == 8) Int.MAX_VALUE else 8
+                    }
+                ) {
+                    Icon(
+                        contentDescription = null,
+                        imageVector = if (currentLines == 8) Icons.Outlined.KeyboardArrowDown
+                        else Icons.Outlined.KeyboardArrowUp,
+                    )
+                }
             }
         }
+
         Text(
             text = main,
-            maxLines = lines,
-            overflow = TextOverflow.Ellipsis
+            maxLines = currentLines,
+            overflow = TextOverflow.Ellipsis,
+            onTextLayout = { hasOverflow = it.hasVisualOverflow }
         )
-        if (hasSpoiler && lines != 8) Row(Modifier.clickable { show = !show }) {
-            Text("Спойлер")
-            Icon(if (show) Icons.Outlined.KeyboardArrowUp else Icons.Outlined.KeyboardArrowDown, null)
+
+        if (hasSpoiler && !hasOverflow) {
+            Column(Modifier.fillMaxWidth()) {
+                Row(Modifier.clickable { showSpoiler = !showSpoiler }) {
+                    Text("Спойлер")
+                    Icon(
+                        contentDescription = null,
+                        imageVector = if (showSpoiler) Icons.Outlined.KeyboardArrowDown
+                        else Icons.Outlined.KeyboardArrowUp,
+                    )
+                }
+                AnimatedVisibility(
+                    visible = showSpoiler,
+                    modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.onSurface)
+                ) {
+                    Text(spoiler, Modifier.padding(horizontal = 4.dp))
+                }
+            }
         }
-        if (show && lines != 8) ElevatedCard { Text(spoiler) }
+
         HorizontalDivider(Modifier.padding(top = 4.dp))
     }
 }
@@ -533,7 +556,7 @@ fun HistoryItem(note: org.application.shikiapp.models.ui.History, onNavigate: (S
         supportingContent = { Text(note.description) },
         modifier = Modifier.clickable {
             note.kind?.let {
-                if (it == LINKED_TYPE[1].lowercase()) onNavigate(Screen.Manga(note.id))
+                if (LinkedType.MANGA.safeEquals(it)) onNavigate(Screen.Manga(note.id))
                 else onNavigate(Screen.Anime(note.id))
             }
         },
@@ -931,15 +954,15 @@ fun DialogScreenshot(
 }
 
 @Composable
-fun CreateRate(id: String, type: String, rateF: UserRateF?, reload: () -> Unit, hide: () -> Unit) {
+fun CreateRate(id: String, type: LinkedType, rateF: UserRateF?, reload: () -> Unit, hide: () -> Unit) {
     val model = viewModel<UserRateViewModel>()
     val state by model.newRate.collectAsStateWithLifecycle()
     val exists by rememberSaveable { mutableStateOf(rateF != null) }
 
     rateF?.let { rate ->
         model.onEvent(SetRateId(rate.id))
-        model.onEvent(SetStatus(WATCH_STATUSES_A.entries.first { it.key == rate.status.rawValue }))
-        model.onEvent(SetScore(SCORES.entries.first { it.key == rate.score }))
+        model.onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status.rawValue), type))
+        model.onEvent(SetScore(Score.entries.first { it.score == rate.score }))
         model.onEvent(SetChapters(rate.chapters.toString()))
         model.onEvent(SetEpisodes(rate.episodes.toString()))
         model.onEvent(SetVolumes(rate.volumes.toString()))
@@ -953,11 +976,11 @@ fun CreateRate(id: String, type: String, rateF: UserRateF?, reload: () -> Unit, 
             TextButton(
                 content = { Text(stringResource(text_save)) },
                 enabled = !state.status.isNullOrEmpty(),
-                onClick = { if (exists) model.update(state.id) else model.create(id, type); reload() }
+                onClick = { if (exists) model.update(state.id, reload) else model.create(id, type, reload) }
             )
         },
         dismissButton = {
-            if (exists) TextButton({ model.delete(state.id); reload() })
+            if (exists) TextButton({ model.delete(state.id, reload) })
             { Text(stringResource(text_remove)) }
         },
         title = {
@@ -969,12 +992,14 @@ fun CreateRate(id: String, type: String, rateF: UserRateF?, reload: () -> Unit, 
         text = {
             Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
                 RateStatus(model::onEvent, state.statusName, type)
-                if (type == LINKED_TYPE[0]) RateEpisodes(model::onEvent, state.episodes)
-                if (type == LINKED_TYPE[1]) {
+                if (type == LinkedType.ANIME) {
+                    RateEpisodes(model::onEvent, state.episodes)
+                }
+                if (type == LinkedType.MANGA) {
                     RateChapters(model::onEvent, state.chapters)
                     RateVolumes(model::onEvent, state.volumes)
                 }
-                RateScore(model::onEvent, state.scoreName)
+                RateScore(model::onEvent, state.score)
                 RateRewatches(model::onEvent, state.rewatches, type)
                 RateText(model::onEvent, state.text)
             }
@@ -984,12 +1009,12 @@ fun CreateRate(id: String, type: String, rateF: UserRateF?, reload: () -> Unit, 
 
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
-fun RateStatus(event: (RateEvent) -> Unit, statusName: String, type: String) {
+fun RateStatus(event: (RateEvent) -> Unit, @StringRes statusName: Int, type: LinkedType) {
     var flag by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(flag, { flag = it }) {
         OutlinedTextField(
-            value = statusName,
+            value = stringResource(statusName),
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
@@ -1001,11 +1026,16 @@ fun RateStatus(event: (RateEvent) -> Unit, statusName: String, type: String) {
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )
         ExposedDropdownMenu(flag, { flag = false }) {
-            (if (type == LINKED_TYPE[0]) WATCH_STATUSES_A else WATCH_STATUSES_M).entries.forEach {
+            WatchStatus.entries.forEach {
                 DropdownMenuItem(
-                    text = { Text(it.value, style = MaterialTheme.typography.bodyLarge) },
-                    onClick = { event(SetStatus(it)); flag = false },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
+                    onClick = { event(SetStatus(it, type)); flag = false },
+                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                    text = {
+                        Text(
+                            text = stringResource(if (type == LinkedType.ANIME) it.titleAnime else it.titleManga),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 )
             }
         }
@@ -1014,12 +1044,12 @@ fun RateStatus(event: (RateEvent) -> Unit, statusName: String, type: String) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RateScore(event: (RateEvent) -> Unit, scoreName: String?) {
+fun RateScore(event: (RateEvent) -> Unit, score: Score?) {
     var flag by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(flag, { flag = it }) {
         OutlinedTextField(
-            value = scoreName ?: BLANK,
+            value = stringResource(score?.title ?: R.string.blank),
             onValueChange = {},
             modifier = Modifier
                 .fillMaxWidth()
@@ -1031,9 +1061,9 @@ fun RateScore(event: (RateEvent) -> Unit, scoreName: String?) {
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
         )
         ExposedDropdownMenu(flag, { flag = false }) {
-            SCORES.entries.forEach {
+            Score.entries.forEach {
                 DropdownMenuItem(
-                    text = { Text(it.value, style = MaterialTheme.typography.bodyLarge) },
+                    text = { Text(stringResource(it.title), style = MaterialTheme.typography.bodyLarge) },
                     onClick = { event(SetScore(it)); flag = false },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
                 )
@@ -1067,10 +1097,10 @@ fun RateChapters(event: (RateEvent) -> Unit, chapters: String?) = OutlinedTextFi
 )
 
 @Composable
-fun RateRewatches(event: (RateEvent) -> Unit, count: String?, type: String) = OutlinedTextField(
+fun RateRewatches(event: (RateEvent) -> Unit, count: String?, type: LinkedType) = OutlinedTextField(
     value = count ?: BLANK,
     onValueChange = { event(SetRewatches(it)) },
-    label = { Text(stringResource(if (type == LINKED_TYPE[0]) text_rewatches else text_rereadings)) },
+    label = { Text(stringResource(if (type == LinkedType.ANIME) text_rewatches else text_rereadings)) },
     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
 )
 
@@ -1115,7 +1145,7 @@ fun Scores(scores: List<ScoresF>, sum: Int = scores.sumOf { it.count }) =
     }
 
 @Composable
-fun Statuses(statuses: List<StatsF>, type: String) {
+fun Statuses(statuses: List<StatsF>, type: LinkedType) {
     val sum = statuses.sumOf { it.count }
 
     ParagraphTitle(stringResource(text_in_lists), Modifier.padding(bottom = 4.dp))
@@ -1138,7 +1168,7 @@ fun Statuses(statuses: List<StatsF>, type: String) {
                     }
                 }
                 Text(
-                    text = getWatchStatus(it.status.rawValue, type),
+                    text = stringResource(getWatchStatus(it.status.rawValue, type)),
                     modifier = Modifier.padding(start = 8.dp),
                     overflow = TextOverflow.Visible,
                     maxLines = 1,
@@ -1153,7 +1183,7 @@ fun Statuses(statuses: List<StatsF>, type: String) {
 fun Statistics(
     scores: List<ScoresF>?,
     stats: List<StatsF>?,
-    type: String,
+    type: LinkedType,
     visible: Boolean,
     hide: () -> Unit
 ) = AnimatedVisibility(
@@ -1231,10 +1261,10 @@ fun LinksSheet(
 fun UserStats(stats: Stats, id: Long, onNavigate:(Screen) -> Unit) {
     Column(Modifier.fillMaxWidth(), spacedBy(12.dp)) {
         if (stats.statuses.anime.sumOf(ShortInfo::size) > 0)
-            Stats(id, stats.statuses.anime, LINKED_TYPE[0], onNavigate)
+            Stats(id, stats.statuses.anime, LinkedType.ANIME, onNavigate)
         if (stats.statuses.manga.sumOf(ShortInfo::size) > 0) {
             HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
-            Stats(id, stats.statuses.manga, LINKED_TYPE[1], onNavigate)
+            Stats(id, stats.statuses.manga, LinkedType.MANGA, onNavigate)
         }
     }
 }
@@ -1243,7 +1273,7 @@ fun UserStats(stats: Stats, id: Long, onNavigate:(Screen) -> Unit) {
 fun Stats(
     id: Long,
     stats: List<ShortInfo>,
-    type: String,
+    type: LinkedType,
     onNavigate: (Screen) -> Unit
 ) {
     val sum = stats.sumOf { it.size }.takeIf { it != 0L } ?: 1
@@ -1252,15 +1282,12 @@ fun Stats(
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(
                 text = stringResource(
-                    if (type == LINKED_TYPE[0]) text_anime_list
+                    if (type == LinkedType.ANIME) text_anime_list
                     else text_manga_list
                 )
             )
             TextButton(
-                onClick = {
-                    if (type == LINKED_TYPE[0]) onNavigate(Screen.AnimeRates(id))
-                    else onNavigate(Screen.MangaRates(id))
-                }
+                onClick = { onNavigate(Screen.UserRates(id, type)) }
             )
             {
                 Text(stringResource(text_show_all_s))
@@ -1284,7 +1311,7 @@ fun Stats(
                     }
                 }
                 Text(
-                    text = getWatchStatus(name, type),
+                    text = stringResource(getWatchStatus(name, type)),
                     modifier = Modifier.padding(end = 4.dp),
                     overflow = TextOverflow.Visible,
                     maxLines = 1

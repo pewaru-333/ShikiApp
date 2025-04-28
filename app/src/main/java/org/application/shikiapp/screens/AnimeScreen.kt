@@ -71,10 +71,10 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.viewModels.AnimeViewModel
-import org.application.shikiapp.network.Response.Error
-import org.application.shikiapp.network.Response.Loading
-import org.application.shikiapp.network.Response.Success
-import org.application.shikiapp.utils.LINKED_TYPE
+import org.application.shikiapp.network.response.Response.Error
+import org.application.shikiapp.network.response.Response.Loading
+import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.VideoKinds
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -234,7 +234,7 @@ private fun AnimeView(
     Statistics(
         scores = anime.stats.scoresStats,
         stats = anime.stats.statusesStats,
-        type = LINKED_TYPE[0],
+        type = LinkedType.ANIME,
         visible = state.showStats,
         hide = { onEvent(ContentDetailEvent.ShowStats) },
     )
@@ -287,7 +287,7 @@ private fun AnimeView(
 
         state.showRate -> CreateRate(
             id = anime.id,
-            type = LINKED_TYPE[0],
+            type = LinkedType.ANIME,
             rateF = anime.userRate,
             reload = { onEvent(AnimeDetailEvent.Reload) },
             hide = { onEvent(AnimeDetailEvent.ShowRate) }
@@ -309,7 +309,7 @@ private fun ShortInfo(anime: Anime) {
     Column(Modifier.height(300.dp), SpaceBetween) {
         Column {
             Text(stringResource(text_kind), style = name)
-            Text(anime.kind, style = info)
+            Text(stringResource(anime.kind), style = info)
         }
         Column {
             Text(stringResource(text_episodes), style = name)
@@ -317,7 +317,7 @@ private fun ShortInfo(anime: Anime) {
         }
         Column {
             Text(stringResource(text_status), style = name)
-            Text(anime.status, style = info)
+            Text(stringResource(anime.status), style = info)
         }
         Column {
             Text(stringResource(text_studio), style = name)
@@ -335,7 +335,7 @@ private fun ShortInfo(anime: Anime) {
         }
         Column {
             Text(stringResource(text_rating), style = name)
-            Text(anime.rating, style = info)
+            Text(stringResource(anime.rating), style = info)
         }
     }
 }

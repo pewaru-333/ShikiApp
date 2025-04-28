@@ -47,7 +47,7 @@ import org.application.shikiapp.models.ui.AnimeCalendar
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.ui.list.ShortContent
 import org.application.shikiapp.models.viewModels.CalendarViewModel
-import org.application.shikiapp.network.Response
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
@@ -218,7 +218,6 @@ private fun AnimeUpdatesFull(
                         kind = anime.kind,
                         season = anime.season,
                         image = anime.poster,
-                        isBig = true,
                         click = { onNavigate(Screen.Anime(anime.id)) }
                     )
                 }

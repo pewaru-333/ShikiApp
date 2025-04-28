@@ -112,7 +112,7 @@ fun ClubScreen(
                     }
 
                     item { BriefInfo(model, state, onNavigate) }
-                    item { Description(club.descriptionHtml) }
+                    item { Description(fromHtml(club.descriptionHtml)) }
 
                     if (comments.itemCount > 0) comments(comments, onNavigate)
                 }

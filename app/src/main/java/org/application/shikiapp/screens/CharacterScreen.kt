@@ -47,15 +47,12 @@ import org.application.shikiapp.R.string.text_show_all_m
 import org.application.shikiapp.R.string.text_show_all_w
 import org.application.shikiapp.events.CharacterDetailEvent
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.models.data.BasicContent
-import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
+import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CharacterViewModel
-import org.application.shikiapp.network.Response
-import org.application.shikiapp.utils.LINKED_TYPE
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
@@ -128,6 +125,7 @@ private fun CharacterView(
             character.anime.let {
                 if (it.isNotEmpty()) item {
                     Catalog(
+                        anime = true,
                         show = { onEvent(CharacterDetailEvent.ShowAnime) },
                         list = it,
                         onNavigate = onNavigate
@@ -137,6 +135,7 @@ private fun CharacterView(
             character.manga.let {
                 if (it.isNotEmpty()) item {
                     Catalog(
+                        anime = false,
                         show = { onEvent(CharacterDetailEvent.ShowManga) },
                         list = it,
                         onNavigate = onNavigate
@@ -163,9 +162,10 @@ private fun CharacterView(
     )
 
     CatalogFull(
-        hide = { onEvent(CharacterDetailEvent.HideAll) },
         list = if (state.showAnime) character.anime else character.manga,
-        visible = state.showAnime || state.showManga,
+        isAnime = state.showAnime,
+        isVisible = state.showAnime || state.showManga,
+        hide = { onEvent(CharacterDetailEvent.HideAll) },
         onNavigate = onNavigate
     )
 
@@ -180,9 +180,9 @@ private fun CharacterView(
 @Composable
 private fun Catalog(
     show: () -> Unit,
-    list: List<BasicContent>,
+    list: List<Content>,
     onNavigate: (Screen) -> Unit,
-    anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
+    anime: Boolean
 ) = Column(verticalArrangement = spacedBy(4.dp)) {
     Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
         ParagraphTitle(stringResource(if (anime) text_anime else text_manga), Modifier.padding(bottom = 4.dp))
@@ -200,15 +200,15 @@ private fun Catalog(
                         )
                     }
             ) {
-                RoundedRelatedPoster(it.image.original)
-                RelatedText(it.russian.orEmpty().ifEmpty(it::name))
+                RoundedRelatedPoster(it.poster)
+                RelatedText(it.title)
             }
         }
     }
 }
 
 @Composable
-private fun Seyu(list: List<BasicInfo>, hide: () -> Unit, onNavigate: (Screen) -> Unit) =
+private fun Seyu(list: List<Content>, hide: () -> Unit, onNavigate: (Screen) -> Unit) =
     Column(verticalArrangement = spacedBy(8.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_seyu))
@@ -216,9 +216,9 @@ private fun Seyu(list: List<BasicInfo>, hide: () -> Unit, onNavigate: (Screen) -
         }
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
             items(list.take(3)) {
-                Column(Modifier.clickable { onNavigate(Screen.Person(it.id)) }) {
-                    CircleImage(it.image.original)
-                    TextCircleImage(it.russian.orEmpty().ifEmpty(it::name))
+                Column(Modifier.clickable { onNavigate(Screen.Person(it.id.toLong())) }) {
+                    CircleImage(it.poster)
+                    TextCircleImage(it.title)
                 }
             }
         }
@@ -227,13 +227,13 @@ private fun Seyu(list: List<BasicInfo>, hide: () -> Unit, onNavigate: (Screen) -
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CatalogFull(
+    list: List<Content>,
+    isAnime: Boolean,
+    isVisible: Boolean,
     hide: () -> Unit,
-    list: List<BasicContent>,
-    visible: Boolean,
-    onNavigate: (Screen) -> Unit,
-    anime: Boolean = list[0].url.contains(LINKED_TYPE[0], true)
+    onNavigate: (Screen) -> Unit
 ) = AnimatedVisibility(
-    visible = visible,
+    visible = isVisible,
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
@@ -241,25 +241,21 @@ private fun CatalogFull(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(if (anime) text_anime else text_manga)) },
+                title = { Text(stringResource(if (isAnime) text_anime else text_manga)) },
                 navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { values ->
-        LazyColumn(
-            contentPadding = values,
-            verticalArrangement = spacedBy(8.dp)
-        ) {
+        LazyColumn(contentPadding = values) {
             items(list) {
                 CatalogListItem(
-                    title = it.russian.orEmpty().ifEmpty(it::name),
-                    kind = it.kind.orEmpty().ifEmpty { "Не указано" },
-                    season = it.releasedOn.orEmpty().ifEmpty { "Неизвестно" },
-                    image = getImage(it.image.original),
-                    isBig = false,
+                    title = it.title,
+                    kind = it.kind,
+                    season = it.season,
+                    image = it.poster,
                     click = {
                         onNavigate(
-                            if (anime) Screen.Anime(it.id.toString())
+                            if (isAnime) Screen.Anime(it.id.toString())
                             else Screen.Manga(it.id.toString())
                         )
                     }
@@ -272,7 +268,7 @@ private fun CatalogFull(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun SeyuFull(
-    list: List<BasicInfo>,
+    list: List<Content>,
     visible: Boolean,
     hide: () -> Unit,
     onNavigate: (Screen) -> Unit
@@ -293,9 +289,9 @@ private fun SeyuFull(
         LazyColumn(contentPadding = values) {
             items(list) {
                 OneLineImage(
-                    name = it.russian.orEmpty().ifEmpty(it::name),
-                    link = it.image.original,
-                    modifier = Modifier.clickable { onNavigate(Screen.Person(it.id)) }
+                    name = it.title,
+                    link = it.poster,
+                    modifier = Modifier.clickable { onNavigate(Screen.Person(it.id.toLong())) }
                 )
             }
         }
