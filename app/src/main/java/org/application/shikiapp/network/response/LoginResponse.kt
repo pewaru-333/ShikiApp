@@ -1,4 +1,4 @@
-package org.application.shikiapp.network
+package org.application.shikiapp.network.response
 
 import org.application.shikiapp.models.ui.User
 

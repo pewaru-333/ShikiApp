@@ -1,4 +1,4 @@
-package org.application.shikiapp.network
+package org.application.shikiapp.network.response
 
 sealed interface Response<out D, out E> {
     data class Success<out D>(val data: D) : Response<D, Nothing>
