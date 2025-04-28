@@ -6,10 +6,12 @@ import com.apollographql.apollo.ApolloClient
 import com.apollographql.ktor.ktorClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -80,6 +82,16 @@ object NetworkClient {
                     decodeEnumsCaseInsensitive = true
                 }
             )
+        }
+
+        install(HttpRequestRetry) {
+            maxRetries = 3
+
+            delayMillis { 1000 }
+
+            retryIf { _, response ->
+                response.status == HttpStatusCode.TooManyRequests
+            }
         }
 
         defaultRequest {
