@@ -13,7 +13,7 @@ import org.application.MangaListQuery
 import org.application.MangaQuery
 import org.application.PeopleQuery
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.utils.ORDERS
+import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.extensions.getRandomTrending
 import org.application.shikiapp.utils.extensions.mapToResult
 import org.application.shikiapp.utils.getOngoingSeason
@@ -25,7 +25,7 @@ object ApolloClient {
     suspend fun getAnimeList(
         page: Int,
         limit: Int,
-        order: String = ORDERS.keys.elementAt(2),
+        order: String = Order.RANKED.name.lowercase(),
         kind: String?,
         status: String?,
         season: String?,
@@ -72,7 +72,7 @@ object ApolloClient {
     suspend fun getMangaList(
         page: Int,
         limit: Int,
-        order: String = ORDERS.keys.elementAt(2),
+        order: String =  Order.RANKED.name.lowercase(),
         kind: String?,
         status: String?,
         season: String?,
@@ -129,5 +129,9 @@ object ApolloClient {
     ) { it.people.map(PeopleQuery.Data.Person::mapper) }
 
     private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) =
-        NetworkClient.apollo.query(query).execute().dataOrThrow().let(mapper)
+        try {
+            NetworkClient.apollo.query(query).execute().dataOrThrow().let(mapper)
+        } catch (_: Exception) {
+            emptyList()
+        }
 }
