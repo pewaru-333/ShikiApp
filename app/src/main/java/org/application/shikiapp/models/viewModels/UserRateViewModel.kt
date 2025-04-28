@@ -1,45 +1,221 @@
 package org.application.shikiapp.models.viewModels
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.core.text.isDigitsOnly
+import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.LoadState
+import androidx.navigation.toRoute
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.onStart
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetChapters
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetEpisodes
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRateId
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetRewatches
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetScore
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetStatus
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetText
-import org.application.shikiapp.models.viewModels.UserRateViewModel.RateEvent.SetVolumes
+import org.application.shikiapp.events.RateEvent
+import org.application.shikiapp.events.RateEvent.SetChapters
+import org.application.shikiapp.events.RateEvent.SetEpisodes
+import org.application.shikiapp.events.RateEvent.SetRateId
+import org.application.shikiapp.events.RateEvent.SetRewatches
+import org.application.shikiapp.events.RateEvent.SetScore
+import org.application.shikiapp.events.RateEvent.SetStatus
+import org.application.shikiapp.events.RateEvent.SetText
+import org.application.shikiapp.events.RateEvent.SetVolumes
+import org.application.shikiapp.models.data.BaseRate
+import org.application.shikiapp.models.data.NewRate
+import org.application.shikiapp.models.states.NewRateState
+import org.application.shikiapp.models.states.RatesState
+import org.application.shikiapp.models.ui.UserRate
+import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.response.RatesResponse
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.enums.LinkedType
+import org.application.shikiapp.utils.enums.WatchStatus
+import org.application.shikiapp.utils.extensions.safeEquals
+import org.application.shikiapp.utils.navigation.Screen
 
-class UserRateViewModel : ViewModel() {
-    private val _newRate = MutableStateFlow(NewRate())
+class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
+    val args = saved.toRoute<Screen.UserRates>()
+    val type = args.type ?: LinkedType.ANIME
+    val userId = args.id ?: 0L
+    val editable = userId == Preferences.getUserId()
+
+    private val _response = MutableStateFlow<RatesResponse>(RatesResponse.Loading)
+    val response = _response.asStateFlow()
+        .onStart { loadRates() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RatesResponse.Loading)
+
+    private val _state = MutableStateFlow(RatesState())
+    val state = _state.asStateFlow()
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RatesState())
+
+    private val _newRate = MutableStateFlow(NewRateState())
     val newRate = _newRate.asStateFlow()
 
-    var show by mutableStateOf(false)
-        private set
+    private val _increment = Channel<Boolean>()
+    val increment = _increment.receiveAsFlow()
+
+    val rates = combine(_response, _state) { response, state ->
+        if (response !is RatesResponse.Success) emptyList()
+        else response.rates
+            .map<BaseRate, UserRate>(BaseRate::mapper)
+            .filter { state.tab.safeEquals(it.status) }
+            .sortedBy(UserRate::title)
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(5000L),
+        initialValue = emptyList()
+    )
+
+    fun loadRates() {
+        viewModelScope.launch {
+            _response.emit(RatesResponse.Loading)
+
+            try {
+                val rates = mutableListOf<BaseRate>()
+                var page = 0
+                var moreDataAvailable = true
+
+                while (moreDataAvailable) {
+                    val calls = (1..5).map {
+                        viewModelScope.async(Dispatchers.IO) {
+                            try {
+                                if (type == LinkedType.ANIME) NetworkClient.user.getAnimeRates(id = userId, page = page + it)
+                                else NetworkClient.user.getMangaRates(id = userId, page = page + it)
+                            } catch (_: Throwable) {
+                                emptyList()
+                            }
+                        }
+                    }
+
+                    val results = calls.awaitAll()
+                    rates.addAll(results.flatten())
+
+                    moreDataAvailable = results.any { it.size >= 100 }
+                    page += 5
+                }
+
+                _response.emit(RatesResponse.Success(rates.distinctBy(BaseRate::id)))
+            } catch (e: ClientRequestException) {
+                if (e.response.status.value == 403) _response.emit(RatesResponse.NoAccess)
+                else _response.emit(RatesResponse.Error)
+            }
+        }
+    }
+
+    fun setTab(status: WatchStatus) = _state.update { it.copy(tab = status) }
+    fun toggleDialog() = _state.update { it.copy(showEditRate = !it.showEditRate) }
+
+    fun create(id: String, targetType: LinkedType, reload: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                NetworkClient.rates.createRate(
+                    NewRate(
+                        userId = Preferences.getUserId(),
+                        targetId = id.toLong(),
+                        targetType = targetType.name.lowercase().replaceFirstChar(Char::uppercase),
+                        status = _newRate.value.status.toString().lowercase(),
+                        score = _newRate.value.score?.score.toString(),
+                        chapters = _newRate.value.chapters,
+                        episodes = _newRate.value.episodes,
+                        volumes = _newRate.value.volumes,
+                        rewatches = _newRate.value.rewatches,
+                        text = _newRate.value.text
+                    )
+                )
+            } catch (e: Throwable) {
+                e.printStackTrace()
+            } finally {
+                reload()
+            }
+        }
+    }
+
+    fun update(rateId: String, reload: () -> Unit = ::loadRates) {
+        viewModelScope.launch {
+            toggleDialog()
+            _response.emit(RatesResponse.Loading)
+
+            try {
+                val request = NetworkClient.rates.updateRate(
+                    id = rateId.toLong(),
+                    newRate = NewRate(
+                        userId = Preferences.getUserId(),
+                        status = _newRate.value.status.toString().lowercase(),
+                        score = _newRate.value.score?.score.toString(),
+                        chapters = _newRate.value.chapters,
+                        episodes = _newRate.value.episodes,
+                        volumes = _newRate.value.volumes,
+                        rewatches = _newRate.value.rewatches,
+                        text = _newRate.value.text
+                    )
+                )
+
+                _increment.trySend(request.status == HttpStatusCode.OK)
+            } catch (_: Throwable) {
+                _increment.trySend(false)
+            } finally {
+                reload()
+            }
+        }
+    }
+
+    fun delete(rateId: String, reload: () -> Unit) {
+        viewModelScope.launch {
+            try {
+                val request = NetworkClient.rates.delete(rateId.toLong())
+
+                _increment.trySend(request.status == HttpStatusCode.NoContent)
+                _newRate.emit(NewRateState())
+            } catch (_: Throwable) {
+                _increment.trySend(false)
+            } finally {
+                reload()
+            }
+        }
+    }
+
+    fun increment(rateId: Long) {
+        viewModelScope.launch {
+            _response.emit(RatesResponse.Loading)
+
+            try {
+                val request = NetworkClient.rates.increment(rateId)
+
+                _increment.send(request.status == HttpStatusCode.Created)
+            } catch (_: Exception) {
+                _increment.send(false)
+            } finally {
+                loadRates()
+            }
+        }
+    }
 
     fun onEvent(event: RateEvent) = when (event) {
         is SetRateId -> _newRate.update { it.copy(id = event.rateId) }
 
         is SetStatus -> _newRate.update {
-            it.copy(status = event.status.key, statusName = event.status.value)
+            it.copy(
+                status = event.status.name,
+                statusName = if (event.type == LinkedType.ANIME) event.status.titleAnime
+                else event.status.titleManga
+            )
         }
 
         is SetScore -> _newRate.update {
-            it.copy(score = event.score.key, scoreName = event.score.value)
+            it.copy(score = event.score)
         }
+
         is SetChapters -> _newRate.update { it.copy(chapters = event.chapters) }
 
         is SetEpisodes -> event.episodes.let { episodes ->
@@ -56,109 +232,4 @@ class UserRateViewModel : ViewModel() {
 
         is SetText -> _newRate.update { it.copy(text = event.text ?: BLANK) }
     }
-
-    fun create(id: String, targetType: String) {
-        viewModelScope.launch {
-            try {
-                NetworkClient.rates.createRate(
-                    org.application.shikiapp.models.data.NewRate(
-                        userId = Preferences.getUserId(),
-                        targetId = id.toLong(),
-                        targetType = targetType,
-                        status = _newRate.value.status,
-                        score = _newRate.value.score.toString(),
-                        chapters = _newRate.value.chapters,
-                        episodes = _newRate.value.episodes,
-                        volumes = _newRate.value.volumes,
-                        rewatches = _newRate.value.rewatches,
-                        text = _newRate.value.text
-                    )
-                )
-            } catch (e: Throwable) {
-                LoadState.Error(e)
-            }
-        }
-    }
-
-    fun update(rateId: String) {
-        viewModelScope.launch {
-            try {
-                NetworkClient.rates.updateRate(
-                    id = rateId.toLong(),
-                    newRate = org.application.shikiapp.models.data.NewRate(
-                        userId = Preferences.getUserId(),
-                        status = _newRate.value.status,
-                        score = _newRate.value.score.toString(),
-                        chapters = _newRate.value.chapters,
-                        episodes = _newRate.value.episodes,
-                        volumes = _newRate.value.volumes,
-                        rewatches = _newRate.value.rewatches,
-                        text = _newRate.value.text
-                    )
-                )
-            } catch (e: Throwable) {
-                LoadState.Error(e)
-            }
-        }
-    }
-
-    fun delete(rateId: String) {
-        viewModelScope.launch {
-            try {
-                NetworkClient.rates.delete(rateId.toLong())
-                _newRate.emit(NewRate())
-            } catch (e: Throwable) {
-                LoadState.Error(e)
-            }
-        }
-    }
-
-    fun increment(rateId: Long) {
-        viewModelScope.launch {
-            try {
-                NetworkClient.rates.increment(rateId)
-            } catch (e: Throwable) {
-                LoadState.Error(e)
-            }
-        }
-    }
-
-    fun reload(anime: AnimeRatesViewModel? = null, manga: MangaRatesViewModel? = null) {
-        viewModelScope.launch {
-            close()
-            anime?.reload()
-            manga?.reload()
-        }
-    }
-
-    fun open() { show = true  }
-
-    fun close() { show = false }
-
-    sealed interface RateEvent {
-        data class SetRateId(val rateId: String) : RateEvent
-        data class SetStatus(val status: Map.Entry<String, String>) : RateEvent
-        data class SetScore(val score: Map.Entry<Int, String>) : RateEvent
-        data class SetChapters(val chapters: String?) : RateEvent
-        data class SetEpisodes(val episodes: String?) : RateEvent
-        data class SetVolumes(val volumes: String?) : RateEvent
-        data class SetRewatches(val rewatches: String?) : RateEvent
-        data class SetText(val text: String?) : RateEvent
-    }
 }
-
-data class NewRate(
-    val id: String = BLANK,
-    val userId: Long = Preferences.getUserId(),
-    val targetId: Long = 0L,
-    val targetType: String = BLANK,
-    val status: String? = null,
-    val statusName: String = BLANK,
-    val score: Int? = null,
-    val scoreName: String? = null,
-    val chapters: String? = null,
-    val episodes: String? = null,
-    val volumes: String? = null,
-    val rewatches: String? = null,
-    val text: String? = null
-)
