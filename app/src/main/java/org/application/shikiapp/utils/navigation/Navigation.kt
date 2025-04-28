@@ -26,19 +26,18 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navDeepLink
-import org.application.shikiapp.screens.AnimeRatesScreen
 import org.application.shikiapp.screens.AnimeScreen
 import org.application.shikiapp.screens.CalendarScreen
 import org.application.shikiapp.screens.CatalogScreen
 import org.application.shikiapp.screens.CharacterScreen
 import org.application.shikiapp.screens.ClubScreen
-import org.application.shikiapp.screens.MangaRatesScreen
 import org.application.shikiapp.screens.MangaScreen
 import org.application.shikiapp.screens.NewsDetail
 import org.application.shikiapp.screens.NewsScreen
 import org.application.shikiapp.screens.PersonScreen
 import org.application.shikiapp.screens.ProfileScreen
 import org.application.shikiapp.screens.SettingsScreen
+import org.application.shikiapp.screens.UserRates
 import org.application.shikiapp.screens.UserScreen
 import org.application.shikiapp.utils.BASE_PATH
 import org.application.shikiapp.utils.REDIRECT_URI
@@ -46,13 +45,11 @@ import org.application.shikiapp.utils.enums.Menu
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.isCurrentRoute
 import org.application.shikiapp.utils.navigation.Screen.Anime
-import org.application.shikiapp.utils.navigation.Screen.AnimeRates
 import org.application.shikiapp.utils.navigation.Screen.Calendar
 import org.application.shikiapp.utils.navigation.Screen.Catalog
 import org.application.shikiapp.utils.navigation.Screen.Club
 import org.application.shikiapp.utils.navigation.Screen.Login
 import org.application.shikiapp.utils.navigation.Screen.Manga
-import org.application.shikiapp.utils.navigation.Screen.MangaRates
 import org.application.shikiapp.utils.navigation.Screen.News
 import org.application.shikiapp.utils.navigation.Screen.NewsDetail
 import org.application.shikiapp.utils.navigation.Screen.Person
@@ -140,11 +137,8 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
         composable<NewsDetail> {
             NewsDetail(navigator::navigate, navigator::navigateUp)
         }
-        composable<AnimeRates> {
-            AnimeRatesScreen(navigator::navigate, navigator::navigateUp)
-        }
-        composable<MangaRates> {
-            MangaRatesScreen(navigator::navigate, navigator::navigateUp)
+        composable<Screen.UserRates> {
+            UserRates(navigator::navigate, navigator::navigateUp)
         }
     }
 }

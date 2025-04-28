@@ -1,6 +1,7 @@
 package org.application.shikiapp.utils.navigation
 
 import kotlinx.serialization.Serializable
+import org.application.shikiapp.utils.enums.LinkedType
 
 sealed interface Screen {
     @Serializable
@@ -43,8 +44,5 @@ sealed interface Screen {
     data class NewsDetail(val id: Long) : Screen
 
     @Serializable
-    data class AnimeRates(val id: Long) : Screen
-
-    @Serializable
-    data class MangaRates(val id: Long) : Screen
+    data class UserRates(val id: Long? = null, val type: LinkedType? = null) : Screen
 }
