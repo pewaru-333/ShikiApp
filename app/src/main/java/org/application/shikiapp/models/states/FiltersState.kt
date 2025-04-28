@@ -3,12 +3,11 @@ package org.application.shikiapp.models.states
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.snapshots.SnapshotStateList
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.ORDERS
+import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.enums.PeopleFilterItems
 
 data class FiltersState(
-    val order: String = ORDERS.keys.elementAt(2),
-    val orderName: String = ORDERS.values.elementAt(2),
+    val order: Order = Order.RANKED,
     val kind: SnapshotStateList<String> = mutableStateListOf(),
     val status: SnapshotStateList<String> = mutableStateListOf(),
     val seasonYS: String = BLANK,
