@@ -1,3 +1,0 @@
-— Now, instead of a series release calendar, information about popular anime ongoings is displayed.
-— Fixed an issue where filters in the catalog were applied to all types of content.
-— Fixed a bug that caused the user to be frequently "kicked out" of the account.

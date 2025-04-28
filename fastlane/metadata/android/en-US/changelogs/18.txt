@@ -1,0 +1,3 @@
+— Improved stability of the function for adding and changing content ratings.
+— Added an indication when the score changes in your list.
+— Downloading content information (anime, manga) now takes less time.
