@@ -7,7 +7,7 @@ sealed interface ContentDetailEvent {
     data object ShowSimilar : ContentDetailEvent, AnimeDetailEvent, MangaDetailEvent
     data object ShowStats : ContentDetailEvent, AnimeDetailEvent, MangaDetailEvent
     data object ShowLinks : ContentDetailEvent, AnimeDetailEvent, MangaDetailEvent
-    data object ShowRate : ContentDetailEvent
+    data object ShowRate : ContentDetailEvent, AnimeDetailEvent, MangaDetailEvent
 
     data class ToggleFavourite(val favoured: Boolean) : ContentDetailEvent
 }

@@ -1,9 +1,10 @@
 package org.application.shikiapp.events
 
+import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.enums.PeopleFilterItems
 
 sealed interface FilterEvent {
-    data class SetOrder(val order: Map.Entry<String, String>) : FilterEvent
+    data class SetOrder(val order: Order) : FilterEvent
     data class SetStatus(val status: String) : FilterEvent
     data class SetKind(val kind: String) : FilterEvent
     data class SetSeasonYS(val year: String) : FilterEvent
