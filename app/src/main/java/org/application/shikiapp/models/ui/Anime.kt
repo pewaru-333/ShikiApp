@@ -1,5 +1,7 @@
 package org.application.shikiapp.models.ui
 
+import androidx.annotation.StringRes
+import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.AnimeQuery
@@ -10,14 +12,14 @@ import org.application.shikiapp.models.data.ExternalLink
 data class Anime(
     val id: String,
     val title: String,
-    val poster: String?,
-    val description: String,
-    val status: String,
-    val kind: String,
+    val poster: String,
+    val description: AnnotatedString,
+    @StringRes val status: Int,
+    @StringRes val kind: Int,
     val episodes: String,
     val studio: String,
     val score: String,
-    val rating: String,
+    @StringRes val rating: Int,
     val favoured: Boolean,
     val genres: List<AnimeQuery.Data.Anime.Genre>?,
     val related: List<Related>,

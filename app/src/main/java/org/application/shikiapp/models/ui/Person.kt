@@ -24,5 +24,5 @@ data class Person(
 data class PersonMain(
     val id: Long,
     val name: String,
-    val poster: String?
+    val poster: String
 )

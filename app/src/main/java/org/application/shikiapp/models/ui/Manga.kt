@@ -1,6 +1,7 @@
 package org.application.shikiapp.models.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.MangaQuery
@@ -12,15 +13,15 @@ data class Manga(
     val id: String,
     val title: String,
     val kindEnum: MangaKindEnum?,
-    val kindString: String,
+    @StringRes val kindString: Int,
     @StringRes val kindTitle: Int,
     val volumes: String,
     val chapters: String,
-    val status: String,
-    val poster: String?,
+    @StringRes val status: Int,
+    val poster: String,
     val publisher: String,
     val score: String,
-    val description: String?,
+    val description: AnnotatedString,
     val favoured: Boolean,
     val showChapters: Boolean,
     val genres: List<MangaQuery.Data.Manga.Genre>?,
