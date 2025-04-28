@@ -2,6 +2,22 @@ package org.application.shikiapp.models.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import org.application.shikiapp.utils.BLANK
+
+@Serializable
+data class BaseRate(
+    @SerialName("id") val id: Long = 0L,
+    @SerialName("score") val score: Int = 10,
+    @SerialName("status") val status: String = BLANK,
+    @SerialName("text") val text: String? = null,
+    @SerialName("text_html") val textHtml: String? = null,
+    @SerialName("rewatches") val rewatches: Int = 0,
+    @SerialName("episodes") val episodes: Int? = null,
+    @SerialName("chapters") val chapters: Int? = null,
+    @SerialName("volumes") val volumes: Int? = null,
+    @SerialName("anime") val anime: AnimeBasic? = null,
+    @SerialName("manga") val manga: MangaBasic? = null
+)
 
 @Serializable
 data class UserRate(
@@ -19,31 +35,6 @@ data class UserRate(
     @SerialName("text_html") val textHtml: String?,
     @SerialName("created_at") val createdAt: String?,
     @SerialName("updated_at") val updatedAt: String?
-)
-
-@Serializable
-data class AnimeRate(
-    @SerialName("id") val id: Long,
-    @SerialName("score") val score: Int,
-    @SerialName("status") val status: String,
-    @SerialName("text") val text: String?,
-    @SerialName("episodes") val episodes: Int,
-    @SerialName("text_html") val textHtml: String?,
-    @SerialName("rewatches") val rewatches: Int,
-    @SerialName("anime") val anime: AnimeBasic,
-)
-
-@Serializable
-data class MangaRate(
-    @SerialName("id") val id: Long,
-    @SerialName("score") val score: Int,
-    @SerialName("status") val status: String,
-    @SerialName("text") val text: String?,
-    @SerialName("chapters") val chapters: Int,
-    @SerialName("volumes") val volumes: Int,
-    @SerialName("text_html") val textHtml: String?,
-    @SerialName("rewatches") val rewatches: Int,
-    @SerialName("manga") val manga: MangaBasic,
 )
 
 @Serializable
