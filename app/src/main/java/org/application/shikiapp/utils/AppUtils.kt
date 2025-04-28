@@ -14,20 +14,16 @@ import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import org.application.AnimeQuery.Data.Anime.Studio
 import org.application.MangaQuery.Data.Manga.Publisher
+import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Date
+import org.application.shikiapp.utils.enums.Kind
+import org.application.shikiapp.utils.enums.LinkedType
+import org.application.shikiapp.utils.enums.Season
+import org.application.shikiapp.utils.enums.Status
+import org.application.shikiapp.utils.enums.WatchStatus
+import org.application.shikiapp.utils.extensions.safeEquals
+import org.application.shikiapp.utils.extensions.safeValueOf
 import java.time.LocalDate
-import java.time.Month.APRIL
-import java.time.Month.AUGUST
-import java.time.Month.DECEMBER
-import java.time.Month.FEBRUARY
-import java.time.Month.JANUARY
-import java.time.Month.JULY
-import java.time.Month.JUNE
-import java.time.Month.MARCH
-import java.time.Month.MAY
-import java.time.Month.NOVEMBER
-import java.time.Month.OCTOBER
-import java.time.Month.SEPTEMBER
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.FormatStyle
@@ -97,69 +93,68 @@ fun getPoster(text: String?): String? {
 }
 
 fun getImage(link: String?) = "https://shikimori.one${link.orEmpty()}"
-fun getStatusA(status: String?) = STATUSES_A[status] ?: "Неизвестно"
-fun getStatusM(status: String?) = STATUSES_M[status] ?: "Неизвестно"
-fun getWatchStatus(status: String?, type: String) = when (type) {
-    LINKED_TYPE[0] -> WATCH_STATUSES_A[status] ?: "Неизвестно"
-    else -> WATCH_STATUSES_M[status] ?: "Неизвестно"
+fun getWatchStatus(status: String?, type: LinkedType) = if (status == null) R.string.text_unknown
+else when (type) {
+    LinkedType.ANIME -> Enum.safeValueOf<WatchStatus>(status).titleAnime
+    LinkedType.MANGA -> Enum.safeValueOf<WatchStatus>(status).titleManga
+    else -> R.string.text_unknown
 }
 
-fun getKind(kind: String?) = KINDS_A[kind] ?: KINDS_M[kind] ?: KINDS_R[kind] ?: "Неизвестно"
-fun getRating(rating: String?) = RATINGS[rating] ?: "Неизвестно"
-fun getFull(full: Int? = 0, status: String? = STATUSES_A.keys.elementAt(1)) =
-    if (status == STATUSES_A.keys.elementAt(1) && full == 0) "?" else full.toString()
+fun getFull(full: Int? = 0, status: String? = Status.ONGOING.name.lowercase()) =
+    if (Status.ONGOING.safeEquals(status) && full == 0) "?" else full.toString()
 
-fun getOngoingSeason() : String {
+fun getOngoingSeason(): String {
     val currentDate = LocalDate.now()
 
-    val currentSeason = when (currentDate.month) {
-        JANUARY, FEBRUARY, DECEMBER -> "winter"
-        MARCH, APRIL, MAY -> "spring"
-        JUNE, JULY, AUGUST -> "summer"
-        SEPTEMBER, OCTOBER, NOVEMBER -> "fall"
+    val currentSeason = Season.entries.first { currentDate.month in it.months }
+    val previousSeason = Season.entries.getOrNull(currentSeason.ordinal - 1) ?: Season.AUTUMN
+
+    val currentYear = currentDate.year
+    val previousYear = if (currentSeason == Season.WINTER) currentYear - 1 else currentYear
+
+    val (currentSeasonName, previousSeasonName) = listOf(currentSeason, previousSeason).map {
+        if (it.safeEquals("autumn")) "fall" else it.name.lowercase()
     }
 
-    val previousSeason = when(currentSeason) {
-        "winter" -> "fall"
-        "fall" -> "summer"
-        "summer" -> "spring"
-        "spring" -> "winter"
-        else -> BLANK
-    }
-
-    val previousYear = if (currentSeason == "winter") currentDate.year - 1 else currentDate.year
-
-
-    return "${currentSeason}_${currentDate.year},${previousSeason}_$previousYear"
+    return "${currentSeasonName}_$currentYear,${previousSeasonName}_$previousYear"
 }
 
 fun getSeason(text: Any?, kind: String?) = when (text) {
     is String -> when (text) {
-        "?" -> "Неизвестно"
+        "?" -> ResourceText.StringResource(R.string.text_unknown)
         else -> when {
-            kind in KINDS_M || kind in KINDS_R -> LocalDate.parse(text).year.toString()
+            Enum.safeValueOf<Kind>(kind).linkedType
+                    in listOf(LinkedType.MANGA, LinkedType.RANOBE) -> ResourceText.StaticString(LocalDate.parse(text).year.toString())
+
             text.contains("_") -> {
                 val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
                 val year = text.substringAfter("_")
-                "${SEASONS[season]} $year"
+
+                ResourceText.MultiString(
+                    listOf(
+                        ResourceText.StringResource(Enum.safeValueOf<Season>(season).title),
+                        year
+                    )
+                )
             }
 
             text.length == 10 -> {
                 val date = LocalDate.parse(text)
-                val season = when (date.month) {
-                    JANUARY, FEBRUARY, DECEMBER -> SEASONS.values.elementAt(0)
-                    MARCH, APRIL, MAY -> SEASONS.values.elementAt(1)
-                    JUNE, JULY, AUGUST -> SEASONS.values.elementAt(2)
-                    SEPTEMBER, OCTOBER, NOVEMBER -> SEASONS.values.elementAt(3)
-                }
-                "$season ${date.year}"
+                val season = Season.entries.first { date.month in it.months }
+
+                ResourceText.MultiString(
+                    listOf(
+                        ResourceText.StringResource(season.title),
+                        date.year
+                    )
+                )
             }
 
-            else -> BLANK
+            else -> ResourceText.StringResource(R.string.blank)
         }
     }
 
-    else -> BLANK
+    else -> ResourceText.StringResource(R.string.blank)
 }
 
 fun getStudio(studio: List<Studio>) = try {
@@ -174,7 +169,7 @@ fun getPublisher(publisher: List<Publisher>) = try {
     "Неизвестно"
 }
 
-fun setScore(status: List<String>, score: Float) = if (STATUSES_A.keys.elementAt(0) in status) null
+fun setScore(status: List<String>, score: Float) = if (Status.ANONS.name.lowercase() in status) null
 else score.toInt()
 
 fun Context.isDomainVerified() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) true
