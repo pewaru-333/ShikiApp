@@ -35,6 +35,95 @@
     <string name="text_ranobe">Ранобэ</string>
     <string name="text_video">Видео</string>
 
+    <!-- Статус просмотра/прочтения -->
+    <string name="status_planned">Запланировано</string>
+    <string name="status_watching_anime">Смотрю</string>
+    <string name="status_watching_manga">Читаю</string>
+    <string name="status_rewatching_anime">Пересматриваю</string>
+    <string name="status_rewatching_manga">Перечитываю</string>
+    <string name="status_completed_anime">Просмотрено</string>
+    <string name="status_completed_manga">Прочитано</string>
+    <string name="status_on_hold">Отложено</string>
+    <string name="status_dropped">Брошено</string>
+
+    <!-- Статус выхода/печати -->
+    <string name="status_anons">Анонсировано</string>
+    <string name="status_ongoing_anime">Онгоинг</string>
+    <string name="status_ongoing_manga">Сейчас издаётся</string>
+    <string name="status_released_anime">Вышло</string>
+    <string name="status_released_manga">Издано</string>
+    <string name="status_paused_manga">Приостановлено</string>
+    <string name="status_paused_discontinued">Прекращено</string>
+
+    <!-- Тип контента -->
+    <string name="kind_anime_tv">TV-сериал</string>
+    <string name="kind_anime_tv_13">Короткие</string>
+    <string name="kind_anime_tv_24">Средние</string>
+    <string name="kind_anime_tv_48">Длинные</string>
+    <string name="kind_anime_movie">Фильм</string>
+    <string name="kind_anime_ova">OVA</string>
+    <string name="kind_anime_ona">ONA</string>
+    <string name="kind_anime_special">Спецвыпуск</string>
+    <string name="kind_anime_tv_special">TV-спецвыпуск</string>
+    <string name="kind_anime_music">Клип</string>
+    <string name="kind_anime_pv">Проморолик</string>
+    <string name="kind_anime_cm">Реклама</string>
+
+    <string name="kind_manga_manga">Манга</string>
+    <string name="kind_manga_manhwa">Манхва</string>
+    <string name="kind_manga_manhua">Маньхуа</string>
+    <string name="kind_manga_one_shot">Ваншот</string>
+    <string name="kind_manga_doujin">Додзинси</string>
+
+    <string name="kind_ranobe_light_novel">Ранобэ</string>
+    <string name="kind_ranobe_novel">Новелла</string>
+
+    <!-- Возрастной рейтинг -->
+    <string name="rating_none">Без ограничений</string>
+    <string name="rating_g">G</string>
+    <string name="rating_pg">PG</string>
+    <string name="rating_pg_13">PG</string>
+    <string name="rating_r">R-17</string>
+    <string name="rating_r_plus">R+</string>
+    <string name="rating_rx">RX</string>
+
+    <!-- Порядок сортировки -->
+    <string name="order_id">По ID ↑</string>
+    <string name="order_id_desc">По ID ↓</string>
+    <string name="order_ranked">По оценке</string>
+    <string name="order_kind">По типу</string>
+    <string name="order_popularity">По популярности</string>
+    <string name="order_name">По названию</string>
+    <string name="order_aired_on">По дате выхода</string>
+    <string name="order_episodes">По эпизодам</string>
+    <string name="order_status">По статусу</string>
+    <string name="order_random">Случайно</string>
+    <string name="order_created_at">По дате создания ↑</string>
+    <string name="order_created_at_desc">По дате создания ↓</string>
+
+    <!-- Длительность эпизода -->
+    <string name="duration_S">До 10 минут</string>
+    <string name="duration_D">До 30 минут</string>
+    <string name="duration_F">Более 30 минут</string>
+
+    <!-- Оценка -->
+    <string name="score_1">1 — Хуже некуда</string>
+    <string name="score_2">2 — Ужасно</string>
+    <string name="score_3">3 — Очень плохо</string>
+    <string name="score_4">4 — Плохо</string>
+    <string name="score_5">5 — Более-менее</string>
+    <string name="score_6">6 — Нормально</string>
+    <string name="score_7">7 — Хорошо</string>
+    <string name="score_8">8 — Отлично</string>
+    <string name="score_9">9 — Великолепно</string>
+    <string name="score_10">10 — Эпик вин!</string>
+
+    <!-- Времена года -->
+    <string name="season_winter">Зима</string>
+    <string name="season_spring">Весна</string>
+    <string name="season_summer">Лето</string>
+    <string name="season_autumn">Осень</string>
+
     <!-- Фильтры -->
     <string name="text_end_year">Конечный год</string>
     <string name="text_episode_duration">Длительность эпизода</string>
@@ -94,6 +183,8 @@
     <string name="preference_theme_dark">Тёмная</string>
 
     <!-- Другое -->
+    <string name="blank" />
     <string name="text_empty">Пусто</string>
     <string name="text_login">Вход</string>
+    <string name="text_unknown">Неизвестно</string>
 </resources>
