@@ -172,7 +172,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         CatalogItems.ANIME -> ApolloClient.getAnimeList(
             page = page,
             limit = params.loadSize,
-            order = query.order,
+            order = query.order.name.lowercase(),
             kind = query.kind.joinToString(","),
             status = query.status.joinToString(","),
             season = query.season.joinToString(","),
@@ -186,7 +186,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         CatalogItems.MANGA -> ApolloClient.getMangaList(
             page = page,
             limit = params.loadSize,
-            order = query.order,
+            order = query.order.name.lowercase(),
             kind = query.kind.joinToString(","),
             status = query.status.joinToString(","),
             season = query.season.joinToString(","),
@@ -198,7 +198,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         CatalogItems.RANOBE -> ApolloClient.getMangaList(
             page = page,
             limit = params.loadSize,
-            order = query.order,
+            order = query.order.name.lowercase(),
             kind = if (query.kind.isNotEmpty()) query.kind.joinToString(",")
             else listOf(MangaKindEnum.light_novel, MangaKindEnum.novel).joinToString(","),
             status = query.status.joinToString(","),
@@ -227,7 +227,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     fun onEvent(event: FilterEvent) {
         when (event) {
             is SetOrder -> _currentFilters.update {
-                it.copy(order = event.order.key, orderName = event.order.value)
+                it.copy(order = event.order)
             }
 
             is SetStatus -> _currentFilters.update {
