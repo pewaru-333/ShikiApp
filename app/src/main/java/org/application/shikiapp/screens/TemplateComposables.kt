@@ -196,6 +196,8 @@ import org.application.shikiapp.utils.enums.Score
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
+import org.application.shikiapp.utils.extensions.substringAfter
+import org.application.shikiapp.utils.extensions.substringBefore
 import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getWatchStatus
 import org.application.shikiapp.utils.navigation.Screen
@@ -402,9 +404,9 @@ fun RelatedText(text: String) = Text(
 
 @Composable
 fun Description(description: AnnotatedString) {
-    val hasSpoiler = description.text.contains("спойлер")
-    val main = if (hasSpoiler) description.text.substringBefore("спойлер") else description.text
-    val spoiler = if (hasSpoiler) description.text.substringAfter("спойлер") else BLANK
+    val hasSpoiler = description.contains("спойлер")
+    val main = if (hasSpoiler) description.substringBefore("спойлер") else description
+    val spoiler = if (hasSpoiler) description.substringAfter("спойлер") else AnnotatedString(BLANK)
 
     var showSpoiler by remember { mutableStateOf(false) }
     var hasOverflow by remember { mutableStateOf(false) }
@@ -449,7 +451,11 @@ fun Description(description: AnnotatedString) {
                     visible = showSpoiler,
                     modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.onSurface)
                 ) {
-                    Text(spoiler, Modifier.padding(horizontal = 4.dp))
+                    Text(
+                        text = spoiler,
+                        modifier = Modifier.padding(horizontal = 4.dp),
+                        overflow = TextOverflow.Visible
+                    )
                 }
             }
         }
