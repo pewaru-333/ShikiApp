@@ -1,0 +1,2 @@
+— Added clickable links in the description of the content (anime, manga, ranobe, characters and people).
+— Fixed a bug that sometimes caused the anime list to fail to load.

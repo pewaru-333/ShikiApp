@@ -1,6 +1,6 @@
 [versions]
 apolloEngineKtor = "0.1.1"
-apolloRuntime = "4.1.1"
+apolloRuntime = "4.2.0"
 composeCoil = "2.7.0"
 composeLifecycle = "2.8.7"
 composeNavigation = "2.8.9"
