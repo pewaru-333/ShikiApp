@@ -43,7 +43,7 @@ import org.application.shikiapp.utils.BASE_PATH
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.enums.Menu
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
-import org.application.shikiapp.utils.isCurrentRoute
+import org.application.shikiapp.utils.extensions.isCurrentRoute
 import org.application.shikiapp.utils.navigation.Screen.Anime
 import org.application.shikiapp.utils.navigation.Screen.Calendar
 import org.application.shikiapp.utils.navigation.Screen.Catalog
