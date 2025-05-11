@@ -8,7 +8,7 @@ import org.application.shikiapp.utils.enums.Score
 
 data class NewRateState(
     val id: String = BLANK,
-    val userId: Long = Preferences.getUserId(),
+    val userId: Long = Preferences.userId,
     val targetId: Long = 0L,
     val targetType: String = BLANK,
     val status: String? = null,
