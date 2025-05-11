@@ -1,45 +1,52 @@
 package org.application.shikiapp.screens
 
 import android.content.Intent
-import android.os.Build
-import android.provider.Settings
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterHorizontally
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import org.application.shikiapp.R.string.text_login
+import org.application.shikiapp.R
 import org.application.shikiapp.models.viewModels.ProfileViewModel
 import org.application.shikiapp.network.response.LoginResponse
-import org.application.shikiapp.network.client.AUTH_URL
+import org.application.shikiapp.utils.AUTH_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CODE
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
-import org.application.shikiapp.utils.isDomainVerified
+import org.application.shikiapp.utils.extensions.appLinksSettings
+import org.application.shikiapp.utils.extensions.isDomainVerified
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -54,6 +61,7 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibil
         is LoginResponse.Logging -> LoadingScreen()
         is LoginResponse.NetworkError -> ErrorScreen(model::loadData)
         is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut, visibility)
+
         else -> Unit
     }
 }
@@ -62,11 +70,11 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibil
 private fun LoginScreen() {
     val context = LocalContext.current
 
-    var selected by remember { mutableStateOf(context.isDomainVerified()) }
+    var verified by remember { mutableStateOf(context.isDomainVerified()) }
 
     val launcher =
         rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            selected = context.isDomainVerified()
+            verified = context.isDomainVerified()
         }
 
     val uri = AUTH_URL.toUri()
@@ -77,35 +85,67 @@ private fun LoginScreen() {
         .appendQueryParameter("scope", BLANK)
         .build()
 
-    Column(Modifier.fillMaxSize(), spacedBy(4.dp, CenterVertically), CenterHorizontally) {
-        Button(
-            enabled = selected,
-            onClick = {
-                context.startActivity(
-                    Intent(Intent.ACTION_VIEW, uri).apply {
-                        flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                    }
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp, 8.dp)
+    ) {
+        if (!verified) {
+            Column(Modifier.align(Alignment.TopCenter), spacedBy(8.dp), CenterHorizontally) {
+                Image(
+                    painter = painterResource(R.drawable.vector_glass_tick),
+                    modifier = Modifier.size(56.dp),
+                    contentDescription = null
+                )
+                Text(
+                    text = stringResource(R.string.text_pay_attention),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.titleLarge
+                )
+                Text(
+                    text = stringResource(R.string.text_add_app_links),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodyLarge
                 )
             }
-        )
-        { Text(stringResource(text_login)) }
+        }
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S)
-            ListItem(
-                headlineContent = {},
-                supportingContent = { Text("Для поддержки входа добавьте поддерживаемые ссылки в настройках") },
-                trailingContent = {
-                    IconButton(
-                        onClick = {
-                            launcher.launch(
-                                Intent(
-                                    Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS,
-                                    "package:${context.packageName}".toUri()
-                                )
-                            )
-                        }
-                    ) { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) }
+        Column(
+            horizontalAlignment = CenterHorizontally,
+            modifier = Modifier
+                .width(240.dp)
+                .align(Alignment.Center)
+        ) {
+            if (verified) {
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = {
+                        context.startActivity(
+                            Intent(Intent.ACTION_VIEW, uri).apply {
+                                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            }
+                        )
+                    }
+                ) {
+                    Text(stringResource(R.string.text_login))
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
                 }
-            )
+
+                Text(
+                    text = stringResource(R.string.text_forward_to_browser),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            } else {
+                FilledTonalButton(
+                    onClick = {
+                        launcher.launch(context.appLinksSettings())
+                    }
+                ) {
+                    Text(stringResource(R.string.text_to_settings))
+                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                }
+            }
+        }
     }
 }
