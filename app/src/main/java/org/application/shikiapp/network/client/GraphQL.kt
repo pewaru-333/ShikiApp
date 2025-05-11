@@ -1,25 +1,25 @@
 package org.application.shikiapp.network.client
 
 import com.apollographql.apollo.api.Query
-import org.application.AnimeAiringQuery
-import org.application.AnimeGenresQuery
-import org.application.AnimeListQuery
-import org.application.AnimeQuery
-import org.application.AnimeStatsQuery
-import org.application.CharacterListQuery
-import org.application.CharacterQuery
-import org.application.MangaGenresQuery
-import org.application.MangaListQuery
-import org.application.MangaQuery
-import org.application.PeopleQuery
+import org.application.shikiapp.generated.AnimeAiringQuery
+import org.application.shikiapp.generated.AnimeGenresQuery
+import org.application.shikiapp.generated.AnimeListQuery
+import org.application.shikiapp.generated.AnimeQuery
+import org.application.shikiapp.generated.AnimeStatsQuery
+import org.application.shikiapp.generated.CharacterListQuery
+import org.application.shikiapp.generated.CharacterQuery
+import org.application.shikiapp.generated.MangaGenresQuery
+import org.application.shikiapp.generated.MangaListQuery
+import org.application.shikiapp.generated.MangaQuery
+import org.application.shikiapp.generated.PeopleQuery
+import org.application.shikiapp.generated.type.OrderEnum
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.extensions.getRandomTrending
 import org.application.shikiapp.utils.extensions.mapToResult
 import org.application.shikiapp.utils.getOngoingSeason
-import org.application.type.OrderEnum
 
-object ApolloClient {
+object GraphQL {
 
     // ============================================= Anime =============================================
     suspend fun getAnimeList(
@@ -52,19 +52,19 @@ object ApolloClient {
 
 
     suspend fun getTrending() =
-        NetworkClient.apollo.query(AnimeAiringQuery(getOngoingSeason())).execute()
+        Network.apollo.query(AnimeAiringQuery(getOngoingSeason())).execute()
             .dataOrThrow().animes
             .map(AnimeAiringQuery.Data.Anime::mapper)
             .getRandomTrending()
 
-    suspend fun getAnime(id: String) = NetworkClient.apollo.query(AnimeQuery(id)).execute()
+    suspend fun getAnime(id: String) = Network.apollo.query(AnimeQuery(id)).execute()
         .dataOrThrow().animes.first()
 
-    fun getAnimeGenres() = NetworkClient.apollo.query(AnimeGenresQuery()).toFlow()
+    fun getAnimeGenres() = Network.apollo.query(AnimeGenresQuery()).toFlow()
         .mapToResult(AnimeGenresQuery.Data::genres)
 
     suspend fun getAnimeStats(id: String) =
-        NetworkClient.apollo.query(AnimeStatsQuery(id)).execute()
+        Network.apollo.query(AnimeStatsQuery(id)).execute()
             .dataOrThrow().animes.first()
 
 // ============================================= Manga =============================================
@@ -72,7 +72,7 @@ object ApolloClient {
     suspend fun getMangaList(
         page: Int,
         limit: Int,
-        order: String =  Order.RANKED.name.lowercase(),
+        order: String = Order.RANKED.name.lowercase(),
         kind: String?,
         status: String?,
         season: String?,
@@ -93,10 +93,10 @@ object ApolloClient {
         )
     ) { it.mangas.map(MangaListQuery.Data.Manga::mapper) }
 
-    suspend fun getManga(id: String) = NetworkClient.apollo.query(MangaQuery(id)).execute()
+    suspend fun getManga(id: String) = Network.apollo.query(MangaQuery(id)).execute()
         .dataOrThrow().mangas.first()
 
-    fun getMangaGenres() = NetworkClient.apollo.query(MangaGenresQuery()).toFlow()
+    fun getMangaGenres() = Network.apollo.query(MangaGenresQuery()).toFlow()
         .mapToResult(MangaGenresQuery.Data::genres)
 
 // ============================================= Other =============================================
@@ -107,7 +107,7 @@ object ApolloClient {
         }
 
     suspend fun getCharacter(id: String) =
-        NetworkClient.apollo.query(CharacterQuery(listOf(id))).execute()
+        Network.apollo.query(CharacterQuery(listOf(id))).execute()
             .dataOrThrow().characters.first()
 
     suspend fun getPeople(
@@ -130,7 +130,7 @@ object ApolloClient {
 
     private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) =
         try {
-            NetworkClient.apollo.query(query).execute().dataOrThrow().let(mapper)
+            Network.apollo.query(query).execute().dataOrThrow().let(mapper)
         } catch (_: Exception) {
             emptyList()
         }
