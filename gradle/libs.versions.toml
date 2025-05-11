@@ -1,16 +1,17 @@
 [versions]
-apolloEngineKtor = "0.1.1"
-apolloRuntime = "4.2.0"
-composeCoil = "2.7.0"
-composeLifecycle = "2.8.7"
-composeNavigation = "2.8.9"
+apolloApi = "4.2.0"
+apolloKtor = "0.1.1"
+coilCompose = "3.1.0"
+composeLifecycle = "2.9.0"
+composeNavigation = "2.9.0"
 composePaging = "3.3.6"
 composePreferences = "1.1.1"
-gradle = "8.9.2"
+gradle = "8.10.0"
 kotlin = "2.1.20"
 kotlinxSerializationJson = "1.8.1"
-ktor = "3.1.2"
+ktor = "3.1.3"
 material3 = "1.3.2"
+zoomableImageCoil3 = "0.15.1"
 
 [libraries]
 androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "composeLifecycle" }
@@ -18,13 +19,15 @@ androidx-material3 = { group = "androidx.compose.material3", name = "material3",
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "composeNavigation" }
 androidx-paging = { group = "androidx.paging", name = "paging-compose", version.ref = "composePaging" }
 
-apollo-engine-ktor = { group = "com.apollographql.ktor", name = "apollo-engine-ktor", version.ref = "apolloEngineKtor" }
-apollo-runtime = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apolloRuntime" }
+apollo-engine-ktor = { group = "com.apollographql.ktor", name = "apollo-engine-ktor", version.ref = "apolloKtor" }
 
-coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "composeCoil" }
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coilCompose" }
+coil-network = { group = "io.coil-kt.coil3", name = "coil-network-core", version.ref = "coilCompose" }
+coil-zoomable = { group = "me.saket.telephoto", name = "zoomable-image-coil3", version.ref = "zoomableImageCoil3" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
+ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
@@ -33,6 +36,7 @@ material-preferences = { group = "me.zhanghai.compose.preference", name = "libra
 
 [bundles]
 ktor = [
+    "ktor-client-auth",
     "ktor-client-content-negotiation",
     "ktor-client-core",
     "ktor-serialization-kotlinx-json"
@@ -40,7 +44,7 @@ ktor = [
 
 [plugins]
 android = { id = "com.android.application", version.ref = "gradle" }
-apollo = { id = "com.apollographql.apollo", version.ref = "apolloRuntime" }
+apollo = { id = "com.apollographql.apollo", version.ref = "apolloApi" }
 compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

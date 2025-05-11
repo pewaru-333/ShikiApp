@@ -8,8 +8,10 @@ plugins {
 
 apollo {
     service("service") {
-        packageName.set("org.application")
+        packageName.set("org.application.shikiapp.generated")
         codegenModels.set("responseBased")
+        warnOnDeprecatedUsages = true
+        generateApolloMetadata = false
         generateOptionalOperationVariables = false
     }
 }
@@ -22,8 +24,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 19
-        versionName = "alpha-0.2.4"
+        versionCode = 20
+        versionName = "alpha-0.2.5"
     }
 
     dependenciesInfo {
@@ -44,7 +46,7 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "17"
+        jvmTarget = JavaVersion.VERSION_17.toString()
     }
     buildFeatures {
         compose = true
@@ -59,7 +61,6 @@ dependencies {
 
     // ============================== Network ==============================
     implementation(libs.apollo.engine.ktor)
-    implementation(libs.apollo.runtime)
     implementation(libs.bundles.ktor)
 
     // ============================== Navigation ==============================
@@ -68,5 +69,7 @@ dependencies {
 
     // ============================== Utilities ==============================
     implementation(libs.coil.compose)
+    implementation(libs.coil.network)
+    implementation(libs.coil.zoomable)
     implementation(libs.material.preferences)
 }
