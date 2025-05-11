@@ -9,8 +9,8 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.client.ApolloClient
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.GraphQL
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
@@ -25,9 +25,9 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
             emit(Response.Loading)
 
             try {
-                val character = asyncLoad { NetworkClient.content.getCharacter(id) }
+                val character = asyncLoad { Network.content.getCharacter(id) }
                 val characterLoaded = character.await()
-                val image = asyncLoad { ApolloClient.getCharacter(id) }
+                val image = asyncLoad { GraphQL.getCharacter(id) }
                 val comments = getComments(characterLoaded.topicId)
 
                 emit(Response.Success(characterLoaded.mapper(image.await(), comments)))
