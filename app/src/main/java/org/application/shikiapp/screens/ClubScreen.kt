@@ -46,7 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
@@ -58,7 +58,6 @@ import org.application.shikiapp.models.viewModels.Menus
 import org.application.shikiapp.models.viewModels.Response
 import org.application.shikiapp.models.viewModels.UIEvent
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -101,7 +100,7 @@ fun ClubScreen(
                             },
                             leadingContent = {
                                 AsyncImage(
-                                    model = getImage(club.logo.original),
+                                    model = club.logo.original,
                                     contentDescription = null,
                                     modifier = Modifier
                                         .size(80.dp)
@@ -129,7 +128,7 @@ private fun BriefInfo(
     onNavigate: (Screen) -> Unit
 ) {
     ParagraphTitle(stringResource(R.string.text_information), Modifier.padding(bottom = 4.dp))
-    FlowRow(Modifier, spacedBy(16.dp), spacedBy(8.dp), 2) {
+    FlowRow(Modifier, spacedBy(16.dp), spacedBy(8.dp), maxItemsInEachRow =  2) {
         Menus.entries.forEach { menu ->
             ElevatedCard(
                 onClick = {
@@ -257,7 +256,7 @@ private fun Characters(
                     characters[it]?.let { character ->
                         OneLineImage(
                             name = character.russian.orEmpty().ifEmpty(character::name),
-                            link = getImage(character.image.original),
+                            link = character.image.original,
                             modifier = Modifier.clickable { onNavigate(Screen.Character(character.id.toString())) }
                         )
                     }
