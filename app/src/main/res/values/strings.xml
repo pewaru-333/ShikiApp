@@ -16,7 +16,7 @@
     <string name="text_similar">Похожее</string>
     <string name="text_statistics">Статистика</string>
     <string name="text_studio">Студия</string>
-    <string name="text_user_rates">Оценки людей</string>
+    <string name="text_user_rates">Оценки пользователей</string>
     <string name="text_volumes">Тома</string>
 
     <!-- Каталог -->
@@ -187,4 +187,8 @@
     <string name="text_empty">Пусто</string>
     <string name="text_login">Вход</string>
     <string name="text_unknown">Неизвестно</string>
+    <string name="text_pay_attention">Обратите внимание!</string>
+    <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
+    <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
+    <string name="text_to_settings">В настройки</string>
 </resources>
