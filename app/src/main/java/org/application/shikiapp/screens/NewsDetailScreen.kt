@@ -34,7 +34,7 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.events.ContentDetailEvent
@@ -93,11 +93,9 @@ fun NewsDetailView(
             verticalArrangement = spacedBy(16.dp)
         ) {
             item {
-                AsyncImage(
+                AnimatedAsyncImage(
                     model = news.poster,
-                    contentDescription = null,
                     contentScale = ContentScale.FillWidth,
-                    filterQuality = FilterQuality.High,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(250.dp)
@@ -144,10 +142,9 @@ fun NewsDetailView(
             item {
                 LazyRow(horizontalArrangement = spacedBy(12.dp)) {
                     news.videos.let {
-                        if (it.isNotEmpty()) item {
-                            AsyncImage(
+                        if (it.size >= 2) item {
+                            AnimatedAsyncImage(
                                 model = it[1],
-                                contentDescription = null,
                                 modifier = Modifier
                                     .size(172.dp, 130.dp)
                                     .clip(MaterialTheme.shapes.small)
