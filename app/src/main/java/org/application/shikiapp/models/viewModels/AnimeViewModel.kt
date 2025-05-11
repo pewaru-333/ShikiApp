@@ -12,8 +12,8 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.client.ApolloClient
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.GraphQL
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
@@ -28,12 +28,12 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
             emit(Response.Loading)
 
             try {
-                val anime = asyncLoad { ApolloClient.getAnime(animeId) }
+                val anime = asyncLoad { GraphQL.getAnime(animeId) }
                 val animeLoaded = anime.await()
-                val similar = asyncLoad { NetworkClient.anime.getSimilar(animeId) }
-                val links = asyncLoad { NetworkClient.anime.getLinks(animeId) }
-                val stats = asyncLoad { ApolloClient.getAnimeStats(animeId) }
-                val favoured = NetworkClient.anime.getAnime(animeId).favoured
+                val similar = asyncLoad { Network.anime.getSimilar(animeId) }
+                val links = asyncLoad { Network.anime.getLinks(animeId) }
+                val stats = asyncLoad { GraphQL.getAnimeStats(animeId) }
+                val favoured = Network.anime.getAnime(animeId).favoured
                 val comments = getComments(animeLoaded.topic?.id?.toLong())
 
                 emit(
