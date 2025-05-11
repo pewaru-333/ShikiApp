@@ -63,7 +63,7 @@ fun UserView(
             TopAppBar(
                 title = {},
                 navigationIcon = {
-                    if (Preferences.getUserId() != user.user.id) NavigationIcon(back)
+                    if (Preferences.userId != user.user.id) NavigationIcon(back)
                     else IconButton(back) {
                         Icon(Icons.AutoMirrored.Outlined.ExitToApp, null)
                     }
