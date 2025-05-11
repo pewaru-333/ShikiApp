@@ -4,6 +4,12 @@ import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
@@ -95,9 +101,13 @@ import androidx.compose.ui.Alignment.Companion.CenterHorizontally
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.layout.Layout
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
@@ -109,9 +119,11 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -120,11 +132,9 @@ import androidx.paging.LoadState.Error
 import androidx.paging.LoadState.Loading
 import androidx.paging.LoadState.NotLoading
 import androidx.paging.compose.LazyPagingItems
-import coil.compose.AsyncImage
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
-import org.application.fragment.ScoresF
-import org.application.fragment.StatsF
-import org.application.fragment.UserRateF
+import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_add_fav
 import org.application.shikiapp.R.string.text_add_rate
@@ -141,7 +151,6 @@ import org.application.shikiapp.R.string.text_external_links
 import org.application.shikiapp.R.string.text_favourite
 import org.application.shikiapp.R.string.text_history
 import org.application.shikiapp.R.string.text_image_of
-import org.application.shikiapp.R.string.text_in_lists
 import org.application.shikiapp.R.string.text_manga_list
 import org.application.shikiapp.R.string.text_profile
 import org.application.shikiapp.R.string.text_rate
@@ -170,6 +179,7 @@ import org.application.shikiapp.events.RateEvent.SetScore
 import org.application.shikiapp.events.RateEvent.SetStatus
 import org.application.shikiapp.events.RateEvent.SetText
 import org.application.shikiapp.events.RateEvent.SetVolumes
+import org.application.shikiapp.generated.fragment.UserRateF
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
@@ -183,6 +193,7 @@ import org.application.shikiapp.models.ui.CharacterMain
 import org.application.shikiapp.models.ui.PersonMain
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Similar
+import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
@@ -190,6 +201,7 @@ import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.enums.FavouriteItems
+import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.ProfileMenus
 import org.application.shikiapp.utils.enums.Score
@@ -198,9 +210,9 @@ import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.extensions.substringAfter
 import org.application.shikiapp.utils.extensions.substringBefore
-import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getWatchStatus
 import org.application.shikiapp.utils.navigation.Screen
+import kotlin.math.roundToInt
 
 @Composable
 fun LoadingScreen() = Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
@@ -381,6 +393,47 @@ fun Deathday(text: String) = Column(Modifier.padding(horizontal = 8.dp)) {
 }
 
 @Composable
+fun AnimatedAsyncImage(
+    model: Any?,
+    modifier: Modifier = Modifier,
+    contentScale: ContentScale = ContentScale.Fit
+) {
+    val shimmerColors = listOf(
+        CardDefaults.elevatedCardColors().contentColor.copy(alpha = 0.15f),
+        CardDefaults.elevatedCardColors().contentColor.copy(alpha = 0.05f),
+        CardDefaults.elevatedCardColors().contentColor.copy(alpha = 0.15f),
+    )
+
+    val transition = rememberInfiniteTransition()
+    val translateAnim = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 3000f,
+        animationSpec = infiniteRepeatable(
+            repeatMode = RepeatMode.Reverse,
+            animation = tween(
+                durationMillis = 3000,
+                easing = LinearEasing
+            )
+        )
+    )
+
+    AsyncImage(
+        model = model,
+        contentDescription = null,
+        contentScale = contentScale,
+        filterQuality = FilterQuality.High,
+        modifier = modifier
+            .background(
+                brush = Brush.linearGradient(
+                    colors = shimmerColors,
+                    start = Offset(translateAnim.value - 500f, 0f),
+                    end = Offset(translateAnim.value, 0f)
+                )
+            )
+    )
+}
+
+@Composable
 fun TextCircleImage(text: String) = Text(
     text = text,
     modifier = Modifier.width(64.dp),
@@ -467,7 +520,7 @@ fun Description(description: AnnotatedString) {
 @Composable
 fun ClubAnimeImage(link: String) {
     AsyncImage(
-        model = getImage(link),
+        model = link,
         contentDescription = null,
         modifier = Modifier
             .size(75.dp, 125.dp)
@@ -542,7 +595,7 @@ fun OneLineImage(name: String, link: String?, modifier: Modifier = Modifier) = L
     modifier = modifier,
     leadingContent = {
         AsyncImage(
-            model = if (link?.contains("https") == true) link else getImage(link),
+            model = link,
             contentDescription = null,
             modifier = Modifier
                 .size(64.dp)
@@ -561,9 +614,11 @@ fun HistoryItem(note: org.application.shikiapp.models.ui.History, onNavigate: (S
         trailingContent = { Text(note.date) },
         supportingContent = { Text(note.description) },
         modifier = Modifier.clickable {
-            note.kind?.let {
-                if (LinkedType.MANGA.safeEquals(it)) onNavigate(Screen.Manga(note.id))
-                else onNavigate(Screen.Anime(note.id))
+            note.kind?.let { kind ->
+                val type = Kind.entries.first { it.safeEquals(kind) }.linkedType
+
+                if (type == LinkedType.MANGA) onNavigate(Screen.Manga(note.contentId))
+                else onNavigate(Screen.Anime(note.contentId))
             }
         },
         headlineContent = {
@@ -605,18 +660,32 @@ fun LazyListScope.comments(comments: LazyPagingItems<Comment>, onNavigate: (Scre
     if (comments.loadState.hasError) item { ErrorScreen(comments::retry) }
 }
 
-fun fromHtml(text: String?) = if (text != null) {
-        AnnotatedString.Companion.fromHtml(
-            htmlString = text,
-            linkStyles = TextLinkStyles(
-                SpanStyle(
-                    color = Color.Blue,
-                    textDecoration = TextDecoration.Underline,
-                    platformStyle = PlatformSpanStyle.Default
-                )
+fun fromHtml(text: String?) = if (text == null) AnnotatedString(BLANK)
+else {
+    val fullPattern = Regex("""<span class="name-en">(.*?)</span><span class="name-ru">(.*?)</span>""")
+    val englishPattern = Regex("""<span class="name-en">(.*?)</span>""")
+    val russianPattern = Regex("""<span class="name-ru">(.*?)</span>""")
+
+    var modifiedHtml = text.replace(fullPattern, """<span class="name-ru">$2</span>""")
+
+
+    if (!modifiedHtml.contains("<span class=\"name-ru\">")) {
+        modifiedHtml = modifiedHtml.replace(englishPattern, """<span class="name-en">$1</span>""")
+    }
+    modifiedHtml = modifiedHtml.replace(russianPattern, "$1")
+    modifiedHtml = modifiedHtml.replace(englishPattern, "$1")
+
+    AnnotatedString.Companion.fromHtml(
+        htmlString = modifiedHtml,
+        linkStyles = TextLinkStyles(
+            SpanStyle(
+                color = Color.Blue,
+                textDecoration = TextDecoration.Underline,
+                platformStyle = PlatformSpanStyle.Default
             )
         )
-    } else AnnotatedString(BLANK)
+    )
+}
 
 @Composable
 fun Related(list: List<Related>, hide: () -> Unit, onNavigate: (Screen) -> Unit) =
@@ -876,7 +945,7 @@ fun BottomSheet(
     onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) },
     contentWindowInsets = { WindowInsets.systemBars }
 ) {
-    if (Preferences.isTokenExists()) {
+    if (Preferences.token != null) {
         ListItem(
             leadingContent = { Icon(Icons.Outlined.Edit, null) },
             headlineContent = {
@@ -952,7 +1021,7 @@ fun DialogScreenshot(
         ) { values ->
             HorizontalPager(pagerState, Modifier.fillMaxSize(), values) {
                 Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    AsyncImage(list[it], null)
+                    ZoomableAsyncImage(list[it], null, Modifier.fillMaxSize())
                 }
             }
         }
@@ -1118,67 +1187,85 @@ fun RateText(event: (RateEvent) -> Unit, text: String?) = OutlinedTextField(
 )
 
 @Composable
-fun Scores(scores: List<ScoresF>, sum: Int = scores.sumOf { it.count }) =
-    Column(Modifier.fillMaxWidth(), spacedBy(4.dp)) {
-        ParagraphTitle(stringResource(text_user_rates))
-        Column(verticalArrangement = spacedBy(8.dp)) {
-            scores.forEach {
-                Row(Modifier.fillMaxWidth(), SpaceBetween) {
-                    Column(Modifier.fillMaxWidth(0.625f)) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth(it.count.toFloat() / sum + 0.15f)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.secondary),
-                            contentAlignment = Alignment.CenterEnd
-                        ) {
-                            Text(
-                                text = it.count.toString(),
-                                modifier = Modifier.padding(end = 4.dp),
-                                color = MaterialTheme.colorScheme.onSecondary
-                            )
-                        }
-                    }
-                    Text(
-                        text = it.score.toString(),
-                        modifier = Modifier.padding(start = 8.dp),
-                        overflow = TextOverflow.Visible,
-                        maxLines = 1
-                    )
-                }
-            }
+fun Statuses(statistics: Statistics, @StringRes label: Int) {
+    val textStyle = MaterialTheme.typography.labelLarge
+    val minBarWidth = 40.dp.value.roundToInt()
+    val gap = 8.dp.value.roundToInt()
+
+    val context = LocalContext.current
+    val textMeasurer = rememberTextMeasurer()
+
+    val maxStatusTextWidth = remember(statistics) {
+        statistics.scores.keys.maxOf {
+            textMeasurer.measure(AnnotatedString(it.asString(context)), textStyle).size.width
         }
     }
 
-@Composable
-fun Statuses(statuses: List<StatsF>, type: LinkedType) {
-    val sum = statuses.sumOf { it.count }
-
-    ParagraphTitle(stringResource(text_in_lists), Modifier.padding(bottom = 4.dp))
+    ParagraphTitle(stringResource(label), Modifier.padding(bottom = 4.dp))
     Column(verticalArrangement = spacedBy(8.dp)) {
-        statuses.forEach {
-            Row(Modifier.fillMaxWidth(), SpaceBetween) {
-                Column(Modifier.fillMaxWidth(0.625f)) {
+        statistics.scores.entries.forEach { (key, value) ->
+            Layout(
+                modifier = Modifier.fillMaxWidth(),
+                content = {
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(it.count.toFloat() / sum + 0.169f)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.secondary),
-                        contentAlignment = Alignment.CenterEnd
-                    ) {
-                        Text(
-                            text = it.count.toString(),
-                            modifier = Modifier.padding(end = 4.dp),
-                            color = MaterialTheme.colorScheme.onSecondary
-                        )
-                    }
+                            .clip(RoundedCornerShape(8.dp))
+                            .background(MaterialTheme.colorScheme.secondary)
+                            .height(24.dp)
+                    )
+
+                    Text(
+                        text = value,
+                        color = MaterialTheme.colorScheme.onSecondary,
+                        style = MaterialTheme.typography.labelLarge
+                    )
+
+                    Text(
+                        text = key.asString(),
+                        style = MaterialTheme.typography.labelLarge,
+                        maxLines = 1,
+                        textAlign = TextAlign.End
+                    )
                 }
-                Text(
-                    text = stringResource(getWatchStatus(it.status.rawValue, type)),
-                    modifier = Modifier.padding(start = 8.dp),
-                    overflow = TextOverflow.Visible,
-                    maxLines = 1,
+            ) { measurables, constraints ->
+                val (horizontalBar, textCount, textStatus) = measurables
+
+                val countTextPlaceable = textCount.measure(Constraints())
+                val statusTextPlaceable = textStatus.measure(
+                    Constraints(0, constraints.maxWidth, 0, constraints.maxHeight)
                 )
+
+                val countTextWidth = countTextPlaceable.width + 4.dp.roundToPx()
+                val idealWidth = (constraints.maxWidth * (value.toFloat() / statistics.sum)).roundToInt()
+                val maxAvailableWidth = constraints.maxWidth - maxStatusTextWidth - gap
+
+
+                val calculatedBarWidth = maxOf(minBarWidth, countTextWidth, idealWidth)
+                val finalBarWidth = minOf(calculatedBarWidth, maxAvailableWidth)
+
+
+                val barPlaceable = horizontalBar.measure(
+                    Constraints(finalBarWidth, finalBarWidth, 0, constraints.maxHeight)
+                )
+
+                val rowHeight = maxOf(barPlaceable.height, statusTextPlaceable.height, countTextPlaceable.height)
+
+                layout(constraints.maxWidth, rowHeight) {
+                    barPlaceable.placeRelative(
+                        x = 0,
+                        y = CenterVertically.align(barPlaceable.height, rowHeight)
+                    )
+
+                    countTextPlaceable.placeRelative(
+                        x = finalBarWidth - countTextPlaceable.width - 4.dp.roundToPx(),
+                        y = CenterVertically.align(countTextPlaceable.height, rowHeight)
+                    )
+
+                    statusTextPlaceable.placeRelative(
+                        x = constraints.maxWidth - statusTextPlaceable.width,
+                        y = CenterVertically.align(statusTextPlaceable.height, rowHeight)
+                    )
+                }
             }
         }
     }
@@ -1186,35 +1273,30 @@ fun Statuses(statuses: List<StatsF>, type: LinkedType) {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Statistics(
-    scores: List<ScoresF>?,
-    stats: List<StatsF>?,
-    type: LinkedType,
-    visible: Boolean,
-    hide: () -> Unit
-) = AnimatedVisibility(
-    visible = visible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    BackHandler(onBack = hide)
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(text_statistics)) },
-                navigationIcon = { NavigationIcon(hide) }
-            )
-        }
-    ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = spacedBy(16.dp)
-        ) {
-            scores?.let { item { Scores(it) } }
-            stats?.let { item { Statuses(it, type) } }
+fun Statistics(statistics: Pair<Statistics?, Statistics?>, visible: Boolean, hide: () -> Unit) =
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInHorizontally { it },
+        exit = slideOutHorizontally { it }
+    ) {
+        BackHandler(onBack = hide)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(text_statistics)) },
+                    navigationIcon = { NavigationIcon(hide) }
+                )
+            }
+        ) { values ->
+            LazyColumn(
+                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
+                verticalArrangement = spacedBy(16.dp)
+            ) {
+                statistics.first?.let { item { Statuses(it, text_user_rates) } }
+                statistics.second?.let { item { Statuses(it, R.string.text_in_lists) } }
+            }
         }
     }
-}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
@@ -1264,7 +1346,7 @@ fun LinksSheet(
 }
 
 @Composable
-fun UserStats(stats: Stats, id: Long, onNavigate:(Screen) -> Unit) {
+fun UserStats(stats: Stats, id: Long, onNavigate: (Screen) -> Unit) {
     Column(Modifier.fillMaxWidth(), spacedBy(12.dp)) {
         if (stats.statuses.anime.sumOf(ShortInfo::size) > 0)
             Stats(id, stats.statuses.anime, LinkedType.ANIME, onNavigate)
@@ -1533,7 +1615,7 @@ fun LazyListScope.clubs(list: List<ClubBasic>, onNavigate: (Screen) -> Unit) =
     else items(list) {
         OneLineImage(
             name = it.name,
-            link = getImage(it.logo.original),
+            link = it.logo.original,
             modifier = Modifier.clickable { onNavigate(Screen.Club(it.id)) }
         )
     }
