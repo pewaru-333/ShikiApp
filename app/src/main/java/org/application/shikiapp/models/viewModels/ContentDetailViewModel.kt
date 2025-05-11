@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.enums.LinkedType
@@ -24,7 +24,7 @@ abstract class ContentDetailViewModel<D, S, E : ContentDetailEvent> : BaseViewMo
         config = PagingConfig(pageSize = 15, enablePlaceholders = false),
         pagingSourceFactory = {
             CommonPaging<Comment>(Comment::id) { page, params ->
-                NetworkClient.topics.getComments(id, type, page, params.loadSize)
+                Network.topics.getComments(id, type, page, params.loadSize)
             }
         }
     ).flow
@@ -35,8 +35,8 @@ abstract class ContentDetailViewModel<D, S, E : ContentDetailEvent> : BaseViewMo
     protected fun toggleFavourite(id: Any, type: LinkedType, favoured: Boolean, kind: String = BLANK) {
         viewModelScope.launch(Dispatchers.IO) {
             try {
-                if (favoured) NetworkClient.profile.deleteFavourite(type.toValue(), id)
-                else NetworkClient.profile.addFavourite(type.toValue(), id, kind)
+                if (favoured) Network.profile.deleteFavourite(type.toValue(), id)
+                else Network.profile.addFavourite(type.toValue(), id, kind)
             } catch (_: Throwable) {
 
             } finally {
