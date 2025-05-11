@@ -4,13 +4,12 @@ import org.application.shikiapp.models.data.BaseRate
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.getFull
-import org.application.shikiapp.utils.getImage
 
 fun BaseRate.mapper() = org.application.shikiapp.models.ui.UserRate(
     id = id,
     contentId = (anime?.id ?: manga?.id!!).toString(),
     title = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name!!,
-    poster = getImage(anime?.image?.original ?: manga?.image?.original!!),
+    poster = anime?.image?.original ?: manga?.image?.original!!,
     kind = Enum.safeValueOf<Kind>(anime?.kind ?: manga?.kind).title,
     score = score,
     scoreString = score.let { if (it != 0) it else '-' }.toString(),
