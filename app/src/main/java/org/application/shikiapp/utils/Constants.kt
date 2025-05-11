@@ -2,29 +2,41 @@ package org.application.shikiapp.utils
 
 // =========================================== Strings ============================================
 
+
+const val BASE_URL = "https://shikimori.one"
+const val API_URL = "$BASE_URL/api/"
+const val GRAPH_URL = "$BASE_URL/api/graphql"
+const val AUTH_URL = "$BASE_URL/oauth/authorize"
+const val TOKEN_URL = "$BASE_URL/oauth/token"
+
 const val CODE = "code"
 const val CLIENT_ID = "C0IlIBQYqt9VHjuoayfbBG9ulhBH9XWuTOxSX_6oE6g"
 const val CLIENT_SECRET = "0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM"
 const val REDIRECT_URI = "app://login"
 const val GRANT_TYPE = "authorization_code"
 
+const val PREF_APP_THEME = "app_theme"
+const val PREF_APP_CACHE = "app_cache"
+const val PREF_DYNAMIC_COLORS = "dynamic_colors"
+const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
+
 const val ACCESS_TOKEN = "access_token"
 const val REFRESH_TOKEN = "refresh_token"
 const val EXPIRES_IN = "expires_in"
 const val CREATED_AT = "created_at"
-const val USER_ID = "user_id"
 
+const val USER_ID = "user_id"
 const val BASE_PATH = "*"
+
 const val BLANK = ""
 
 // =========================================== Lists ==============================================
-
 val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
 val DATE_FORMATS = listOf("d.M.yyyy", "d.M", "yyyy")
+
 val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
 
 // =========================================== Maps ===============================================
-
 val EXTERNAL_LINK_KINDS = mapOf(
     "official_site" to "Официальный сайт",
     "wikipedia" to "Википедия",
