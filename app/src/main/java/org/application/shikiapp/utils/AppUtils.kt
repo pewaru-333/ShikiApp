@@ -1,19 +1,7 @@
 package org.application.shikiapp.utils
 
-import android.content.Context
-import android.content.pm.verify.domain.DomainVerificationManager
-import android.content.pm.verify.domain.DomainVerificationUserState
-import android.icu.text.SimpleDateFormat
-import android.icu.util.Calendar
-import android.os.Build
 import android.text.format.DateUtils
 import android.util.Patterns
-import androidx.navigation.NavBackStackEntry
-import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavHostController
-import org.application.AnimeQuery.Data.Anime.Studio
-import org.application.MangaQuery.Data.Manga.Publisher
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Date
 import org.application.shikiapp.utils.enums.Kind
@@ -24,44 +12,39 @@ import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
 import java.time.LocalDate
+import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
 import java.time.format.FormatStyle
-import java.util.Locale
-import kotlin.reflect.KClass
 
 
-fun convertDate(text: String): String {
-    val format = SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSXXX", Locale.forLanguageTag("ru"))
-    val parsed = format.parse(text).time
+fun convertDate(date: String): String {
+    val formatted = OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    val millis = formatted.toInstant().toEpochMilli()
 
     return DateUtils.getRelativeTimeSpanString(
-        parsed,
-        Calendar.getInstance().timeInMillis,
+        millis,
+        System.currentTimeMillis(),
         DateUtils.DAY_IN_MILLIS
     ).toString()
 }
 
 fun getLinks(text: String): List<String> {
-    val links = ArrayList<String>()
-    val words = text.split("\"")
-    val pattern = Patterns.WEB_URL
+    val links = mutableListOf<String>()
+    val matcher = Patterns.WEB_URL.matcher(text)
 
-    words.forEach {
-        if (pattern.matcher(it).find() && (it.contains("https://") || it.contains(".jpg")))
-            links.add(it)
-    }
+    while (matcher.find()) {
+        val url = matcher.group()
 
-    links.indices.forEach {
-        if (!links[it].contains("https://"))
-            links[it] = "https:".plus(links[it])
+        if (url.contains("https://") || url.contains(".jpg")) {
+            links.add(
+                if (!url.startsWith("https://") && url.contains(".jpg")) "https://$url" else url
+            )
+        }
     }
 
     return links
 }
-
-//fun fromISODate(date: String) = LocalDate.parse(date, DateTimeFormatter.ISO_DATE_TIME)
-//fun toCalendarDate(date: LocalDate) = date.format(DateTimeFormatter.ofPattern("d MMMM, E"))
 
 fun getBirthday(birthday: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
     try {
@@ -85,14 +68,13 @@ fun getDeathday(deceasedOn: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
     }
 }
 
-fun getPoster(text: String?): String? {
+fun getNewsPoster(text: String?): String? {
     val embed = getLinks(text.orEmpty()).find { it.contains("img.youtube.com") }
     val poster = getLinks(text.orEmpty()).find { it.contains(".jpg") }
 
     return embed ?: poster
 }
 
-fun getImage(link: String?) = "https://shikimori.one${link.orEmpty()}"
 fun getWatchStatus(status: String?, type: LinkedType) = if (status == null) R.string.text_unknown
 else when (type) {
     LinkedType.ANIME -> Enum.safeValueOf<WatchStatus>(status).titleAnime
@@ -157,38 +139,5 @@ fun getSeason(text: Any?, kind: String?) = when (text) {
     else -> ResourceText.StringResource(R.string.blank)
 }
 
-fun getStudio(studio: List<Studio>) = try {
-    studio.first().name
-} catch (e: NoSuchElementException) {
-    "Неизвестно"
-}
-
-fun getPublisher(publisher: List<Publisher>) = try {
-    publisher.first().name
-} catch (e: NoSuchElementException) {
-    "Неизвестно"
-}
-
 fun setScore(status: List<String>, score: Float) = if (Status.ANONS.name.lowercase() in status) null
 else score.toInt()
-
-fun Context.isDomainVerified() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) true
-    else {
-        val manager = getSystemService(DomainVerificationManager::class.java)
-        val userState = manager.getDomainVerificationUserState(packageName)!!
-
-        userState.hostToStateMap.all { it.value == DomainVerificationUserState.DOMAIN_STATE_SELECTED }
-    }
-
-fun <T : Any> NavBackStackEntry?.isCurrentRoute(route: KClass<T>) =
-    this?.destination?.hierarchy?.any { it.hasRoute(route) } == true
-
-fun NavHostController.toBottomBarItem(route: Any) = currentBackStackEntry?.destination?.route?.let {
-    if (!route.toString().contains(it)) {
-        navigate(route) {
-            launchSingleTop = true
-            restoreState = true
-            popBackStack(route, true)
-        }
-    }
-}
