@@ -35,7 +35,7 @@ import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.models.states.RatesState
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.RatesResponse
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
@@ -48,7 +48,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     val args = saved.toRoute<Screen.UserRates>()
     val type = args.type ?: LinkedType.ANIME
     val userId = args.id ?: 0L
-    val editable = userId == Preferences.getUserId()
+    val editable = userId == Preferences.userId
 
     private val _response = MutableStateFlow<RatesResponse>(RatesResponse.Loading)
     val response = _response.asStateFlow()
@@ -90,8 +90,8 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     val calls = (1..5).map {
                         viewModelScope.async(Dispatchers.IO) {
                             try {
-                                if (type == LinkedType.ANIME) NetworkClient.user.getAnimeRates(id = userId, page = page + it)
-                                else NetworkClient.user.getMangaRates(id = userId, page = page + it)
+                                if (type == LinkedType.ANIME) Network.user.getAnimeRates(id = userId, page = page + it)
+                                else Network.user.getMangaRates(id = userId, page = page + it)
                             } catch (_: Throwable) {
                                 emptyList()
                             }
@@ -119,9 +119,9 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     fun create(id: String, targetType: LinkedType, reload: () -> Unit) {
         viewModelScope.launch {
             try {
-                NetworkClient.rates.createRate(
+                Network.rates.createRate(
                     NewRate(
-                        userId = Preferences.getUserId(),
+                        userId = Preferences.userId,
                         targetId = id.toLong(),
                         targetType = targetType.name.lowercase().replaceFirstChar(Char::uppercase),
                         status = _newRate.value.status.toString().lowercase(),
@@ -147,10 +147,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             _response.emit(RatesResponse.Loading)
 
             try {
-                val request = NetworkClient.rates.updateRate(
+                val request = Network.rates.updateRate(
                     id = rateId.toLong(),
                     newRate = NewRate(
-                        userId = Preferences.getUserId(),
+                        userId = Preferences.userId,
                         status = _newRate.value.status.toString().lowercase(),
                         score = _newRate.value.score?.score.toString(),
                         chapters = _newRate.value.chapters,
@@ -173,7 +173,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     fun delete(rateId: String, reload: () -> Unit) {
         viewModelScope.launch {
             try {
-                val request = NetworkClient.rates.delete(rateId.toLong())
+                val request = Network.rates.delete(rateId.toLong())
 
                 _increment.trySend(request.status == HttpStatusCode.NoContent)
                 _newRate.emit(NewRateState())
@@ -190,7 +190,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             _response.emit(RatesResponse.Loading)
 
             try {
-                val request = NetworkClient.rates.increment(rateId)
+                val request = Network.rates.increment(rateId)
 
                 _increment.send(request.status == HttpStatusCode.Created)
             } catch (_: Exception) {
