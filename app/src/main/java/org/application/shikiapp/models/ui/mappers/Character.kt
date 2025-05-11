@@ -2,9 +2,9 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.CharacterListQuery
-import org.application.CharacterQuery
 import org.application.shikiapp.R
+import org.application.shikiapp.generated.CharacterListQuery
+import org.application.shikiapp.generated.CharacterQuery
 import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.ui.list.Content
@@ -13,7 +13,6 @@ import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.extensions.safeValueOf
-import org.application.shikiapp.utils.getImage
 import org.application.shikiapp.utils.getSeason
 
 fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<PagingData<Comment>>) =
@@ -31,7 +30,7 @@ fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<Paging
                 title = it.russian.orEmpty().ifEmpty(it::name),
                 kind = Enum.safeValueOf<Kind>(it.kind).title,
                 season = getSeason(it.releasedOn, it.kind),
-                poster = getImage(it.image.original)
+                poster = it.image.original
             )
         },
         manga = mangas.map {
@@ -40,7 +39,7 @@ fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<Paging
                 title = it.russian.orEmpty().ifEmpty(it::name),
                 kind = Enum.safeValueOf<Kind>(it.kind).title,
                 season = getSeason(it.releasedOn, it.kind),
-                poster = getImage(it.image.original)
+                poster = it.image.original
             )
         },
         seyu = seyu.map {
@@ -49,7 +48,7 @@ fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<Paging
                 title = it.russian.orEmpty().ifEmpty(it::name),
                 kind = R.string.blank,
                 season = ResourceText.StringResource(R.string.blank),
-                poster = getImage(it.image.original)
+                poster = it.image.original
             )
         },
         comments = comments
