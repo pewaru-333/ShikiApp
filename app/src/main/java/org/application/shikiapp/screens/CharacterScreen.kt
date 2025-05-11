@@ -92,7 +92,7 @@ private fun CharacterView(
                         ) {
                             Icon(painterResource(vector_comments), null)
                         }
-                    if (Preferences.isTokenExists())
+                    if (Preferences.token != null)
                         IconButton(
                         onClick = {
                             onEvent(CharacterDetailEvent.ToggleFavourite(character.favoured))
