@@ -10,7 +10,7 @@ import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.response.Response
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.utils.navigation.Screen
 
 
@@ -24,7 +24,7 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
             emit(Response.Loading)
 
             try {
-                val news = asyncLoad { NetworkClient.topics.getTopic(newsId) }
+                val news = asyncLoad { Network.topics.getTopic(newsId) }
                 val comments = getComments(newsId)
 
                 emit(Response.Success(news.await().mapper(comments)))
