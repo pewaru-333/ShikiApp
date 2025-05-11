@@ -2,10 +2,12 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.MangaListQuery
-import org.application.MangaQuery
 import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_ranobe
+import org.application.shikiapp.generated.MangaListQuery
+import org.application.shikiapp.generated.MangaQuery
+import org.application.shikiapp.generated.type.MangaKindEnum.light_novel
+import org.application.shikiapp.generated.type.MangaKindEnum.novel
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.MangaBasic
@@ -14,19 +16,20 @@ import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.ui.PersonMain
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Similar
+import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ROLES_RUSSIAN
+import org.application.shikiapp.utils.ResourceText
+import org.application.shikiapp.utils.ResourceText.StringResource
 import org.application.shikiapp.utils.enums.Kind
+import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.Status
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
-import org.application.shikiapp.utils.getImage
-import org.application.shikiapp.utils.getPublisher
 import org.application.shikiapp.utils.getSeason
-import org.application.type.MangaKindEnum.light_novel
-import org.application.type.MangaKindEnum.novel
+import org.application.shikiapp.utils.getWatchStatus
 
 fun MangaQuery.Data.Manga.mapper(
     similar: List<MangaBasic>,
@@ -44,7 +47,7 @@ fun MangaQuery.Data.Manga.mapper(
     chapters = chapters.toString(),
     showChapters = !Status.ONGOING.safeEquals(status?.rawValue),
     status = Enum.safeValueOf<Status>(status?.rawValue).mangaTitle,
-    publisher = getPublisher(publishers),
+    publisher = publishers.map(MangaQuery.Data.Manga.Publisher::name).firstOrNull() ?: "Неизвестно",
     score = score.toString(),
     description = fromHtml(descriptionHtml),
     favoured = favoured,
@@ -53,7 +56,7 @@ fun MangaQuery.Data.Manga.mapper(
         Similar(
             id = it.id.toString(),
             title = it.russian ?: it.name,
-            poster = getImage(it.image.original)
+            poster = it.image.original
         )
     },
     related = related?.map {
@@ -95,9 +98,25 @@ fun MangaQuery.Data.Manga.mapper(
             poster = it.person.poster?.originalUrl ?: BLANK
         )
     } ?: emptyList(),
-    scoresStats = scoresStats,
-    statusesStats = statusesStats,
     comments = comments,
+    stats = Pair(
+        first = scoresStats?.let { scores ->
+            Statistics(
+                sum = scores.sumOf(MangaQuery.Data.Manga.ScoresStat::count),
+                scores = scores.associate {
+                    ResourceText.StaticString(it.score.toString()) to it.count.toString()
+                }
+            )
+        },
+        second = statusesStats?.let { statuses ->
+            Statistics(
+                sum = statuses.sumOf(MangaQuery.Data.Manga.StatusesStat::count),
+                scores = statuses.associate {
+                    StringResource(getWatchStatus(it.status.rawValue, LinkedType.MANGA)) to it.count.toString()
+                }
+            )
+        }
+    ),
     userRate = userRate
 )
 
