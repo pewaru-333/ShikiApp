@@ -9,16 +9,16 @@ import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.events.MangaDetailEvent
+import org.application.shikiapp.generated.type.MangaKindEnum.light_novel
+import org.application.shikiapp.generated.type.MangaKindEnum.novel
 import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.client.ApolloClient
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.GraphQL
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
-import org.application.type.MangaKindEnum.light_novel
-import org.application.type.MangaKindEnum.novel
 
 class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, MangaState, MangaDetailEvent>() {
     private val mangaId = saved.toRoute<Screen.Manga>().id
@@ -30,11 +30,11 @@ class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, Ma
             emit(Response.Loading)
 
             try {
-                val manga = asyncLoad { ApolloClient.getManga(mangaId) }
+                val manga = asyncLoad { GraphQL.getManga(mangaId) }
                 val mangaLoaded = manga.await()
-                val similar = asyncLoad { NetworkClient.manga.getSimilar(mangaId) }
-                val links = asyncLoad { NetworkClient.manga.getLinks(mangaId.toLong()) }
-                val favoured = NetworkClient.manga.getManga(mangaId).favoured
+                val similar = asyncLoad { Network.manga.getSimilar(mangaId) }
+                val links = asyncLoad { Network.manga.getLinks(mangaId.toLong()) }
+                val favoured = Network.manga.getManga(mangaId).favoured
                 val comments = getComments(mangaLoaded.topic?.id?.toLong())
 
                 emit(
