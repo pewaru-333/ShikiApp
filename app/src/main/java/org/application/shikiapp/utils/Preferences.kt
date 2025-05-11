@@ -17,11 +17,6 @@ import org.application.shikiapp.utils.extensions.getEnum
 import org.application.shikiapp.utils.extensions.getThemeFlow
 import org.application.shikiapp.utils.extensions.putEnum
 
-const val PREF_APP_THEME = "app_theme"
-const val PREF_APP_CACHE = "app_cache"
-const val PREF_DYNAMIC_COLORS = "dynamic_colors"
-const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
-
 object Preferences : ViewModel() {
     private lateinit var auth: SharedPreferences
     lateinit var app: SharedPreferences
@@ -45,6 +40,26 @@ object Preferences : ViewModel() {
     val cache: Int
         get() = app.getInt(PREF_APP_CACHE, 16)
 
+    val userId: Long
+        get() = auth.getLong(USER_ID, 0L)
+
+    val token: Token?
+        get() {
+            val accessToken = auth.getString(ACCESS_TOKEN, BLANK)
+            val refreshToken = auth.getString(REFRESH_TOKEN, BLANK)
+
+            if (accessToken == null || refreshToken == null)
+                return null
+
+            if (accessToken.isBlank() || refreshToken.isBlank())
+                return null
+
+            return Token(
+                accessToken = accessToken,
+                refreshToken = refreshToken
+            )
+        }
+
     fun saveToken(token: Token) = auth.edit {
         putString(ACCESS_TOKEN, token.accessToken)
         putString(REFRESH_TOKEN, token.refreshToken)
@@ -52,16 +67,11 @@ object Preferences : ViewModel() {
         putLong(CREATED_AT, token.createdAt)
     }
 
-    fun setUserId(userId: Long) = auth.edit { putLong(USER_ID, userId).apply() }
+    fun setUserId(userId: Long) = auth.edit {
+        putLong(USER_ID, userId)
+    }
 
-    fun isTokenExists() =
-        auth.contains(ACCESS_TOKEN) && auth.getString(ACCESS_TOKEN, BLANK) != BLANK
-
-    fun getToken() = auth.getString(ACCESS_TOKEN, BLANK) ?: BLANK
-    fun getRefreshToken() = auth.getString(REFRESH_TOKEN, BLANK) ?: BLANK
-    fun getUserId() = auth.getLong(USER_ID, 0L)
-
-    fun setTheme(theme: Themes) {
-        app.edit { putEnum(PREF_APP_THEME, theme) }
+    fun setTheme(theme: Themes) = app.edit {
+        putEnum(PREF_APP_THEME, theme)
     }
 }
