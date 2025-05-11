@@ -9,12 +9,12 @@ import io.ktor.client.request.post
 import io.ktor.http.parameters
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.models.data.UserBrief
-import org.application.shikiapp.network.client.TOKEN_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CLIENT_SECRET
 import org.application.shikiapp.utils.GRANT_TYPE
 import org.application.shikiapp.utils.REDIRECT_URI
+import org.application.shikiapp.utils.TOKEN_URL
 
 class Profile(private val client: HttpClient) {
     suspend fun getToken(code: String) = client.submitForm(
