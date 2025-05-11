@@ -85,7 +85,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
-import org.application.fragment.GenresF
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_catalog
@@ -117,6 +116,7 @@ import org.application.shikiapp.events.FilterEvent.SetSeasonYF
 import org.application.shikiapp.events.FilterEvent.SetSeasonYS
 import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetTitle
+import org.application.shikiapp.generated.fragment.GenresF
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.Content
