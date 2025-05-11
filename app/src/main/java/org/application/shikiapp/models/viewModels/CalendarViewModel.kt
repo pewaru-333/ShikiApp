@@ -15,8 +15,8 @@ import org.application.shikiapp.models.data.Topic
 import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
 import org.application.shikiapp.models.ui.mappers.toAnimeContent
-import org.application.shikiapp.network.client.ApolloClient
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.GraphQL
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.network.response.Response
 
@@ -28,7 +28,7 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
             emit(Response.Loading)
 
             try {
-                val trending = asyncLoad { ApolloClient.getTrending() }
+                val trending = asyncLoad { GraphQL.getTrending() }
                 val topicsUpdates = getTopicsUpdates()
 
                 emit(Response.Success(AnimeCalendar(trending.await(), topicsUpdates)))
@@ -52,7 +52,7 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
         ),
         pagingSourceFactory = {
             CommonPaging<Topic>(Topic::id) { page, params ->
-                NetworkClient.topics.getTopicsUpdates(page, params.loadSize)
+                Network.topics.getTopicsUpdates(page, params.loadSize)
             }
         }
     ).flow
