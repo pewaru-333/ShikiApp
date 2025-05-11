@@ -4,6 +4,7 @@ import androidx.compose.ui.text.AnnotatedString
 
 data class History(
     val id: String,
+    val contentId: String,
     val title: String,
     val description: AnnotatedString,
     val date: String,
