@@ -42,9 +42,9 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.text.HtmlCompat
-import coil.compose.AsyncImage
-import coil.imageLoader
-import coil.request.ImageRequest
+import coil3.compose.AsyncImage
+import coil3.imageLoader
+import coil3.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.utils.BLANK
@@ -200,8 +200,8 @@ private suspend fun loadImage(context: Context, source: String): LoadedImage? {
 
     return LoadedImage(
         source = source.replace("thumbnail", "original"),
-        width = imageResult.drawable?.intrinsicWidth?.toFloat() ?: return null,
-        height = imageResult.drawable?.intrinsicHeight?.toFloat() ?: return null,
+        width = imageResult.image?.width?.toFloat() ?: return null,
+        height = imageResult.image?.height?.toFloat() ?: return null,
     )
 }
 
