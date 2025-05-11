@@ -1,14 +1,22 @@
 package org.application.shikiapp
 
 import android.app.Application
-import coil.ImageLoader
-import coil.ImageLoaderFactory
-import coil.disk.DiskCache
-import coil.memory.MemoryCache
-import coil.request.CachePolicy
+import coil3.ImageLoader
+import coil3.PlatformContext
+import coil3.SingletonImageLoader
+import coil3.annotation.ExperimentalCoilApi
+import coil3.asImage
+import coil3.disk.DiskCache
+import coil3.disk.directory
+import coil3.memory.MemoryCache
+import coil3.network.NetworkFetcher
+import coil3.request.CachePolicy
+import coil3.request.crossfade
+import org.application.shikiapp.network.client.CoilClient
+import org.application.shikiapp.network.client.ImageInterceptor
 import org.application.shikiapp.utils.Preferences
 
-class ShikiApp : Application(), ImageLoaderFactory {
+class ShikiApp : Application(), SingletonImageLoader.Factory {
 
     override fun onCreate() {
         super.onCreate()
@@ -16,14 +24,19 @@ class ShikiApp : Application(), ImageLoaderFactory {
         Preferences.getInstance(this)
     }
 
-    override fun newImageLoader() = ImageLoader(this).newBuilder()
-        .error(R.drawable.vector_bad)
-        .fallback(R.drawable.vector_bad)
+    @OptIn(ExperimentalCoilApi::class)
+    override fun newImageLoader(context: PlatformContext) = ImageLoader(this).newBuilder()
+        .components {
+            add(NetworkFetcher.Factory({ CoilClient }))
+            add(ImageInterceptor)
+        }
+        .error(getDrawable(R.drawable.vector_bad)?.asImage())
+        .fallback(getDrawable(R.drawable.vector_bad)?.asImage())
         .crossfade(200)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .memoryCache {
-            MemoryCache.Builder(this)
-                .maxSizePercent(0.3)
+            MemoryCache.Builder()
+                .maxSizePercent(context, 0.3)
                 .strongReferencesEnabled(true)
                 .build()
         }
@@ -31,7 +44,7 @@ class ShikiApp : Application(), ImageLoaderFactory {
         .diskCache {
             DiskCache.Builder()
                 .maxSizeBytes(Preferences.cache * 1024 * 1024L)
-                .directory(cacheDir)
+                .directory(context.cacheDir)
                 .build()
         }.build()
 }
