@@ -12,7 +12,7 @@ import org.application.shikiapp.events.PersonDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
@@ -27,7 +27,7 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
             emit(Response.Loading)
 
             try {
-                val person = asyncLoad { NetworkClient.content.getPerson(id) }
+                val person = asyncLoad { Network.content.getPerson(id) }
                 val personLoaded = person.await()
                 val comments = getComments(personLoaded.topicId)
 
