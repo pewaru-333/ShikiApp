@@ -8,7 +8,7 @@ class CommonPaging<T : Any>(
     private val getId: (T) -> Any,
     private val request: suspend (page: Int, params: LoadParams<Int>) -> List<T>,
 ) : PagingSource<Int, T>() {
-    private val contentList = mutableSetOf<Any>()
+    private val contentList = hashSetOf<Any>()
 
     override fun getRefreshKey(state: PagingState<Int, T>) = state.anchorPosition?.let {
         state.closestPageToPosition(it).let { anchorPage ->
