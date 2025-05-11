@@ -84,7 +84,7 @@ private fun PersonView(
                         ) {
                             Icon(painterResource(vector_comments), null)
                         }
-                    if (Preferences.isTokenExists() || person.website.isNotEmpty())
+                    if (Preferences.token != null || person.website.isNotEmpty())
                         IconButton(
                             onClick = { onEvent(ContentDetailEvent.ShowSheet) }
                         ) {
@@ -153,7 +153,7 @@ private fun BottomSheet(
     onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) },
     contentWindowInsets = { WindowInsets.systemBars }
 ) {
-    if (Preferences.isTokenExists()) ListItem(
+    if (Preferences.token != null) ListItem(
         headlineContent = {
             Text(
                 text = stringResource(
