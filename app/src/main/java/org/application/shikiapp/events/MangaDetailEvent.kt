@@ -1,6 +1,6 @@
 package org.application.shikiapp.events
 
-import org.application.type.MangaKindEnum
+import org.application.shikiapp.generated.type.MangaKindEnum
 
 sealed interface MangaDetailEvent : ContentDetailEvent {
     data object Reload : MangaDetailEvent
