@@ -8,18 +8,24 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.UserDetailEvent
+import org.application.shikiapp.models.data.ClubBasic
+import org.application.shikiapp.models.data.Comment
+import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.ui.History
 import org.application.shikiapp.models.ui.User
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.response.Response
-import org.application.shikiapp.network.client.NetworkClient
+import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.navigation.Screen
 
 open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailViewModel<User, UserState, UserDetailEvent>() {
@@ -30,7 +36,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),
         pagingSourceFactory = {
             CommonPaging<UserBasic>(UserBasic::id) { page, params ->
-                NetworkClient.user.getFriends(userId, page, params.loadSize)
+                Network.user.getFriends(userId, page, params.loadSize)
             }
         }
     ).flow
@@ -41,7 +47,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         config = PagingConfig(pageSize = 20, enablePlaceholders = false),
         pagingSourceFactory = {
             CommonPaging<History>(History::id) { page, params ->
-                NetworkClient.user.getHistory(userId, page, params.loadSize)
+                Network.user.getHistory(userId, page, params.loadSize)
                     .map(org.application.shikiapp.models.data.History::mapper)
             }
         }
@@ -49,10 +55,17 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         .cachedIn(viewModelScope)
         .retryWhen { _, attempt -> attempt <= 5 }
 
-    protected val user = asyncLoad { NetworkClient.user.getUser(userId) }
-    protected val clubs = asyncLoad { NetworkClient.user.getClubs(userId) }
-    protected val favourites = asyncLoad { NetworkClient.user.getFavourites(userId) }
-    protected val comments = getComments(userId, "User")
+    protected val user: Deferred<org.application.shikiapp.models.data.User>
+        get() = asyncLoad { Network.user.getUser(userId) }
+
+    protected val clubs: Deferred<List<ClubBasic>>
+        get() = asyncLoad { Network.user.getClubs(userId) }
+
+    protected val favourites: Deferred<Favourites>
+        get() = asyncLoad { Network.user.getFavourites(userId) }
+
+    protected val comments: Flow<PagingData<Comment>>
+        get() = getComments(userId, "User")
 
     override fun initState() = UserState()
 
