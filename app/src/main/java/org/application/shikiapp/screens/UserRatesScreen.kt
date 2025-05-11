@@ -174,14 +174,14 @@ private fun UserRateList(
                         .combinedClickable(
                             onClick = {
                                 onNavigate(
-                                    if (type == LinkedType.MANGA) Screen.Anime(rate.contentId)
+                                    if (type == LinkedType.ANIME) Screen.Anime(rate.contentId)
                                     else Screen.Manga(rate.contentId)
                                 )
                             },
                             onLongClick = {
                                 if (editable) {
                                     onEvent(SetRateId(rate.id.toString()))
-                                    onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status) ?: WatchStatus.PLANNED, type))
+                                    onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), type))
                                     onEvent(SetScore(Score.entries.first { it.score == rate.score }))
                                     onEvent(SetChapters(rate.chapters.toString()))
                                     onEvent(SetEpisodes(rate.episodes.toString()))
