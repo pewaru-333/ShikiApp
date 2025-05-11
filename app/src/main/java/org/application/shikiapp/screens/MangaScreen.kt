@@ -195,11 +195,9 @@ private fun MangaView(
         onNavigate = { onNavigate(Screen.Manga(it)) })
 
     Statistics(
+        statistics = manga.stats,
         visible = state.showStats,
-        hide = { onEvent(ContentDetailEvent.ShowStats) },
-        scores = manga.scoresStats,
-        stats = manga.statusesStats,
-        type = LinkedType.MANGA
+        hide = { onEvent(ContentDetailEvent.ShowStats) }
     )
 
     when {
