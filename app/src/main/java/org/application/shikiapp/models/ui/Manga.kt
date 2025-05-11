@@ -4,10 +4,10 @@ import androidx.annotation.StringRes
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.MangaQuery
+import org.application.shikiapp.generated.MangaQuery
+import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.ExternalLink
-import org.application.type.MangaKindEnum
 
 data class Manga(
     val id: String,
@@ -32,8 +32,7 @@ data class Manga(
     val charactersAll: List<CharacterMain>,
     val personMain: List<PersonMain>,
     val personAll: List<PersonMain>,
-    val scoresStats: List<MangaQuery.Data.Manga.ScoresStat>?,
-    val statusesStats: List<MangaQuery.Data.Manga.StatusesStat>?,
+    val stats: Pair<Statistics?, Statistics?>,
     val comments: Flow<PagingData<Comment>>,
     val userRate: MangaQuery.Data.Manga.UserRate?
 )
