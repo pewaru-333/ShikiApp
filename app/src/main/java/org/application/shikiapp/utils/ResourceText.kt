@@ -1,5 +1,6 @@
 package org.application.shikiapp.utils
 
+import android.content.Context
 import androidx.annotation.PluralsRes
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Composable
@@ -34,5 +35,20 @@ sealed interface ResourceText {
         )
 
         is PluralStringResource -> pluralStringResource(resourceId, count, *args)
+    }
+
+    fun asString(context: Context) : String = when (this) {
+        is StaticString -> value
+
+        is MultiString -> value.map {
+            (it as? ResourceText)?.asString(context) ?: it
+        }.joinToString(" ")
+
+        is StringResource -> context.getString(
+            resourceId,
+            *args.map { (it as? ResourceText)?.asString(context) ?: it }.toTypedArray()
+        )
+
+        is PluralStringResource -> context.resources.getQuantityString(resourceId, count, *args)
     }
 }
