@@ -51,10 +51,11 @@ import org.application.shikiapp.events.FilterEvent.SetSeasonYS
 import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetStudio
 import org.application.shikiapp.events.FilterEvent.SetTitle
+import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.Content
-import org.application.shikiapp.network.client.ApolloClient
+import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.paging.ContentPaging
 import org.application.shikiapp.utils.enums.CatalogItems
 import org.application.shikiapp.utils.enums.PeopleFilterItems.MANGAKA
@@ -62,7 +63,6 @@ import org.application.shikiapp.utils.enums.PeopleFilterItems.PRODUCER
 import org.application.shikiapp.utils.enums.PeopleFilterItems.SEYU
 import org.application.shikiapp.utils.navigation.Screen
 import org.application.shikiapp.utils.setScore
-import org.application.type.MangaKindEnum
 
 class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     private val args = saved.toRoute<Screen.Catalog>()
@@ -74,8 +74,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     val event = _event.receiveAsFlow()
 
     private val _navEvent = Channel<Boolean>()
-    val navEvent = _navEvent.receiveAsFlow()
-        .onStart { emit(args.showOngoing) }
+    val navEvent = _navEvent.receiveAsFlow().onStart { emit(args.showOngoing) }
 
     private val filters = CatalogItems.entries.associateWith { MutableStateFlow(FiltersState()) }
     private val pagers = mutableMapOf<CatalogItems, Flow<PagingData<Content>>>()
@@ -95,8 +94,8 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val genres = _state.flatMapLatest {
         when (it.menu) {
-            CatalogItems.ANIME -> ApolloClient.getAnimeGenres()
-            CatalogItems.MANGA, CatalogItems.RANOBE -> ApolloClient.getMangaGenres()
+            CatalogItems.ANIME -> GraphQL.getAnimeGenres()
+            CatalogItems.MANGA, CatalogItems.RANOBE -> GraphQL.getMangaGenres()
             else -> flowOf(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
@@ -114,10 +113,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
 
     fun hideFilters() = _state.update {
         it.copy(
-            showFiltersA = false,
-            showFiltersM = false,
-            showFiltersR = false,
-            showFiltersP = false
+            showFiltersA = false, showFiltersM = false, showFiltersR = false, showFiltersP = false
         )
     }
 
@@ -147,29 +143,16 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     private fun createPagingFlow(item: CatalogItems, filtersState: FiltersState) = Pager(
-        config = PagingConfig(pageSize = 20, enablePlaceholders = false),
-        pagingSourceFactory = {
-            ContentPaging(
-                filters = { filtersState },
-                fetch = { filters, page, params ->
-                    fetchData(item, filters, page, params)
-                }
-            )
-        }
-    ).flow
-        .debounce(350L)
-        .flowOn(Dispatchers.IO)
-        .retryWhen { cause, attempt ->
+        config = PagingConfig(pageSize = 20, enablePlaceholders = false), pagingSourceFactory = {
+            ContentPaging(filters = { filtersState }, fetch = { filters, page, params ->
+                fetchData(item, filters, page, params)
+            })
+        }).flow.debounce(350L).flowOn(Dispatchers.IO).retryWhen { cause, attempt ->
             cause is ClientRequestException && attempt < 3
         }
 
-    private suspend fun fetchData(
-        item: CatalogItems,
-        query: FiltersState,
-        page: Int,
-        params: LoadParams<Int>
-    ) = when (item) {
-        CatalogItems.ANIME -> ApolloClient.getAnimeList(
+    private suspend fun fetchData(item: CatalogItems, query: FiltersState, page: Int, params: LoadParams<Int>) = when (item) {
+        CatalogItems.ANIME -> GraphQL.getAnimeList(
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
@@ -183,7 +166,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             search = query.title
         )
 
-        CatalogItems.MANGA -> ApolloClient.getMangaList(
+        CatalogItems.MANGA -> GraphQL.getMangaList(
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
@@ -195,7 +178,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             search = query.title
         )
 
-        CatalogItems.RANOBE -> ApolloClient.getMangaList(
+        CatalogItems.RANOBE -> GraphQL.getMangaList(
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
@@ -208,13 +191,11 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             search = query.title
         )
 
-        CatalogItems.CHARACTERS -> ApolloClient.getCharacters(
-            page = page,
-            limit = params.loadSize,
-            search = query.title
+        CatalogItems.CHARACTERS -> GraphQL.getCharacters(
+            page = page, limit = params.loadSize, search = query.title
         )
 
-        CatalogItems.PEOPLE -> ApolloClient.getPeople(
+        CatalogItems.PEOPLE -> GraphQL.getPeople(
             page = page,
             limit = params.loadSize,
             search = query.title,
@@ -231,27 +212,31 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             }
 
             is SetStatus -> _currentFilters.update {
-                it.copy(status = it.status.apply {
-                    if (event.status in it.status) remove(event.status) else add(event.status)
-                })
+                it.copy(
+                    status = it.status.apply {
+                        if (event.status in it.status) remove(event.status) else add(event.status)
+                    }
+                )
             }
 
             is SetKind -> _currentFilters.update {
-                it.copy(kind = it.kind.apply {
-                    if (event.kind in it.kind) remove(event.kind) else add(event.kind)
-                })
+                it.copy(
+                    kind = it.kind.apply {
+                        if (event.kind in it.kind) remove(event.kind) else add(event.kind)
+                    }
+                )
             }
 
-            is SetSeasonYS ->
-                if (event.year.length <= 4) _currentFilters.update { it.copy(seasonYS = event.year) }
+            is SetSeasonYS -> if (event.year.length <= 4) _currentFilters.update { it.copy(seasonYS = event.year) }
 
-            is SetSeasonYF ->
-                if (event.year.length <= 4) _currentFilters.update { it.copy(seasonYF = event.year) }
+            is SetSeasonYF -> if (event.year.length <= 4) _currentFilters.update { it.copy(seasonYF = event.year) }
 
             is SetSeasonS -> _currentFilters.update {
-                it.copy(season = it.seasonS.apply {
-                    if (event.season in it.seasonS) remove(event.season) else add(event.season)
-                })
+                it.copy(
+                    season = it.seasonS.apply {
+                        if (event.season in it.seasonS) remove(event.season) else add(event.season)
+                    }
+                )
             }
 
             is SetSeason -> {
@@ -300,18 +285,15 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
                 when (event.item) {
                     SEYU -> it.copy(
                         isSeyu = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(SEYU) else remove(SEYU) }
-                    )
+                        roles = it.roles.apply { if (event.flag) add(SEYU) else remove(SEYU) })
 
                     PRODUCER -> it.copy(
                         isProducer = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(PRODUCER) else remove(PRODUCER) }
-                    )
+                        roles = it.roles.apply { if (event.flag) add(PRODUCER) else remove(PRODUCER) })
 
                     MANGAKA -> it.copy(
                         isMangaka = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(MANGAKA) else remove(MANGAKA) }
-                    )
+                        roles = it.roles.apply { if (event.flag) add(MANGAKA) else remove(MANGAKA) })
                 }
             }
 
