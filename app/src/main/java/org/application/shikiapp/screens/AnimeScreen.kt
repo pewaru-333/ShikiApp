@@ -54,8 +54,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil.compose.AsyncImage
-import org.application.AnimeQuery.Data.Anime.Video
+import coil3.compose.AsyncImage
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_episodes
@@ -68,6 +67,7 @@ import org.application.shikiapp.R.string.text_studio
 import org.application.shikiapp.R.string.text_video
 import org.application.shikiapp.events.AnimeDetailEvent
 import org.application.shikiapp.events.ContentDetailEvent
+import org.application.shikiapp.generated.AnimeQuery.Data.Anime.Video
 import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.viewModels.AnimeViewModel
@@ -232,9 +232,7 @@ private fun AnimeView(
     )
 
     Statistics(
-        scores = anime.stats.scoresStats,
-        stats = anime.stats.statusesStats,
-        type = LinkedType.ANIME,
+        statistics = anime.stats,
         visible = state.showStats,
         hide = { onEvent(ContentDetailEvent.ShowStats) },
     )
