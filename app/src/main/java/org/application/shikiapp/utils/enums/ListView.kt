@@ -4,6 +4,6 @@ import androidx.annotation.StringRes
 import org.application.shikiapp.R
 
 enum class ListView(@StringRes val title: Int) {
-    COLUMN(R.string.text_column),
-    GRID(R.string.text_grid)
+    COLUMN(R.string.preference_list_view_column),
+    GRID(R.string.preference_list_view_grid)
 }
