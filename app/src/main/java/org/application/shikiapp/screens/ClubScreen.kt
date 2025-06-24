@@ -1,311 +1,577 @@
 package org.application.shikiapp.screens
 
+import android.widget.Toast
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement.spacedBy
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material3.ElevatedCard
+import androidx.compose.material.icons.outlined.Close
+import androidx.compose.material.icons.outlined.Done
+import androidx.compose.material.icons.outlined.MoreVert
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.collectLatest
+import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
-import org.application.shikiapp.models.data.AnimeBasic
-import org.application.shikiapp.models.data.BasicInfo
+import org.application.shikiapp.events.ClubEvent
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.UserBasic
-import org.application.shikiapp.models.viewModels.ClubState
+import org.application.shikiapp.models.states.ClubState
+import org.application.shikiapp.models.states.showContent
+import org.application.shikiapp.models.states.showImages
+import org.application.shikiapp.models.states.showMembers
+import org.application.shikiapp.models.ui.Club
+import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.ClubViewModel
-import org.application.shikiapp.models.viewModels.Menus
-import org.application.shikiapp.models.viewModels.Response
-import org.application.shikiapp.models.viewModels.UIEvent
-import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.enums.ClubMenu
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ClubScreen(
-    onNavigate:(Screen) -> Unit,
-    back: () -> Unit
-) {
+fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
+    val context = LocalContext.current
+
     val model = viewModel<ClubViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
+    val state by model.state.collectAsStateWithLifecycle()
+    val content = model.content.collectAsLazyPagingItems()
 
     when (val data = response) {
-        Response.Error -> ErrorScreen()
+        is Response.Error -> ErrorScreen()
         Response.Loading -> LoadingScreen()
-        is Response.Success -> {
-            val club = data.club
-            val state by model.state.collectAsStateWithLifecycle()
-            val comments = model.comments.collectAsLazyPagingItems()
+        is Response.Success -> ClubView(data.data, state, content, model::onEvent, onNavigate, back)
 
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = {},
-                        navigationIcon = { NavigationIcon(back) }
-                    )
-                }
-            ) { paddingValues ->
-                LazyColumn(
-                    contentPadding = PaddingValues(8.dp, paddingValues.calculateTopPadding()),
-                    verticalArrangement = spacedBy(16.dp)
-                ) {
-                    item {
-                        ListItem(
-                            headlineContent = {},
-                            overlineContent = {
-                                Text(
-                                    text = club.name,
-                                    style = MaterialTheme.typography.titleLarge
-                                )
-                            },
-                            leadingContent = {
-                                AsyncImage(
-                                    model = club.logo.original,
-                                    contentDescription = null,
-                                    modifier = Modifier
-                                        .size(80.dp)
-                                        .border(1.dp, Color.Gray)
-                                )
-                            }
-                        )
-                    }
+        else -> Unit
+    }
 
-                    item { BriefInfo(model, state, onNavigate) }
-                    item { Description(fromHtml(club.descriptionHtml)) }
-
-                    if (comments.itemCount > 0) comments(comments, onNavigate)
-                }
-            }
+    LaunchedEffect(Unit) {
+        model.joinChannel.collectLatest {
+            Toast.makeText(context, it.asString(context), Toast.LENGTH_SHORT).show()
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BriefInfo(
-    model: ClubViewModel,
+private fun ClubView(
+    club: Club,
     state: ClubState,
-    onNavigate: (Screen) -> Unit
-) {
-    ParagraphTitle(stringResource(R.string.text_information), Modifier.padding(bottom = 4.dp))
-    FlowRow(Modifier, spacedBy(16.dp), spacedBy(8.dp), maxItemsInEachRow =  2) {
-        Menus.entries.forEach { menu ->
-            ElevatedCard(
-                onClick = {
-                    model.onEvent(UIEvent.SetShow(true))
-                    model.onEvent(UIEvent.SetMenu(menu.ordinal))
-                },
-                modifier = Modifier
-                    .weight(0.5f)
-                    .height(64.dp),
-                enabled = menu.ordinal !in listOf(0, 3)
-            ) {
-                Row(modifier = Modifier.fillMaxSize(), verticalAlignment = CenterVertically) {
-                    Text(
-                        text = menu.title,
-                        modifier = Modifier.padding(4.dp),
-                        style = MaterialTheme.typography.titleMedium
-                    )
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
-                }
-            }
-        }
-    }
-
-    if (state.show)
-        Dialog(
-            onDismissRequest = { model.onEvent(UIEvent.SetShow(false)) },
-            properties = DialogProperties(usePlatformDefaultWidth = false)
-        ) {
-            Scaffold(
-                topBar = {
-                    TopAppBar(
-                        title = { Text(model.getTitle()) },
-                        navigationIcon = { NavigationIcon { model.onEvent(UIEvent.SetShow(false)) } }
-                    )
-                }
-            ) { paddingValues ->
-                val padding = paddingValues.calculateTopPadding()
-                when (state.menu) {
-                    1 -> model.anime.collectAsLazyPagingItems().also {
-                        Anime(it, onNavigate, padding)
-                    }
-
-                    2 -> model.members.collectAsLazyPagingItems().also {
-                        Members(it, onNavigate, padding)
-                    }
-
-                    4 -> model.characters.collectAsLazyPagingItems().also {
-                        Characters(it, onNavigate, padding)
-                    }
-
-                    5 -> model.images.collectAsLazyPagingItems().also {
-                        Images(it, padding)
-                    }
-                }
-            }
-        }
-}
-
-@Composable
-private fun Anime(anime: LazyPagingItems<AnimeBasic>, onNavigate: (Screen) -> Unit, padding: Dp) {
-    LazyColumn(contentPadding = PaddingValues(top = padding)) {
-        when (anime.loadState.refresh) {
-            is LoadState.Error -> item { ErrorScreen() }
-            is LoadState.Loading -> item { LoadingScreen() }
-            is LoadState.NotLoading -> {
-                items(anime.itemCount) {
-                    anime[it]?.let { anime ->
-                        ListItem(
-                            headlineContent = {
-                                Text(
-                                    text = anime.russian ?: anime.name,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        fontWeight = FontWeight.SemiBold
-                                    )
-                                )
-                            },
-                            modifier = Modifier.clickable { onNavigate(Screen.Anime(anime.id.toString())) },
-                            leadingContent = { ClubAnimeImage(anime.image.original) }
-                        )
-                    }
-                }
-                if (anime.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (anime.loadState.hasError) item { ErrorScreen() }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Members(members: LazyPagingItems<UserBasic>, onNavigate: (Screen) -> Unit, padding: Dp) {
-    LazyColumn(contentPadding = PaddingValues(top = padding)) {
-        when (members.loadState.refresh) {
-            is LoadState.Error -> item { ErrorScreen() }
-            is LoadState.Loading -> item { LoadingScreen() }
-            is LoadState.NotLoading -> {
-                items(members.itemCount) {
-                    members[it]?.let { member ->
-                        OneLineImage(
-                            name = member.nickname,
-                            link = member.image.x160,
-                            modifier = Modifier.clickable { onNavigate(Screen.User(member.id)) }
-                        )
-                    }
-                }
-                if (members.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (members.loadState.hasError) item { ErrorScreen() }
-            }
-
-        }
-    }
-}
-
-@Composable
-private fun Characters(
-    characters: LazyPagingItems<BasicInfo>,
+    content: LazyPagingItems<Content>,
+    onEvent: (ClubEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
-    padding: Dp
+    back: () -> Unit
 ) {
-    LazyColumn(contentPadding = PaddingValues(top = padding)) {
-        when (characters.loadState.refresh) {
-            is LoadState.Error -> item { ErrorScreen() }
-            is LoadState.Loading -> item { LoadingScreen() }
-            is LoadState.NotLoading -> {
-                items(characters.itemCount) {
-                    characters[it]?.let { character ->
-                        OneLineImage(
-                            name = character.russian.orEmpty().ifEmpty(character::name),
-                            link = character.image.original,
-                            modifier = Modifier.clickable { onNavigate(Screen.Character(character.id.toString())) }
-                        )
+    val members = club.members.collectAsLazyPagingItems()
+    val images = club.images.collectAsLazyPagingItems()
+    val clubs = club.clubs.collectAsLazyPagingItems()
+    val comments = club.comments.collectAsLazyPagingItems()
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {},
+                navigationIcon = { NavigationIcon(back) },
+                actions = {
+                    IconButton(
+                        onClick = { onEvent(ClubEvent.ShowComments) }
+                    ) {
+                        Icon(painterResource(R.drawable.vector_comments), null)
+                    }
+
+                    IconButton(
+                        onClick = { onEvent(ClubEvent.ShowBottomSheet) }
+                    ) {
+                        Icon(Icons.Outlined.MoreVert, null)
                     }
                 }
-                if (characters.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (characters.loadState.hasError) item { ErrorScreen() }
+            )
+        }
+    ) { paddingValues ->
+        LazyColumn(
+            contentPadding = PaddingValues(8.dp, paddingValues.calculateTopPadding()),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
+        ) {
+            item {
+                ListItem(
+                    headlineContent = {},
+                    overlineContent = {
+                        Text(
+                            text = club.name,
+                            style = MaterialTheme.typography.titleLarge
+                        )
+                    },
+                    leadingContent = {
+                        AsyncImage(
+                            model = club.image,
+                            contentDescription = null,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .border(1.dp, Color.Gray)
+                        )
+                    }
+                )
+            }
+
+            item {
+                HorizontalDivider()
+            }
+
+            item {
+                ClubMenuItems(onEvent)
+            }
+
+            item {
+                HorizontalDivider()
+            }
+
+            item {
+                Text(club.description)
+            }
+        }
+    }
+
+    Members(
+        members = members,
+        visible = state.showMembers,
+        onNavigate = onNavigate,
+        hide = { onEvent(ClubEvent.PickItem()) }
+    )
+
+    Content(
+        content = content,
+        state = state,
+        visible = state.showContent,
+        onNavigate = onNavigate,
+        hide = { onEvent(ClubEvent.PickItem()) }
+    )
+
+    Images(
+        images = images,
+        visible = state.showImages,
+        onEvent = onEvent,
+        hide = { onEvent(ClubEvent.PickItem()) }
+    )
+
+    Clubs(
+        clubs = clubs,
+        visible = state.showClubs,
+        onNavigate = onNavigate,
+        hide = { onEvent(ClubEvent.ShowClubs) }
+    )
+
+    Comments(
+        list = comments,
+        visible = state.showComments,
+        onNavigate = onNavigate,
+        hide = { onEvent(ClubEvent.ShowComments) }
+    )
+
+    when {
+        state.showFullImage -> DialogImage(state) {
+            onEvent(ClubEvent.ShowFullImage())
+        }
+
+        state.showBottomSheet -> BottomSheet(state, onEvent)
+    }
+}
+
+@Composable
+private fun ClubMenuItems(onEvent: (ClubEvent) -> Unit) =
+    Column(Modifier.wrapContentHeight(), Arrangement.spacedBy(8.dp), Alignment.CenterHorizontally) {
+        ClubMenu.entries.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
+                row.forEach {
+                    AssistChip(
+                        label = { Text(stringResource(it.title)) },
+                        onClick = { onEvent(ClubEvent.PickItem(it)) },
+                        trailingIcon = {
+                            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                        },
+                        modifier = Modifier
+                            .height(48.dp)
+                            .weight(1f)
+                    )
+                }
+            }
+        }
+    }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Members(
+    members: LazyPagingItems<UserBasic>,
+    visible: Boolean,
+    onNavigate: (Screen) -> Unit,
+    hide: () -> Unit,
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.text_members)) },
+                navigationIcon = {
+                    IconButton(hide) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        when (members.loadState.refresh) {
+            LoadState.Loading -> LoadingScreen()
+            is LoadState.Error -> ErrorScreen()
+            is LoadState.NotLoading -> LazyVerticalGrid(
+                columns = GridCells.FixedSize(70.dp),
+                contentPadding = padding,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                items(members.itemCount) { index ->
+                    members[index]?.let {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clickable {
+                                onNavigate(Screen.User(it.id))
+                            }
+                        ) {
+                            AsyncImage(
+                                model = it.avatar,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .padding(4.dp)
+                                    .clip(CircleShape)
+                            )
+
+                            Text(
+                                maxLines = 1,
+                                text = it.nickname,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                }
+
+                if (members.loadState.append == LoadState.Loading) {
+                    item(
+                        span = { GridItemSpan(maxLineSpan) }
+                    ) {
+                        LoadingScreen(Modifier.padding(8.dp))
+                    }
+                }
+                if (members.loadState.hasError) {
+                    item { ErrorScreen(members::retry) }
+                }
             }
         }
     }
 }
 
-@Composable
-private fun Images(images: LazyPagingItems<ClubImages>, padding: Dp) {
-    var show by rememberSaveable { mutableStateOf(false) }
-    var link by rememberSaveable { mutableStateOf(BLANK) }
 
-    LazyVerticalStaggeredGrid(
-        columns = StaggeredGridCells.Adaptive(76.dp),
-        modifier = Modifier.fillMaxSize(),
-        contentPadding = PaddingValues(top = padding),
-        verticalItemSpacing = 2.dp,
-        horizontalArrangement = spacedBy(2.dp)
-    ) {
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Content(
+    content: LazyPagingItems<Content>,
+    state: ClubState,
+    visible: Boolean,
+    onNavigate: (Screen) -> Unit,
+    hide: () -> Unit,
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { state.menu?.let { Text(stringResource(it.title)) } },
+                navigationIcon = {
+                    IconButton(hide) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        when (content.loadState.refresh) {
+            LoadState.Loading -> LoadingScreen()
+            is LoadState.Error -> ErrorScreen()
+            is LoadState.NotLoading -> LazyVerticalGrid(
+                columns = GridCells.FixedSize(116.dp),
+                contentPadding = padding,
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+                horizontalArrangement = Arrangement.SpaceAround
+            ) {
+                items(content.itemCount) { index ->
+                    content[index]?.let {
+                        Column(
+                            verticalArrangement = Arrangement.spacedBy(4.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clickable {
+                                when (state.menu) {
+                                    ClubMenu.ANIME -> onNavigate(Screen.Anime(it.id))
+                                    ClubMenu.MANGA, ClubMenu.RANOBE -> onNavigate(Screen.Manga(it.id))
+                                    ClubMenu.CHARACTERS -> onNavigate(Screen.Character(it.id))
+
+                                    else -> Unit
+                                }
+                            }
+                        ) {
+                            AsyncImage(
+                                model = it.poster,
+                                contentDescription = null,
+                                contentScale = ContentScale.FillBounds,
+                                filterQuality = FilterQuality.High,
+                                modifier = Modifier
+                                    .size(116.dp, 180.dp)
+                                    .clip(MaterialTheme.shapes.medium)
+                                    .border(
+                                        1.dp,
+                                        MaterialTheme.colorScheme.onSurface,
+                                        MaterialTheme.shapes.medium
+                                    )
+                            )
+
+                            Text(
+                                modifier = Modifier.padding(horizontal = 4.dp),
+                                maxLines = 2,
+                                text = it.title,
+                                textAlign = TextAlign.Center,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelLarge
+                            )
+                        }
+                    }
+                }
+
+                if (content.loadState.append == LoadState.Loading) {
+                    item(
+                        span = { GridItemSpan(maxLineSpan) }
+                    ) {
+                        LoadingScreen(Modifier.padding(8.dp))
+                    }
+                }
+                if (content.loadState.hasError) {
+                    item { ErrorScreen(content::retry) }
+                }
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Images(
+    images: LazyPagingItems<ClubImages>,
+    visible: Boolean,
+    onEvent: (ClubEvent) -> Unit,
+    hide: () -> Unit
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = {  Text(stringResource(R.string.text_pictures)) },
+                navigationIcon = {
+                    IconButton(hide) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
         when (images.loadState.refresh) {
-            is LoadState.Error -> item { ErrorScreen() }
-            is LoadState.Loading -> item { LoadingScreen() }
-            is LoadState.NotLoading -> {
-                items(images.itemCount) {
-                    images[it]?.let { image ->
+            LoadState.Loading -> LoadingScreen()
+            is LoadState.Error -> ErrorScreen()
+            is LoadState.NotLoading -> LazyVerticalStaggeredGrid(
+                modifier = Modifier.fillMaxSize(),
+                columns = StaggeredGridCells.Adaptive(120.dp),
+                contentPadding = padding,
+                verticalItemSpacing = 4.dp,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                items(images.itemCount, images.itemKey(ClubImages::id)) { index ->
+                    images[index]?.let {
                         AsyncImage(
-                            model = image.previewUrl,
+                            model = it.mainUrl,
                             contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            filterQuality = FilterQuality.High,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight()
                                 .clickable {
-                                    link = image.originalUrl.orEmpty(); show = true
-                                },
-                            contentScale = ContentScale.Crop
+                                    onEvent(ClubEvent.ShowFullImage(it.originalUrl))
+                                }
                         )
                     }
                 }
-                if (images.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                if (images.loadState.hasError) item { ErrorScreen() }
+
+                if (images.loadState.append == LoadState.Loading) {
+                    item(span = StaggeredGridItemSpan.FullLine) {
+                        LoadingScreen(Modifier.padding(8.dp))
+                    }
+                }
+
+                if (images.loadState.hasError) {
+                    item { ErrorScreen(images::retry) }
+                }
             }
         }
     }
+}
 
-    if (show) Dialog({ show = false }, DialogProperties(usePlatformDefaultWidth = false)) {
-        AsyncImage(link, null)
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Clubs(
+    clubs: LazyPagingItems<Content>,
+    visible: Boolean,
+    onNavigate: (Screen) -> Unit,
+    hide: () -> Unit
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.text_clubs)) },
+                navigationIcon = {
+                    IconButton(hide) {
+                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
+                    }
+                }
+            )
+        }
+    ) { padding ->
+        LazyColumn(contentPadding = padding) {
+            items(clubs.itemCount, clubs.itemKey(Content::id)) { index ->
+                clubs[index]?.let {
+                    OneLineImage(
+                        name = it.title,
+                        link = it.poster,
+                        modifier = Modifier.clickable {
+                            onNavigate(Screen.Club(it.id.toLong()))
+                        }
+                    )
+                }
+            }
+        }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun BottomSheet(state: ClubState, onEvent: (ClubEvent) -> Unit) = ModalBottomSheet(
+    onDismissRequest = { onEvent(ClubEvent.ShowBottomSheet) },
+    sheetState = state.sheetState
+) {
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.text_clubs)) },
+        leadingContent = { Icon(painterResource(R.drawable.vector_clubs), null) },
+        modifier = Modifier.clickable { onEvent(ClubEvent.ShowClubs) }
+    )
+
+    if (Preferences.token != null) {
+        if (state.isMember) {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.text_leave_club)) },
+                leadingContent = { Icon(Icons.Outlined.Close, null) },
+                modifier = Modifier.clickable { onEvent(ClubEvent.LeaveClub) }
+            )
+        } else {
+            ListItem(
+                headlineContent = { Text(stringResource(R.string.text_join_club)) },
+                leadingContent = { Icon(Icons.Outlined.Done, null) },
+                modifier = Modifier.clickable { onEvent(ClubEvent.JoinClub) }
+            )
+        }
+    }
+
+    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
+}
+
+@Composable
+private fun DialogImage(state: ClubState, onDismiss: () -> Unit) = Dialog(onDismiss) {
+    ZoomableAsyncImage(
+        contentDescription = null,
+        model = state.image,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    )
 }
