@@ -2,7 +2,7 @@ package org.application.shikiapp.models.viewModels
 
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.snapshots.SnapshotStateList
+import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -13,7 +13,6 @@ import androidx.paging.PagingData
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.cachedIn
 import io.ktor.client.plugins.ClientRequestException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.channels.Channel
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
@@ -52,15 +50,21 @@ import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetStudio
 import org.application.shikiapp.events.FilterEvent.SetTitle
 import org.application.shikiapp.generated.type.MangaKindEnum
+import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.network.client.GraphQL
+import org.application.shikiapp.network.client.Network
+import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.network.paging.ContentPaging
-import org.application.shikiapp.utils.enums.CatalogItems
-import org.application.shikiapp.utils.enums.PeopleFilterItems.MANGAKA
-import org.application.shikiapp.utils.enums.PeopleFilterItems.PRODUCER
-import org.application.shikiapp.utils.enums.PeopleFilterItems.SEYU
+import org.application.shikiapp.utils.enums.CatalogItem
+import org.application.shikiapp.utils.enums.PeopleFilterItem.MANGAKA
+import org.application.shikiapp.utils.enums.PeopleFilterItem.PRODUCER
+import org.application.shikiapp.utils.enums.PeopleFilterItem.SEYU
+import org.application.shikiapp.utils.extensions.toggle
 import org.application.shikiapp.utils.navigation.Screen
 import org.application.shikiapp.utils.setScore
 
@@ -76,8 +80,8 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     private val _navEvent = Channel<Boolean>()
     val navEvent = _navEvent.receiveAsFlow().onStart { emit(args.showOngoing) }
 
-    private val filters = CatalogItems.entries.associateWith { MutableStateFlow(FiltersState()) }
-    private val pagers = mutableMapOf<CatalogItems, Flow<PagingData<Content>>>()
+    private val filters = CatalogItem.entries.associateWith { MutableStateFlow(FiltersState()) }
+    private val pagers = mutableMapOf<CatalogItem, Flow<PagingData<Content>>>()
 
     private val _currentFilters = MutableStateFlow(FiltersState())
     val currentFilters = _currentFilters.asStateFlow()
@@ -94,19 +98,19 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val genres = _state.flatMapLatest {
         when (it.menu) {
-            CatalogItems.ANIME -> GraphQL.getAnimeGenres()
-            CatalogItems.MANGA, CatalogItems.RANOBE -> GraphQL.getMangaGenres()
+            CatalogItem.ANIME -> GraphQL.getAnimeGenres()
+            CatalogItem.MANGA, CatalogItem.RANOBE -> GraphQL.getMangaGenres()
             else -> flowOf(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
 
 
-    fun showFilters(menu: CatalogItems) = _state.update {
+    fun showFilters(menu: CatalogItem) = _state.update {
         when (menu) {
-            CatalogItems.ANIME -> it.copy(showFiltersA = true)
-            CatalogItems.MANGA -> it.copy(showFiltersM = true)
-            CatalogItems.RANOBE -> it.copy(showFiltersR = true)
-            CatalogItems.PEOPLE -> it.copy(showFiltersP = true)
+            CatalogItem.ANIME -> it.copy(showFiltersA = true)
+            CatalogItem.MANGA -> it.copy(showFiltersM = true)
+            CatalogItem.RANOBE -> it.copy(showFiltersR = true)
+            CatalogItem.PEOPLE -> it.copy(showFiltersP = true)
             else -> it
         }
     }
@@ -123,7 +127,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun pick(menu: CatalogItems) {
+    fun pick(menu: CatalogItem) {
         filters.getValue(_state.value.menu).update { _currentFilters.value }
         _currentFilters.update { filters.getValue(menu).value }
 
@@ -142,17 +146,33 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
-    private fun createPagingFlow(item: CatalogItems, filtersState: FiltersState) = Pager(
-        config = PagingConfig(pageSize = 20, enablePlaceholders = false), pagingSourceFactory = {
-            ContentPaging(filters = { filtersState }, fetch = { filters, page, params ->
-                fetchData(item, filters, page, params)
-            })
-        }).flow.debounce(350L).flowOn(Dispatchers.IO).retryWhen { cause, attempt ->
+    private fun createPagingFlow(item: CatalogItem, filtersState: FiltersState) = Pager(
+        config = PagingConfig(
+            pageSize = 20,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = {
+            if (item in listOf(CatalogItem.USERS, CatalogItem.CLUBS)) {
+                CommonPaging<Content>(Content::id) { page, params ->
+                    fetchData(item, filtersState, page, params)
+                }
+            } else {
+                ContentPaging(
+                    filters = { filtersState },
+                    fetch = { filters, page, params ->
+                        fetchData(item, filters, page, params)
+                    }
+                )
+            }
+        }
+    ).flow
+        .debounce(350L)
+        .retryWhen { cause, attempt ->
             cause is ClientRequestException && attempt < 3
         }
 
-    private suspend fun fetchData(item: CatalogItems, query: FiltersState, page: Int, params: LoadParams<Int>) = when (item) {
-        CatalogItems.ANIME -> GraphQL.getAnimeList(
+    private suspend fun fetchData(item: CatalogItem, query: FiltersState, page: Int, params: LoadParams<Int>) = when (item) {
+        CatalogItem.ANIME -> GraphQL.getAnimeList(
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
@@ -166,7 +186,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             search = query.title
         )
 
-        CatalogItems.MANGA -> GraphQL.getMangaList(
+        CatalogItem.MANGA -> GraphQL.getMangaList(
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
@@ -178,7 +198,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             search = query.title
         )
 
-        CatalogItems.RANOBE -> GraphQL.getMangaList(
+        CatalogItem.RANOBE -> GraphQL.getMangaList(
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
@@ -191,18 +211,30 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             search = query.title
         )
 
-        CatalogItems.CHARACTERS -> GraphQL.getCharacters(
+        CatalogItem.CHARACTERS -> GraphQL.getCharacters(
             page = page, limit = params.loadSize, search = query.title
         )
 
-        CatalogItems.PEOPLE -> GraphQL.getPeople(
+        CatalogItem.PEOPLE -> GraphQL.getPeople(
             page = page,
             limit = params.loadSize,
             search = query.title,
-            isSeyu = query.isSeyu,
-            isProducer = query.isProducer,
-            isMangaka = query.isMangaka
+            isSeyu = query.roles.contains(SEYU).takeIf { it },
+            isProducer = query.roles.contains(PRODUCER).takeIf { it },
+            isMangaka = query.roles.contains(MANGAKA).takeIf { it }
         )
+
+        CatalogItem.USERS -> Network.user.getUsers(
+            search = query.title,
+            page = page,
+            limit = params.loadSize
+        ).map(UserBasic::toContent)
+
+        CatalogItem.CLUBS -> Network.clubs.getClubs(
+            search = query.title,
+            page = page,
+            limit = params.loadSize
+        ).map(Club::toContent)
     }
 
     fun onEvent(event: FilterEvent) {
@@ -214,7 +246,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             is SetStatus -> _currentFilters.update {
                 it.copy(
                     status = it.status.apply {
-                        if (event.status in it.status) remove(event.status) else add(event.status)
+                        toggle(event.status)
                     }
                 )
             }
@@ -222,19 +254,23 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             is SetKind -> _currentFilters.update {
                 it.copy(
                     kind = it.kind.apply {
-                        if (event.kind in it.kind) remove(event.kind) else add(event.kind)
+                        toggle(event.kind)
                     }
                 )
             }
 
-            is SetSeasonYS -> if (event.year.length <= 4) _currentFilters.update { it.copy(seasonYS = event.year) }
+            is SetSeasonYS -> if (event.year.length <= 4) {
+                _currentFilters.update { it.copy(seasonYS = event.year) }
+            }
 
-            is SetSeasonYF -> if (event.year.length <= 4) _currentFilters.update { it.copy(seasonYF = event.year) }
+            is SetSeasonYF -> if (event.year.length <= 4) {
+                _currentFilters.update { it.copy(seasonYF = event.year) }
+            }
 
             is SetSeasonS -> _currentFilters.update {
                 it.copy(
                     season = it.seasonS.apply {
-                        if (event.season in it.seasonS) remove(event.season) else add(event.season)
+                        toggle(event.season)
                     }
                 )
             }
@@ -244,7 +280,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
                 val yearEnd = _currentFilters.value.seasonYF.toIntOrNull() ?: 2100
                 val selectedSeasons = _currentFilters.value.seasonS
 
-                val seasons = (yearStart..yearEnd).flatMapTo(SnapshotStateList()) { year ->
+                val seasons = (yearStart..yearEnd).flatMapTo(SnapshotStateSet()) { year ->
                     if (selectedSeasons.isEmpty()) listOf(year.toString())
                     else selectedSeasons.map { season -> "${season}_$year" }
                 }
@@ -259,21 +295,27 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             }
 
             is SetDuration -> _currentFilters.update {
-                it.copy(duration = it.duration.apply {
-                    if (event.duration in it.duration) remove(event.duration) else add(event.duration)
-                })
+                it.copy(
+                    duration = it.duration.apply {
+                        toggle(event.duration)
+                    }
+                )
             }
 
             is SetRating -> _currentFilters.update {
-                it.copy(rating = it.rating.apply {
-                    if (event.rating in it.rating) remove(event.rating) else add(event.rating)
-                })
+                it.copy(
+                    rating = it.rating.apply {
+                        toggle(event.rating)
+                    }
+                )
             }
 
             is SetGenre -> _currentFilters.update {
-                it.copy(genres = it.genres.apply {
-                    if (event.genre in it.genres) remove(event.genre) else add(event.genre)
-                })
+                it.copy(
+                    genres = it.genres.apply {
+                        toggle(event.genre)
+                    }
+                )
             }
 
             is SetStudio -> {}
@@ -282,19 +324,11 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             is SetCensored -> {}
             is SetMyList -> {}
             is SetRole -> _currentFilters.update {
-                when (event.item) {
-                    SEYU -> it.copy(
-                        isSeyu = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(SEYU) else remove(SEYU) })
-
-                    PRODUCER -> it.copy(
-                        isProducer = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(PRODUCER) else remove(PRODUCER) })
-
-                    MANGAKA -> it.copy(
-                        isMangaka = event.flag,
-                        roles = it.roles.apply { if (event.flag) add(MANGAKA) else remove(MANGAKA) })
-                }
+                it.copy(
+                    roles = it.roles.apply {
+                        toggle(event.item)
+                    }
+                )
             }
 
             is SetTitle -> {
