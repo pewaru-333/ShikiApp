@@ -18,7 +18,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.enums.Themes
+import org.application.shikiapp.utils.enums.Theme
 
 private val lightScheme = lightColorScheme(
     primary = primaryLight,
@@ -104,8 +104,8 @@ fun Theme(content: @Composable () -> Unit) {
     val dynamicColor by Preferences.dynamicColors.collectAsStateWithLifecycle()
 
     val darkTheme = when (darkState) {
-        Themes.LIGHT -> false
-        Themes.DARK -> true
+        Theme.LIGHT -> false
+        Theme.DARK -> true
         else -> isSystemInDarkTheme()
     }
 
