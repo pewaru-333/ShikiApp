@@ -5,7 +5,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.callbackFlow
 import org.application.shikiapp.utils.PREF_APP_THEME
 import org.application.shikiapp.utils.PREF_DYNAMIC_COLORS
-import org.application.shikiapp.utils.enums.Themes
+import org.application.shikiapp.utils.enums.Theme
 
 fun <E : Enum<E>> SharedPreferences.Editor.putEnum(key: String, value: E) {
     putString(key, value.name)
@@ -24,12 +24,12 @@ fun <E : Enum<E>> SharedPreferences.getEnum(key: String, defaultValue: E): E {
 
 fun SharedPreferences.getThemeFlow(changedKey: String = PREF_APP_THEME) = callbackFlow {
     val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-        if (changedKey == key) trySend(getEnum(key, Themes.SYSTEM))
+        if (changedKey == key) trySend(getEnum(key, Theme.SYSTEM))
     }
 
     registerOnSharedPreferenceChangeListener(listener)
 
-    if (contains(changedKey)) send(getEnum(changedKey, Themes.SYSTEM))
+    if (contains(changedKey)) send(getEnum(changedKey, Theme.SYSTEM))
 
     awaitClose { unregisterOnSharedPreferenceChangeListener(listener) }
 }
