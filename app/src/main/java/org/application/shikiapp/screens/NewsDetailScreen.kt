@@ -38,7 +38,6 @@ import coil3.compose.AsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.events.NewsDetailEvent
 import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.viewModels.NewsDetailViewModel
@@ -65,7 +64,7 @@ fun NewsDetail(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 fun NewsDetailView(
     news: NewsDetail,
     state: NewsDetailState,
-    onEvent: (NewsDetailEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
@@ -160,7 +159,7 @@ fun NewsDetailView(
                             modifier = Modifier
                                 .size(172.dp, 130.dp)
                                 .clip(MaterialTheme.shapes.small)
-                                .clickable { onEvent(NewsDetailEvent.ShowImage(index)) }
+                                .clickable { onEvent(ContentDetailEvent.Media.ShowImage(index)) }
                         )
                     }
                 }
@@ -179,7 +178,7 @@ fun NewsDetailView(
         list = news.images,
         screenshot = state.image,
         visible = state.showImage,
-        setScreenshot = { onEvent(NewsDetailEvent.SetImage(it)) },
-        hide = { onEvent(NewsDetailEvent.ShowImage()) }
+        setScreenshot = { onEvent(ContentDetailEvent.Media.SetImage(it)) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowImage()) }
     )
 }
