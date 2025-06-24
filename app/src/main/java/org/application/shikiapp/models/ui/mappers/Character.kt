@@ -1,10 +1,12 @@
 package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
+import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.R
 import org.application.shikiapp.generated.CharacterListQuery
 import org.application.shikiapp.generated.CharacterQuery
+import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.ui.list.Content
@@ -61,3 +63,13 @@ fun CharacterListQuery.Data.Character.mapper() = Content(
     season = ResourceText.StringResource(R.string.blank),
     poster = poster?.mainUrl ?: BLANK
 )
+
+fun PagingData<BasicInfo>.toContent() = map {
+    Content(
+        id = it.id.toString(),
+        title = it.russian.orEmpty().ifEmpty(it::name),
+        kind = R.string.blank,
+        season = ResourceText.StringResource(R.string.blank),
+        poster = it.image.original
+    )
+}
