@@ -1,6 +1,8 @@
 package org.application.shikiapp.models.ui.mappers
 
+import androidx.core.net.toUri
 import androidx.paging.PagingData
+import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_ranobe
@@ -20,6 +22,7 @@ import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.utils.ROLES_RUSSIAN
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.ResourceText.StringResource
@@ -69,7 +72,13 @@ fun MangaQuery.Data.Manga.mapper(
             relationText = it.relationText
         )
     } ?: emptyList(),
-    links = links,
+    links = links.filter { it.kind in EXTERNAL_LINK_KINDS.keys }.map {
+        org.application.shikiapp.models.ui.ExternalLink(
+            url = it.url.toUri(),
+            title = EXTERNAL_LINK_KINDS[it.kind].orEmpty(),
+            kind = it.kind
+        )
+    },
     charactersAll = characterRoles?.map {
         CharacterMain(
             id = it.character.id,
@@ -127,3 +136,13 @@ fun MangaListQuery.Data.Manga.mapper() = Content(
     season = getSeason(airedOn, kind?.rawValue),
     poster = poster?.mainUrl ?: BLANK
 )
+
+fun PagingData<MangaBasic>.toContent() = map {
+    Content(
+        id = it.id.toString(),
+        title = it.russian.orEmpty().ifEmpty(it::name),
+        kind = Enum.safeValueOf<Kind>(it.kind).title,
+        season = ResourceText.StaticString(BLANK),
+        poster = it.image.original
+    )
+}
