@@ -15,6 +15,9 @@ const val CLIENT_SECRET = "0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM"
 const val REDIRECT_URI = "app://login"
 const val GRANT_TYPE = "authorization_code"
 
+const val PREF_GROUP_APP_VIEW = "app_view"
+const val PREF_GROUP_APP_SYSTEM = "app_system"
+
 const val PREF_APP_THEME = "app_theme"
 const val PREF_APP_CACHE = "app_cache"
 const val PREF_DYNAMIC_COLORS = "dynamic_colors"
@@ -35,6 +38,8 @@ val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
 val DATE_FORMATS = listOf("d.M.yyyy", "d.M", "yyyy")
 
 val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
+
+val AUTH_SCOPES = listOf("user_rates", /*"email"*/ "messages", "comments", "topics", /*"content"*/ "clubs", "friends", /*"ignores"*/)
 
 // =========================================== Maps ===============================================
 val EXTERNAL_LINK_KINDS = mapOf(
