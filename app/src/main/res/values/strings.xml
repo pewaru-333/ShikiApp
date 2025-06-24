@@ -27,13 +27,16 @@
     <string name="text_manga">Манга</string>
     <string name="text_mangaka">Мангака</string>
     <string name="text_mangakas">Мангаки</string>
+    <string name="text_members">Участники</string>
     <string name="text_news">Новости</string>
     <string name="text_news_one">Новость</string>
     <string name="text_others">Прочие</string>
     <string name="text_people">Персоналии</string>
+    <string name="text_pictures">Картинки</string>
     <string name="text_producer">Продюсер</string>
     <string name="text_ranobe">Ранобэ</string>
     <string name="text_video">Видео</string>
+    <string name="text_users">Пользователи</string>
 
     <!-- Статус просмотра/прочтения -->
     <string name="status_planned">Запланировано</string>
@@ -149,6 +152,7 @@
     <string name="text_rewatches">Повторных просмотров</string>
 
     <!-- Пользователь -->
+    <string name="text_about_me">Обо мне</string>
     <string name="text_achievements">Достижения</string>
     <string name="text_anime_list">Список аниме</string>
     <string name="text_clubs">Клубы</string>
@@ -162,6 +166,7 @@
     <!-- Действия -->
     <string name="text_add_fav">Добавить в избранное</string>
     <string name="text_add_rate">Добавить в список</string>
+    <string name="text_confirm">Подтвердить</string>
     <string name="text_cancel">Отменить</string>
     <string name="text_change">Изменить</string>
     <string name="text_change_rate">Изменить оценку</string>
@@ -174,21 +179,48 @@
     <string name="text_show_all_s">Показать весь</string>
     <string name="text_show_all_w">Показать все</string>
 
+    <string name="text_add_friend">Добавить в друзья</string>
+    <string name="text_remove_friend">Удалить из друзей</string>
+
+    <string name="text_join_club">Вступить в клуб</string>
+    <string name="text_leave_club">Покинуть клуб</string>
+
     <!-- Настройки -->
-    <string name="text_settings">Настройки</string>
-    <string name="text_column">Столбец</string>
-    <string name="text_grid">Сетка</string>
+    <string name="preference_category_app_view">Вид приложения</string>
+    <string name="preference_category_system">Системные</string>
+
+    <string name="preference_list_view">Вид списков</string>
+    <string name="preference_list_view_column">Столбец</string>
+    <string name="preference_list_view_grid">Сетка</string>
+
+    <string name="preference_theme">Тема приложения</string>
     <string name="preference_theme_system">Системная</string>
     <string name="preference_theme_light">Светлая</string>
     <string name="preference_theme_dark">Тёмная</string>
 
+    <string name="preference_dynamic_colors">Системные цвета</string>
+
+    <string name="preference_cache_size">Размер кэша</string>
+    <string name="preference_cache_size_mb">%1$d МБ</string>
+
     <!-- Другое -->
     <string name="blank" />
-    <string name="text_empty">Пусто</string>
-    <string name="text_login">Вход</string>
-    <string name="text_unknown">Неизвестно</string>
-    <string name="text_pay_attention">Обратите внимание!</string>
     <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
+    <string name="text_empty">Пусто</string>
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
+
+    <string name="text_login">Вход</string>
+    <string name="text_pay_attention">Обратите внимание!</string>
     <string name="text_to_settings">В настройки</string>
+    <string name="text_settings">Настройки</string>
+    <string name="text_unknown">Неизвестно</string>
+
+    <string name="text_successfully_joined_club">Вы вступили в клуб!</string>
+    <string name="text_unsuccessfully_joined_club">Ошибка вступления в клуб!</string>
+
+    <string name="text_successfully_leave_club">Вы покинули клуб!</string>
+    <string name="text_unsuccessfully_leave_club">Ошибка при выходе из клуба!</string>
+
+    <string name="text_confirm_remove_friend">Вы действительно хотите удалить данного пользователя из друзей?</string>
+    <string name="text_confirm_add_friend">Вы действительно хотите добавить данного пользователя в друзья?</string>
 </resources>
