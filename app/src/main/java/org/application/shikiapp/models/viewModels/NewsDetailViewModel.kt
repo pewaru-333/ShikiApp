@@ -5,16 +5,15 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.events.NewsDetailEvent
 import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.ui.mappers.mapper
-import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.client.Network
+import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.navigation.Screen
 
 
-class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<NewsDetail, NewsDetailState, NewsDetailEvent>() {
+class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<NewsDetail, NewsDetailState>() {
     private val newsId = saved.toRoute<Screen.NewsDetail>().id
 
     override fun initState() = NewsDetailState()
@@ -34,12 +33,19 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
         }
     }
 
-    override fun onEvent(event: NewsDetailEvent) {
+    override fun onEvent(event: ContentDetailEvent) {
         when (event) {
-            is ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
-            is NewsDetailEvent.ShowImage -> updateState {
+            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+
+            is ContentDetailEvent.Media.ShowImage -> updateState {
                 it.copy(
                     showImage = !it.showImage,
+                    image = event.index
+                )
+            }
+
+            is ContentDetailEvent.Media.SetImage -> updateState {
+                it.copy(
                     image = event.index
                 )
             }
