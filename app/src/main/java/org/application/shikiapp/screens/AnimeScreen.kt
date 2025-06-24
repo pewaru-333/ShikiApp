@@ -65,7 +65,6 @@ import org.application.shikiapp.R.string.text_screenshots
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_studio
 import org.application.shikiapp.R.string.text_video
-import org.application.shikiapp.events.AnimeDetailEvent
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.generated.AnimeQuery.Data.Anime.Video
 import org.application.shikiapp.models.states.AnimeState
@@ -75,7 +74,7 @@ import org.application.shikiapp.network.response.Response.Error
 import org.application.shikiapp.network.response.Response.Loading
 import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.utils.enums.LinkedType
-import org.application.shikiapp.utils.enums.VideoKinds
+import org.application.shikiapp.utils.enums.VideoKind
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
@@ -97,7 +96,7 @@ fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 private fun AnimeView(
     anime: Anime,
     state: AnimeState,
-    onEvent: (AnimeDetailEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
@@ -166,7 +165,7 @@ private fun AnimeView(
                 if (it.isNotEmpty()) item {
                     Related(
                         list = it,
-                        hide = { onEvent(ContentDetailEvent.ShowRelated) },
+                        hide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
                         onNavigate = onNavigate
                     )
                 }
@@ -175,7 +174,7 @@ private fun AnimeView(
                 if (it.isNotEmpty()) item {
                     Characters(
                         list = it,
-                        show = { onEvent(AnimeDetailEvent.ShowCharacters) },
+                        show = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
                         onNavigate = onNavigate
                     )
                 }
@@ -184,7 +183,7 @@ private fun AnimeView(
                 if (it.isNotEmpty()) item {
                     Authors(
                         list = it,
-                        show = { onEvent(AnimeDetailEvent.ShowAuthors) },
+                        show = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
                         onNavigate = onNavigate
                     )
                 }
@@ -193,8 +192,8 @@ private fun AnimeView(
                 if (it.isNotEmpty()) item {
                     Screenshots(
                         list = it,
-                        show = { onEvent(AnimeDetailEvent.ShowScreenshot(it)) },
-                        hide = { onEvent(AnimeDetailEvent.ShowScreenshots) },
+                        show = { onEvent(ContentDetailEvent.Media.ShowImage(it)) },
+                        hide = { onEvent(ContentDetailEvent.Media.Anime.ShowScreenshots) },
                     )
                 }
             }
@@ -202,7 +201,7 @@ private fun AnimeView(
                 if (it.isNotEmpty()) item {
                     Video(
                         list = it,
-                        show = { onEvent(AnimeDetailEvent.ShowVideo) },
+                        show = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) },
                     )
                 }
             }
@@ -219,7 +218,7 @@ private fun AnimeView(
     RelatedFull(
         list = anime.related,
         visible = state.showRelated,
-        hide = { onEvent(ContentDetailEvent.ShowRelated) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
         onNavigate = onNavigate
     )
 
@@ -228,20 +227,20 @@ private fun AnimeView(
         listState = state.lazySimilar,
         visible = state.showSimilar,
         onNavigate = { onNavigate(Screen.Anime(it)) },
-        hide = { onEvent(ContentDetailEvent.ShowSimilar) }
+        hide = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
     )
 
     Statistics(
         statistics = anime.stats,
         visible = state.showStats,
-        hide = { onEvent(ContentDetailEvent.ShowStats) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowStats) },
     )
 
     CharactersFull(
         list = anime.charactersAll,
         state = state.lazyCharacters,
         visible = state.showCharacters,
-        hide = { onEvent(AnimeDetailEvent.ShowCharacters) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
         onNavigate = onNavigate
     )
 
@@ -249,29 +248,29 @@ private fun AnimeView(
         roles = anime.personAll,
         state = state.lazyAuthors,
         visible = state.showAuthors,
-        hide = { onEvent(AnimeDetailEvent.ShowAuthors) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
         onNavigate = onNavigate
     )
 
     Screenshots(
         list = anime.screenshots,
         visible = state.showScreenshots,
-        showScreenshot = { onEvent(AnimeDetailEvent.ShowScreenshot(it)) },
-        hide = { onEvent(AnimeDetailEvent.ShowScreenshots) }
+        showScreenshot = { onEvent(ContentDetailEvent.Media.ShowImage(it)) },
+        hide = { onEvent(ContentDetailEvent.Media.Anime.ShowScreenshots) }
     )
 
     DialogScreenshot(
         list = anime.screenshots,
         screenshot = state.screenshot,
         visible = state.showScreenshot,
-        setScreenshot = { onEvent(AnimeDetailEvent.SetScreenshot(it)) },
-        hide = { onEvent(AnimeDetailEvent.ShowScreenshot()) }
+        setScreenshot = { onEvent(ContentDetailEvent.Media.SetImage(it)) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowImage()) }
     )
 
     Video(
         list = anime.videos,
         visible = state.showVideo,
-        hide = { onEvent(AnimeDetailEvent.ShowVideo) }
+        hide = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) }
     )
 
     when {
@@ -279,22 +278,22 @@ private fun AnimeView(
             state = state.sheetBottom,
             rate = anime.userRate,
             favoured = anime.favoured,
-            onEvent = onEvent as (ContentDetailEvent) -> Unit,
-            toggleFavourite = { onEvent(AnimeDetailEvent.ToggleFavourite(anime.favoured)) }
+            onEvent = onEvent,
+            toggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite(anime.favoured)) }
         )
 
         state.showRate -> CreateRate(
             id = anime.id,
             type = LinkedType.ANIME,
             rateF = anime.userRate,
-            reload = { onEvent(AnimeDetailEvent.Reload) },
-            hide = { onEvent(AnimeDetailEvent.ShowRate) }
+            reload = { onEvent(ContentDetailEvent.Media.Reload) },
+            hide = { onEvent(ContentDetailEvent.Media.ShowRate) }
         )
 
         state.showLinks -> LinksSheet(
             list = anime.links,
             state = state.sheetLinks,
-            hide = { onEvent(ContentDetailEvent.ShowLinks) }
+            hide = { onEvent(ContentDetailEvent.Media.ShowLinks) }
         )
     }
 }
@@ -448,7 +447,7 @@ private fun Video(
             horizontalArrangement = SpaceBetween,
             verticalItemSpacing = 12.dp
         ) {
-            VideoKinds.entries.forEach { entry ->
+            VideoKind.entries.forEach { entry ->
                 if (list.any { it.kind.rawValue in entry.kinds })
                     item(span = StaggeredGridItemSpan.FullLine) {
                         ParagraphTitle(entry.title, Modifier.padding(bottom = 4.dp))
