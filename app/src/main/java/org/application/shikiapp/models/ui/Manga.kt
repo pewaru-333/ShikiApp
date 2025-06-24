@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.MangaQuery
 import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.models.data.ExternalLink
 
 data class Manga(
     val id: String,
