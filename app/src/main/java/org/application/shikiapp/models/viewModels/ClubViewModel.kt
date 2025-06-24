@@ -1,38 +1,50 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.models.viewModels
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import io.ktor.client.plugins.ClientRequestException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.flowOn
+import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
-import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.R
+import org.application.shikiapp.events.ClubEvent
 import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
-import org.application.shikiapp.models.data.Club
+import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.Comment
+import org.application.shikiapp.models.data.MangaBasic
 import org.application.shikiapp.models.data.UserBasic
+import org.application.shikiapp.models.states.ClubState
+import org.application.shikiapp.models.ui.Club
+import org.application.shikiapp.models.ui.mappers.mapper
+import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
+import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.ResourceText
+import org.application.shikiapp.utils.enums.ClubMenu
 import org.application.shikiapp.utils.navigation.Screen
 
-class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
+class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, ClubEvent>() {
     private val clubId = saved.toRoute<Screen.Club>().id
 
-    private val _response = MutableStateFlow<Response>(Response.Loading)
-    val response = _response.asStateFlow()
-
-    private val _state = MutableStateFlow(ClubState())
-    val state = _state.asStateFlow()
+    private val _joinChannel = Channel<ResourceText>()
+    val joinChannel = _joinChannel.receiveAsFlow()
 
     val members = Pager(
         config = PagingConfig(
@@ -45,7 +57,6 @@ class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
@@ -60,11 +71,11 @@ class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
+        .map(PagingData<BasicInfo>::toContent)
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
-    val anime = Pager(
+    val animes = Pager(
         config = PagingConfig(
             pageSize = 10,
             enablePlaceholders = false
@@ -75,22 +86,52 @@ class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
+        .map(PagingData<AnimeBasic>::toContent)
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
-    val comments = Pager(
+    val manga = Pager(
         config = PagingConfig(
             pageSize = 10,
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<Comment>(Comment::id) { page, params ->
-                Network.topics.getComments(_state.value.topicId, "Topic", page, params.loadSize)
+            CommonPaging<MangaBasic>(MangaBasic::id) { page, params ->
+                Network.clubs.getManga(clubId, page, params.loadSize)
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
+        .map(PagingData<MangaBasic>::toContent)
+        .cachedIn(viewModelScope)
+        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+
+    val ranobe = Pager(
+        config = PagingConfig(
+            pageSize = 10,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = {
+            CommonPaging<MangaBasic>(MangaBasic::id) { page, params ->
+                Network.clubs.getRanobe(clubId, page, params.loadSize)
+            }
+        }
+    ).flow
+        .map(PagingData<MangaBasic>::toContent)
+        .cachedIn(viewModelScope)
+        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+
+    val clubs = Pager(
+        config = PagingConfig(
+            pageSize = 10,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = {
+            CommonPaging<ClubBasic>(ClubBasic::id) { page, params ->
+                Network.clubs.getClubClubs(clubId, page, params.loadSize)
+            }
+        }
+    ).flow
+        .map(PagingData<ClubBasic>::toContent)
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
@@ -105,52 +146,132 @@ class ClubViewModel(saved: SavedStateHandle) : ViewModel() {
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
-    init {
+    @OptIn(ExperimentalCoroutinesApi::class)
+    val content = state.flatMapLatest { state ->
+        when (state.menu) {
+            ClubMenu.ANIME -> animes
+            ClubMenu.MANGA -> manga
+            ClubMenu.RANOBE -> ranobe
+            ClubMenu.CHARACTERS -> characters
+            else -> emptyFlow()
+        }
+    }
+
+    override fun initState() = ClubState()
+
+    override fun loadData() {
         viewModelScope.launch {
-            _response.emit(Response.Loading)
+            emit(Response.Loading)
 
             try {
-                val club = Network.clubs.getClub(clubId)
-                _state.update { it.copy(topicId = club.topicId) }
+                val club = asyncLoad { Network.clubs.getClub(clubId) }
+                val clubLoaded = club.await()
 
-                _response.emit(Response.Success(club))
+                val comments = getComments(clubLoaded.topicId)
+
+                updateState {
+                    it.copy(
+                        isMember = clubLoaded.userRole == "member"
+                    )
+                }
+
+                emit(
+                    Response.Success(
+                        clubLoaded.mapper(
+                            images = images,
+                            members = members,
+                            animes = animes,
+                            mangas = manga,
+                            ranobe = ranobe,
+                            characters = characters,
+                            clubs = clubs,
+                            comments = comments
+                        )
+                    )
+                )
             } catch (e: Throwable) {
-                _response.emit(Response.Error)
+                emit(Response.Error(e))
             }
         }
     }
 
-    fun onEvent(event: UIEvent) = when (event) {
-        is UIEvent.SetMenu -> _state.update { it.copy(menu = event.menu) }
-        is UIEvent.SetShow -> _state.update { it.copy(show = event.show) }
+    override fun onEvent(event: ClubEvent) {
+        when (event) {
+            ClubEvent.ShowBottomSheet -> updateState { it.copy(showBottomSheet = !it.showBottomSheet) }
+
+            ClubEvent.ShowClubs -> updateState {
+                it.copy(
+                    showBottomSheet = !it.showBottomSheet,
+                    showClubs = !it.showClubs
+                )
+            }
+
+            ClubEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+
+            ClubEvent.JoinClub -> joinClub()
+            ClubEvent.LeaveClub -> leaveClub()
+
+            is ClubEvent.PickItem -> updateState { it.copy(menu = event.item) }
+
+            is ClubEvent.ShowFullImage -> updateState {
+                it.copy(
+                    showFullImage = !it.showFullImage,
+                    image = event.url
+                )
+            }
+        }
     }
 
-    fun getTitle(): String = Menus.entries[_state.value.menu].title
-}
+    private fun getComments(id: Long) = Pager(
+        config = PagingConfig(
+            pageSize = 15,
+            enablePlaceholders = false
+        ),
+        pagingSourceFactory = {
+            CommonPaging<Comment>(Comment::id) { page, params ->
+                Network.topics.getComments(id, "Topic", page, params.loadSize)
+            }
+        }
+    ).flow
+        .cachedIn(viewModelScope)
+        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
-data class ClubState(
-    val menu: Int = 0,
-    val show: Boolean = false,
-    val topicId: Long = 0L
-)
+    private fun joinClub() {
+        viewModelScope.launch {
+            try {
+                val response = Network.clubs.joinClub(clubId)
 
-internal enum class Menus(val title: String) {
-    Admins("Администрация"), Anime("Аниме"),
-    Members("Участники"), Manga("Манга"),
-    Characters("Персонажи"), Images("Картинки")
-}
+                if (response.status == HttpStatusCode.OK) {
+                    _joinChannel.send(ResourceText.StringResource(R.string.text_successfully_joined_club))
+                } else {
+                    _joinChannel.send(ResourceText.StringResource(R.string.text_unsuccessfully_joined_club))
+                }
+            } catch (e: Throwable) {
+                _joinChannel.send(ResourceText.StaticString(e.stackTraceToString()))
+            } finally {
+                loadData()
+            }
+        }
+    }
 
-sealed interface Response {
-    data object Error : Response
-    data object Loading : Response
-    data class Success(val club: Club) : Response
-}
+    private fun leaveClub() {
+        viewModelScope.launch {
+            try {
+                val response = Network.clubs.leaveClub(clubId)
 
-sealed interface UIEvent {
-    data class SetMenu(val menu: Int) : UIEvent
-    data class SetShow(val show: Boolean) : UIEvent
+                if (response.status == HttpStatusCode.OK) {
+                    _joinChannel.send(ResourceText.StringResource(R.string.text_successfully_leave_club))
+                } else {
+                    _joinChannel.send(ResourceText.StringResource(R.string.text_unsuccessfully_leave_club))
+                }
+            } catch (e: Throwable) {
+                _joinChannel.send(ResourceText.StaticString(e.stackTraceToString()))
+            } finally {
+                loadData()
+            }
+        }
+    }
 }
