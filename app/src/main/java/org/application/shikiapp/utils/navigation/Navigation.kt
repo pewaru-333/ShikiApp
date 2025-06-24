@@ -7,20 +7,18 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -144,12 +142,7 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
 }
 
 @Composable
-fun BottomNavigationBar(backStack: NavBackStackEntry?, visible: Boolean, onClick: (Screen) -> Unit) {
-    val initial = MaterialTheme.typography.labelMedium
-
-    var style by remember { mutableStateOf(initial) }
-    var draw by remember { mutableStateOf(false) }
-
+fun BottomNavigationBar(backStack: NavBackStackEntry?, visible: Boolean, onClick: (Screen) -> Unit) =
     AnimatedVisibility(
         visible = Menu.entries.any { backStack.isCurrentRoute(it.route::class) } && visible,
         enter = expandVertically(),
@@ -163,19 +156,20 @@ fun BottomNavigationBar(backStack: NavBackStackEntry?, visible: Boolean, onClick
                     icon = { Icon(painterResource(screen.icon), null) },
                     onClick = { onClick(screen.route) },
                     label = {
-                        Text(
+                        BasicText(
                             text = stringResource(screen.title),
                             softWrap = false,
-                            modifier = Modifier.drawWithContent { if (draw) drawContent() },
-                            style = style,
-                            onTextLayout = {
-                                if (!it.didOverflowWidth) draw = true
-                                else style = style.copy(fontSize = style.fontSize * 0.95)
-                            }
+                            style = LocalTextStyle.current.copy(
+                                color = LocalContentColor.current
+                            ),
+                            autoSize = TextAutoSize.StepBased(
+                                minFontSize = 1.sp,
+                                maxFontSize = LocalTextStyle.current.fontSize,
+                                stepSize = (0.1).sp
+                            )
                         )
                     }
                 )
             }
         }
     }
-}
