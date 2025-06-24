@@ -1,6 +1,7 @@
 package org.application.shikiapp
 
 import android.app.Application
+import android.os.Build.VERSION.SDK_INT
 import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
@@ -8,6 +9,8 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.asImage
 import coil3.disk.DiskCache
 import coil3.disk.directory
+import coil3.gif.AnimatedImageDecoder
+import coil3.gif.GifDecoder
 import coil3.memory.MemoryCache
 import coil3.network.NetworkFetcher
 import coil3.request.CachePolicy
@@ -29,6 +32,11 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
         .components {
             add(NetworkFetcher.Factory({ CoilClient }))
             add(ImageInterceptor)
+            if (SDK_INT >= 28) {
+                add(AnimatedImageDecoder.Factory())
+            } else {
+                add(GifDecoder.Factory())
+            }
         }
         .error(getDrawable(R.drawable.vector_bad)?.asImage())
         .fallback(getDrawable(R.drawable.vector_bad)?.asImage())
