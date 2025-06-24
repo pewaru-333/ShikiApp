@@ -1,0 +1,4 @@
+— It is now possible to join/exit clubs(s) and add users as friends.
+— Added a search by clubs and users in the catalog.
+— Updated user and club screens.
+— Many minor improvements and feature additions.

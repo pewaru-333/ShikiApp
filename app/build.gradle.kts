@@ -24,8 +24,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 35
-        versionCode = 20
-        versionName = "alpha-0.2.5"
+        versionCode = 21
+        versionName = "alpha-0.3.0"
     }
 
     dependenciesInfo {
@@ -55,13 +55,14 @@ android {
 
 dependencies {
     // ============================== Android ==============================
+    implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.lifecycle.runtime)
     implementation(libs.androidx.material3)
     implementation(libs.androidx.paging)
 
     // ============================== Network ==============================
-    implementation(libs.apollo.engine.ktor)
     implementation(libs.bundles.ktor)
+    implementation(libs.apollo.api)
 
     // ============================== Navigation ==============================
     implementation(libs.androidx.navigation)
@@ -69,6 +70,7 @@ dependencies {
 
     // ============================== Utilities ==============================
     implementation(libs.coil.compose)
+    implementation(libs.coil.gif)
     implementation(libs.coil.network)
     implementation(libs.coil.zoomable)
     implementation(libs.material.preferences)

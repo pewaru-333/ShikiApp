@@ -1,4 +1,0 @@
-— Added the ability to zoom images in the dialog box.
-— Added image loading indicator.
-— Added smooth transitions through links in descriptions and news text.
-— Many improvements and minor bug fixes.

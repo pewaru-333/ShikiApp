@@ -1,32 +1,35 @@
 [versions]
-apolloApi = "4.2.0"
-apolloKtor = "0.1.1"
-coilCompose = "3.1.0"
-composeLifecycle = "2.9.0"
+apolloApi = "4.3.1"
+coilCompose = "3.2.0"
+composeBom = "2025.06.01"
+composeLifecycle = "2.9.1"
 composeNavigation = "2.9.0"
 composePaging = "3.3.6"
 composePreferences = "1.1.1"
-gradle = "8.10.0"
-kotlin = "2.1.20"
+gradle = "8.10.1"
+kotlin = "2.1.21"
 kotlinxSerializationJson = "1.8.1"
 ktor = "3.1.3"
 material3 = "1.3.2"
-zoomableImageCoil3 = "0.15.1"
+zoomableImageCoil3 = "0.16.0"
 
 [libraries]
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
 androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "composeLifecycle" }
 androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "composeNavigation" }
 androidx-paging = { group = "androidx.paging", name = "paging-compose", version.ref = "composePaging" }
 
-apollo-engine-ktor = { group = "com.apollographql.ktor", name = "apollo-engine-ktor", version.ref = "apolloKtor" }
+apollo-api = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apolloApi" }
 
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coilCompose" }
+coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coilCompose" }
 coil-network = { group = "io.coil-kt.coil3", name = "coil-network-core", version.ref = "coilCompose" }
 coil-zoomable = { group = "me.saket.telephoto", name = "zoomable-image-coil3", version.ref = "zoomableImageCoil3" }
 
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
+ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
@@ -36,6 +39,7 @@ material-preferences = { group = "me.zhanghai.compose.preference", name = "libra
 
 [bundles]
 ktor = [
+    "ktor-client-android",
     "ktor-client-auth",
     "ktor-client-content-negotiation",
     "ktor-client-core",
