@@ -36,11 +36,12 @@ import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import io.ktor.http.URLBuilder
 import org.application.shikiapp.R
 import org.application.shikiapp.models.viewModels.ProfileViewModel
 import org.application.shikiapp.network.response.LoginResponse
+import org.application.shikiapp.utils.AUTH_SCOPES
 import org.application.shikiapp.utils.AUTH_URL
-import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CODE
 import org.application.shikiapp.utils.REDIRECT_URI
@@ -77,13 +78,14 @@ private fun LoginScreen() {
             verified = context.isDomainVerified()
         }
 
-    val uri = AUTH_URL.toUri()
-        .buildUpon()
-        .appendQueryParameter("client_id", CLIENT_ID)
-        .appendQueryParameter("redirect_uri", REDIRECT_URI)
-        .appendQueryParameter("response_type", CODE)
-        .appendQueryParameter("scope", BLANK)
-        .build()
+    val uri = URLBuilder(AUTH_URL).apply {
+        encodedParameters.apply {
+            append("client_id", CLIENT_ID)
+            append("redirect_uri", REDIRECT_URI)
+            append("response_type", CODE)
+            append("scope", AUTH_SCOPES.joinToString("+", transform = String::lowercase))
+        }
+    }.buildString().toUri()
 
     Box(
         modifier = Modifier
