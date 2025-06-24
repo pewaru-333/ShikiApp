@@ -7,7 +7,6 @@ import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.AnimeQuery
 import org.application.shikiapp.generated.AnimeStatsQuery
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.models.data.ExternalLink
 
 data class Anime(
     val id: String,
