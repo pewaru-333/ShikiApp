@@ -5,8 +5,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
@@ -56,7 +54,6 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
         .map(PagingData<Topic>::toAnimeContent)
         .cachedIn(viewModelScope)
         .retryWhen { _, attempt -> attempt <= 3 }
