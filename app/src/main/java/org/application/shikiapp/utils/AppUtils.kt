@@ -52,7 +52,7 @@ fun getBirthday(birthday: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
             "${birthday?.day}.${birthday?.month}.${birthday?.year}"
                 .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
         ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-    } catch (e: DateTimeParseException) {
+    } catch (_: DateTimeParseException) {
         null
     }
 }
@@ -63,7 +63,7 @@ fun getDeathday(deceasedOn: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
             "${deceasedOn?.day}.${deceasedOn?.month}.${deceasedOn?.year}"
                 .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
         ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-    } catch (e: DateTimeParseException) {
+    } catch (_: DateTimeParseException) {
         null
     }
 }
@@ -139,5 +139,5 @@ fun getSeason(text: Any?, kind: String?) = when (text) {
     else -> ResourceText.StringResource(R.string.blank)
 }
 
-fun setScore(status: List<String>, score: Float) = if (Status.ANONS.name.lowercase() in status) null
+fun setScore(status: Set<String>, score: Float) = if (Status.ANONS.name.lowercase() in status) null
 else score.toInt()
