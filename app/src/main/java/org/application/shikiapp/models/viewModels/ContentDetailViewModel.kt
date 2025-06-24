@@ -5,9 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import io.ktor.client.plugins.ClientRequestException
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
@@ -18,22 +16,24 @@ import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.extensions.toValue
 
-abstract class ContentDetailViewModel<D, S, E : ContentDetailEvent> : BaseViewModel<D, S, E>() {
+abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailEvent>() {
     protected fun getComments(id: Long?, type: String = "Topic") = if (id == null) emptyFlow()
     else Pager(
-        config = PagingConfig(pageSize = 15, enablePlaceholders = false),
+        config = PagingConfig(
+            pageSize = 15,
+            enablePlaceholders = false
+        ),
         pagingSourceFactory = {
             CommonPaging<Comment>(Comment::id) { page, params ->
                 Network.topics.getComments(id, type, page, params.loadSize)
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
     protected fun toggleFavourite(id: Any, type: LinkedType, favoured: Boolean, kind: String = BLANK) {
-        viewModelScope.launch(Dispatchers.IO) {
+        viewModelScope.launch {
             try {
                 if (favoured) Network.profile.deleteFavourite(type.toValue(), id)
                 else Network.profile.addFavourite(type.toValue(), id, kind)
