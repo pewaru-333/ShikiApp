@@ -48,10 +48,15 @@ import coil3.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.utils.BLANK
+import kotlin.math.min
 
 @Composable
 fun HtmlCommentBody(text: String) {
     val context = LocalContext.current
+    val displayMetrics = context.resources.displayMetrics
+
+    val screenWidth = displayMetrics.widthPixels
+    val screenHeight = displayMetrics.heightPixels
 
     val linkColor = Color.Blue
 
@@ -72,16 +77,24 @@ fun HtmlCommentBody(text: String) {
 
     val inlineContent = remember(imageMap) {
         imageMap.mapValues { (_, image) ->
-            val imageWidth = pxToSp(context, image.width)
-            val imageHeight = pxToSp(context, image.height)
+            val isEmoji = image.source.contains("smileys")
 
-            InlineTextContent(Placeholder(imageWidth, imageHeight, PlaceholderVerticalAlign.Top)) {
+            val imageWidth = if (isEmoji) 22.sp else pxToSp(context, image.width)
+            val imageHeight = if (isEmoji) 22.sp else pxToSp(context, image.height)
+
+            val width = min(pxToSp(context, screenWidth.times(0.85f)).value, imageWidth.value).sp
+            val height = min(pxToSp(context, screenHeight.times(0.6f)).value, imageHeight.value).sp
+
+            InlineTextContent(Placeholder(width, height, PlaceholderVerticalAlign.Top)) {
                 AsyncImage(
                     model = image.source,
                     contentDescription = null,
                     modifier = Modifier
                         .fillMaxSize()
-                        .clickable { show = true; bigImage = image.source }
+                        .clickable(!isEmoji) {
+                            show = true
+                            bigImage = image.source
+                        }
                 )
             }
         }
