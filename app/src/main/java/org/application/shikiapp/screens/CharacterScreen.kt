@@ -45,7 +45,6 @@ import org.application.shikiapp.R.string.text_manga
 import org.application.shikiapp.R.string.text_seyu
 import org.application.shikiapp.R.string.text_show_all_m
 import org.application.shikiapp.R.string.text_show_all_w
-import org.application.shikiapp.events.CharacterDetailEvent
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
@@ -74,7 +73,7 @@ fun CharacterScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 private fun CharacterView(
     character: Character,
     state: CharacterState,
-    onEvent: (CharacterDetailEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
@@ -95,7 +94,7 @@ private fun CharacterView(
                     if (Preferences.token != null)
                         IconButton(
                         onClick = {
-                            onEvent(CharacterDetailEvent.ToggleFavourite(character.favoured))
+                            onEvent(ContentDetailEvent.Character.ToggleFavourite(character.favoured))
                         }
                         ) {
                         Icon(
@@ -126,7 +125,7 @@ private fun CharacterView(
                 if (it.isNotEmpty()) item {
                     Catalog(
                         anime = true,
-                        show = { onEvent(CharacterDetailEvent.ShowAnime) },
+                        show = { onEvent(ContentDetailEvent.Character.ShowAnime) },
                         list = it,
                         onNavigate = onNavigate
                     )
@@ -136,7 +135,7 @@ private fun CharacterView(
                 if (it.isNotEmpty()) item {
                     Catalog(
                         anime = false,
-                        show = { onEvent(CharacterDetailEvent.ShowManga) },
+                        show = { onEvent(ContentDetailEvent.Character.ShowManga) },
                         list = it,
                         onNavigate = onNavigate
                     )
@@ -146,7 +145,7 @@ private fun CharacterView(
                 if (it.isNotEmpty()) item {
                     Seyu(
                         list = it,
-                        hide = { onEvent(CharacterDetailEvent.ShowSeyu) },
+                        hide = { onEvent(ContentDetailEvent.Character.ShowSeyu) },
                         onNavigate = onNavigate
                     )
                 }
@@ -165,14 +164,14 @@ private fun CharacterView(
         list = if (state.showAnime) character.anime else character.manga,
         isAnime = state.showAnime,
         isVisible = state.showAnime || state.showManga,
-        hide = { onEvent(CharacterDetailEvent.HideAll) },
+        hide = { onEvent(ContentDetailEvent.Character.HideAll) },
         onNavigate = onNavigate
     )
 
     SeyuFull(
         list = character.seyu,
         visible = state.showSeyu,
-        hide = { onEvent(CharacterDetailEvent.ShowSeyu) },
+        hide = { onEvent(ContentDetailEvent.Character.ShowSeyu) },
         onNavigate = onNavigate
     )
 }
