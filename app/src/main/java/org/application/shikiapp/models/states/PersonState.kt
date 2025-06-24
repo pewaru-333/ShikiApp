@@ -9,7 +9,6 @@ import androidx.compose.ui.unit.Density
 data class PersonState(
     val showSheet: Boolean = false,
     val showComments: Boolean = false,
-    val showRoles: Boolean = false,
     val showCharacters: Boolean = false,
     val sheetState: SheetState = SheetState(false, Density(1f))
 )
