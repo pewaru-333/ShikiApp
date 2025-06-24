@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.events.PersonDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.ui.mappers.mapper
@@ -17,7 +16,7 @@ import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
-class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, PersonState, PersonDetailEvent>() {
+class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, PersonState>() {
     private val id = saved.toRoute<Screen.Person>().id
 
     override fun initState() = PersonState()
@@ -27,31 +26,31 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
             emit(Response.Loading)
 
             try {
-                val person = asyncLoad { Network.content.getPerson(id) }
-                val personLoaded = person.await()
-                val comments = getComments(personLoaded.topicId)
+                val person = Network.content.getPerson(id)
+                val comments = getComments(person.topicId)
 
-                emit(Response.Success(personLoaded.mapper(comments)))
+                emit(Response.Success(person.mapper(comments)))
             } catch (e: Throwable) {
                 emit(Response.Error(e))
             }
         }
     }
 
-    override fun onEvent(event: PersonDetailEvent) {
+    override fun onEvent(event: ContentDetailEvent) {
         when (event) {
-            is PersonDetailEvent.ShowRoles -> updateState { it.copy(showRoles = !it.showRoles) }
-            is PersonDetailEvent.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
+            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+            ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
 
-            is PersonDetailEvent.ToggleFavourite -> toggleFavourite(
+            ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
+
+            is ContentDetailEvent.Person.ToggleFavourite -> toggleFavourite(
                 id = id,
                 type = LinkedType.PERSON,
                 favoured = event.favoured,
                 kind = event.kind
             )
 
-            is ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
-            is ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+            else -> Unit
         }
     }
 }
