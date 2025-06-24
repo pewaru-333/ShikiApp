@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.events.MangaDetailEvent
 import org.application.shikiapp.generated.type.MangaKindEnum.light_novel
 import org.application.shikiapp.generated.type.MangaKindEnum.novel
 import org.application.shikiapp.models.states.MangaState
@@ -20,7 +19,7 @@ import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
-class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, MangaState, MangaDetailEvent>() {
+class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, MangaState>() {
     private val mangaId = saved.toRoute<Screen.Manga>().id
 
     override fun initState() = MangaState()
@@ -31,10 +30,11 @@ class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, Ma
 
             try {
                 val manga = asyncLoad { GraphQL.getManga(mangaId) }
-                val mangaLoaded = manga.await()
                 val similar = asyncLoad { Network.manga.getSimilar(mangaId) }
                 val links = asyncLoad { Network.manga.getLinks(mangaId.toLong()) }
                 val favoured = Network.manga.getManga(mangaId).favoured
+
+                val mangaLoaded = manga.await()
                 val comments = getComments(mangaLoaded.topic?.id?.toLong())
 
                 emit(
@@ -53,57 +53,64 @@ class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, Ma
         }
     }
 
-    override fun onEvent(event: MangaDetailEvent) {
+    override fun onEvent(event: ContentDetailEvent) {
         when (event) {
-            MangaDetailEvent.Reload -> viewModelScope.launch {
-                updateState {
+            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+            ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
+
+            is ContentDetailEvent.Media -> when (event) {
+                ContentDetailEvent.Media.Reload -> viewModelScope.launch {
+                    updateState {
+                        it.copy(
+                            showRate = !it.showRate,
+                            showSheet = !it.showSheet
+                        )
+                    }
+                    loadData()
+                }
+
+                ContentDetailEvent.Media.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
+                ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
+                ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
+                ContentDetailEvent.Media.ShowSimilar -> updateState {
+                    it.copy(
+                        showSimilar = !it.showSimilar,
+                        showSheet = !it.showSheet
+                    )
+                }
+
+                ContentDetailEvent.Media.ShowStats -> updateState {
+                    it.copy(
+                        showStats = !it.showStats,
+                        showSheet = !it.showSheet
+                    )
+                }
+
+                ContentDetailEvent.Media.ShowLinks -> updateState {
+                    it.copy(
+                        showLinks = !it.showLinks,
+                        showSheet = !it.showSheet
+                    )
+                }
+
+                ContentDetailEvent.Media.ShowRate -> updateState {
                     it.copy(
                         showRate = !it.showRate,
                         showSheet = !it.showSheet
                     )
                 }
-                loadData()
+
+                else -> Unit
             }
 
-            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
-            ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
-            ContentDetailEvent.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
-            ContentDetailEvent.ShowSimilar -> updateState {
-                it.copy(
-                    showSimilar = !it.showSimilar,
-                    showSheet = !it.showSheet
-                )
-            }
+            is ContentDetailEvent.Media.Manga.ToggleFavourite -> toggleFavourite(
+                id = mangaId,
+                favoured = event.favoured,
+                type = if (event.type in listOf(light_novel, novel)) LinkedType.RANOBE
+                else LinkedType.MANGA
+            )
 
-            MangaDetailEvent.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
-            MangaDetailEvent.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
-            ContentDetailEvent.ShowRate, MangaDetailEvent.ShowRate -> updateState {
-                it.copy(
-                    showRate = !it.showRate,
-                    showSheet = !it.showSheet
-                )
-            }
-            ContentDetailEvent.ShowLinks -> updateState {
-                it.copy(
-                    showLinks = !it.showLinks,
-                    showSheet = !it.showSheet
-                )
-            }
-
-            ContentDetailEvent.ShowStats -> updateState {
-                it.copy(
-                    showStats = !it.showStats,
-                    showSheet = !it.showSheet
-                )
-            }
-
-            is MangaDetailEvent.ToggleFavourite ->
-                toggleFavourite(
-                    id = mangaId,
-                    favoured = event.favoured,
-                    type = if (event.type in listOf(light_novel, novel)) LinkedType.RANOBE
-                    else LinkedType.MANGA
-                )
+            else -> Unit
         }
     }
 }
