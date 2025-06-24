@@ -4,6 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -25,6 +26,7 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -40,6 +42,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Label
@@ -67,6 +70,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
@@ -76,6 +80,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.text.isDigitsOnly
@@ -84,6 +89,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
@@ -122,18 +129,20 @@ import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CatalogViewModel
 import org.application.shikiapp.utils.Preferences
-import org.application.shikiapp.utils.enums.CatalogItems
-import org.application.shikiapp.utils.enums.CatalogItems.ANIME
-import org.application.shikiapp.utils.enums.CatalogItems.CHARACTERS
-import org.application.shikiapp.utils.enums.CatalogItems.MANGA
-import org.application.shikiapp.utils.enums.CatalogItems.PEOPLE
-import org.application.shikiapp.utils.enums.CatalogItems.RANOBE
+import org.application.shikiapp.utils.enums.CatalogItem
+import org.application.shikiapp.utils.enums.CatalogItem.ANIME
+import org.application.shikiapp.utils.enums.CatalogItem.CHARACTERS
+import org.application.shikiapp.utils.enums.CatalogItem.CLUBS
+import org.application.shikiapp.utils.enums.CatalogItem.MANGA
+import org.application.shikiapp.utils.enums.CatalogItem.PEOPLE
+import org.application.shikiapp.utils.enums.CatalogItem.RANOBE
+import org.application.shikiapp.utils.enums.CatalogItem.USERS
 import org.application.shikiapp.utils.enums.Duration
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.ListView
 import org.application.shikiapp.utils.enums.Order
-import org.application.shikiapp.utils.enums.PeopleFilterItems
+import org.application.shikiapp.utils.enums.PeopleFilterItem
 import org.application.shikiapp.utils.enums.Rating
 import org.application.shikiapp.utils.enums.Season
 import org.application.shikiapp.utils.enums.Status
@@ -178,7 +187,7 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                     style = MaterialTheme.typography.headlineSmall
                 )
 
-                CatalogItems.entries.forEach {
+                CatalogItem.entries.forEach {
                     NavigationDrawerItem(
                         selected = state.menu == it,
                         onClick = { model.pick(it) },
@@ -191,6 +200,10 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                             )
                         }
                     )
+
+                    if (it == PEOPLE) {
+                        HorizontalDivider(Modifier.padding(8.dp))
+                    }
                 }
             }
         }
@@ -224,7 +237,7 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                         IconButton(model::onDrawerClick) { Icon(Icons.Outlined.Menu, null) }
                     },
                     actions = {
-                        if (state.menu != CHARACTERS)
+                        if (state.menu !in listOf(CHARACTERS, USERS, CLUBS))
                             IconButton(
                                 onClick = { model.showFilters(state.menu) }
                             ) {
@@ -279,48 +292,107 @@ private fun CatalogList(
 ) = when (list.loadState.refresh) {
     LoadState.Loading -> LoadingScreen()
     is LoadState.Error -> ErrorScreen(list::retry)
-    is LoadState.NotLoading -> if (Preferences.listView == ListView.COLUMN)
-        LazyColumn(
-            contentPadding = paddingValues,
-            state = state.listStates.getValue(state.menu)
-        ) {
-            contentList(list) {
-                onNavigate(
-                    when (state.menu) {
-                        ANIME -> Screen.Anime(it)
-                        MANGA, RANOBE -> Screen.Manga(it)
-                        CHARACTERS -> Screen.Character(it)
-                        PEOPLE -> Screen.Person(it.toLong())
-                    }
-                )
-            }
-            if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-            if (list.loadState.hasError) item { ErrorScreen(list::retry) }
-        }
-    else LazyVerticalGrid(
-        columns = GridCells.FixedSize(116.dp),
-        contentPadding = PaddingValues(0.dp, paddingValues.calculateTopPadding().plus(8.dp)),
-        horizontalArrangement = Arrangement.SpaceAround,
-        verticalArrangement = spacedBy(4.dp),
-        state = state.gridStates.getValue(state.menu)
-    ) {
-        contentList(list) {
-            onNavigate(
-                when (state.menu) {
-                    ANIME -> Screen.Anime(it)
-                    MANGA, RANOBE -> Screen.Manga(it)
-                    CHARACTERS -> Screen.Character(it)
-                    PEOPLE -> Screen.Person(it.toLong())
-                }
-            )
-        }
-        if (list.loadState.append == LoadState.Loading)
-            item(
-                span = { GridItemSpan(maxLineSpan) }
+    is LoadState.NotLoading -> {
+        when (state.menu) {
+            USERS, CLUBS -> LazyVerticalGrid(
+                columns = GridCells.FixedSize(70.dp),
+                contentPadding = paddingValues,
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                horizontalArrangement = Arrangement.SpaceAround
             ) {
-                LoadingScreen()
+                items(list.itemCount) { index ->
+                    list[index]?.let {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier.clickable {
+                                onNavigate(
+                                    if (state.menu == USERS) Screen.User(it.id.toLong())
+                                    else Screen.Club(it.id.toLong())
+                                )
+                            }
+                        ) {
+                            AsyncImage(
+                                model = it.poster,
+                                contentDescription = null,
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .padding(4.dp)
+                                    .clip(CircleShape)
+                            )
+
+                            Text(
+                                maxLines = 1,
+                                text = it.title,
+                                overflow = TextOverflow.Ellipsis,
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                }
+
+                if (list.loadState.append == LoadState.Loading) {
+                    item(
+                        span = { GridItemSpan(maxLineSpan) }
+                    ) {
+                        LoadingScreen(Modifier.padding(8.dp))
+                    }
+                }
+                if (list.loadState.hasError) {
+                    item { ErrorScreen(list::retry) }
+                }
             }
-        if (list.loadState.hasError) item { ErrorScreen(list::retry) }
+
+            else -> if (Preferences.listView == ListView.COLUMN)
+                LazyColumn(
+                    contentPadding = paddingValues,
+                    state = state.listStates.getValue(state.menu)
+                ) {
+                    contentList(list) {
+                        onNavigate(
+                            when (state.menu) {
+                                ANIME -> Screen.Anime(it)
+                                MANGA, RANOBE -> Screen.Manga(it)
+                                CHARACTERS -> Screen.Character(it)
+                                PEOPLE -> Screen.Person(it.toLong())
+                                USERS -> Screen.User(it.toLong())
+                                CLUBS -> Screen.Club(it.toLong())
+                            }
+                        )
+                    }
+                    if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
+                    if (list.loadState.hasError) item { ErrorScreen(list::retry) }
+                }
+            else LazyVerticalGrid(
+                columns = GridCells.FixedSize(116.dp),
+                contentPadding = PaddingValues(0.dp, paddingValues.calculateTopPadding().plus(8.dp)),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalArrangement = spacedBy(4.dp),
+                state = state.gridStates.getValue(state.menu)
+            ) {
+                contentList(list) {
+                    onNavigate(
+                        when (state.menu) {
+                            ANIME -> Screen.Anime(it)
+                            MANGA, RANOBE -> Screen.Manga(it)
+                            CHARACTERS -> Screen.Character(it)
+                            PEOPLE -> Screen.Person(it.toLong())
+                            USERS -> Screen.User(it.toLong())
+                            CLUBS -> Screen.Club(it.toLong())
+                        }
+                    )
+                }
+                if (list.loadState.append == LoadState.Loading) {
+                    item(
+                        span = { GridItemSpan(maxLineSpan) }
+                    ) {
+                        LoadingScreen()
+                    }
+                }
+                if (list.loadState.hasError) {
+                    item { ErrorScreen(list::retry) }
+                }
+            }
+        }
     }
 }
 
@@ -383,7 +455,7 @@ private fun DialogFilters(
 
 @Composable
 private fun DialogFiltersP(
-    roles: List<PeopleFilterItems>,
+    roles: Set<PeopleFilterItem>,
     event: (FilterEvent) -> Unit,
     hide: () -> Unit
 ) = AlertDialog(
@@ -393,17 +465,17 @@ private fun DialogFiltersP(
     title = { Text(stringResource(text_filters)) },
     text = {
         Column {
-            PeopleFilterItems.entries.forEach { entry ->
+            PeopleFilterItem.entries.forEach { entry ->
                 Row(
+                    verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(56.dp)
                         .toggleable(
                             value = entry in roles,
-                            onValueChange = { event(SetRole(it, entry)) },
+                            onValueChange = { event(SetRole(entry)) },
                             role = Role.Checkbox
-                        ),
-                    verticalAlignment = Alignment.CenterVertically
+                        )
                 ) {
                     Checkbox(entry in roles, null)
                     Text(
@@ -462,7 +534,7 @@ private fun Sorting(event: (FilterEvent) -> Unit, order: Order) {
 }
 
 @Composable
-private fun Status(event: (FilterEvent) -> Unit, status: List<String>, type: LinkedType?) {
+private fun Status(event: (FilterEvent) -> Unit, status: Set<String>, type: LinkedType?) {
     ParagraphTitle(stringResource(text_status))
     Column {
         Status.entries.filter { type in it.types }.forEach { entry ->
@@ -492,7 +564,7 @@ private fun Status(event: (FilterEvent) -> Unit, status: List<String>, type: Lin
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: LinkedType?) {
+private fun Kind(event: (FilterEvent) -> Unit, kind: Set<String>, type: LinkedType?) {
     ParagraphTitle(stringResource(text_kind))
     FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         Kind.entries.filter { it.linkedType == type }.forEach {
@@ -509,7 +581,7 @@ private fun Kind(event: (FilterEvent) -> Unit, kind: List<String>, type: LinkedT
 private fun Season(
     seasonYS: String,
     seasonYF: String,
-    seasonS: List<String>,
+    seasonS: Set<String>,
     event: (FilterEvent) -> Unit
 ) {
     ParagraphTitle(stringResource(text_season), Modifier.padding(bottom = 8.dp))
@@ -586,7 +658,7 @@ private fun Score(event: (FilterEvent) -> Unit, score: Float) {
 }
 
 @Composable
-private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
+private fun Duration(event: (FilterEvent) -> Unit, duration: Set<String>) {
     ParagraphTitle(stringResource(text_episode_duration))
     Column {
         Duration.entries.forEach { entry ->
@@ -610,7 +682,7 @@ private fun Duration(event: (FilterEvent) -> Unit, duration: List<String>) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Rating(event: (FilterEvent) -> Unit, rating: List<String>) {
+private fun Rating(event: (FilterEvent) -> Unit, rating: Set<String>) {
     ParagraphTitle(stringResource(text_rating))
     FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         Rating.entries.forEach {
@@ -625,7 +697,7 @@ private fun Rating(event: (FilterEvent) -> Unit, rating: List<String>) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genres: List<String>) {
+private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genres: Set<String>) {
     ParagraphTitle(stringResource(text_genres))
     FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         allGenres.forEach { genre ->
@@ -644,10 +716,7 @@ private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genre
 // ========================================== Extensions ===========================================
 
 private fun LazyListScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { list.peek(it)?.id ?: it }
-    ) { index ->
+    items(list.itemCount, list.itemKey(Content::id)) { index ->
         list[index]?.let {
             CatalogListItem(
                 title = it.title,
@@ -661,10 +730,7 @@ private fun LazyListScope.contentList(list: LazyPagingItems<Content>, onNavigate
     }
 
 private fun LazyGridScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
-    items(
-        count = list.itemCount,
-        key = { list.peek(it)?.id ?: it }
-    ) { index ->
+    items(list.itemCount, list.itemKey(Content::id)) { index ->
         list[index]?.let {
             CatalogGridItem(
                 title = it.title,
