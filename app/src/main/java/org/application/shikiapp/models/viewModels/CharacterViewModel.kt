@@ -4,7 +4,6 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.launch
-import org.application.shikiapp.events.CharacterDetailEvent
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
@@ -15,7 +14,7 @@ import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
-class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Character, CharacterState, CharacterDetailEvent>(){
+class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Character, CharacterState>() {
     private val id = saved.toRoute<Screen.Character>().id
 
     override fun initState() = CharacterState()
@@ -26,8 +25,9 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
 
             try {
                 val character = asyncLoad { Network.content.getCharacter(id) }
-                val characterLoaded = character.await()
                 val image = asyncLoad { GraphQL.getCharacter(id) }
+
+                val characterLoaded = character.await()
                 val comments = getComments(characterLoaded.topicId)
 
                 emit(Response.Success(characterLoaded.mapper(image.await(), comments)))
@@ -37,20 +37,29 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
         }
     }
 
-    override fun onEvent(event: CharacterDetailEvent) {
-        when(event) {
-            CharacterDetailEvent.ShowAnime -> updateState { it.copy(showAnime = !it.showAnime) }
-            CharacterDetailEvent.ShowManga -> updateState { it.copy(showManga = !it.showManga) }
-            CharacterDetailEvent.ShowSeyu -> updateState { it.copy(showSeyu = !it.showSeyu) }
-            CharacterDetailEvent.HideAll -> updateState { it.copy(showAnime = false, showManga = false) }
+    override fun onEvent(event: ContentDetailEvent) {
+        when (event) {
+            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
 
-            is ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+            is ContentDetailEvent.Character -> when (event) {
+                ContentDetailEvent.Character.ShowAnime -> updateState { it.copy(showAnime = !it.showAnime) }
+                ContentDetailEvent.Character.ShowManga -> updateState { it.copy(showManga = !it.showManga) }
+                ContentDetailEvent.Character.ShowSeyu -> updateState { it.copy(showSeyu = !it.showSeyu) }
+                ContentDetailEvent.Character.HideAll -> updateState {
+                    it.copy(
+                        showAnime = false,
+                        showManga = false
+                    )
+                }
 
-            is CharacterDetailEvent.ToggleFavourite -> toggleFavourite(
-                id = id,
-                type = LinkedType.CHARACTER,
-                favoured = event.favoured
-            )
+                is ContentDetailEvent.Character.ToggleFavourite -> toggleFavourite(
+                    id = id,
+                    type = LinkedType.CHARACTER,
+                    favoured = event.favoured
+                )
+            }
+
+            else -> Unit
         }
     }
 }
