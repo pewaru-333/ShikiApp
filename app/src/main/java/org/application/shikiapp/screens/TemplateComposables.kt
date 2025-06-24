@@ -17,13 +17,13 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.Center
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -37,12 +37,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -58,16 +58,15 @@ import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Edit
-import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Info
 import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AssistChip
 import androidx.compose.material3.Button
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -125,7 +124,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
-import androidx.core.net.toUri
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState.Error
@@ -152,7 +150,6 @@ import org.application.shikiapp.R.string.text_favourite
 import org.application.shikiapp.R.string.text_history
 import org.application.shikiapp.R.string.text_image_of
 import org.application.shikiapp.R.string.text_manga_list
-import org.application.shikiapp.R.string.text_profile
 import org.application.shikiapp.R.string.text_rate
 import org.application.shikiapp.R.string.text_rate_chapters
 import org.application.shikiapp.R.string.text_related
@@ -182,29 +179,26 @@ import org.application.shikiapp.events.RateEvent.SetVolumes
 import org.application.shikiapp.generated.fragment.UserRateF
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.models.data.ExternalLink
 import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.ShortInfo
 import org.application.shikiapp.models.data.Stats
-import org.application.shikiapp.models.data.User
 import org.application.shikiapp.models.data.UserBasic
-import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.ui.CharacterMain
+import org.application.shikiapp.models.ui.ExternalLink
 import org.application.shikiapp.models.ui.PersonMain
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Similar
 import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.convertDate
-import org.application.shikiapp.utils.enums.FavouriteItems
+import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
-import org.application.shikiapp.utils.enums.ProfileMenus
 import org.application.shikiapp.utils.enums.Score
+import org.application.shikiapp.utils.enums.UserMenu
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
@@ -215,7 +209,9 @@ import org.application.shikiapp.utils.navigation.Screen
 import kotlin.math.roundToInt
 
 @Composable
-fun LoadingScreen() = Box(Modifier.fillMaxSize(), Alignment.Center) { CircularProgressIndicator() }
+fun LoadingScreen(modifier: Modifier = Modifier) = Box(modifier.fillMaxSize(), Alignment.Center) {
+    CircularProgressIndicator()
+}
 
 @Composable
 fun ErrorScreen(retry: () -> Unit = {}) = Column(Modifier.fillMaxSize(), Center, CenterHorizontally) {
@@ -257,23 +253,23 @@ fun CircleImage(link: String) = AsyncImage(
 )
 
 @Composable
-fun UserBriefItem(user: User) = ListItem(
-    headlineContent = { user.lastOnline?.let { Text(it, style = MaterialTheme.typography.bodyMedium) } },
+fun UserBriefItem(user: org.application.shikiapp.models.ui.User) = ListItem(
+    headlineContent = { Text(user.lastOnline, style = MaterialTheme.typography.bodyMedium) },
     modifier = Modifier.offset((-16).dp, (-8).dp),
     overlineContent = { Text(user.nickname, style = MaterialTheme.typography.titleLarge) },
     leadingContent = {
         AsyncImage(
-            model = user.image.x80,
+            model = user.avatar,
             contentDescription = null,
             modifier = Modifier
-                .size(80.dp)
+                .size(88.dp)
                 .clip(MaterialTheme.shapes.small)
                 .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.small)
         )
     },
     supportingContent = {
         Text(
-            text = fromHtml(user.commonInfo.joinToString(" / ")),
+            text = user.commonInfo,
             style = MaterialTheme.typography.bodySmall
         )
     }
@@ -294,6 +290,8 @@ fun CatalogListItem(
     overlineContent = {
         Text(
             text = title,
+            maxLines = 4,
+            overflow = TextOverflow.Ellipsis,
             style = MaterialTheme.typography.titleMedium.copy(
                 color = MaterialTheme.colorScheme.onSurface,
                 fontWeight = FontWeight.W500
@@ -456,7 +454,7 @@ fun RelatedText(text: String) = Text(
 )
 
 @Composable
-fun Description(description: AnnotatedString) {
+fun Description(description: AnnotatedString, withDivider: Boolean = true) {
     val hasSpoiler = description.contains("спойлер")
     val main = if (hasSpoiler) description.substringBefore("спойлер") else description
     val spoiler = if (hasSpoiler) description.substringAfter("спойлер") else AnnotatedString(BLANK)
@@ -513,22 +511,10 @@ fun Description(description: AnnotatedString) {
             }
         }
 
-        HorizontalDivider(Modifier.padding(top = 4.dp))
+        if (withDivider) {
+            HorizontalDivider(Modifier.padding(top = 4.dp))
+        }
     }
-}
-
-@Composable
-fun ClubAnimeImage(link: String) {
-    AsyncImage(
-        model = link,
-        contentDescription = null,
-        modifier = Modifier
-            .size(75.dp, 125.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, Color.Gray, MaterialTheme.shapes.medium),
-        contentScale = ContentScale.FillHeight,
-        filterQuality = FilterQuality.High
-    )
 }
 
 @Composable
@@ -668,12 +654,11 @@ else {
 
     var modifiedHtml = text.replace(fullPattern, """<span class="name-ru">$2</span>""")
 
-
     if (!modifiedHtml.contains("<span class=\"name-ru\">")) {
         modifiedHtml = modifiedHtml.replace(englishPattern, """<span class="name-en">$1</span>""")
     }
-    modifiedHtml = modifiedHtml.replace(russianPattern, "$1")
-    modifiedHtml = modifiedHtml.replace(englishPattern, "$1")
+
+    modifiedHtml = modifiedHtml.replace(russianPattern, "$1").replace(englishPattern, "$1")
 
     AnnotatedString.Companion.fromHtml(
         htmlString = modifiedHtml,
@@ -952,7 +937,7 @@ fun BottomSheet(
                 Text(stringResource(rate?.let { text_change_rate } ?: text_add_rate))
             },
             modifier = Modifier.clickable {
-                onEvent(ContentDetailEvent.ShowRate)
+                onEvent(ContentDetailEvent.Media.ShowRate)
             }
         )
         ListItem(
@@ -971,21 +956,21 @@ fun BottomSheet(
         headlineContent = { Text(stringResource(text_similar)) },
         leadingContent = { Icon(painterResource(R.drawable.vector_similar), null) },
         modifier = Modifier.clickable {
-            onEvent(ContentDetailEvent.ShowSimilar)
+            onEvent(ContentDetailEvent.Media.ShowSimilar)
         }
     )
     ListItem(
         headlineContent = { Text(stringResource(text_statistics)) },
         leadingContent = { Icon(Icons.Outlined.Info, null) },
         modifier = Modifier.clickable {
-            onEvent(ContentDetailEvent.ShowStats)
+            onEvent(ContentDetailEvent.Media.ShowStats)
         }
     )
     ListItem(
         headlineContent = { Text(stringResource(text_external_links)) },
         leadingContent = { Icon(Icons.AutoMirrored.Outlined.List, null) },
         modifier = Modifier.clickable {
-            onEvent(ContentDetailEvent.ShowLinks)
+            onEvent(ContentDetailEvent.Media.ShowLinks)
         }
     )
 }
@@ -1306,42 +1291,23 @@ fun LinksSheet(
     hide: () -> Unit,
     handler: UriHandler = LocalUriHandler.current
 ) = ModalBottomSheet(hide, sheetState = state) {
-    FlowRow(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(16.dp, 4.dp),
-        horizontalArrangement = SpaceBetween,
-        verticalArrangement = spacedBy(8.dp)
-    ) {
-        list.forEach { link ->
-            EXTERNAL_LINK_KINDS.entries.firstOrNull { it.key == link.kind }?.let { (_, value) ->
-                ElevatedCard(
-                    onClick = { handler.openUri(link.url) },
-                    modifier = Modifier.size(100.dp),
-                    colors = CardDefaults.elevatedCardColors().copy(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer
-                    )
-                ) {
+    LazyColumn {
+        items(list) {
+            ListItem(
+                modifier = Modifier.clickable { handler.openUri(it.url.toString()) },
+                headlineContent = { Text(it.title) },
+                leadingContent = {
                     AsyncImage(
-                        model = "https://www.google.com/s2/favicons?domain=${link.url.toUri().host}&sz=64",
                         contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(top = 4.dp)
-                            .size(64.dp),
-                        alignment = Alignment.Center,
+                        model = "https://www.google.com/s2/favicons?domain=${it.url.host}&sz=128",
+                        modifier = Modifier.size(24.dp),
                         filterQuality = FilterQuality.High
                     )
-                    Text(
-                        text = value,
-                        modifier = Modifier.fillMaxWidth(),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.labelSmall
-                    )
                 }
-            }
+            )
         }
     }
+
     Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
 }
 
@@ -1413,16 +1379,25 @@ fun Stats(
 @Composable
 fun DialogFavourites(
     hide: () -> Unit,
-    setTab: (FavouriteItems) -> Unit,
-    tab: FavouriteItems,
+    setTab: (FavouriteItem) -> Unit,
+    tab: FavouriteItem,
     visible: Boolean,
     favourites: Favourites,
     onNavigate: (Screen) -> Unit,
-)  = AnimatedVisibility(
+) = AnimatedVisibility(
     visible = visible,
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
+    val navigate = remember(tab) {
+        when (tab) {
+            FavouriteItem.ANIME -> { id: Long -> Screen.Anime(id.toString()) }
+            FavouriteItem.MANGA, FavouriteItem.RANOBE -> { id: Long -> Screen.Manga(id.toString()) }
+            FavouriteItem.CHARACTERS -> { id: Long -> Screen.Character(id.toString()) }
+            else -> { id: Long -> Screen.Person(id) }
+        }
+    }
+
     BackHandler(onBack = hide)
     Scaffold(
         topBar = {
@@ -1434,7 +1409,7 @@ fun DialogFavourites(
     ) { values ->
         Column(Modifier.padding(top = values.calculateTopPadding()), spacedBy(8.dp)) {
             ScrollableTabRow(tab.ordinal, edgePadding = 8.dp) {
-                FavouriteItems.entries.forEach {
+                FavouriteItem.entries.forEach {
                     Tab(
                         selected = tab == it,
                         onClick = { setTab(it) }
@@ -1444,28 +1419,12 @@ fun DialogFavourites(
                 }
             }
             LazyColumn {
-                items(
-                    when (tab) {
-                        FavouriteItems.ANIME -> favourites.animes
-                        FavouriteItems.MANGA -> favourites.mangas
-                        FavouriteItems.RANOBE -> favourites.ranobe
-                        FavouriteItems.CHARACTERS -> favourites.characters
-                        FavouriteItems.PEOPLE -> favourites.people
-                        FavouriteItems.MANGAKAS -> favourites.mangakas
-                        FavouriteItems.SEYU -> favourites.seyu
-                        FavouriteItems.OTHERS -> favourites.producers
-                    }
-                ) { (id, name, russian, image) ->
+                items(tab.getFavouriteList(favourites)) {
                     OneLineImage(
-                        name = russian.orEmpty().ifEmpty { name },
-                        link = image,
+                        name = it.russian.orEmpty().ifEmpty(it::name),
+                        link = it.image,
                         modifier = Modifier.clickable {
-                            when (tab) {
-                                FavouriteItems.ANIME -> onNavigate(Screen.Anime(id.toString()))
-                                FavouriteItems.MANGA, FavouriteItems.RANOBE -> onNavigate(Screen.Manga(id.toString()))
-                                FavouriteItems.CHARACTERS -> onNavigate(Screen.Character(id.toString()))
-                                else -> onNavigate(Screen.Person(id))
-                            }
+                            onNavigate(navigate(it.id))
                         }
                     )
                 }
@@ -1503,56 +1462,31 @@ fun DialogHistory(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun BottomSheet(
-    hideSheet: () -> Unit,
-    showFavourite: () -> Unit,
-    showHistory: () -> Unit,
-    state: SheetState
-) = ModalBottomSheet(hideSheet, sheetState = state) {
-    ListItem(
-        headlineContent = { Text(stringResource(text_favourite)) },
-        modifier = Modifier.clickable(onClick = showFavourite),
-        leadingContent = { Icon(Icons.Outlined.FavoriteBorder, null) }
-    )
-    ListItem(
-        headlineContent = { Text(stringResource(text_history)) },
-        modifier = Modifier.clickable(onClick = showHistory),
-        leadingContent = { Icon(Icons.AutoMirrored.Outlined.List, null) }
-    )
-    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
-}
-
-@Composable
-fun BriefInfo(setMenu: (ProfileMenus) -> Unit) {
-    ParagraphTitle(stringResource(text_profile), Modifier.padding(bottom = 4.dp))
-    Row(Modifier.fillMaxWidth(), spacedBy(8.dp)) {
-        ProfileMenus.entries.forEach { entry ->
-            ElevatedCard(
-                onClick = { setMenu(entry) },
-                enabled = entry != ProfileMenus.ACHIEVEMENTS,
-                modifier = Modifier
-                    .height(64.dp)
-                    .weight(1f)
-            ) {
-                Row(Modifier.fillMaxSize(), Center, CenterVertically) {
-                    Text(stringResource(entry.title), style = MaterialTheme.typography.titleSmall)
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+fun UserMenuItems(setMenu: (UserMenu) -> Unit) =
+    Column(Modifier.wrapContentHeight(), Arrangement.spacedBy(8.dp), Alignment.CenterHorizontally) {
+        UserMenu.entries.chunked(2).forEach { row ->
+            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
+                row.forEach { entry ->
+                    AssistChip(
+                        label = { Text(stringResource(entry.title)) },
+                        trailingIcon = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) },
+                        onClick = { setMenu(entry) },
+                        modifier = Modifier
+                            .height(48.dp)
+                            .weight(1f)
+                    )
                 }
             }
         }
     }
-}
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DialogItem(
-    state: UserState,
-    menu: ProfileMenus,
-    visible: Boolean,
+fun DialogFriends(
     friends: LazyPagingItems<UserBasic>,
-    clubs: List<ClubBasic>,
+    visible: Boolean,
     hide: () -> Unit,
     onNavigate: (Screen) -> Unit
 ) = AnimatedVisibility(
@@ -1564,24 +1498,40 @@ fun DialogItem(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(menu.title)) },
+                title = { Text(stringResource(R.string.text_friends)) },
                 navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(top = values.calculateTopPadding()),
-            state = when (state.menu) {
-                ProfileMenus.FRIENDS -> state.stateF
-                ProfileMenus.CLUBS -> state.stateC
-                else -> rememberLazyListState()
-            }
-        ) {
-            when (state.menu) {
-                ProfileMenus.FRIENDS -> friends(friends, onNavigate)
-                ProfileMenus.CLUBS -> clubs(clubs, onNavigate)
-                else -> Unit
-            }
+        LazyColumn(contentPadding = values) {
+            friends(friends, onNavigate)
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun DialogClubs(
+    clubs: List<ClubBasic>,
+    visible: Boolean,
+    hide: () -> Unit,
+    onNavigate: (Screen) -> Unit
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }),
+    exit = slideOutHorizontally(targetOffsetX = { it })
+) {
+    BackHandler(onBack = hide)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text(stringResource(R.string.text_clubs)) },
+                navigationIcon = { NavigationIcon(hide) }
+            )
+        }
+    ) { values ->
+        LazyColumn(contentPadding = values) {
+            clubs(clubs, onNavigate)
         }
     }
 }
@@ -1591,7 +1541,7 @@ fun DialogItem(
 fun LazyListScope.friends(list: LazyPagingItems<UserBasic>, onNavigate: (Screen) -> Unit) {
     when (list.loadState.refresh) {
         is Error -> item { ErrorScreen(list::retry) }
-        is Loading -> item { LoadingScreen() }
+        Loading -> item { LoadingScreen() }
         is NotLoading -> {
             items(list.itemCount) { index ->
                 list[index]?.let {
