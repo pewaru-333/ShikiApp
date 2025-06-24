@@ -39,7 +39,6 @@ import org.application.shikiapp.R.string.text_add_fav
 import org.application.shikiapp.R.string.text_information
 import org.application.shikiapp.R.string.text_remove_fav
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.events.PersonDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.viewModels.PersonViewModel
@@ -66,7 +65,7 @@ fun PersonScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 private fun PersonView(
     person: Person,
     state: PersonState,
-    onEvent: (PersonDetailEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
@@ -115,7 +114,7 @@ private fun PersonView(
                 if (it.isNotEmpty()) item {
                     Characters(
                         list = it.take(7),
-                        show = { onEvent(PersonDetailEvent.ShowCharacters) },
+                        show = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
                         onNavigate = onNavigate
                     )
                 }
@@ -134,7 +133,7 @@ private fun PersonView(
         list = person.characters,
         state = rememberLazyListState(),
         visible = state.showCharacters,
-        hide = { onEvent(PersonDetailEvent.ShowCharacters) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
         onNavigate = onNavigate
     )
 
@@ -146,7 +145,7 @@ private fun PersonView(
 private fun BottomSheet(
     person: Person,
     state: PersonState,
-    onEvent: (PersonDetailEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     handler: UriHandler = LocalUriHandler.current
 ) = ModalBottomSheet(
     sheetState = state.sheetState,
@@ -162,7 +161,7 @@ private fun BottomSheet(
             )
         },
         modifier = Modifier.clickable {
-            onEvent(PersonDetailEvent.ToggleFavourite(person.personKind, person.isPersonFavoured))
+            onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind, person.isPersonFavoured))
         },
         leadingContent = {
             Icon(
