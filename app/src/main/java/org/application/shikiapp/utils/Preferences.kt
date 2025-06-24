@@ -11,7 +11,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.utils.enums.ListView
-import org.application.shikiapp.utils.enums.Themes
+import org.application.shikiapp.utils.enums.Theme
 import org.application.shikiapp.utils.extensions.getColorsFlow
 import org.application.shikiapp.utils.extensions.getEnum
 import org.application.shikiapp.utils.extensions.getThemeFlow
@@ -21,14 +21,14 @@ object Preferences : ViewModel() {
     private lateinit var auth: SharedPreferences
     lateinit var app: SharedPreferences
 
-    lateinit var theme: StateFlow<Themes>
+    lateinit var theme: StateFlow<Theme>
     lateinit var dynamicColors: StateFlow<Boolean>
 
     fun getInstance(context: Context) {
         app = context.getSharedPreferences("preferences_${context.packageName}", MODE_PRIVATE)
         auth = context.getSharedPreferences("auth_${context.packageName}", MODE_PRIVATE)
         theme = app.getThemeFlow()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Themes.SYSTEM)
+            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Theme.SYSTEM)
         dynamicColors = app.getColorsFlow()
             .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
     }
@@ -71,7 +71,7 @@ object Preferences : ViewModel() {
         putLong(USER_ID, userId)
     }
 
-    fun setTheme(theme: Themes) = app.edit {
+    fun setTheme(theme: Theme) = app.edit {
         putEnum(PREF_APP_THEME, theme)
     }
 }
