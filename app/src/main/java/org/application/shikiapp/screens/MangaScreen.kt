@@ -41,7 +41,6 @@ import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.R.string.text_volumes
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.events.MangaDetailEvent
 import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.viewModels.MangaViewModel
@@ -68,7 +67,7 @@ fun MangaScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 private fun MangaView(
     manga: Manga,
     state: MangaState,
-    onEvent: (MangaDetailEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
@@ -131,7 +130,7 @@ private fun MangaView(
                 if (it.isNotEmpty()) item {
                     Related(
                         list = it,
-                        hide = { onEvent(ContentDetailEvent.ShowRelated) },
+                        hide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
                         onNavigate = onNavigate
                     )
                 }
@@ -140,7 +139,7 @@ private fun MangaView(
                 if (it.isNotEmpty()) item {
                     Characters(
                         list = it,
-                        show = { onEvent(MangaDetailEvent.ShowCharacters) },
+                        show = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
                         onNavigate = onNavigate
                     )
                 }
@@ -149,7 +148,7 @@ private fun MangaView(
                 if (it.isNotEmpty()) item {
                     Authors(
                         list = it,
-                        show = { onEvent(MangaDetailEvent.ShowAuthors) },
+                        show = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
                         onNavigate = onNavigate
                     )
                 }
@@ -167,7 +166,7 @@ private fun MangaView(
     RelatedFull(
         list = manga.related,
         visible = state.showRelated,
-        hide = { onEvent(ContentDetailEvent.ShowRelated) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
         onNavigate = onNavigate
     )
 
@@ -175,7 +174,7 @@ private fun MangaView(
         roles = manga.personAll,
         state = state.lazyAuthors,
         visible = state.showAuthors,
-        hide = { onEvent(MangaDetailEvent.ShowAuthors) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
         onNavigate = onNavigate
     )
 
@@ -183,12 +182,12 @@ private fun MangaView(
         list = manga.charactersAll,
         state = state.lazyCharacters,
         visible = state.showCharacters,
-        hide = { onEvent(MangaDetailEvent.ShowCharacters) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
         onNavigate = onNavigate
     )
 
     SimilarFull(
-        hide = { onEvent(ContentDetailEvent.ShowSimilar) },
+        hide = { onEvent(ContentDetailEvent.Media.ShowSimilar) },
         listState = state.lazySimilar,
         visible = state.showSimilar,
         list = manga.similar,
@@ -197,7 +196,7 @@ private fun MangaView(
     Statistics(
         statistics = manga.stats,
         visible = state.showStats,
-        hide = { onEvent(ContentDetailEvent.ShowStats) }
+        hide = { onEvent(ContentDetailEvent.Media.ShowStats) }
     )
 
     when {
@@ -205,21 +204,21 @@ private fun MangaView(
             state = state.sheetBottom,
             rate = manga.userRate,
             favoured = manga.favoured,
-            onEvent = onEvent as (ContentDetailEvent) -> Unit,
-            toggleFavourite = { onEvent(MangaDetailEvent.ToggleFavourite(manga.kindEnum, manga.favoured)) }
+            onEvent = onEvent,
+            toggleFavourite = { onEvent(ContentDetailEvent.Media.Manga.ToggleFavourite(manga.kindEnum, manga.favoured)) }
         )
 
         state.showRate -> CreateRate(
             id = manga.id,
             type = LinkedType.MANGA,
             rateF = manga.userRate,
-            reload = { onEvent(MangaDetailEvent.Reload) },
-            hide = { onEvent(MangaDetailEvent.ShowRate) })
+            reload = { onEvent(ContentDetailEvent.Media.Reload) },
+            hide = { onEvent(ContentDetailEvent.Media.ShowRate) })
 
         state.showLinks -> LinksSheet(
             list = manga.links,
             state = state.sheetLinks,
-            hide = { onEvent(ContentDetailEvent.ShowLinks) })
+            hide = { onEvent(ContentDetailEvent.Media.ShowLinks) })
     }
 }
 
