@@ -1,7 +1,7 @@
 package org.application.shikiapp.events
 
 import org.application.shikiapp.utils.enums.Order
-import org.application.shikiapp.utils.enums.PeopleFilterItems
+import org.application.shikiapp.utils.enums.PeopleFilterItem
 
 sealed interface FilterEvent {
     data class SetOrder(val order: Order) : FilterEvent
@@ -20,6 +20,6 @@ sealed interface FilterEvent {
     data class SetFranchise(val franchise: String) : FilterEvent
     data class SetCensored(val censored: Boolean) : FilterEvent
     data class SetMyList(val myList: String) : FilterEvent
-    data class SetRole(val flag: Boolean, val item: PeopleFilterItems) : FilterEvent
+    data class SetRole(val item: PeopleFilterItem) : FilterEvent
     data class SetTitle(val title: String) : FilterEvent
 }
