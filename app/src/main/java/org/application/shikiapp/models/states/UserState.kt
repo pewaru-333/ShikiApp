@@ -2,22 +2,26 @@
 
 package org.application.shikiapp.models.states
 
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SheetState
-import androidx.compose.ui.unit.Density
-import org.application.shikiapp.utils.enums.FavouriteItems
-import org.application.shikiapp.utils.enums.ProfileMenus
+import org.application.shikiapp.utils.enums.FavouriteItem
+import org.application.shikiapp.utils.enums.UserMenu
 
 data class UserState(
-    val menu: ProfileMenus = ProfileMenus.FRIENDS,
-    val favouriteTab: FavouriteItems = FavouriteItems.ANIME,
+    val menu: UserMenu? = null,
+    val favouriteTab: FavouriteItem = FavouriteItem.ANIME,
+    val isFriend: Boolean = false,
     val showComments: Boolean = false,
-    val showDialog: Boolean = false,
-    val showSheet: Boolean = false,
-    val showFavourite: Boolean = false,
-    val showHistory: Boolean = false,
-    val stateF: LazyListState = LazyListState(),
-    val stateC: LazyListState = LazyListState(),
-    val sheetState: SheetState = SheetState(false, Density(1f))
+    val showDialogToggleFriend: Boolean = false
 )
+
+val UserState.showFriends: Boolean
+    get() = menu == UserMenu.FRIENDS
+
+val UserState.showClubs: Boolean
+    get() = menu == UserMenu.CLUBS
+
+val UserState.showFavourite: Boolean
+    get() = menu == UserMenu.FAVOURITE
+
+val UserState.showHistory: Boolean
+    get() = menu == UserMenu.HISTORY
