@@ -7,7 +7,6 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
@@ -88,7 +87,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
                 while (moreDataAvailable) {
                     val calls = (1..5).map {
-                        viewModelScope.async(Dispatchers.IO) {
+                        viewModelScope.async {
                             try {
                                 if (type == LinkedType.ANIME) Network.user.getAnimeRates(id = userId, page = page + it)
                                 else Network.user.getMangaRates(id = userId, page = page + it)
