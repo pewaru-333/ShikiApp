@@ -3,9 +3,8 @@
 package org.application.shikiapp.network.client
 
 import com.apollographql.apollo.ApolloClient
-import com.apollographql.ktor.ktorClient
 import io.ktor.client.HttpClient
-import io.ktor.client.engine.okhttp.OkHttp
+import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.auth.Auth
@@ -30,21 +29,15 @@ import org.application.shikiapp.utils.API_URL
 import org.application.shikiapp.utils.GRAPH_URL
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.extensions.refreshToken
-import java.util.concurrent.TimeUnit.SECONDS
 
 
 object Network {
     val client: HttpClient by lazy {
-        HttpClient(OkHttp) {
+        HttpClient(Android) {
             expectSuccess = true
 
             engine {
                 dispatcher = Dispatchers.IO
-                config {
-                    connectTimeout(30, SECONDS)
-                    readTimeout(30, SECONDS)
-                    callTimeout(30, SECONDS)
-                }
             }
 
             install(UserAgent) {
@@ -97,7 +90,7 @@ object Network {
     val apollo by lazy {
         ApolloClient.Builder()
             .serverUrl(GRAPH_URL)
-            .ktorClient(client)
+            .httpEngine(KtorEngine(client))
             .build()
     }
 
