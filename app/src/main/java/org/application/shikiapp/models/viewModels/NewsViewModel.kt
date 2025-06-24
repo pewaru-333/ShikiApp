@@ -7,8 +7,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import androidx.paging.map
 import io.ktor.client.plugins.ClientRequestException
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import org.application.shikiapp.models.data.News
@@ -25,7 +23,6 @@ class NewsViewModel : ViewModel() {
             }
         }
     ).flow
-        .flowOn(Dispatchers.IO)
         .map { list -> list.map(News::mapper) }
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
