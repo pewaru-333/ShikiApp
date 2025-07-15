@@ -24,7 +24,7 @@ abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailE
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<Comment>(Comment::id) { page, params ->
+            CommonPaging(Comment::id) { page, params ->
                 Network.topics.getComments(id, type, page, params.loadSize)
             }
         }
