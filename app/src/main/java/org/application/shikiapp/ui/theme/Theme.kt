@@ -14,8 +14,8 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.Theme
@@ -105,17 +105,23 @@ fun Theme(content: @Composable () -> Unit) {
 
     val darkTheme = when (darkState) {
         Theme.LIGHT -> false
-        Theme.DARK -> true
+        Theme.DARK, Theme.DARK_AMOLED -> true
         else -> isSystemInDarkTheme()
     }
 
-    val colors = when {
+    val baseColors = when {
         isDynamicColorAvailable() && dynamicColor ->
-            if (darkTheme) dynamicDarkColorScheme(activity) else dynamicLightColorScheme(activity)
+            if (darkTheme) dynamicDarkColorScheme(activity)
+            else dynamicLightColorScheme(activity)
 
         darkTheme -> darkScheme
         else -> lightScheme
     }
+
+    val colors = if (darkState != Theme.DARK_AMOLED) baseColors else baseColors.copy(
+        background = androidx.compose.ui.graphics.Color.Black,
+        surface = androidx.compose.ui.graphics.Color.Black
+    )
 
     DisposableEffect(darkTheme) {
         activity.enableEdgeToEdge(
