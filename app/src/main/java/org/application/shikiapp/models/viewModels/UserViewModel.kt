@@ -38,7 +38,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<UserBasic>(UserBasic::id) { page, params ->
+            CommonPaging(UserBasic::id) { page, params ->
                 Network.user.getFriends(userId, page, params.loadSize)
             }
         }
@@ -52,7 +52,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<History>(History::id) { page, params ->
+            CommonPaging(History::id) { page, params ->
                 Network.user.getHistory(userId, page, params.loadSize)
                     .map(org.application.shikiapp.models.data.History::mapper)
             }
@@ -111,6 +111,8 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
 
             is ContentDetailEvent.User -> when (event) {
                 ContentDetailEvent.User.ToggleFriend -> toggleFriend()
+
+                ContentDetailEvent.User.ShowDialogs -> updateState { it.copy(showDialogs = !it.showDialogs) }
 
                 ContentDetailEvent.User.ShowDialogToggleFriend -> updateState { it.copy(showDialogToggleFriend = !it.showDialogToggleFriend) }
 
