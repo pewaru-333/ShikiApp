@@ -28,12 +28,12 @@ import org.application.shikiapp.events.RateEvent.SetScore
 import org.application.shikiapp.events.RateEvent.SetStatus
 import org.application.shikiapp.events.RateEvent.SetText
 import org.application.shikiapp.events.RateEvent.SetVolumes
-import org.application.shikiapp.models.data.BaseRate
+import org.application.shikiapp.generated.type.UserRateTargetTypeEnum
 import org.application.shikiapp.models.data.NewRate
 import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.models.states.RatesState
 import org.application.shikiapp.models.ui.UserRate
-import org.application.shikiapp.models.ui.mappers.mapper
+import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.RatesResponse
 import org.application.shikiapp.utils.BLANK
@@ -41,22 +41,23 @@ import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeEquals
+import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.navigation.Screen
 
 class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
-    val args = saved.toRoute<Screen.UserRates>()
-    val type = args.type ?: LinkedType.ANIME
-    val userId = args.id ?: 0L
+    val args = runCatching { saved.toRoute<Screen.UserRates>() }.getOrNull()
+    val type = args?.type ?: LinkedType.ANIME
+    val userId = args?.id ?: 0L
     val editable = userId == Preferences.userId
 
     private val _response = MutableStateFlow<RatesResponse>(RatesResponse.Loading)
     val response = _response.asStateFlow()
         .onStart { loadRates() }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RatesResponse.Loading)
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), RatesResponse.Loading)
 
     private val _state = MutableStateFlow(RatesState())
     val state = _state.asStateFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RatesState())
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), RatesState())
 
     private val _newRate = MutableStateFlow(NewRateState())
     val newRate = _newRate.asStateFlow()
@@ -67,12 +68,11 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     val rates = combine(_response, _state) { response, state ->
         if (response !is RatesResponse.Success) emptyList()
         else response.rates
-            .map<BaseRate, UserRate>(BaseRate::mapper)
             .filter { state.tab.safeEquals(it.status) }
             .sortedBy(UserRate::title)
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5000L),
+        started = SharingStarted.WhileSubscribed(),
         initialValue = emptyList()
     )
 
@@ -80,17 +80,21 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         viewModelScope.launch {
             _response.emit(RatesResponse.Loading)
 
-            try {
-                val rates = mutableListOf<BaseRate>()
-                var page = 0
-                var moreDataAvailable = true
+            val rates = mutableListOf<UserRate>()
+            var page = 0
+            var moreDataAvailable = true
 
+            try {
                 while (moreDataAvailable) {
                     val calls = (1..5).map {
-                        viewModelScope.async {
+                        async {
                             try {
-                                if (type == LinkedType.ANIME) Network.user.getAnimeRates(id = userId, page = page + it)
-                                else Network.user.getMangaRates(id = userId, page = page + it)
+                                GraphQL.getUserRates(
+                                    userId = userId,
+                                    page = page + it,
+                                    limit = 50,
+                                    type = Enum.safeValueOf<UserRateTargetTypeEnum>(type.name)
+                                )
                             } catch (_: Throwable) {
                                 emptyList()
                             }
@@ -100,11 +104,11 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     val results = calls.awaitAll()
                     rates.addAll(results.flatten())
 
-                    moreDataAvailable = results.any { it.size >= 100 }
+                    moreDataAvailable = results.any { it.size == 50 }
                     page += 5
                 }
 
-                _response.emit(RatesResponse.Success(rates.distinctBy(BaseRate::id)))
+                _response.emit(RatesResponse.Success(rates))
             } catch (e: ClientRequestException) {
                 if (e.response.status.value == 403) _response.emit(RatesResponse.NoAccess)
                 else _response.emit(RatesResponse.Error)
