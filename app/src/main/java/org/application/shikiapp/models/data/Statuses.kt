@@ -9,22 +9,22 @@ data class Statuses(
     val manga: List<ShortInfo> = emptyList()
 )
 
-@Serializable
-data class Scores(
-    val anime: List<RatesScores> = emptyList(),
-    val manga: List<RatesScores> = emptyList()
-)
-
-@Serializable
-data class Types(
-    val anime: List<RatesScores> = emptyList(),
-    val manga: List<RatesScores> = emptyList()
-)
-
-@Serializable
-data class Ratings(
-    val anime: List<RatesScores> = emptyList()
-)
+//@Serializable
+//data class Scores(
+//    val anime: List<RatesScores> = emptyList(),
+//    val manga: List<RatesScores> = emptyList()
+//)
+//
+//@Serializable
+//data class Types(
+//    val anime: List<RatesScores> = emptyList(),
+//    val manga: List<RatesScores> = emptyList()
+//)
+//
+//@Serializable
+//data class Ratings(
+//    val anime: List<RatesScores> = emptyList()
+//)
 
 @Serializable
 data class ShortInfo(

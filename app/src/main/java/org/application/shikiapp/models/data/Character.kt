@@ -18,8 +18,8 @@ class Character : BasicInfo() {
     @SerialName("description_html")
     val descriptionHTML: String? = null
 
-    @SerialName("description_source")
-    val descriptionSource: String? = null
+//    @SerialName("description_source")
+//    val descriptionSource: String? = null
 
     @SerialName("favoured")
     val favoured: Boolean = false

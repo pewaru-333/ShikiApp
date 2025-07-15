@@ -12,12 +12,12 @@ class Person(
     @SerialName("url") val url: String,
     @SerialName("japanese") val japanese: String,
     @SerialName("job_title") val jobTitle: String,
-    @SerialName("birth_on") val birthOn: Date? = null,
+    // @SerialName("birth_on") val birthOn: Date? = null,
     @SerialName("deceased_on") val deceasedOn: Date? = null,
     @SerialName("website") val website: String,
     @SerialName("groupped_roles") val grouppedRoles: List<List<String>>,
     @SerialName("roles") val roles: List<Roles>?,
-    @SerialName("works") val works: List<Works>?,
+    // @SerialName("works") val works: List<Works>?,
     @SerialName("topic_id") val topicId: Long?,
     @SerialName("person_favoured") val personFavoured: Boolean,
     @SerialName("producer") val producer: Boolean,
@@ -27,7 +27,7 @@ class Person(
     @SerialName("seyu") val seyu: Boolean,
     @SerialName("seyu_favoured") val seyuFavoured: Boolean,
     @SerialName("updated_at") val updatedAt: String,
-    @SerialName("thread_id") val threadId: Long?,
+    //  @SerialName("thread_id") val threadId: Long?,
     @SerialName("birthday") val birthday: Date? = null
 )
 
@@ -44,9 +44,9 @@ data class Roles(
     val animes: List<AnimeBasic>
 )
 
-@Serializable
-data class Works(
-    val anime: AnimeBasic?,
-    val manga: MangaBasic?,
-    val roles: Role?
-)
+//@Serializable
+//data class Works(
+//    val anime: AnimeBasic?,
+//    val manga: MangaBasic?,
+//    val roles: Role?
+//)

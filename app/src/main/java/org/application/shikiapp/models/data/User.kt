@@ -36,8 +36,8 @@ class User : UserBrief() {
     @SerialName("stats")
     val stats: Stats = Stats()
 
-    @SerialName("style_id")
-    val styleId: Long? = null
+//    @SerialName("style_id")
+//    val styleId: Long? = null
 }
 
 @Serializable
