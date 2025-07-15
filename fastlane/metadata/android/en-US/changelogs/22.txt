@@ -1,0 +1,3 @@
+— Added the ability to view your dialogues and send messages to other users.
+— Added a dark AMOLED theme.
+— Fixed a bug that sometimes caused the app to crash when adding/changing anime/manga/ranobe scores.

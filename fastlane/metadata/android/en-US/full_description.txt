@@ -1,11 +1,11 @@
-Shikimori (shikimori.one) unofficial mobile app.
-
-<b>The main functions at the moment</b>
+<b>Main functions at the moment</b>
 
 * Search and view information about anime, manga and ranobe.
 * Search and view information about characters and people.
 * View the anime series release schedule.
 * View and read news and topics.
-* View user profiles, clubs and friends.
-* Add anime, manga and ranobe to your list and favorites (account required).
-* Add characters and people to favorites (account required).
+* View user profiles, clubs, and friends.
+* View your conversations and send messages to other users.
+* Add anime, manga, and ranobe to your list and favorites.
+* Add characters and people to favorites.
+* The ability to join or leave clubs(s).

@@ -157,6 +157,7 @@
     <string name="text_anime_list">Список аниме</string>
     <string name="text_clubs">Клубы</string>
     <string name="text_comments">Комментарии</string>
+    <string name="text_dialogs">Диалоги</string>
     <string name="text_friends">Друзья</string>
     <string name="text_history">История</string>
     <string name="text_manga_list">Список манги</string>
@@ -197,6 +198,7 @@
     <string name="preference_theme_system">Системная</string>
     <string name="preference_theme_light">Светлая</string>
     <string name="preference_theme_dark">Тёмная</string>
+    <string name="preference_theme_dark_amoled">Тёмная AMOLED</string>
 
     <string name="preference_dynamic_colors">Системные цвета</string>
 
@@ -209,11 +211,14 @@
     <string name="text_empty">Пусто</string>
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
 
+    <string name="text_enter_message">Введите сообщение</string>
     <string name="text_login">Вход</string>
     <string name="text_pay_attention">Обратите внимание!</string>
     <string name="text_to_settings">В настройки</string>
     <string name="text_settings">Настройки</string>
     <string name="text_unknown">Неизвестно</string>
+
+    <string name="text_sure_to_delete_dialog">Вы действительно хотите удалить всю переписку с пользователем %1$s?</string>
 
     <string name="text_successfully_joined_club">Вы вступили в клуб!</string>
     <string name="text_unsuccessfully_joined_club">Ошибка вступления в клуб!</string>
