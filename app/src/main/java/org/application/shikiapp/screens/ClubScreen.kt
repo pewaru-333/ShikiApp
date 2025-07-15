@@ -35,8 +35,8 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Done
 import androidx.compose.material.icons.outlined.MoreVert
-import androidx.compose.material3.AssistChip
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -242,7 +242,8 @@ private fun ClubMenuItems(onEvent: (ClubEvent) -> Unit) =
         ClubMenu.entries.chunked(2).forEach { row ->
             Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
                 row.forEach {
-                    AssistChip(
+                    FilterChip(
+                        selected = true,
                         label = { Text(stringResource(it.title)) },
                         onClick = { onEvent(ClubEvent.PickItem(it)) },
                         trailingIcon = {
