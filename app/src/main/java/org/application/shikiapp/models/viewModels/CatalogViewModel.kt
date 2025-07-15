@@ -51,7 +51,6 @@ import org.application.shikiapp.events.FilterEvent.SetStudio
 import org.application.shikiapp.events.FilterEvent.SetTitle
 import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.models.data.Club
-import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.Content
@@ -224,11 +223,11 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             isMangaka = query.roles.contains(MANGAKA).takeIf { it }
         )
 
-        CatalogItem.USERS -> Network.user.getUsers(
+        CatalogItem.USERS -> GraphQL.getUsers(
             search = query.title,
             page = page,
             limit = params.loadSize
-        ).map(UserBasic::toContent)
+        )
 
         CatalogItem.CLUBS -> Network.clubs.getClubs(
             search = query.title,
