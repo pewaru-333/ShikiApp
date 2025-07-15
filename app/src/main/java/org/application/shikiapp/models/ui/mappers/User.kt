@@ -3,6 +3,7 @@ package org.application.shikiapp.models.ui.mappers
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.R
+import org.application.shikiapp.generated.UsersQuery
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Favourites
@@ -36,10 +37,10 @@ fun User.mapper(
     favourites = favourites
 )
 
-fun UserBasic.toContent() = Content(
-    id = id.toString(),
+fun UsersQuery.Data.User.toContent() = Content(
+    id = id,
     title = nickname,
     kind = R.string.blank,
     season = ResourceText.StaticString(BLANK),
-    poster = image.x80
+    poster = avatarUrl
 )
