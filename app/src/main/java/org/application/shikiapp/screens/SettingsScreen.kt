@@ -14,7 +14,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
-import me.zhanghai.compose.preference.getPreferenceFlow
 import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preferenceCategory
 import me.zhanghai.compose.preference.switchPreference
@@ -28,6 +27,7 @@ import org.application.shikiapp.utils.PREF_GROUP_APP_VIEW
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.ListView
 import org.application.shikiapp.utils.enums.Theme
+import org.application.shikiapp.utils.extensions.getPreferenceFlow
 import org.application.shikiapp.utils.extensions.valueToText
 
 @Composable
@@ -44,7 +44,7 @@ fun SettingsScreen() {
             item {
                 var value by remember { mutableStateOf(Preferences.listView) }
 
-                ListPreference<ListView>(
+                ListPreference(
                     value = value,
                     onValueChange = { value = it; Preferences.listView = it },
                     values = ListView.entries,
@@ -62,7 +62,7 @@ fun SettingsScreen() {
             item {
                 val value by Preferences.theme.collectAsStateWithLifecycle()
 
-                ListPreference<Theme>(
+                ListPreference(
                     value = value,
                     onValueChange = Preferences::setTheme,
                     values = Theme.entries,
