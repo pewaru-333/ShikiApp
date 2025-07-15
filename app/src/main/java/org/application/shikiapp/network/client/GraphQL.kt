@@ -12,8 +12,12 @@ import org.application.shikiapp.generated.MangaGenresQuery
 import org.application.shikiapp.generated.MangaListQuery
 import org.application.shikiapp.generated.MangaQuery
 import org.application.shikiapp.generated.PeopleQuery
+import org.application.shikiapp.generated.UserRatesQuery
+import org.application.shikiapp.generated.UsersQuery
 import org.application.shikiapp.generated.type.OrderEnum
+import org.application.shikiapp.generated.type.UserRateTargetTypeEnum
 import org.application.shikiapp.models.ui.mappers.mapper
+import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.extensions.getRandomTrending
 import org.application.shikiapp.utils.extensions.mapToResult
@@ -127,6 +131,36 @@ object GraphQL {
             isMangaka = isMangaka
         )
     ) { it.people.map(PeopleQuery.Data.Person::mapper) }
+
+    suspend fun getUsers(
+        page: Int,
+        limit: Int,
+        search: String?
+    ) = getList(
+        UsersQuery(
+            page = page,
+            limit = limit,
+            search = search
+        )
+    ) { it.users.map(UsersQuery.Data.User::toContent) }
+
+    suspend fun getUserRates(
+        userId: Long,
+        page: Int,
+        limit: Int,
+        type: UserRateTargetTypeEnum
+    ) = getList(
+        UserRatesQuery(
+            userId = userId.toString(),
+            page = page,
+            limit = limit,
+            targetType = type,
+            status = null,
+            order = null
+        )
+    ) {
+        it.userRates.map { it.mapper(type) }
+    }
 
     private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) =
         try {
