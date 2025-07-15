@@ -13,12 +13,12 @@ sealed interface ResourceText {
     data class MultiString(val value: List<Any>) : ResourceText
 
     class StringResource(
-        @StringRes val resourceId: Int,
+        @param:StringRes val resourceId: Int,
         vararg val args: Any
     ) : ResourceText
 
     class PluralStringResource(
-        @PluralsRes val resourceId: Int,
+        @param:PluralsRes val resourceId: Int,
         val count: Int,
         vararg val args: Any
     ) : ResourceText
