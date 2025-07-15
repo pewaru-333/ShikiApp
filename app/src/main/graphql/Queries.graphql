@@ -277,6 +277,75 @@ query People(
     }
 }
 
+# ============================================= Users ==============================================
+
+query Users(
+    $page: PositiveInt,
+    $limit: PositiveInt,
+    $search: String
+) {
+    users(
+        page: $page,
+        limit: $limit,
+        search: $search
+    ) {
+        id
+        nickname
+        avatarUrl
+    }
+}
+
+# ========================================== User rates ============================================
+
+query UserRates(
+    $userId: ID,
+    $page: PositiveInt,
+    $limit: PositiveInt,
+    $targetType: UserRateTargetTypeEnum,
+    $status: UserRateStatusEnum
+    $order: UserRateOrderInputType
+) {
+    userRates(
+        userId: $userId,
+        page: $page,
+        limit: $limit,
+        targetType: $targetType,
+        status: $status,
+        order: $order
+    ) {
+        id
+        score
+        status
+        text
+        rewatches
+        episodes
+        chapters
+        volumes
+        anime {
+            id
+            name
+            russian
+            kind
+            episodes
+            status
+            poster {
+                originalUrl
+            }
+        }
+        manga {
+            id
+            name
+            russian
+            kind
+            chapters
+            status
+            poster {
+                originalUrl
+            }
+        }
+    }
+}
+
 # =========================================== Fragments ============================================
 
 fragment CharacterFragment on CharacterRole {
