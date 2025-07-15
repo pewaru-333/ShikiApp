@@ -18,14 +18,14 @@ apollo {
 
 android {
     namespace = "org.application.shikiapp"
-    compileSdk = 35
+    compileSdk = 36
 
     defaultConfig {
         applicationId = "org.application.shikiapp"
         minSdk = 26
-        targetSdk = 35
-        versionCode = 21
-        versionName = "alpha-0.3.0"
+        targetSdk = 36
+        versionCode = 22
+        versionName = "alpha-0.3.1"
     }
 
     dependenciesInfo {
@@ -45,8 +45,10 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = JavaVersion.VERSION_17.toString()
+    kotlin {
+        compilerOptions {
+            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
+        }
     }
     buildFeatures {
         compose = true
