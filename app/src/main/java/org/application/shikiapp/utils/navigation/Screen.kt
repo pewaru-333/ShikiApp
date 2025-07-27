@@ -17,9 +17,6 @@ sealed interface Screen {
     object Profile : Screen
 
     @Serializable
-    object Settings : Screen
-
-    @Serializable
     data class Login(val code: String? = null) : Screen
 
     @Serializable
@@ -44,5 +41,5 @@ sealed interface Screen {
     data class NewsDetail(val id: Long) : Screen
 
     @Serializable
-    data class UserRates(val id: Long? = null, val type: LinkedType? = null) : Screen
+    data class UserRates(val id: Long? = null, val type: LinkedType? = null, val editable: Boolean = false) : Screen
 }
