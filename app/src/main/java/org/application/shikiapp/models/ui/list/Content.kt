@@ -8,5 +8,6 @@ data class Content(
     val title: String,
     @StringRes val kind: Int,
     val season: ResourceText,
+    val score: String?,
     val poster: String
 )
