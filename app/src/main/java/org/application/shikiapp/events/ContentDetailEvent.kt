@@ -49,6 +49,8 @@ sealed interface ContentDetailEvent {
     sealed interface User : ContentDetailEvent {
         data object ToggleFriend : User
 
+        data object ShowSettings : User
+
         data object ShowDialogs : User
         data object ShowDialogToggleFriend : User
 
