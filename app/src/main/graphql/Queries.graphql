@@ -36,6 +36,7 @@ query AnimeList(
         russian
         kind
         season
+        score
         poster {
             originalUrl
             mainUrl
@@ -153,6 +154,7 @@ query MangaList(
         name
         russian
         kind
+        score
         airedOn {
             date
         }
