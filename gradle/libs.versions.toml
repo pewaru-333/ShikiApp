@@ -1,12 +1,13 @@
 [versions]
 apolloApi = "4.3.1"
-coilCompose = "3.2.0"
-composeBom = "2025.06.01"
-composeLifecycle = "2.9.1"
-composeNavigation = "2.9.1"
+coilCompose = "3.3.0"
+composeBom = "2025.07.00"
+composeLifecycle = "2.9.2"
+composeNavigation = "2.9.2"
 composePaging = "3.3.6"
-composePreferences = "2.0.0"
+composePreferences = "2.1.0"
 gradle = "8.11.1"
+jsoup = "1.21.1"
 kotlin = "2.2.0"
 kotlinxSerializationJson = "1.9.0"
 ktor = "3.2.2"
@@ -26,6 +27,7 @@ coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coilC
 coil-network = { group = "io.coil-kt.coil3", name = "coil-network-core", version.ref = "coilCompose" }
 coil-zoomable = { group = "me.saket.telephoto", name = "zoomable-image-coil3", version.ref = "zoomableImageCoil3" }
 
+jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
 kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
 
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }

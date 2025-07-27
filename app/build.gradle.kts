@@ -24,8 +24,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 22
-        versionName = "alpha-0.3.1"
+        versionCode = 23
+        versionName = "alpha-0.3.2"
     }
 
     dependenciesInfo {
@@ -76,4 +76,5 @@ dependencies {
     implementation(libs.coil.network)
     implementation(libs.coil.zoomable)
     implementation(libs.material.preferences)
+    implementation(libs.jsoup)
 }
