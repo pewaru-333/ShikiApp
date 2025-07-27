@@ -10,6 +10,7 @@ data class UserState(
     val menu: UserMenu? = null,
     val favouriteTab: FavouriteItem = FavouriteItem.ANIME,
     val isFriend: Boolean = false,
+    val showSettings: Boolean = false,
     val showComments: Boolean = false,
     val showDialogs: Boolean = false,
     val showDialogToggleFriend: Boolean = false
