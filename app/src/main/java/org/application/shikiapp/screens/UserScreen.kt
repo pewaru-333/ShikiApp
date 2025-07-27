@@ -26,6 +26,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
 import androidx.compose.material.icons.automirrored.outlined.Send
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -132,12 +133,14 @@ fun UserView(
                 UserMenuItems { onEvent(ContentDetailEvent.User.PickMenu(it)) }
             }
 
-            item {
-                UserStats(
-                    id = user.id,
-                    stats = user.stats,
-                    onNavigate = onNavigate
-                )
+            if (Preferences.userId != user.id) {
+                item {
+                    UserStats(
+                        id = user.id,
+                        stats = user.stats,
+                        onNavigate = onNavigate
+                    )
+                }
             }
 
             user.about.let {
@@ -162,10 +165,7 @@ fun UserView(
     }
 
     LaunchedEffect(state.menu, state.showDialogs) {
-        visibility?.let { bottomBar ->
-            if (state.menu != null || state.showDialogs) bottomBar.hide()
-            else bottomBar.show()
-        }
+        visibility?.toggle(state.menu != null || state.showDialogs)
     }
 
     Comments(
@@ -229,6 +229,10 @@ private fun TopBarActions(
             IconButton(
                 onClick = { onEvent(ContentDetailEvent.User.ShowDialogs) },
                 content = { Icon(Icons.Outlined.Email, null) }
+            )
+            IconButton(
+                onClick = { onEvent(ContentDetailEvent.User.ShowSettings) },
+                content = { Icon(Icons.Outlined.Settings, null) }
             )
         }
 
