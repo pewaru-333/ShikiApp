@@ -130,7 +130,6 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         filters.getValue(_state.value.menu).update { _currentFilters.value }
         _currentFilters.update { filters.getValue(menu).value }
 
-
         _state.update {
             it.copy(
                 menu = menu,
@@ -152,7 +151,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         ),
         pagingSourceFactory = {
             if (item in listOf(CatalogItem.USERS, CatalogItem.CLUBS)) {
-                CommonPaging<Content>(Content::id) { page, params ->
+                CommonPaging(Content::id) { page, params ->
                     fetchData(item, filtersState, page, params)
                 }
             } else {
