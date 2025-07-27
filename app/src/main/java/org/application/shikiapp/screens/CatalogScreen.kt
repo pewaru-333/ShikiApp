@@ -154,7 +154,6 @@ import org.application.shikiapp.utils.navigation.Screen
 fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit) {
     val model = viewModel<CatalogViewModel>()
     val state by model.state.collectAsStateWithLifecycle()
-    val catalogList = model.list.collectAsLazyPagingItems()
     val filters by model.currentFilters.collectAsStateWithLifecycle()
     val genres by model.genres.collectAsStateWithLifecycle()
 
@@ -187,21 +186,21 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                     style = MaterialTheme.typography.headlineSmall
                 )
 
-                CatalogItem.entries.forEach {
+                CatalogItem.entries.forEach { item ->
                     NavigationDrawerItem(
-                        selected = state.menu == it,
-                        onClick = { model.pick(it) },
+                        selected = state.menu == item,
+                        onClick = { model.pick(item) },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                        icon = { Icon(painterResource(it.icon), null) },
+                        icon = { Icon(painterResource(item.icon), null) },
                         label = {
                             Text(
-                                text = stringResource(it.title),
+                                text = stringResource(item.title),
                                 style = MaterialTheme.typography.labelLarge
                             )
                         }
                     )
 
-                    if (it == PEOPLE) {
+                    if (item == PEOPLE) {
                         HorizontalDivider(Modifier.padding(8.dp))
                     }
                 }
@@ -247,35 +246,38 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                 )
             }
         ) { values ->
-            CatalogList(
-                list = catalogList,
-                state = state,
-                paddingValues = values,
-                onNavigate = onNavigate
-            )
+            key(state.menu) {
+                val catalogList = model.list.collectAsLazyPagingItems()
 
-            DialogFilters(
-                genres = genres,
-                filters = filters,
-                visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
-                event = model::onEvent,
-                refresh = catalogList::refresh,
-                hide = model::hideFilters,
-                type = when (state.menu) {
-                    RANOBE -> LinkedType.RANOBE
-                    MANGA -> LinkedType.MANGA
-                    ANIME -> LinkedType.ANIME
-                    else -> null
-                }
-            )
+                CatalogList(
+                    list = catalogList,
+                    state = state,
+                    paddingValues = values,
+                    onNavigate = onNavigate
+                )
+
+                DialogFilters(
+                    genres = genres,
+                    filters = filters,
+                    visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
+                    event = model::onEvent,
+                    refresh = catalogList::refresh,
+                    hide = model::hideFilters,
+                    type = when (state.menu) {
+                        RANOBE -> LinkedType.RANOBE
+                        MANGA -> LinkedType.MANGA
+                        ANIME -> LinkedType.ANIME
+                        else -> null
+                    }
+                )
+            }
 
             if (state.showFiltersP) {
                 DialogFiltersP(filters.roles, model::onEvent, model::hideFilters)
             }
 
             LaunchedEffect(state.showFiltersA, state.showFiltersM, state.showFiltersR) {
-                if (state.showFiltersA || state.showFiltersM || state.showFiltersR) visibility.hide()
-                else visibility.show()
+                visibility.toggle(state.showFiltersA || state.showFiltersM || state.showFiltersR)
             }
         }
     }
@@ -304,12 +306,7 @@ private fun CatalogList(
                     list[index]?.let {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable {
-                                onNavigate(
-                                    if (state.menu == USERS) Screen.User(it.id.toLong())
-                                    else Screen.Club(it.id.toLong())
-                                )
-                            }
+                            modifier = Modifier.clickable { onNavigate(state.menu.navigateTo(it.id)) }
                         ) {
                             AsyncImage(
                                 model = it.poster,
@@ -348,16 +345,7 @@ private fun CatalogList(
                     state = state.listStates.getValue(state.menu)
                 ) {
                     contentList(list) {
-                        onNavigate(
-                            when (state.menu) {
-                                ANIME -> Screen.Anime(it)
-                                MANGA, RANOBE -> Screen.Manga(it)
-                                CHARACTERS -> Screen.Character(it)
-                                PEOPLE -> Screen.Person(it.toLong())
-                                USERS -> Screen.User(it.toLong())
-                                CLUBS -> Screen.Club(it.toLong())
-                            }
-                        )
+                        onNavigate(state.menu.navigateTo(it))
                     }
                     if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
                     if (list.loadState.hasError) item { ErrorScreen(list::retry) }
@@ -370,16 +358,7 @@ private fun CatalogList(
                 state = state.gridStates.getValue(state.menu)
             ) {
                 contentList(list) {
-                    onNavigate(
-                        when (state.menu) {
-                            ANIME -> Screen.Anime(it)
-                            MANGA, RANOBE -> Screen.Manga(it)
-                            CHARACTERS -> Screen.Character(it)
-                            PEOPLE -> Screen.Person(it.toLong())
-                            USERS -> Screen.User(it.toLong())
-                            CLUBS -> Screen.Club(it.toLong())
-                        }
-                    )
+                    onNavigate(state.menu.navigateTo(it))
                 }
                 if (list.loadState.append == LoadState.Loading) {
                     item(
@@ -718,14 +697,24 @@ private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genre
 private fun LazyListScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
     items(list.itemCount, list.itemKey(Content::id)) { index ->
         list[index]?.let {
-            CatalogListItem(
+            CatalogCardItem(
                 title = it.title,
                 kind = it.kind,
                 modifier = Modifier.animateItem(),
                 season = it.season,
                 image = it.poster,
-                click = { onNavigate(it.id) }
+                onClick = { onNavigate(it.id) },
+                score = it.score
             )
+
+//            CatalogListItem(
+//                title = it.title,
+//                kind = it.kind,
+//                modifier = Modifier.animateItem(),
+//                season = it.season,
+//                image = it.poster,
+//                click = { onNavigate(it.id) }
+//            )
         }
     }
 
