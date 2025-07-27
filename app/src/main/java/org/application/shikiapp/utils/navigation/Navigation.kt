@@ -34,7 +34,6 @@ import org.application.shikiapp.screens.NewsDetail
 import org.application.shikiapp.screens.NewsScreen
 import org.application.shikiapp.screens.PersonScreen
 import org.application.shikiapp.screens.ProfileScreen
-import org.application.shikiapp.screens.SettingsScreen
 import org.application.shikiapp.screens.UserRates
 import org.application.shikiapp.screens.UserScreen
 import org.application.shikiapp.utils.BASE_PATH
@@ -52,7 +51,6 @@ import org.application.shikiapp.utils.navigation.Screen.News
 import org.application.shikiapp.utils.navigation.Screen.NewsDetail
 import org.application.shikiapp.utils.navigation.Screen.Person
 import org.application.shikiapp.utils.navigation.Screen.Profile
-import org.application.shikiapp.utils.navigation.Screen.Settings
 import org.application.shikiapp.utils.navigation.Screen.User
 
 @Composable
@@ -62,11 +60,11 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
         composable<Catalog> {
             CatalogScreen(visibility, navigator::navigate)
         }
-        composable<News> {
-            NewsScreen(navigator::navigate)
-        }
         composable<Calendar> {
             CalendarScreen(navigator::navigate)
+        }
+        composable<News> {
+            NewsScreen(navigator::navigate)
         }
         composable<Profile>(
             deepLinks = listOf(
@@ -76,9 +74,6 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
             )
         ) {
             ProfileScreen(navigator::navigate, visibility)
-        }
-        composable<Settings> {
-            SettingsScreen()
         }
 
         // Screens //
@@ -136,7 +131,7 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
             NewsDetail(navigator::navigate, navigator::navigateUp)
         }
         composable<Screen.UserRates> {
-            UserRates(navigator::navigate, navigator::navigateUp)
+            UserRates(visibility, navigator::navigate, navigator::navigateUp)
         }
     }
 }
