@@ -112,6 +112,8 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             is ContentDetailEvent.User -> when (event) {
                 ContentDetailEvent.User.ToggleFriend -> toggleFriend()
 
+                ContentDetailEvent.User.ShowSettings -> updateState { it.copy(showSettings = !it.showSettings) }
+
                 ContentDetailEvent.User.ShowDialogs -> updateState { it.copy(showDialogs = !it.showDialogs) }
 
                 ContentDetailEvent.User.ShowDialogToggleFriend -> updateState { it.copy(showDialogToggleFriend = !it.showDialogToggleFriend) }
