@@ -109,7 +109,7 @@ private fun Trending(trending: List<ShortContent>, onNavigate: (Screen) -> Unit)
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(trending) { anime ->
+        items(trending, ShortContent::id) { anime ->
             Column(
                 modifier = Modifier
                     .width(129.dp)
@@ -155,8 +155,8 @@ private fun AnimeUpdates(
     else LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(12) { index ->
-            updates.takeIf { it.itemCount > index }?.get(index)?.let { anime ->
+        items(updates.itemCount.coerceAtMost(12)) { index ->
+            updates[index]?.let { anime ->
                 Column(
                     modifier = Modifier
                         .width(129.dp)
