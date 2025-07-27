@@ -48,5 +48,6 @@ fun PeopleQuery.Data.Person.mapper() = Content(
     title = russian.orEmpty().ifEmpty(::name),
     kind = R.string.blank,
     season = ResourceText.StringResource(R.string.blank),
-    poster = poster?.mainUrl ?: BLANK
+    poster = poster?.mainUrl ?: BLANK,
+    score = null
 )

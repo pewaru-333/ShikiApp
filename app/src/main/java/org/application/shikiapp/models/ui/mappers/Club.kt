@@ -48,7 +48,8 @@ fun PagingData<ClubBasic>.toContent() = map {
         title = it.name,
         kind = R.string.blank,
         season = ResourceText.StaticString(BLANK),
-        poster = it.logo.main.orEmpty()
+        poster = it.logo.main.orEmpty(),
+        score = null
     )
 }
 
@@ -57,5 +58,6 @@ fun Club.toContent() = Content(
     title = name,
     kind = R.string.blank,
     season = ResourceText.StaticString(BLANK),
-    poster = logo.main.orEmpty()
+    poster = logo.main.orEmpty(),
+    score = null
 )

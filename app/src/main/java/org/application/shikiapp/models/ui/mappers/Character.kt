@@ -13,6 +13,7 @@ import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.ResourceText
+import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.getSeason
@@ -32,7 +33,8 @@ fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<Paging
                 title = it.russian.orEmpty().ifEmpty(it::name),
                 kind = Enum.safeValueOf<Kind>(it.kind).title,
                 season = getSeason(it.releasedOn, it.kind),
-                poster = it.image.original
+                poster = it.image.original,
+                score = it.score?.let(::convertScore)
             )
         },
         manga = mangas.map {
@@ -41,7 +43,8 @@ fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<Paging
                 title = it.russian.orEmpty().ifEmpty(it::name),
                 kind = Enum.safeValueOf<Kind>(it.kind).title,
                 season = getSeason(it.releasedOn, it.kind),
-                poster = it.image.original
+                poster = it.image.original,
+                score = it.score?.let(::convertScore)
             )
         },
         seyu = seyu.map {
@@ -50,7 +53,8 @@ fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<Paging
                 title = it.russian.orEmpty().ifEmpty(it::name),
                 kind = R.string.blank,
                 season = ResourceText.StringResource(R.string.blank),
-                poster = it.image.original
+                poster = it.image.original,
+                score = null
             )
         },
         comments = comments
@@ -61,7 +65,8 @@ fun CharacterListQuery.Data.Character.mapper() = Content(
     title = russian.orEmpty().ifEmpty(::name),
     kind = R.string.blank,
     season = ResourceText.StringResource(R.string.blank),
-    poster = poster?.mainUrl ?: BLANK
+    poster = poster?.mainUrl ?: BLANK,
+    score = null
 )
 
 fun PagingData<BasicInfo>.toContent() = map {
@@ -70,6 +75,7 @@ fun PagingData<BasicInfo>.toContent() = map {
         title = it.russian.orEmpty().ifEmpty(it::name),
         kind = R.string.blank,
         season = ResourceText.StringResource(R.string.blank),
-        poster = it.image.original
+        poster = it.image.original,
+        score = null
     )
 }

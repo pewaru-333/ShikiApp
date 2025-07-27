@@ -27,6 +27,7 @@ import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.utils.ROLES_RUSSIAN
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.ResourceText.StringResource
+import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.Rating
@@ -55,7 +56,7 @@ fun AnimeQuery.Data.Anime.mapper(
         else -> "$episodesAired / $episodes"
     },
     studio = studios.map(AnimeQuery.Data.Anime.Studio::name).firstOrNull() ?: "Неизвестно",
-    score = score.toString(),
+    score = score.let(::convertScore),
     rating = Enum.safeValueOf<Rating>(rating?.rawValue).title,
     genres = genres,
     related = related?.map {
@@ -140,7 +141,8 @@ fun AnimeListQuery.Data.Anime.mapper() = Content(
     title = russian.orEmpty().ifEmpty(::name),
     kind = Enum.safeValueOf<Kind>(kind?.rawValue).title,
     season = getSeason(season, kind?.rawValue),
-    poster = poster?.mainUrl ?: BLANK
+    poster = poster?.mainUrl ?: BLANK,
+    score = score?.let(::convertScore)
 )
 
 fun AnimeAiringQuery.Data.Anime.mapper() = ShortContent(
@@ -155,7 +157,8 @@ fun PagingData<Topic>.toAnimeContent() = map {
         title = it.linked.russian.orEmpty().ifEmpty(it.linked::name),
         kind = Enum.safeValueOf<Kind>(it.linked.kind).title,
         season = getSeason(it.linked.releasedOn, it.linked.kind),
-        poster = it.linked.image.original
+        poster = it.linked.image.original,
+        score = null
     )
 }
 
@@ -165,6 +168,7 @@ fun PagingData<AnimeBasic>.toContent() = map {
         title = it.russian.orEmpty().ifEmpty(it::name),
         kind = Enum.safeValueOf<Kind>(it.kind).title,
         season = getSeason(it.releasedOn, it.kind),
-        poster = it.image.original
+        poster = it.image.original,
+        score = it.score?.let(::convertScore)
     )
 }

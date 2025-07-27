@@ -42,5 +42,6 @@ fun UsersQuery.Data.User.toContent() = Content(
     title = nickname,
     kind = R.string.blank,
     season = ResourceText.StaticString(BLANK),
-    poster = avatarUrl
+    poster = avatarUrl,
+    score = null
 )

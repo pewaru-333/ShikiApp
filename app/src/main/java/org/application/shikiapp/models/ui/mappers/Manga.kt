@@ -26,6 +26,7 @@ import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.utils.ROLES_RUSSIAN
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.ResourceText.StringResource
+import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.Status
@@ -51,7 +52,7 @@ fun MangaQuery.Data.Manga.mapper(
     showChapters = !Status.ONGOING.safeEquals(status?.rawValue),
     status = Enum.safeValueOf<Status>(status?.rawValue).mangaTitle,
     publisher = publishers.map(MangaQuery.Data.Manga.Publisher::name).firstOrNull() ?: "Неизвестно",
-    score = score.toString(),
+    score = score.let(::convertScore),
     description = fromHtml(descriptionHtml),
     favoured = favoured,
     genres = genres,
@@ -134,7 +135,8 @@ fun MangaListQuery.Data.Manga.mapper() = Content(
     title = russian.orEmpty().ifEmpty(::name),
     kind = Enum.safeValueOf<Kind>(kind?.rawValue).title,
     season = getSeason(airedOn, kind?.rawValue),
-    poster = poster?.mainUrl ?: BLANK
+    poster = poster?.mainUrl ?: BLANK,
+    score = score?.let(::convertScore)
 )
 
 fun PagingData<MangaBasic>.toContent() = map {
@@ -143,6 +145,7 @@ fun PagingData<MangaBasic>.toContent() = map {
         title = it.russian.orEmpty().ifEmpty(it::name),
         kind = Enum.safeValueOf<Kind>(it.kind).title,
         season = ResourceText.StaticString(BLANK),
-        poster = it.image.original
+        poster = it.image.original,
+        score = it.score?.let(::convertScore)
     )
 }
