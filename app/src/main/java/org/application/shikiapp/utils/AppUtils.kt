@@ -1,7 +1,9 @@
 package org.application.shikiapp.utils
 
+import android.icu.text.NumberFormat
 import android.text.format.DateUtils
 import android.util.Patterns
+import androidx.compose.ui.text.intl.Locale
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Date
 import org.application.shikiapp.utils.enums.Kind
@@ -27,6 +29,16 @@ fun convertDate(date: String): String {
         System.currentTimeMillis(),
         DateUtils.DAY_IN_MILLIS
     ).toString()
+}
+
+fun convertScore(score: Any?) = when (val result = score) {
+    is String -> result.replace(".", ",")
+    is Double -> NumberFormat.getNumberInstance(Locale.current.platformLocale).apply {
+        minimumFractionDigits = 2
+        maximumFractionDigits = 2
+    }.format(score)
+
+    else -> BLANK
 }
 
 fun getLinks(text: String): List<String> {
