@@ -24,6 +24,7 @@
     <string name="text_calendar">Календарь</string>
     <string name="text_catalog">Каталог</string>
     <string name="text_characters">Персонажи</string>
+    <string name="text_lists">Списки</string>
     <string name="text_manga">Манга</string>
     <string name="text_mangaka">Мангака</string>
     <string name="text_mangakas">Мангаки</string>
@@ -207,16 +208,19 @@
 
     <!-- Другое -->
     <string name="blank" />
-    <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
     <string name="text_empty">Пусто</string>
-    <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
-
-    <string name="text_enter_message">Введите сообщение</string>
     <string name="text_login">Вход</string>
-    <string name="text_pay_attention">Обратите внимание!</string>
+    <string name="text_to_profile">В профиль</string>
     <string name="text_to_settings">В настройки</string>
     <string name="text_settings">Настройки</string>
     <string name="text_unknown">Неизвестно</string>
+
+    <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
+    <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
+    <string name="text_login_to_modify_lists">Для работы со списками необходимо осуществить вход в приложение</string>
+
+    <string name="text_enter_message">Введите сообщение</string>
+    <string name="text_pay_attention">Обратите внимание!</string>
 
     <string name="text_sure_to_delete_dialog">Вы действительно хотите удалить всю переписку с пользователем %1$s?</string>
 

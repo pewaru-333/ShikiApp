@@ -1,0 +1,4 @@
+— Updated the bottom menu. User lists are available immediately upon authorization, and the settings screen is available through the profile.
+— The appearance of the comments list has been changed: spoilers and quotes are highlighted in the text, and images are displayed without unnecessary text.
+— Redesigned some user interface elements. It look more elegant now.
+— Removed unnecessary animations and information reloading on some screens.
