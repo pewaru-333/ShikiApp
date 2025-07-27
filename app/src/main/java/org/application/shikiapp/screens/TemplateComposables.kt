@@ -4,7 +4,7 @@ import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
@@ -28,6 +28,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -51,11 +52,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.KeyboardArrowDown
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Info
@@ -63,6 +67,7 @@ import androidx.compose.material.icons.outlined.KeyboardArrowDown
 import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
@@ -74,6 +79,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
@@ -104,6 +110,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
@@ -131,6 +138,8 @@ import androidx.paging.LoadState.Loading
 import androidx.paging.LoadState.NotLoading
 import androidx.paging.compose.LazyPagingItems
 import coil3.compose.AsyncImage
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
 import kotlinx.coroutines.flow.collectLatest
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
@@ -191,6 +200,7 @@ import org.application.shikiapp.models.ui.Similar
 import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.HtmlComment
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.convertDate
@@ -274,6 +284,90 @@ fun UserBriefItem(user: org.application.shikiapp.models.ui.User) = ListItem(
         )
     }
 )
+
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@Composable
+fun CatalogCardItem(
+    title: String,
+    @StringRes kind: Int,
+    season: ResourceText,
+    score: String?,
+    image: String?,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) {
+    Card(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RectangleShape,
+        colors = CardDefaults.cardColors().copy(
+            containerColor = ListItemDefaults.containerColor
+        )
+    ) {
+        Row(
+            modifier = Modifier.padding(8.dp),
+            verticalAlignment = Alignment.Top
+        ) {
+            AsyncImage(
+                model = image,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .width(120.dp)
+                    .aspectRatio(2f / 3f)
+                    .clip(MaterialTheme.shapes.medium)
+                    .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+            )
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(Modifier.weight(1f), spacedBy(4.dp)) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 3,
+                    overflow = TextOverflow.Ellipsis
+                )
+
+                Text(
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        fontWeight = FontWeight.Medium
+                    ),
+                    text = buildString {
+                        append(stringResource(kind))
+
+                        season.asString().let {
+                            if (it.isNotEmpty()) {
+                                append(" · $it")
+                            }
+                        }
+                    }
+                )
+
+                Spacer(Modifier.weight(1f))
+
+                if (score != null) {
+                    Row(Modifier.offset(x = (-4).dp), spacedBy(4.dp), CenterVertically) {
+                        Icon(
+                            modifier = Modifier.size(20.dp),
+                            imageVector = Icons.Default.Star,
+                            tint = Color(0xFFFFC319),
+                            contentDescription = null
+                        )
+
+                        Text(
+                            text = score,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
 
 @Composable
 fun CatalogListItem(
@@ -396,38 +490,60 @@ fun AnimatedAsyncImage(
     modifier: Modifier = Modifier,
     contentScale: ContentScale = ContentScale.Fit
 ) {
-    val shimmerColors = listOf(
-        CardDefaults.elevatedCardColors().contentColor.copy(alpha = 0.15f),
-        CardDefaults.elevatedCardColors().contentColor.copy(alpha = 0.05f),
-        CardDefaults.elevatedCardColors().contentColor.copy(alpha = 0.15f),
-    )
-
-    val transition = rememberInfiniteTransition()
-    val translateAnim = transition.animateFloat(
-        initialValue = 0f,
-        targetValue = 3000f,
-        animationSpec = infiniteRepeatable(
-            repeatMode = RepeatMode.Reverse,
-            animation = tween(
-                durationMillis = 3000,
-                easing = LinearEasing
-            )
-        )
-    )
-
-    AsyncImage(
+    SubcomposeAsyncImage(
         model = model,
         contentDescription = null,
+        modifier = modifier,
         contentScale = contentScale,
         filterQuality = FilterQuality.High,
-        modifier = modifier
-            .background(
-                brush = Brush.linearGradient(
-                    colors = shimmerColors,
-                    start = Offset(translateAnim.value - 500f, 0f),
-                    end = Offset(translateAnim.value, 0f)
+        success = { SubcomposeAsyncImageContent() },
+        loading = {
+            val shimmerColors = listOf(
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
+                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
+            )
+
+            val transition = rememberInfiniteTransition()
+            val translateAnim = transition.animateFloat(
+                initialValue = 0f,
+                targetValue = 1000f,
+                animationSpec = infiniteRepeatable(
+                    repeatMode = RepeatMode.Reverse,
+                    animation = tween(
+                        durationMillis = 1200,
+                        easing = FastOutSlowInEasing
+                    )
                 )
             )
+
+            val brush = Brush.linearGradient(
+                colors = shimmerColors,
+                start = Offset.Zero,
+                end = Offset(x = translateAnim.value, y = translateAnim.value)
+            )
+
+            Spacer(
+                modifier = modifier
+                    .fillMaxSize()
+                    .background(brush)
+            )
+        },
+        error = {
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+            ) {
+                Icon(
+                    contentDescription = null,
+                    painter = painterResource(R.drawable.vector_bad),
+                    modifier = Modifier.fillMaxSize(0.75f),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
     )
 }
 
@@ -455,26 +571,29 @@ fun RelatedText(text: String) = Text(
 
 @Composable
 fun Description(description: AnnotatedString, withDivider: Boolean = true) {
-    val hasSpoiler = description.contains("спойлер")
-    val main = if (hasSpoiler) description.substringBefore("спойлер") else description
-    val spoiler = if (hasSpoiler) description.substringAfter("спойлер") else AnnotatedString(BLANK)
+    val hasSpoiler = description.text.contains("спойлер", ignoreCase = true)
+    val mainText = if (hasSpoiler) description.substringBefore("спойлер") else description
+    val spoilerText = if (hasSpoiler) description.substringAfter("спойлер") else AnnotatedString(BLANK)
 
-    var showSpoiler by remember { mutableStateOf(false) }
     var hasOverflow by remember { mutableStateOf(false) }
-    var currentLines by remember { mutableIntStateOf(8) }
+    var isVisible by remember { mutableStateOf(false) }
+    var maxLines by remember { mutableIntStateOf(8) }
+
+    val isTextExpanded = !hasOverflow || maxLines > 8
 
     Column(Modifier.animateContentSize()) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle("Описание", Modifier.padding(bottom = 4.dp))
-            if (hasOverflow || currentLines > 8) {
+
+            if (hasOverflow || maxLines > 8) {
                 IconButton(
                     onClick = {
-                        currentLines = if (currentLines == 8) Int.MAX_VALUE else 8
+                        maxLines = if (maxLines == 8) Int.MAX_VALUE else 8
                     }
                 ) {
                     Icon(
                         contentDescription = null,
-                        imageVector = if (currentLines == 8) Icons.Outlined.KeyboardArrowDown
+                        imageVector = if (maxLines == 8) Icons.Outlined.KeyboardArrowDown
                         else Icons.Outlined.KeyboardArrowUp,
                     )
                 }
@@ -482,46 +601,64 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
         }
 
         Text(
-            text = main,
-            maxLines = currentLines,
+            text = mainText,
+            style = MaterialTheme.typography.bodyLarge,
+            maxLines = maxLines,
             overflow = TextOverflow.Ellipsis,
             onTextLayout = { hasOverflow = it.hasVisualOverflow }
         )
 
-        if (hasSpoiler && !hasOverflow) {
-            Column(Modifier.fillMaxWidth()) {
-                Row(Modifier.clickable { showSpoiler = !showSpoiler }) {
-                    Text("Спойлер")
+        if (hasSpoiler && isTextExpanded) {
+            Spacer(Modifier.height(8.dp))
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(8.dp))
+                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .padding(12.dp, 8.dp)
+                    .clickable { isVisible = !isVisible }
+            ) {
+                Row(verticalAlignment = CenterVertically) {
                     Icon(
                         contentDescription = null,
-                        imageVector = if (showSpoiler) Icons.Outlined.KeyboardArrowDown
-                        else Icons.Outlined.KeyboardArrowUp,
+                        modifier = Modifier.size(20.dp),
+                        imageVector = if (isVisible) Icons.Default.KeyboardArrowDown
+                        else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                    )
+
+                    Spacer(Modifier.width(8.dp))
+
+                    Text(
+                        text = "Спойлер",
+                        fontWeight = FontWeight.Bold,
+                        style = MaterialTheme.typography.bodyMedium
                     )
                 }
-                AnimatedVisibility(
-                    visible = showSpoiler,
-                    modifier = Modifier.border(1.dp, MaterialTheme.colorScheme.onSurface)
-                ) {
-                    Text(
-                        text = spoiler,
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        overflow = TextOverflow.Visible
-                    )
+
+                AnimatedVisibility(isVisible) {
+                    Column(Modifier.padding(top = 8.dp)) {
+                        Text(
+                            text = spoilerText.apply(AnnotatedString::trimStart),
+                            style = MaterialTheme.typography.bodyLarge
+                        )
+                    }
                 }
             }
         }
 
         if (withDivider) {
-            HorizontalDivider(Modifier.padding(top = 4.dp))
+            HorizontalDivider(Modifier.padding(top = 12.dp))
         }
     }
 }
 
 @Composable
-fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) {
+fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) = Column {
     ListItem(
-        headlineContent = { Text(comment.user.nickname) },
         modifier = Modifier.offset(x = (-8).dp),
+        headlineContent = { Text(comment.user.nickname) },
+        supportingContent = { Text(convertDate(comment.createdAt)) },
         leadingContent = {
             AsyncImage(
                 model = comment.user.image.x160,
@@ -534,10 +671,9 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) {
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.High,
             )
-        },
-        supportingContent = { Text(convertDate(comment.createdAt)) }
+        }
     )
-    HtmlCommentBody(comment.htmlBody.trimIndent())
+    HtmlComment(comment.htmlBody.trimIndent())
     HorizontalDivider(Modifier.padding(top = 8.dp))
 }
 
@@ -563,7 +699,11 @@ fun Comments(
             )
         }
     ) { values ->
-        LazyColumn(contentPadding = PaddingValues(8.dp, values.calculateTopPadding())) {
+        LazyColumn(
+            reverseLayout = true,
+            modifier = Modifier.fillMaxSize(),
+            contentPadding = PaddingValues(8.dp, values.calculateTopPadding())
+        ) {
             when (list.loadState.refresh) {
                 is Error -> item { ErrorScreen(list::retry) }
                 Loading -> item { LoadingScreen() }
@@ -603,8 +743,7 @@ fun HistoryItem(note: org.application.shikiapp.models.ui.History, onNavigate: (S
             note.kind?.let { kind ->
                 val type = Kind.entries.first { it.safeEquals(kind) }.linkedType
 
-                if (type == LinkedType.MANGA) onNavigate(Screen.Manga(note.contentId))
-                else onNavigate(Screen.Anime(note.contentId))
+                onNavigate(type.navigateTo(note.contentId))
             }
         },
         headlineContent = {
@@ -635,19 +774,7 @@ fun HistoryItem(note: org.application.shikiapp.models.ui.History, onNavigate: (S
 fun NavigationIcon(onClick: () -> Unit) =
     IconButton(onClick) { Icon(Icons.AutoMirrored.Outlined.ArrowBack, null) }
 
-fun LazyListScope.comments(comments: LazyPagingItems<Comment>, onNavigate: (Screen) -> Unit) {
-    item { ParagraphTitle(stringResource(text_comments), Modifier.offset(y = 8.dp)) }
-    when (comments.loadState.refresh) {
-        is Error -> item { ErrorScreen() }
-        Loading -> item { LoadingScreen() }
-        is NotLoading -> items(comments.itemCount) { Comment(comments[it]!!, onNavigate) }
-    }
-    if (comments.loadState.append == Loading) item { LoadingScreen() }
-    if (comments.loadState.hasError) item { ErrorScreen(comments::retry) }
-}
-
-fun fromHtml(text: String?) = if (text == null) AnnotatedString(BLANK)
-else {
+fun localizeNames(text: String) : String {
     val fullPattern = Regex("""<span class="name-en">(.*?)</span><span class="name-ru">(.*?)</span>""")
     val englishPattern = Regex("""<span class="name-en">(.*?)</span>""")
     val russianPattern = Regex("""<span class="name-ru">(.*?)</span>""")
@@ -658,19 +785,22 @@ else {
         modifiedHtml = modifiedHtml.replace(englishPattern, """<span class="name-en">$1</span>""")
     }
 
-    modifiedHtml = modifiedHtml.replace(russianPattern, "$1").replace(englishPattern, "$1")
+    return modifiedHtml
+        .replace(russianPattern, "$1")
+        .replace(englishPattern, "$1")
+}
 
-    AnnotatedString.Companion.fromHtml(
-        htmlString = modifiedHtml,
-        linkStyles = TextLinkStyles(
-            SpanStyle(
-                color = Color.Blue,
-                textDecoration = TextDecoration.Underline,
-                platformStyle = PlatformSpanStyle.Default
-            )
+fun fromHtml(text: String?) = if (text == null) AnnotatedString(BLANK)
+else AnnotatedString.Companion.fromHtml(
+    htmlString = localizeNames(text),
+    linkStyles = TextLinkStyles(
+        SpanStyle(
+            color = Color(0xFF33BBFF),
+            textDecoration = TextDecoration.Underline,
+            platformStyle = PlatformSpanStyle.Default
         )
     )
-}
+)
 
 @Composable
 fun Related(list: List<Related>, hide: () -> Unit, onNavigate: (Screen) -> Unit) =
@@ -928,7 +1058,6 @@ fun BottomSheet(
 ) = ModalBottomSheet(
     sheetState = state,
     onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) },
-    contentWindowInsets = { WindowInsets.systemBars }
 ) {
     if (Preferences.token != null) {
         ListItem(
@@ -1019,15 +1148,17 @@ fun CreateRate(id: String, type: LinkedType, rateF: UserRateF?, reload: () -> Un
     val state by model.newRate.collectAsStateWithLifecycle()
     val exists by rememberSaveable { mutableStateOf(rateF != null) }
 
-    rateF?.let { rate ->
-        model.onEvent(SetRateId(rate.id))
-        model.onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status.rawValue), type))
-        model.onEvent(SetScore(Score.entries.first { it.score == rate.score }))
-        model.onEvent(SetChapters(rate.chapters.toString()))
-        model.onEvent(SetEpisodes(rate.episodes.toString()))
-        model.onEvent(SetVolumes(rate.volumes.toString()))
-        model.onEvent(SetRewatches(rate.rewatches.toString()))
-        model.onEvent(SetText(rate.text))
+    LaunchedEffect(rateF) {
+        rateF?.let { rate ->
+            model.onEvent(SetRateId(rate.id))
+            model.onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status.rawValue), type))
+            model.onEvent(SetScore(Score.entries.first { it.score == rate.score }))
+            model.onEvent(SetChapters(rate.chapters.toString()))
+            model.onEvent(SetEpisodes(rate.episodes.toString()))
+            model.onEvent(SetVolumes(rate.volumes.toString()))
+            model.onEvent(SetRewatches(rate.rewatches.toString()))
+            model.onEvent(SetText(rate.text))
+        }
     }
 
     AlertDialog(
@@ -1092,7 +1223,7 @@ fun RateStatus(event: (RateEvent) -> Unit, @StringRes statusName: Int, type: Lin
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     text = {
                         Text(
-                            text = stringResource(if (type == LinkedType.ANIME) it.titleAnime else it.titleManga),
+                            text = stringResource(type.getTitleResId(it)),
                             style = MaterialTheme.typography.bodyLarge
                         )
                     }
