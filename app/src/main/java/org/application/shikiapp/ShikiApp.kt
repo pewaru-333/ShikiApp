@@ -28,7 +28,7 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
     }
 
     @OptIn(ExperimentalCoilApi::class)
-    override fun newImageLoader(context: PlatformContext) = ImageLoader(this).newBuilder()
+    override fun newImageLoader(context: PlatformContext) = ImageLoader(context).newBuilder()
         .components {
             add(NetworkFetcher.Factory({ CoilClient }))
             add(ImageInterceptor)
@@ -44,8 +44,7 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
         .memoryCachePolicy(CachePolicy.ENABLED)
         .memoryCache {
             MemoryCache.Builder()
-                .maxSizePercent(context, 0.3)
-                .strongReferencesEnabled(true)
+                .maxSizePercent(context, 0.25)
                 .build()
         }
         .diskCachePolicy(CachePolicy.ENABLED)
@@ -54,5 +53,6 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
                 .maxSizeBytes(Preferences.cache * 1024 * 1024L)
                 .directory(context.cacheDir)
                 .build()
-        }.build()
+        }
+        .build()
 }
