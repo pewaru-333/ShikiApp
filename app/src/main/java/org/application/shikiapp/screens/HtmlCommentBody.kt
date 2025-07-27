@@ -58,17 +58,15 @@ fun HtmlCommentBody(text: String) {
     val screenWidth = displayMetrics.widthPixels
     val screenHeight = displayMetrics.heightPixels
 
-    val linkColor = Color.Blue
-
     var string by remember { mutableStateOf(AnnotatedString(BLANK)) }
     var imageMap by remember { mutableStateOf<Map<String, LoadedImage>>(emptyMap()) }
     var loading by remember { mutableStateOf(true) }
     var show by remember { mutableStateOf(false)}
     var bigImage by remember { mutableStateOf(BLANK)}
 
-    LaunchedEffect(text, linkColor) {
+    LaunchedEffect(text) {
         val (annotatedText, images) = withContext(Dispatchers.Default) {
-            toAnnotatedString(context, text, linkColor)
+            toAnnotatedString(context, text, Color(0xFF33BBFF))
         }
         string = annotatedText
         imageMap = images
@@ -116,7 +114,7 @@ private suspend fun toAnnotatedString(
     string: String,
     linkColor: Color
 ): Pair<AnnotatedString, Map<String, LoadedImage>> {
-    val spanned = HtmlCompat.fromHtml(string, HtmlCompat.FROM_HTML_MODE_COMPACT)
+    val spanned = HtmlCompat.fromHtml(localizeNames(string), HtmlCompat.FROM_HTML_MODE_COMPACT)
 
     val images = mutableMapOf<String, LoadedImage>()
     var counter = 0
@@ -161,7 +159,7 @@ private suspend fun toAnnotatedString(
                                 url = span.url,
                                 styles = TextLinkStyles(
                                     SpanStyle(
-                                        color = Color.Blue,
+                                        color = linkColor,
                                         textDecoration = TextDecoration.Underline,
                                         platformStyle = PlatformSpanStyle.Default
                                     )
