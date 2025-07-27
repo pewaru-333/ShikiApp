@@ -254,8 +254,8 @@ private fun CatalogFull(
                     image = it.poster,
                     click = {
                         onNavigate(
-                            if (isAnime) Screen.Anime(it.id.toString())
-                            else Screen.Manga(it.id.toString())
+                            if (isAnime) Screen.Anime(it.id)
+                            else Screen.Manga(it.id)
                         )
                     }
                 )
