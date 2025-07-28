@@ -88,6 +88,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.SheetState
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -295,74 +296,72 @@ fun CatalogCardItem(
     image: String?,
     modifier: Modifier = Modifier,
     onClick: () -> Unit
+) = Card(
+    onClick = onClick,
+    modifier = modifier.fillMaxWidth(),
+    shape = RectangleShape,
+    colors = CardDefaults.cardColors().copy(
+        containerColor = ListItemDefaults.containerColor
+    )
 ) {
-    Card(
-        onClick = onClick,
-        modifier = modifier.fillMaxWidth(),
-        shape = RectangleShape,
-        colors = CardDefaults.cardColors().copy(
-            containerColor = ListItemDefaults.containerColor
-        )
+    Row(
+        modifier = Modifier.padding(8.dp),
+        verticalAlignment = Alignment.Top
     ) {
-        Row(
-            modifier = Modifier.padding(8.dp),
-            verticalAlignment = Alignment.Top
-        ) {
-            AsyncImage(
-                model = image,
-                contentDescription = null,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .width(120.dp)
-                    .aspectRatio(2f / 3f)
-                    .clip(MaterialTheme.shapes.medium)
-                    .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+        AsyncImage(
+            model = image,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(120.dp)
+                .aspectRatio(2f / 3f)
+                .clip(MaterialTheme.shapes.medium)
+                .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+        )
+
+        Spacer(Modifier.width(12.dp))
+
+        Column(Modifier.weight(1f), spacedBy(4.dp)) {
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 3,
+                overflow = TextOverflow.Ellipsis
             )
 
-            Spacer(Modifier.width(12.dp))
+            Text(
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    fontWeight = FontWeight.Medium
+                ),
+                text = buildString {
+                    append(stringResource(kind))
 
-            Column(Modifier.weight(1f), spacedBy(4.dp)) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 3,
-                    overflow = TextOverflow.Ellipsis
-                )
-
-                Text(
-                    style = MaterialTheme.typography.bodyMedium.copy(
-                        fontWeight = FontWeight.Medium
-                    ),
-                    text = buildString {
-                        append(stringResource(kind))
-
-                        season.asString().let {
-                            if (it.isNotEmpty()) {
-                                append(" · $it")
-                            }
+                    season.asString().let {
+                        if (it.isNotEmpty()) {
+                            append(" · $it")
                         }
                     }
-                )
+                }
+            )
 
-                Spacer(Modifier.weight(1f))
+            Spacer(Modifier.weight(1f))
 
-                if (score != null) {
-                    Row(Modifier.offset(x = (-4).dp), spacedBy(4.dp), CenterVertically) {
-                        Icon(
-                            modifier = Modifier.size(20.dp),
-                            imageVector = Icons.Default.Star,
-                            tint = Color(0xFFFFC319),
-                            contentDescription = null
+            if (score != null) {
+                Row(Modifier.offset(x = (-4).dp), spacedBy(4.dp), CenterVertically) {
+                    Icon(
+                        modifier = Modifier.size(20.dp),
+                        imageVector = Icons.Default.Star,
+                        tint = Color(0xFFFFC319),
+                        contentDescription = null
+                    )
+
+                    Text(
+                        text = score,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold
                         )
-
-                        Text(
-                            text = score,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            )
-                        )
-                    }
+                    )
                 }
             }
         }
@@ -409,34 +408,94 @@ fun CatalogListItem(
 @Composable
 fun CatalogGridItem(
     title: String,
-    image: String,
-    modifier: Modifier,
-    click: () -> Unit
-) = Column(modifier.clickable(onClick = click)) {
-    AsyncImage(
-        model = image,
-        contentDescription = null,
-        contentScale = ContentScale.FillBounds,
-        filterQuality = FilterQuality.High,
-        modifier = Modifier
-            .fillMaxWidth()
-            .height(180.dp)
-            .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+    image: String?,
+    score: String?,
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit
+) = Card(
+    onClick = onClick,
+    modifier = modifier.fillMaxWidth(),
+    shape = MaterialTheme.shapes.medium,
+    colors = CardDefaults.cardColors().copy(
+        containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
     )
+) {
+    Column {
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .aspectRatio(2f / 3f)
+        ) {
+            AsyncImage(
+                model = image,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
+            )
 
-    Text(
-        minLines = 3,
-        maxLines = 3,
-        text = title,
-        textAlign = TextAlign.Center,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.titleSmall,
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(4.dp)
-    )
+            if (score != null) {
+                Surface(
+                    shape = MaterialTheme.shapes.small,
+                    color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                    tonalElevation = 4.dp,
+                    modifier = Modifier
+                        .align(Alignment.TopEnd)
+                        .padding(8.dp),
+                ) {
+                    Row(Modifier.padding(6.dp, 4.dp), spacedBy(4.dp), CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Star,
+                            contentDescription = null,
+                            tint = Color(0xFFFFC319),
+                            modifier = Modifier.size(16.dp)
+                        )
+                        Text(
+                            text = score,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            style = MaterialTheme.typography.bodySmall.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+        }
+
+        Text(
+            text = title,
+            style = MaterialTheme.typography.titleSmall,
+            maxLines = 2,
+            minLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(4.dp, 8.dp)
+        )
+    }
 }
+
+@Composable
+fun UserGridItem(title: String, imageUrl: String?, onClick: () -> Unit) =
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.clickable(onClick = onClick)
+    ) {
+        AsyncImage(
+            model = imageUrl,
+            contentDescription = null,
+            modifier = Modifier
+                .size(64.dp)
+                .padding(4.dp)
+                .clip(CircleShape)
+        )
+
+        Text(
+            maxLines = 1,
+            text = title,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.labelMedium
+        )
+    }
 
 @Composable
 fun RoundedPoster(link: String) = AsyncImage(

@@ -4,7 +4,6 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -26,7 +25,6 @@ import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.selection.toggleable
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
@@ -46,6 +44,8 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Label
+import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.ModalDrawerSheet
@@ -80,7 +80,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.zIndex
 import androidx.core.text.isDigitsOnly
@@ -90,7 +89,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
@@ -304,26 +302,11 @@ private fun CatalogList(
             ) {
                 items(list.itemCount) { index ->
                     list[index]?.let {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable { onNavigate(state.menu.navigateTo(it.id)) }
-                        ) {
-                            AsyncImage(
-                                model = it.poster,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .padding(4.dp)
-                                    .clip(CircleShape)
-                            )
-
-                            Text(
-                                maxLines = 1,
-                                text = it.title,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        }
+                        UserGridItem(
+                            title = it.title,
+                            imageUrl = it.poster,
+                            onClick = { onNavigate(state.menu.navigateTo(it.id)) }
+                        )
                     }
                 }
 
@@ -410,7 +393,7 @@ private fun DialogFilters(
         }
     ) { values ->
         LazyColumn(
-            verticalArrangement = spacedBy(16.dp),
+            verticalArrangement = spacedBy(12.dp),
             contentPadding = PaddingValues(
                 start = 8.dp,
                 top = values.calculateTopPadding(),
@@ -517,26 +500,30 @@ private fun Status(event: (FilterEvent) -> Unit, status: Set<String>, type: Link
     ParagraphTitle(stringResource(text_status))
     Column {
         Status.entries.filter { type in it.types }.forEach { entry ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            ListItem(
+                colors = ListItemDefaults.colors(Color.Transparent),
+                headlineContent = {
+                    Text(
+                        stringResource(
+                            if (type == LinkedType.ANIME) entry.animeTitle ?: R.string.text_unknown
+                            else entry.mangaTitle
+                        )
+                    )
+                },
+                leadingContent = {
+                    Checkbox(
+                        checked = entry.name.lowercase() in status,
+                        onCheckedChange = null
+                    )
+                },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
+                    .clip(MaterialTheme.shapes.medium)
                     .toggleable(
                         value = entry.name.lowercase() in status,
                         onValueChange = { event(SetStatus(entry.name.lowercase())) },
                         role = Role.Checkbox
                     )
-            ) {
-                Checkbox(entry.name.lowercase() in status, null)
-                Text(
-                    modifier = Modifier.padding(start = 16.dp),
-                    text = stringResource(
-                        if (type == LinkedType.ANIME) entry.animeTitle ?: R.string.text_unknown
-                        else entry.mangaTitle
-                    )
-                )
-            }
+            )
         }
     }
 }
@@ -565,7 +552,7 @@ private fun Season(
 ) {
     ParagraphTitle(stringResource(text_season), Modifier.padding(bottom = 8.dp))
     Column(Modifier, spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp)) {
             OutlinedTextField(
                 value = seasonYS,
                 onValueChange = {
@@ -573,7 +560,7 @@ private fun Season(
                         event(SetSeasonYS(it)); event(SetSeason)
                     }
                 },
-                modifier = Modifier.width(160.dp),
+                modifier = Modifier.weight(1f),
                 label = { Text(stringResource(text_start_year)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -584,7 +571,7 @@ private fun Season(
                         event(SetSeasonYF(it)); event(SetSeason)
                     }
                 },
-                modifier = Modifier.width(160.dp),
+                modifier = Modifier.weight(1f),
                 label = { Text(stringResource(text_end_year)) },
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
             )
@@ -596,7 +583,8 @@ private fun Season(
                     modifier = Modifier.height(36.dp),
                     selected = it.name.lowercase() in seasonS,
                     onClick = { event(SetSeasonS(it.name.lowercase())); event(SetSeason) },
-                    label = { Text(stringResource(it.title)) })
+                    label = { Text(stringResource(it.title)) }
+                )
             }
         }
     }
@@ -620,7 +608,11 @@ private fun Score(event: (FilterEvent) -> Unit, score: Float) {
                     interactionSource = interactionSource,
                     label = {
                         PlainTooltip(Modifier.sizeIn(maxWidth = 30.dp)) {
-                            Text(text = score.toInt().toString(), textAlign = TextAlign.Center)
+                            Text(
+                                text = score.toInt().toString(),
+                                modifier = Modifier.fillMaxWidth(),
+                                textAlign = TextAlign.Center
+                            )
                         }
                     }
                 ) {
@@ -641,20 +633,23 @@ private fun Duration(event: (FilterEvent) -> Unit, duration: Set<String>) {
     ParagraphTitle(stringResource(text_episode_duration))
     Column {
         Duration.entries.forEach { entry ->
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
+            ListItem(
+                colors = ListItemDefaults.colors(Color.Transparent),
+                headlineContent = { Text(stringResource(entry.title)) },
+                leadingContent = {
+                    Checkbox(
+                        checked = entry.name.lowercase() in duration,
+                        onCheckedChange = null
+                    )
+                },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .height(56.dp)
+                    .clip(MaterialTheme.shapes.medium)
                     .toggleable(
                         value = entry.name.lowercase() in duration,
                         onValueChange = { event(SetDuration(entry.name.lowercase())) },
                         role = Role.Checkbox
                     )
-            ) {
-                Checkbox(entry.name.lowercase() in duration, null)
-                Text(stringResource(entry.title), Modifier.padding(start = 16.dp))
-            }
+            )
         }
     }
 }
@@ -724,8 +719,9 @@ private fun LazyGridScope.contentList(list: LazyPagingItems<Content>, onNavigate
             CatalogGridItem(
                 title = it.title,
                 image = it.poster,
+                score = it.score,
                 modifier = Modifier.animateItem(),
-                click = { onNavigate(it.id) }
+                onClick = { onNavigate(it.id) }
             )
         }
     }
