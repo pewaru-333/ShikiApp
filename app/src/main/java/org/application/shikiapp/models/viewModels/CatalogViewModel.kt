@@ -146,21 +146,18 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     private fun createPagingFlow(item: CatalogItem, filtersState: FiltersState) = Pager(
         config = PagingConfig(
-            pageSize = 20,
+            pageSize = 50,
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            if (item in listOf(CatalogItem.USERS, CatalogItem.CLUBS)) {
+            if (item == CatalogItem.CLUBS) {
                 CommonPaging(Content::id) { page, params ->
                     fetchData(item, filtersState, page, params)
                 }
             } else {
-                ContentPaging(
-                    filters = { filtersState },
-                    fetch = { filters, page, params ->
-                        fetchData(item, filters, page, params)
-                    }
-                )
+                ContentPaging(filtersState) { filters, page, params ->
+                    fetchData(item, filters, page, params)
+                }
             }
         }
     ).flow
