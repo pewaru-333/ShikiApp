@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -109,7 +110,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     }
 
     LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::targetPage).collectLatest(::onScroll)
+        snapshotFlow(pagerState::settledPage).collectLatest(::onScroll)
     }
 
     LaunchedEffect(model.type) {
@@ -164,7 +165,14 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
                     }
                 }
 
-                HorizontalPager(pagerState) { page ->
+                HorizontalPager(
+                    state = pagerState,
+                    key = { WatchStatus.entries[it] },
+                    flingBehavior = PagerDefaults.flingBehavior(
+                        state = pagerState,
+                        snapPositionalThreshold = 0.05f
+                    )
+                ) { page ->
                     UserRateList(
                         rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
                         listState = listStates[page],
