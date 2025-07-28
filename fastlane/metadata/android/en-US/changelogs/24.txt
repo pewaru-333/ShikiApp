@@ -1,0 +1,1 @@
+— This update fixes some minor bugs and improves the user experience of using the application.
