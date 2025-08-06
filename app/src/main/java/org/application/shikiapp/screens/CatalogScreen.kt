@@ -28,10 +28,12 @@ import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Check
 import androidx.compose.material.icons.outlined.Menu
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material.icons.outlined.Search
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
@@ -81,6 +83,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -121,11 +124,13 @@ import org.application.shikiapp.events.FilterEvent.SetSeasonYF
 import org.application.shikiapp.events.FilterEvent.SetSeasonYS
 import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetTitle
-import org.application.shikiapp.generated.fragment.GenresF
+import org.application.shikiapp.generated.fragment.Genres
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
+import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CatalogViewModel
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.CatalogItem
 import org.application.shikiapp.utils.enums.CatalogItem.ANIME
@@ -169,9 +174,22 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
     }
 
     LaunchedEffect(Unit) {
-        model.navEvent.collectLatest {
-            if (it) model.onEvent(SetStatus("ongoing"))
+        model.navEvent.collectLatest { args ->
+            when {
+                args.studio != null -> model.onEvent(FilterEvent.SetStudio(args.studio))
+                args.publisher != null -> {
+                    model.pick(if (args.linkedType == LinkedType.MANGA) MANGA else RANOBE)
+                    model.onEvent(FilterEvent.SetPublisher(args.publisher))
+                }
+
+                args.showOngoing == true -> model.onEvent(SetStatus("ongoing"))
+            }
         }
+    }
+
+    LaunchedEffect(filters, state.showFiltersA, state.showFiltersM, state.showFiltersR) {
+        state.listStates[state.menu]?.scrollToItem(0)
+        state.gridStates[state.menu]?.scrollToItem(0)
     }
 
     ModalNavigationDrawer(
@@ -234,12 +252,17 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                         IconButton(model::onDrawerClick) { Icon(Icons.Outlined.Menu, null) }
                     },
                     actions = {
-                        if (state.menu !in listOf(CHARACTERS, USERS, CLUBS))
+                        if (state.menu !in listOf(CHARACTERS, USERS, CLUBS)) {
                             IconButton(
-                                onClick = { model.showFilters(state.menu) }
-                            ) {
-                                Icon(painterResource(vector_filter), null)
-                            }
+                                onClick = { model.showFilters(state.menu) },
+                                content = {
+                                    BadgedBox(
+                                        badge = { if (filters != FiltersState()) Badge() },
+                                        content = { Icon(painterResource(vector_filter), null) }
+                                    )
+                                }
+                            )
+                        }
                     }
                 )
             }
@@ -259,7 +282,6 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                     filters = filters,
                     visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
                     event = model::onEvent,
-                    refresh = catalogList::refresh,
                     hide = model::hideFilters,
                     type = when (state.menu) {
                         RANOBE -> LinkedType.RANOBE
@@ -285,7 +307,7 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
 
 @Composable
 private fun CatalogList(
-    list: LazyPagingItems<Content>,
+    list: LazyPagingItems<BasicContent>,
     state: CatalogState,
     paddingValues: PaddingValues,
     onNavigate: (Screen) -> Unit
@@ -312,10 +334,9 @@ private fun CatalogList(
 
                 if (list.loadState.append == LoadState.Loading) {
                     item(
-                        span = { GridItemSpan(maxLineSpan) }
-                    ) {
-                        LoadingScreen(Modifier.padding(8.dp))
-                    }
+                        span = { GridItemSpan(maxLineSpan) },
+                        content = { LoadingScreen(Modifier.padding(8.dp)) }
+                    )
                 }
                 if (list.loadState.hasError) {
                     item { ErrorScreen(list::retry) }
@@ -345,10 +366,9 @@ private fun CatalogList(
                 }
                 if (list.loadState.append == LoadState.Loading) {
                     item(
-                        span = { GridItemSpan(maxLineSpan) }
-                    ) {
-                        LoadingScreen()
-                    }
+                        span = { GridItemSpan(maxLineSpan) },
+                        content = { LoadingScreen() }
+                    )
                 }
                 if (list.loadState.hasError) {
                     item { ErrorScreen(list::retry) }
@@ -363,12 +383,11 @@ private fun CatalogList(
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun DialogFilters(
-    genres: List<GenresF>,
+    genres: List<Genres>,
     filters: FiltersState,
     visible: Boolean,
     type: LinkedType?,
     event: (FilterEvent) -> Unit,
-    refresh: () -> Unit,
     hide: () -> Unit
 ) = AnimatedVisibility(
     modifier = Modifier.zIndex(10f),
@@ -380,14 +399,29 @@ private fun DialogFilters(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text(stringResource(text_filters)) },
                 navigationIcon = { NavigationIcon(hide) },
+                title = {
+                    Column {
+                        Text(
+                            text = stringResource(text_filters),
+                            style = MaterialTheme.typography.headlineSmall.copy(
+                                fontSize = 22.sp,
+                                lineHeight = 28.sp
+                            )
+                        )
+                        Text(
+                            text = "применяются сразу",
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                fontSize = 12.sp
+                            )
+                        )
+                    }
+                },
                 actions = {
                     IconButton(
-                        onClick = { hide(); refresh() }
-                    ) {
-                        Icon(Icons.Outlined.Check, null)
-                    }
+                        onClick = { event(FilterEvent.ClearFilters) },
+                        content = { Icon(Icons.Outlined.Refresh, null) }
+                    )
                 }
             )
         }
@@ -671,7 +705,7 @@ private fun Rating(event: (FilterEvent) -> Unit, rating: Set<String>) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genres: Set<String>) {
+private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<Genres>, genres: Set<String>) {
     ParagraphTitle(stringResource(text_genres))
     FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
         allGenres.forEach { genre ->
@@ -689,39 +723,46 @@ private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<GenresF>, genre
 
 // ========================================== Extensions ===========================================
 
-private fun LazyListScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
-    items(list.itemCount, list.itemKey(Content::id)) { index ->
-        list[index]?.let {
-            CatalogCardItem(
-                title = it.title,
-                kind = it.kind,
-                modifier = Modifier.animateItem(),
-                season = it.season,
-                image = it.poster,
-                onClick = { onNavigate(it.id) },
-                score = it.score
-            )
+private fun LazyListScope.contentList(list: LazyPagingItems<BasicContent>, onNavigate: (String) -> Unit) =
+    items(list.itemCount, list.itemKey(BasicContent::id)) { index ->
+        list[index]?.let { item ->
+            when(item) {
+                is Content -> {
+                    CatalogCardItem(
+                        title = item.title,
+                        kind = item.kind,
+                        modifier = Modifier.animateItem(),
+                        season = item.season,
+                        status = item.status,
+                        image = item.poster,
+                        onClick = { onNavigate(item.id) },
+                        score = item.score
+                    )
+                }
 
-//            CatalogListItem(
-//                title = it.title,
-//                kind = it.kind,
-//                modifier = Modifier.animateItem(),
-//                season = it.season,
-//                image = it.poster,
-//                click = { onNavigate(it.id) }
-//            )
+                else -> {
+                    CatalogCardItem(
+                        title = item.title,
+                        modifier = Modifier.animateItem(),
+                        image = item.poster,
+                        onClick = { onNavigate(item.id) },
+                    )
+                }
+            }
         }
     }
 
-private fun LazyGridScope.contentList(list: LazyPagingItems<Content>, onNavigate: (String) -> Unit) =
-    items(list.itemCount, list.itemKey(Content::id)) { index ->
-        list[index]?.let {
+private fun LazyGridScope.contentList(list: LazyPagingItems<BasicContent>, onNavigate: (String) -> Unit) =
+    items(list.itemCount, list.itemKey(BasicContent::id)) { index ->
+        list[index]?.let { item ->
             CatalogGridItem(
-                title = it.title,
-                image = it.poster,
-                score = it.score,
+                title = item.title,
+                image = item.poster,
+                score = (item as? Content)?.score,
+                kind = (item as? Content)?.kind,
+                season = (item as? Content)?.season?.asString()?.split(" ")?.lastOrNull(),
                 modifier = Modifier.animateItem(),
-                onClick = { onNavigate(it.id) }
+                onClick = { onNavigate(item.id) }
             )
         }
     }
