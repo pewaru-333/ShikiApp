@@ -36,6 +36,8 @@
     <string name="text_pictures">Картинки</string>
     <string name="text_producer">Продюсер</string>
     <string name="text_ranobe">Ранобэ</string>
+    <string name="text_roles">Роли</string>
+    <string name="text_works">Работы</string>
     <string name="text_video">Видео</string>
     <string name="text_users">Пользователи</string>
 
@@ -82,6 +84,39 @@
     <string name="kind_ranobe_light_novel">Ранобэ</string>
     <string name="kind_ranobe_novel">Новелла</string>
 
+    <!-- Типы связей во франшизе -->
+    <string name="relation_kind_adaptation">Адаптация</string>
+    <string name="relation_kind_alternative_setting">Альтернативная вселенная</string>
+    <string name="relation_kind_alternative_version">Альтернативная история</string>
+    <string name="relation_kind_character">Общий персонаж</string>
+    <string name="relation_kind_full_story">Развёрнутая история</string>
+    <string name="relation_kind_other">Прочее</string>
+    <string name="relation_kind_parent_story">Изначальная история</string>
+    <string name="relation_kind_prequel">Предыстория</string>
+    <string name="relation_kind_sequel">Продолжение</string>
+    <string name="relation_kind_side_story">Другая история</string>
+    <string name="relation_kind_spin_off">Ответвление от оригинала</string>
+    <string name="relation_kind_summary">Обобщение</string>
+
+    <!-- Первоисточник -->
+    <string name="origin_original">Оригинал</string>
+    <string name="origin_manga">Манга</string>
+    <string name="origin_web_manga">Веб-манга</string>
+    <string name="origin_four_koma_manga">Енкома</string>
+    <string name="origin_novel">Новелла</string>
+    <string name="origin_web_novel">Веб-новелла</string>
+    <string name="origin_visual_novel">Визуальная новелла</string>
+    <string name="origin_light_novel">Ранобэ</string>
+    <string name="origin_game">Игра</string>
+    <string name="origin_card_game">Карточная игра</string>
+    <string name="origin_music">Музыка</string>
+    <string name="origin_radio">Радио</string>
+    <string name="origin_book">Книга</string>
+    <string name="origin_picture_book">Книга с картинками</string>
+    <string name="origin_mixed_media">Более одного</string>
+    <string name="origin_other">Другое</string>
+    <string name="origin_unknown">Неизвестен</string>
+
     <!-- Возрастной рейтинг -->
     <string name="rating_none">Без ограничений</string>
     <string name="rating_g">G</string>
@@ -100,10 +135,13 @@
     <string name="order_name">По названию</string>
     <string name="order_aired_on">По дате выхода</string>
     <string name="order_episodes">По эпизодам</string>
+    <string name="order_chapters">По главам</string>
     <string name="order_status">По статусу</string>
     <string name="order_random">Случайно</string>
-    <string name="order_created_at">По дате создания ↑</string>
+    <string name="order_created_at">По дате создания</string>
+    <string name="order_created_at_asc">По дате создания ↑</string>
     <string name="order_created_at_desc">По дате создания ↓</string>
+    <string name="order_updated_at">По дате обновления</string>
 
     <!-- Длительность эпизода -->
     <string name="duration_S">До 10 минут</string>
@@ -214,6 +252,9 @@
     <string name="text_to_settings">В настройки</string>
     <string name="text_settings">Настройки</string>
     <string name="text_unknown">Неизвестно</string>
+
+    <string name="text_birthday">Дата рождения</string>
+    <string name="text_deathday">Дата смерти</string>
 
     <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
