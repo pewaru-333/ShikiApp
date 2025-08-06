@@ -14,6 +14,6 @@ enum class Order(@StringRes val title: Int) {
     EPISODES(R.string.order_episodes),
     STATUS(R.string.order_status),
     RANDOM(R.string.order_random),
-    CREATED_AT(R.string.order_created_at),
+    CREATED_AT(R.string.order_created_at_asc),
     CREATED_AT_DESC(R.string.order_created_at_desc)
 }
