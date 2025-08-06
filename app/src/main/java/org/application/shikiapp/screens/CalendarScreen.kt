@@ -44,8 +44,8 @@ import coil3.compose.AsyncImage
 import org.application.shikiapp.events.CalendarEvent
 import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
+import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
-import org.application.shikiapp.models.ui.list.ShortContent
 import org.application.shikiapp.models.viewModels.CalendarViewModel
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.navigation.Screen
@@ -97,11 +97,11 @@ private fun CalendarView(
 }
 
 @Composable
-private fun Trending(trending: List<ShortContent>, onNavigate: (Screen) -> Unit) = Column {
+private fun Trending(trending: List<BasicContent>, onNavigate: (Screen) -> Unit) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle("Сейчас на экранах")
         IconButton(
-            onClick = { onNavigate(Screen.Catalog(true)) }
+            onClick = { onNavigate(Screen.Catalog(showOngoing = true)) }
         ) {
             Icon(Icons.AutoMirrored.Outlined.ArrowForward, null)
         }
@@ -109,7 +109,7 @@ private fun Trending(trending: List<ShortContent>, onNavigate: (Screen) -> Unit)
     LazyRow(
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
-        items(trending, ShortContent::id) { anime ->
+        items(trending, BasicContent::id) { anime ->
             Column(
                 modifier = Modifier
                     .width(129.dp)
