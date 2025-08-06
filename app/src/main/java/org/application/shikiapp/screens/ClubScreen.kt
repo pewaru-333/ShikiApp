@@ -58,7 +58,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -80,9 +79,10 @@ import org.application.shikiapp.models.states.showContent
 import org.application.shikiapp.models.states.showImages
 import org.application.shikiapp.models.states.showMembers
 import org.application.shikiapp.models.ui.Club
-import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.viewModels.ClubViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.ClubMenu
 import org.application.shikiapp.utils.navigation.Screen
@@ -117,7 +117,7 @@ fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 private fun ClubView(
     club: Club,
     state: ClubState,
-    content: LazyPagingItems<Content>,
+    content: LazyPagingItems<BasicContent>,
     onEvent: (ClubEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
@@ -275,11 +275,7 @@ private fun Members(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.text_members)) },
-                navigationIcon = {
-                    IconButton(hide) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
-                    }
-                }
+                navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { padding ->
@@ -339,7 +335,7 @@ private fun Members(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(
-    content: LazyPagingItems<Content>,
+    content: LazyPagingItems<BasicContent>,
     state: ClubState,
     visible: Boolean,
     onNavigate: (Screen) -> Unit,
@@ -373,10 +369,14 @@ private fun Content(
             ) {
                 items(content.itemCount) { index ->
                     content[index]?.let {
-                        Column(
-                            verticalArrangement = Arrangement.spacedBy(4.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable {
+                        CatalogGridItem(
+                            title = it.title,
+                            image = it.poster,
+                            score = null,
+                            kind = null,
+                            season = null,
+                            modifier = Modifier.animateItem(),
+                            onClick = {
                                 when (state.menu) {
                                     ClubMenu.ANIME -> onNavigate(Screen.Anime(it.id))
                                     ClubMenu.MANGA, ClubMenu.RANOBE -> onNavigate(Screen.Manga(it.id))
@@ -385,31 +385,7 @@ private fun Content(
                                     else -> Unit
                                 }
                             }
-                        ) {
-                            AsyncImage(
-                                model = it.poster,
-                                contentDescription = null,
-                                contentScale = ContentScale.FillBounds,
-                                filterQuality = FilterQuality.High,
-                                modifier = Modifier
-                                    .size(116.dp, 180.dp)
-                                    .clip(MaterialTheme.shapes.medium)
-                                    .border(
-                                        1.dp,
-                                        MaterialTheme.colorScheme.onSurface,
-                                        MaterialTheme.shapes.medium
-                                    )
-                            )
-
-                            Text(
-                                modifier = Modifier.padding(horizontal = 4.dp),
-                                maxLines = 2,
-                                text = it.title,
-                                textAlign = TextAlign.Center,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        }
+                        )
                     }
                 }
 
@@ -445,11 +421,7 @@ private fun Images(
         topBar = {
             TopAppBar(
                 title = {  Text(stringResource(R.string.text_pictures)) },
-                navigationIcon = {
-                    IconButton(hide) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
-                    }
-                }
+                navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { padding ->
@@ -497,7 +469,7 @@ private fun Images(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Clubs(
-    clubs: LazyPagingItems<Content>,
+    clubs: LazyPagingItems<BasicContent>,
     visible: Boolean,
     onNavigate: (Screen) -> Unit,
     hide: () -> Unit
@@ -511,16 +483,12 @@ private fun Clubs(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.text_clubs)) },
-                navigationIcon = {
-                    IconButton(hide) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
-                    }
-                }
+                navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { padding ->
         LazyColumn(contentPadding = padding) {
-            items(clubs.itemCount, clubs.itemKey(Content::id)) { index ->
+            items(clubs.itemCount, clubs.itemKey(BasicContent::id)) { index ->
                 clubs[index]?.let {
                     OneLineImage(
                         name = it.title,
