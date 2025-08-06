@@ -68,6 +68,7 @@ import org.application.shikiapp.models.ui.list.Dialog
 import org.application.shikiapp.models.viewModels.UserMessagesViewModel
 import org.application.shikiapp.models.viewModels.UserViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
@@ -135,9 +136,9 @@ fun UserView(
 
             if (Preferences.userId != user.id) {
                 item {
-                    UserStats(
+                    Statistics(
                         id = user.id,
-                        stats = user.stats,
+                        statistics = user.stats,
                         onNavigate = onNavigate
                     )
                 }
