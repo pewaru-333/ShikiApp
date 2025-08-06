@@ -8,7 +8,7 @@ import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.ClubJoinPolicy
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.UserBasic
-import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.models.ui.list.BasicContent
 
 data class Club(
     val id: Long,
@@ -18,11 +18,11 @@ data class Club(
     val description: AnnotatedString,
     val images: Flow<PagingData<ClubImages>>,
     val members: Flow<PagingData<UserBasic>>,
-    val animes: Flow<PagingData<Content>>,
-    val mangas: Flow<PagingData<Content>>,
-    val ranobe: Flow<PagingData<Content>>,
-    val characters: Flow<PagingData<Content>>,
-    val clubs: Flow<PagingData<Content>>,
+    val animes: Flow<PagingData<BasicContent>>,
+    val mangas: Flow<PagingData<BasicContent>>,
+    val ranobe: Flow<PagingData<BasicContent>>,
+    val characters: Flow<PagingData<BasicContent>>,
+    val clubs: Flow<PagingData<BasicContent>>,
     val comments: Flow<PagingData<Comment>>,
     val isCensored: Boolean,
     val joinPolicy: ClubJoinPolicy,

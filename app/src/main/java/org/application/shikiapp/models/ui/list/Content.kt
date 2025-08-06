@@ -1,13 +1,15 @@
 package org.application.shikiapp.models.ui.list
 
-import androidx.annotation.StringRes
 import org.application.shikiapp.utils.ResourceText
+import org.application.shikiapp.utils.enums.Kind
+import org.application.shikiapp.utils.enums.Status
 
-data class Content(
-    val id: String,
-    val title: String,
-    @StringRes val kind: Int,
+open class Content(
+    id: String,
+    title: String,
+    poster: String,
+    val kind: Kind,
     val season: ResourceText,
     val score: String?,
-    val poster: String
-)
+    val status: Status
+) : BasicContent(id, title, poster)
