@@ -6,6 +6,7 @@ import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.getFull
+import java.time.OffsetDateTime
 
 fun UserRatesQuery.Data.UserRate.mapper(type: UserRateTargetTypeEnum) = UserRate(
     id = id.toLong(),
@@ -34,4 +35,6 @@ fun UserRatesQuery.Data.UserRate.mapper(type: UserRateTargetTypeEnum) = UserRate
     chapters = chapters,
     rewatches = rewatches,
     fullChapters = getFull(manga?.chapters, manga?.status?.rawValue),
+    createdAt = OffsetDateTime.parse(createdAt.toString()),
+    updatedAt = OffsetDateTime.parse(updatedAt.toString())
 )

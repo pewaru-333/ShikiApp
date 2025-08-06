@@ -3,79 +3,91 @@ package org.application.shikiapp.models.ui.mappers
 import androidx.paging.PagingData
 import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.R
 import org.application.shikiapp.generated.CharacterListQuery
 import org.application.shikiapp.generated.CharacterQuery
+import org.application.shikiapp.generated.fragment.CharacterRole
+import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.Comment
+import org.application.shikiapp.models.data.MangaBasic
+import org.application.shikiapp.models.ui.Related
+import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
-import org.application.shikiapp.screens.fromHtml
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
+import org.application.shikiapp.utils.enums.Status
 import org.application.shikiapp.utils.extensions.safeValueOf
+import org.application.shikiapp.utils.fromHtml
 import org.application.shikiapp.utils.getSeason
 
-fun Character.mapper(image: CharacterQuery.Data.Character, comments: Flow<PagingData<Comment>>) =
-    org.application.shikiapp.models.ui.Character(
+object CharacterMapper {
+    fun create(
+        character: Character,
+        image: CharacterQuery.Data.Character,
+        comments: Flow<PagingData<Comment>>
+    ): org.application.shikiapp.models.ui.Character {
+        val relatedList = character.animes.map(AnimeBasic::toRelated) +
+                character.mangas.map(MangaBasic::toRelated)
+
+        return org.application.shikiapp.models.ui.Character(
+            altName = character.altName,
+            anime = character.animes.map(AnimeBasic::toContent),
+            comments = comments,
+            description = fromHtml(character.descriptionHTML),
+            favoured = character.favoured,
+            id = character.id.toString(),
+            japanese = character.japanese,
+            manga = character.mangas.map(MangaBasic::toContent),
+            poster = image.poster?.originalUrl ?: BLANK,
+            relatedList = relatedList,
+            relatedMap = relatedList.groupBy(Related::linkedType).toSortedMap(),
+            russian = character.russian,
+            seyu = character.seyu.map(BasicInfo::toBasicContent),
+        )
+    }
+}
+
+fun org.application.shikiapp.models.data.BasicContent.toRelated(relationText: String = BLANK) =
+    Related(
         id = id.toString(),
-        russian = russian,
-        japanese = japanese,
-        altName = altName,
-        description = fromHtml(descriptionHTML),
-        poster = image.poster?.originalUrl ?: BLANK,
-        favoured = favoured,
-        anime = animes.map {
-            Content(
-                id = it.id.toString(),
-                title = it.russian.orEmpty().ifEmpty(it::name),
-                kind = Enum.safeValueOf<Kind>(it.kind).title,
-                season = getSeason(it.releasedOn, it.kind),
-                poster = it.image.original,
-                score = it.score?.let(::convertScore)
-            )
-        },
-        manga = mangas.map {
-            Content(
-                id = it.id.toString(),
-                title = it.russian.orEmpty().ifEmpty(it::name),
-                kind = Enum.safeValueOf<Kind>(it.kind).title,
-                season = getSeason(it.releasedOn, it.kind),
-                poster = it.image.original,
-                score = it.score?.let(::convertScore)
-            )
-        },
-        seyu = seyu.map {
-            Content(
-                id = it.id.toString(),
-                title = it.russian.orEmpty().ifEmpty(it::name),
-                kind = R.string.blank,
-                season = ResourceText.StringResource(R.string.blank),
-                poster = it.image.original,
-                score = null
-            )
-        },
-        comments = comments
+        title = russian.orEmpty().ifEmpty(::name),
+        poster = image.original,
+        kind = Enum.safeValueOf<Kind>(kind),
+        status = Enum.safeValueOf<Status>(status),
+        season = getSeason(airedOn, kind),
+        score = convertScore(score),
+        relationText = relationText,
+        linkedType = Enum.safeValueOf<Kind>(kind).linkedType
     )
 
-fun CharacterListQuery.Data.Character.mapper() = Content(
+fun org.application.shikiapp.models.data.BasicContent.toContent() = Content(
+    id = id.toString(),
+    kind = Enum.safeValueOf<Kind>(kind),
+    poster = image.original,
+    score = score?.let(::convertScore),
+    season = getSeason(airedOn, kind),
+    status = Enum.safeValueOf<Status>(status),
+    title = russian.orEmpty().ifEmpty(::name)
+)
+
+fun CharacterRole.toBasicContent() = BasicContent(
+    id = character.id,
+    title = character.russian.orEmpty().ifEmpty(character::name),
+    poster = character.poster?.originalUrl.orEmpty()
+)
+
+fun CharacterListQuery.Data.Character.mapper() = BasicContent(
     id = id,
     title = russian.orEmpty().ifEmpty(::name),
-    kind = R.string.blank,
-    season = ResourceText.StringResource(R.string.blank),
-    poster = poster?.mainUrl ?: BLANK,
-    score = null
+    poster = poster?.mainUrl.orEmpty(),
 )
 
 fun PagingData<BasicInfo>.toContent() = map {
-    Content(
+    BasicContent(
         id = it.id.toString(),
         title = it.russian.orEmpty().ifEmpty(it::name),
-        kind = R.string.blank,
-        season = ResourceText.StringResource(R.string.blank),
-        poster = it.image.original,
-        score = null
+        poster = it.image.original
     )
 }

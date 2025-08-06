@@ -3,25 +3,22 @@ package org.application.shikiapp.models.ui.mappers
 import androidx.paging.PagingData
 import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.UserBasic
-import org.application.shikiapp.models.ui.list.Content
-import org.application.shikiapp.screens.fromHtml
-import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.ResourceText
+import org.application.shikiapp.models.ui.list.BasicContent
+import org.application.shikiapp.utils.fromHtml
 
 fun Club.mapper(
     images: Flow<PagingData<ClubImages>>,
     members: Flow<PagingData<UserBasic>>,
-    animes: Flow<PagingData<Content>>,
-    mangas: Flow<PagingData<Content>>,
-    ranobe: Flow<PagingData<Content>>,
-    characters: Flow<PagingData<Content>>,
-    clubs: Flow<PagingData<Content>>,
+    animes: Flow<PagingData<BasicContent>>,
+    mangas: Flow<PagingData<BasicContent>>,
+    ranobe: Flow<PagingData<BasicContent>>,
+    characters: Flow<PagingData<BasicContent>>,
+    clubs: Flow<PagingData<BasicContent>>,
     comments: Flow<PagingData<Comment>>
 ) = org.application.shikiapp.models.ui.Club(
     id = id,
@@ -43,21 +40,15 @@ fun Club.mapper(
 )
 
 fun PagingData<ClubBasic>.toContent() = map {
-    Content(
+    BasicContent(
         id = it.id.toString(),
         title = it.name,
-        kind = R.string.blank,
-        season = ResourceText.StaticString(BLANK),
-        poster = it.logo.main.orEmpty(),
-        score = null
+        poster = it.logo.main.orEmpty()
     )
 }
 
-fun Club.toContent() = Content(
+fun Club.toContent() = BasicContent(
     id = id.toString(),
     title = name,
-    kind = R.string.blank,
-    season = ResourceText.StaticString(BLANK),
-    poster = logo.main.orEmpty(),
-    score = null
+    poster = logo.main.orEmpty()
 )
