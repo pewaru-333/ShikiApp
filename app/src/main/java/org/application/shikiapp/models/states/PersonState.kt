@@ -7,8 +7,9 @@ import androidx.compose.material3.SheetState
 import androidx.compose.ui.unit.Density
 
 data class PersonState(
-    val showSheet: Boolean = false,
-    val showComments: Boolean = false,
+    val sheetState: SheetState = SheetState(false, Density(1f)),
     val showCharacters: Boolean = false,
-    val sheetState: SheetState = SheetState(false, Density(1f))
+    val showComments: Boolean = false,
+    val showSheet: Boolean = false,
+    val showWorks: Boolean = false
 )
