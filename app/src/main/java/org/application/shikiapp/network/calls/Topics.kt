@@ -23,7 +23,7 @@ class Topics(private val client: HttpClient) {
     }.body<List<Topic>>()
 
     suspend fun getComments(
-        id: Long,
+        id: Long?,
         type: String,
         page: Int,
         limit: Int,
