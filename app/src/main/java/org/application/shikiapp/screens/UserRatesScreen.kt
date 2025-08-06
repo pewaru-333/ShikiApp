@@ -3,37 +3,48 @@ package org.application.shikiapp.screens
 import android.widget.Toast
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Add
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.FilledTonalIconButton
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScrollableTabRow
@@ -50,6 +61,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.Center
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -59,19 +73,17 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_cancel
 import org.application.shikiapp.R.string.text_change
-import org.application.shikiapp.R.string.text_chapters
-import org.application.shikiapp.R.string.text_empty
 import org.application.shikiapp.R.string.text_profile_closed
-import org.application.shikiapp.R.string.text_rate_episodes
-import org.application.shikiapp.R.string.text_rate_score
 import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.events.RateEvent
 import org.application.shikiapp.models.states.NewRateState
+import org.application.shikiapp.models.states.SortingState
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.network.response.RatesResponse
@@ -79,7 +91,17 @@ import org.application.shikiapp.network.response.RatesResponse.Error
 import org.application.shikiapp.network.response.RatesResponse.Loading
 import org.application.shikiapp.network.response.RatesResponse.NoAccess
 import org.application.shikiapp.network.response.RatesResponse.Success
+import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.RateChapters
+import org.application.shikiapp.ui.templates.RateEpisodes
+import org.application.shikiapp.ui.templates.RateRewatches
+import org.application.shikiapp.ui.templates.RateScore
+import org.application.shikiapp.ui.templates.RateStatus
+import org.application.shikiapp.ui.templates.RateText
+import org.application.shikiapp.ui.templates.RateVolumes
 import org.application.shikiapp.utils.enums.LinkedType
+import org.application.shikiapp.utils.enums.OrderDirection
+import org.application.shikiapp.utils.enums.OrderRates
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
@@ -91,6 +113,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
 
     val model = viewModel<UserRateViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
+    val orderState by model.orderState.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = WatchStatus.entries::size)
@@ -159,9 +182,23 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
                         ) {
                             Text(
                                 modifier = Modifier.padding(8.dp, 12.dp),
-                                text = stringResource(model.type.getTitleResId(status))
+                                text = stringResource(model.type.getWatchStatusTitle(status))
                             )
                         }
+                    }
+                }
+
+                LazyRow(
+                    contentPadding = PaddingValues(horizontal = 16.dp),
+                    horizontalArrangement = spacedBy(8.dp)
+                ) {
+                    items(OrderRates.entries) { type ->
+                        SortChip(
+                            order = type,
+                            state = orderState,
+                            type = model.type,
+                            onClick = { model.onSortChanged(type) }
+                        )
                     }
                 }
 
@@ -196,89 +233,6 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
             onDelete = model::delete,
             onDismiss = model::toggleDialog
         )
-    }
-}
-
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun UserRateList(
-    rates: List<UserRate>,
-    listState: LazyListState,
-    getRate: (UserRate) -> Unit,
-    type: LinkedType,
-    editable: Boolean,
-    increment: (Long) -> Unit,
-    onNavigate: (Screen) -> Unit
-) = LazyColumn(Modifier.fillMaxSize(), listState) {
-    if (rates.isEmpty()) item {
-        Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_empty)) }
-    }
-    else items(rates, UserRate::id) { rate ->
-        Box(Modifier.fillMaxSize()) {
-            ListItem(
-                modifier = Modifier
-                    .align(Alignment.TopStart)
-                    .combinedClickable(
-                        onClick = { onNavigate(type.navigateTo(rate.contentId)) },
-                        onLongClick = { if (editable) getRate(rate) }
-                    ),
-                leadingContent = {
-                    RoundedPoster(rate.poster)
-                },
-                overlineContent = {
-                    Text(
-                        text = rate.title,
-                        overflow = TextOverflow.Ellipsis,
-                        maxLines = 2,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold
-                        )
-                    )
-                },
-                headlineContent = {
-                    Text(
-                        text = stringResource(rate.kind),
-                        style = MaterialTheme.typography.bodyLarge
-                    )
-                },
-                supportingContent = {
-                    Column {
-                        if (type == LinkedType.ANIME) {
-                            Text(
-                                text = stringResource(text_rate_episodes, rate.episodes, rate.fullEpisodes),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        if (type == LinkedType.MANGA) {
-                            Text(
-                                text = stringResource(text_chapters, rate.chapters, rate.fullChapters),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                        Text(
-                            text = stringResource(text_rate_score, rate.scoreString),
-                            style = MaterialTheme.typography.bodyMedium
-                        )
-                    }
-                }
-            )
-            if (editable && WatchStatus.WATCHING.name.equals(rate.status, true)) {
-                Box(
-                    contentAlignment = Center,
-                    content = { Icon(Icons.Outlined.Add, null) },
-                    modifier = Modifier
-                        .align(Alignment.BottomEnd)
-                        .padding(end = 12.dp, bottom = 12.dp)
-                        .size(40.dp)
-                        .border(
-                            1.dp,
-                            MaterialTheme.colorScheme.onSurface,
-                            MaterialTheme.shapes.medium
-                        )
-                        .clickable { increment(rate.id) }
-                )
-            }
-        }
     }
 }
 
@@ -356,3 +310,186 @@ private fun DialogEditRate(
         }
     }
 )
+
+@Composable
+private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, onIncrement: (Long) -> Unit) {
+    val current = if (type == LinkedType.ANIME) rate.episodes else rate.chapters
+    val maximum = (if (type == LinkedType.ANIME) rate.fullEpisodes else rate.fullChapters).toIntOrNull()
+
+    val progressText = "$current / ${maximum ?: "?"}"
+    val progressValue = maximum?.let { if (it > 0) current.toFloat() / it else 0f }
+
+    Column {
+        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+            Text(
+                text = stringResource(if (type == LinkedType.ANIME) R.string.text_episodes else R.string.text_rate_chapters),
+                style = MaterialTheme.typography.bodySmall
+            )
+            Text(
+                text = progressText,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+
+        Spacer(Modifier.height(4.dp))
+
+        Row(Modifier, spacedBy(8.dp), CenterVertically) {
+            if (progressValue != null) {
+                LinearProgressIndicator(
+                    progress = { progressValue.coerceIn(0f, 1f) },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(8.dp)
+                        .clip(CircleShape)
+                )
+            }
+
+            if (editable && WatchStatus.WATCHING.name.equals(rate.status, true)) {
+                FilledTonalIconButton(
+                    modifier = Modifier.size(32.dp),
+                    onClick = { onIncrement(rate.id) },
+                    content = { Icon(Icons.Default.Add, null) }
+                )
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun UserRateCard(
+    rate: UserRate,
+    type: LinkedType,
+    editable: Boolean,
+    modifier: Modifier = Modifier,
+    onGetRate: (UserRate) -> Unit,
+    onIncrement: (Long) -> Unit,
+    onNavigate: (Screen) -> Unit
+) = Row(
+    horizontalArrangement = spacedBy(16.dp),
+    modifier = modifier
+        .height(175.dp)
+        .combinedClickable(
+            onClick = { onNavigate(type.navigateTo(rate.contentId)) },
+            onLongClick = { if (editable) onGetRate(rate) }
+        )
+        .padding(12.dp)
+) {
+    AsyncImage(
+        model = rate.poster,
+        contentDescription = null,
+        contentScale = ContentScale.Crop,
+        modifier = Modifier
+            .width(100.dp)
+            .fillMaxHeight()
+            .clip(MaterialTheme.shapes.medium)
+            .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+    )
+
+    Column(Modifier.fillMaxHeight()) {
+        Text(
+            text = rate.title,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.SemiBold,
+            )
+        )
+
+        Spacer(Modifier.height(4.dp))
+
+        Row(Modifier, spacedBy(8.dp), CenterVertically) {
+            Text(
+                text = stringResource(rate.kind),
+                style = MaterialTheme.typography.bodySmall
+            )
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        if (rate.score > 0) {
+            Row(verticalAlignment = CenterVertically) {
+                Icon(Icons.Default.Star, null, Modifier.size(18.dp), Color(0xFFFFC319))
+
+                Spacer(Modifier.width(4.dp))
+
+                Text(
+                    text = rate.scoreString,
+                    style = MaterialTheme.typography.bodyLarge.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+            }
+        }
+
+        Spacer(Modifier.weight(1f))
+
+        Progress(rate, type, editable, onIncrement)
+    }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun UserRateList(
+    rates: List<UserRate>,
+    listState: LazyListState,
+    getRate: (UserRate) -> Unit,
+    type: LinkedType,
+    editable: Boolean,
+    increment: (Long) -> Unit,
+    onNavigate: (Screen) -> Unit
+) = LazyColumn(Modifier.fillMaxSize(), listState) {
+    if (rates.isEmpty()) {
+        item {
+            Box(Modifier.fillParentMaxSize(), Center) {
+                Text(stringResource(R.string.text_empty))
+            }
+        }
+    } else {
+        itemsIndexed(rates, key = { index, item -> item.id }) { index, rate ->
+            UserRateCard(
+                modifier = Modifier.animateItem(),
+                rate = rate,
+                type = type,
+                editable = editable,
+                onIncrement = increment,
+                onNavigate = onNavigate,
+                onGetRate = getRate
+            )
+
+            if (index < rates.size - 1) {
+                HorizontalDivider(Modifier.padding(horizontal = 12.dp))
+            }
+        }
+    }
+}
+
+@Composable
+private fun SortChip(order: OrderRates, state: SortingState, type: LinkedType, onClick: () -> Unit) =
+    FilterChip(
+        onClick = onClick,
+        selected = state.order == order,
+        label = {
+            Text(
+                text = stringResource(
+                    if (type == LinkedType.ANIME) order.title
+                    else order.titleManga ?: order.title
+                )
+            )
+        },
+        leadingIcon = {
+            if (state.order == order) {
+                Icon(
+                    contentDescription = null,
+                    painter = painterResource(
+                        when (state.direction) {
+                            OrderDirection.ASCENDING -> R.drawable.vector_arrow_up
+                            OrderDirection.DESCENDING -> R.drawable.vector_arrow_down
+                        }
+                    )
+                )
+            }
+        }
+    )

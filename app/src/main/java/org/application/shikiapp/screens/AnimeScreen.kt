@@ -4,9 +4,11 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
 import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -25,8 +27,8 @@ import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -38,10 +40,10 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
@@ -55,24 +57,24 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
-import org.application.shikiapp.R.drawable.vector_comments
+import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_episodes
 import org.application.shikiapp.R.string.text_kind
-import org.application.shikiapp.R.string.text_rating
-import org.application.shikiapp.R.string.text_score
 import org.application.shikiapp.R.string.text_screenshots
-import org.application.shikiapp.R.string.text_status
-import org.application.shikiapp.R.string.text_studio
 import org.application.shikiapp.R.string.text_video
 import org.application.shikiapp.events.ContentDetailEvent
-import org.application.shikiapp.generated.AnimeQuery.Data.Anime.Video
 import org.application.shikiapp.models.states.AnimeState
+import org.application.shikiapp.models.states.showSheetContent
 import org.application.shikiapp.models.ui.Anime
+import org.application.shikiapp.models.ui.Video
 import org.application.shikiapp.models.viewModels.AnimeViewModel
 import org.application.shikiapp.network.response.Response.Error
 import org.application.shikiapp.network.response.Response.Loading
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.CreateRate
+import org.application.shikiapp.ui.templates.IconComment
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.VideoKind
 import org.application.shikiapp.utils.navigation.Screen
@@ -108,17 +110,14 @@ private fun AnimeView(
                 title = { Text(stringResource(text_anime)) },
                 navigationIcon = { NavigationIcon(back) },
                 actions = {
-                    if (comments.itemCount > 0)
-                        IconButton(
-                            onClick = { onEvent(ContentDetailEvent.ShowComments) }
-                        ) {
-                            Icon(painterResource(vector_comments), null)
-                        }
+                    IconComment(
+                        comments = comments,
+                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
+                    )
                     IconButton(
-                        onClick = { onEvent(ContentDetailEvent.ShowSheet) }
-                    ) {
-                        Icon(Icons.Outlined.MoreVert, null)
-                    }
+                        onClick = { onEvent(ContentDetailEvent.ShowSheet) },
+                        content = { Icon(Icons.Outlined.MoreVert, null) }
+                    )
                 }
             )
         }
@@ -141,68 +140,164 @@ private fun AnimeView(
             item {
                 Row(horizontalArrangement = spacedBy(8.dp)) {
                     Poster(anime.poster)
-                    ShortInfo(anime)
+                    Column(Modifier.height(300.dp), SpaceBetween) {
+                        LabelInfoItem(stringResource(text_kind), stringResource(anime.kind))
+                        LabelInfoItem(stringResource(text_episodes), anime.episodes)
+                        StatusInfo(anime.status, anime.airedOn, anime.releasedOn)
+                        LabelInfoItem("Первоисточник", stringResource(anime.origin))
+                        ScoreInfo(anime.score)
+                        LabelInfoItem(stringResource(R.string.text_rating), stringResource(anime.rating))
+                    }
                 }
             }
 
-            anime.genres?.let {
+            anime.genres?.let { list ->
                 item {
                     LazyRow(horizontalArrangement = spacedBy(4.dp)) {
-                        items(it) { (russian) ->
+                        items(list) {
                             SuggestionChip(
                                 onClick = {},
-                                label = { Text(russian) }
+                                label = { Text(it) }
                             )
                         }
                     }
                 }
             }
 
-            anime.description.let {
-                if (it.isNotEmpty()) item { Description(it) }
-            }
-            anime.related.let {
-                if (it.isNotEmpty()) item {
-                    Related(
-                        list = it,
-                        hide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
-                        onNavigate = onNavigate
-                    )
+            item {
+                LazyRow(
+                    horizontalArrangement = spacedBy(12.dp),
+                    contentPadding = PaddingValues(horizontal = 8.dp)
+                ) {
+                    anime.studio?.let { studio ->
+                        item {
+                            DetailBox(
+                                icon = R.drawable.vector_anime,
+                                label = "Студия",
+                                value = studio.title,
+                                onClick = { onNavigate(Screen.Catalog(studio = studio.id)) }
+                            )
+                        }
+                    }
+
+                    item {
+                        DetailBox(
+                            icon = R.drawable.vector_timer,
+                            label = "Эпизод",
+                            value = anime.duration
+                        )
+                    }
+
+                    anime.nextEpisodeAt.let {
+                        if (it.isNotEmpty()) {
+                            item {
+                                DetailBox(
+                                    icon = R.drawable.vector_calendar,
+                                    label = "Следующий эпизод",
+                                    value = it
+                                )
+                            }
+                        }
+                    }
+
+                    anime.similar.let {
+                        if (it.isNotEmpty()) {
+                            item {
+                                DetailBox(
+                                    icon = R.drawable.vector_similar,
+                                    label = "Похожее",
+                                    onClick = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
+                                )
+                            }
+                        }
+                    }
+
+                    item {
+                        DetailBox(
+                            icon = R.drawable.vector_statistics,
+                            label = stringResource(R.string.text_statistics),
+                            onClick = { onEvent(ContentDetailEvent.Media.ShowStats) }
+                        )
+                    }
+
+                    item {
+                        DetailBox(
+                            icon = R.drawable.vector_subtitles,
+                            label = "Субтитры",
+                            onClick = { onEvent(ContentDetailEvent.Media.ShowFansubbers) }
+                        )
+                    }
+
+                    item {
+                        DetailBox(
+                            icon = R.drawable.vector_voice_actors,
+                            label = "Озвучка",
+                            onClick = { onEvent(ContentDetailEvent.Media.ShowFandubbers) }
+                        )
+                    }
                 }
             }
+
+            anime.description.let {
+                if (it.isNotEmpty()) {
+                    item { Description(it) }
+                }
+            }
+            anime.related.let {
+                if (it.isNotEmpty()) {
+                    item {
+                        Related(
+                            list = it,
+                            showAllRelated = { onEvent(ContentDetailEvent.Media.ShowRelated) },
+                            onNavigate = onNavigate
+                        )
+                    }
+                }
+            }
+
             anime.charactersMain.let {
-                if (it.isNotEmpty()) item {
-                    Characters(
-                        list = it,
-                        show = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
-                        onNavigate = onNavigate
-                    )
+                if (it.isNotEmpty()) {
+                    item {
+                        Profiles(
+                            list = it,
+                            title = stringResource(R.string.text_characters),
+                            onShowFull = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+                            onNavigate = { onNavigate(Screen.Character(it)) }
+                        )
+                    }
                 }
             }
             anime.personMain.let {
-                if (it.isNotEmpty()) item {
-                    Authors(
-                        list = it,
-                        show = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
-                        onNavigate = onNavigate
-                    )
+                if (it.isNotEmpty()) {
+                    item {
+                        Profiles(
+                            list = it,
+                            title = stringResource(R.string.text_authors),
+                            onShowFull = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
+                            onNavigate = { onNavigate(Screen.Person(it.toLong())) }
+                        )
+                    }
                 }
             }
             anime.screenshots.let {
-                if (it.isNotEmpty()) item {
-                    Screenshots(
-                        list = it,
-                        show = { onEvent(ContentDetailEvent.Media.ShowImage(it)) },
-                        hide = { onEvent(ContentDetailEvent.Media.Anime.ShowScreenshots) },
-                    )
+                if (it.isNotEmpty()) {
+                    item {
+                        Screenshots(
+                            list = it,
+                            show = { onEvent(ContentDetailEvent.Media.ShowImage(it)) },
+                            hide = { onEvent(ContentDetailEvent.Media.Anime.ShowScreenshots) },
+                        )
+                    }
                 }
             }
             anime.videos.let {
-                if (it.isNotEmpty()) item {
-                    Video(
-                        list = it,
-                        show = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) },
-                    )
+                if (it.isNotEmpty()) {
+                    item {
+                        Video(
+                            list = it,
+                            show = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) },
+                        )
+                    }
                 }
             }
         }
@@ -216,7 +311,9 @@ private fun AnimeView(
     )
 
     RelatedFull(
-        list = anime.related,
+        related = anime.related,
+        chronology = anime.chronology,
+        franchise = anime.franchiseList,
         visible = state.showRelated,
         hide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
         onNavigate = onNavigate
@@ -236,20 +333,23 @@ private fun AnimeView(
         hide = { onEvent(ContentDetailEvent.Media.ShowStats) },
     )
 
-    CharactersFull(
-        list = anime.charactersAll,
-        state = state.lazyCharacters,
-        visible = state.showCharacters,
-        hide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
-        onNavigate = onNavigate
-    )
-
-    AuthorsFull(
-        roles = anime.personAll,
-        state = state.lazyAuthors,
-        visible = state.showAuthors,
-        hide = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
-        onNavigate = onNavigate
+    ProfilesFull(
+        list = if (state.showCharacters) anime.charactersAll else anime.personAll,
+        visible = state.showCharacters || state.showAuthors,
+        title = stringResource(if (state.showCharacters) R.string.text_characters else R.string.text_authors),
+        state = if (state.showCharacters) state.lazyCharacters else state.lazyAuthors,
+        onHide = {
+            onEvent(
+                if (state.showCharacters) ContentDetailEvent.Media.ShowCharacters
+                else ContentDetailEvent.Media.ShowAuthors
+            )
+        },
+        onNavigate = {
+            onNavigate(
+                if (state.showCharacters) Screen.Character(it)
+                else Screen.Person(it.toLong())
+            )
+        }
     )
 
     Screenshots(
@@ -295,47 +395,89 @@ private fun AnimeView(
             state = state.sheetLinks,
             hide = { onEvent(ContentDetailEvent.Media.ShowLinks) }
         )
+
+        state.showSheetContent -> SheetColumn(
+            state = state.sheetColumn,
+            label = if (state.showFansubbers) "Субтитры" else "Озвучка",
+            list = if (state.showFansubbers) anime.fansubbers else anime.fandubbers,
+            onHide = {
+                onEvent(
+                    if (state.showFansubbers) ContentDetailEvent.Media.ShowFansubbers
+                    else ContentDetailEvent.Media.ShowFandubbers
+                )
+            }
+        )
     }
 }
 
 @Composable
-private fun ShortInfo(anime: Anime) {
-    val name = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light)
-    val info = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
-
-    Column(Modifier.height(300.dp), SpaceBetween) {
-        Column {
-            Text(stringResource(text_kind), style = name)
-            Text(stringResource(anime.kind), style = info)
-        }
-        Column {
-            Text(stringResource(text_episodes), style = name)
-            Text(anime.episodes, style = info)
-        }
-        Column {
-            Text(stringResource(text_status), style = name)
-            Text(stringResource(anime.status), style = info)
-        }
-        Column {
-            Text(stringResource(text_studio), style = name)
-            Text(anime.studio, style = info)
-        }
-        Column {
-            Text(stringResource(text_score), style = name)
+fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> Unit)? = null) =
+    Box(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.medium)
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                MaterialTheme.shapes.medium
+            )
+            .clickable(
+                enabled = onClick != null,
+                onClick = { onClick?.invoke() }
+            )
+    ) {
+        if (value != null) {
             Row(
-                horizontalArrangement = spacedBy(4.dp),
-                verticalAlignment = CenterVertically
+                horizontalArrangement = spacedBy(8.dp),
+                verticalAlignment = CenterVertically,
+                modifier = Modifier
+                    .height(56.dp)
+                    .padding(12.dp, 8.dp),
             ) {
-                Icon(Icons.Default.Star, null, Modifier.size(16.dp), Color(0xFFFFC319))
-                Text(anime.score, style = info)
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Column {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+                if (onClick != null) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        } else {
+            Column(
+                verticalArrangement = spacedBy(2.dp, CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .height(56.dp)
+                    .padding(10.dp, 6.dp),
+            ) {
+                Icon(
+                    painter = painterResource(icon),
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
-        Column {
-            Text(stringResource(text_rating), style = name)
-            Text(stringResource(anime.rating), style = info)
-        }
     }
-}
 
 @Composable
 private fun Screenshots(list: List<String>, show: (Int) -> Unit, hide: () -> Unit) =
@@ -368,7 +510,7 @@ private fun Video(list: List<Video>, show: () -> Unit, uri: UriHandler = LocalUr
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
             items(list.take(3)) {
                 AsyncImage(
-                    model = "https:${it.imageUrl}",
+                    model = it.imageUrl,
                     contentDescription = null,
                     modifier = Modifier
                         .size(172.dp, 130.dp)
@@ -448,15 +590,15 @@ private fun Video(
             verticalItemSpacing = 12.dp
         ) {
             VideoKind.entries.forEach { entry ->
-                if (list.any { it.kind.rawValue in entry.kinds })
+                if (list.any { it.kind in entry.kinds })
                     item(span = StaggeredGridItemSpan.FullLine) {
                         ParagraphTitle(entry.title, Modifier.padding(bottom = 4.dp))
                     }
 
-                items(list.filter { it.kind.rawValue in entry.kinds }.sortedBy(Video::name)) {
+                items(list.filter { it.kind in entry.kinds }.sortedBy(Video::name)) {
                     Column(verticalArrangement = spacedBy(4.dp)) {
                         AsyncImage(
-                            model = "https:${it.imageUrl}",
+                            model = it.imageUrl,
                             contentDescription = null,
                             modifier = Modifier
                                 .size(172.dp, 130.dp)

@@ -42,6 +42,8 @@ import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.viewModels.NewsDetailViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.AnimatedAsyncImage
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)

@@ -1,48 +1,61 @@
 package org.application.shikiapp.screens
 
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import coil3.compose.AsyncImage
 import org.application.shikiapp.R
-import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.R.string.text_add_fav
-import org.application.shikiapp.R.string.text_information
 import org.application.shikiapp.R.string.text_remove_fav
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.viewModels.PersonViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.IconComment
+import org.application.shikiapp.ui.templates.Names
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -77,18 +90,16 @@ private fun PersonView(
                 title = { Text(person.jobTitle) },
                 navigationIcon = { NavigationIcon(back) },
                 actions = {
-                    if (comments.itemCount > 0)
+                    IconComment(
+                        comments = comments,
+                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
+                    )
+                    if (Preferences.token != null || person.website.isNotEmpty()) {
                         IconButton(
-                            onClick = { onEvent(ContentDetailEvent.ShowComments) }
-                        ) {
-                            Icon(painterResource(vector_comments), null)
-                        }
-                    if (Preferences.token != null || person.website.isNotEmpty())
-                        IconButton(
-                            onClick = { onEvent(ContentDetailEvent.ShowSheet) }
-                        ) {
-                            Icon(Icons.Outlined.MoreVert, null)
-                        }
+                            onClick = { onEvent(ContentDetailEvent.ShowSheet) },
+                            content = { Icon(Icons.Outlined.MoreVert, null) }
+                        )
+                    }
                 }
             )
         }
@@ -98,25 +109,35 @@ private fun PersonView(
             verticalArrangement = spacedBy(16.dp)
         ) {
             item {
-                Row(horizontalArrangement = spacedBy(8.dp)) {
-                    Poster(person.image)
-                    Column(verticalArrangement = spacedBy(16.dp)) {
-                        Names(listOf(person.russian, person.english, person.japanese))
-                        person.birthday?.let { Birthday(it) }
-                        person.deathday?.let { Deathday(it) }
+                PersonHeader(person)
+            }
+
+            item {
+                Roles(person.grouppedRoles)
+            }
+
+            person.relatedList.let {
+                if (it.isNotEmpty()) {
+                    item {
+                        Related(
+                            list = it.take(6),
+                            showAllRelated = { onEvent(ContentDetailEvent.Person.ShowWorks) },
+                            onNavigate = onNavigate
+                        )
                     }
                 }
             }
-            person.grouppedRoles.let {
-                item { Roles(it) }
-            }
+
             person.characters.let {
-                if (it.isNotEmpty()) item {
-                    Characters(
-                        list = it.take(7),
-                        show = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
-                        onNavigate = onNavigate
-                    )
+                if (it.isNotEmpty()) {
+                    item {
+                        Profiles(
+                            list = it.take(6),
+                            title = stringResource(R.string.text_characters),
+                            onShowFull = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+                            onNavigate = { onNavigate(Screen.Character(it)) }
+                        )
+                    }
                 }
             }
         }
@@ -129,15 +150,25 @@ private fun PersonView(
         onNavigate = onNavigate
     )
 
-    CharactersFull(
+    ProfilesFull(
         list = person.characters,
-        state = rememberLazyListState(),
         visible = state.showCharacters,
-        hide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+        title = stringResource(R.string.text_characters),
+        state = rememberLazyListState(),
+        onHide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+        onNavigate = { onNavigate(Screen.Character(it)) }
+    )
+
+    RelatedFull(
+        related = person.relatedMap,
+        visible = state.showWorks,
+        hide = { onEvent(ContentDetailEvent.Person.ShowWorks) },
         onNavigate = onNavigate
     )
 
-    if (state.showSheet) BottomSheet(person, state, onEvent)
+    if (state.showSheet) {
+        BottomSheet(person, state, onEvent)
+    }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -149,37 +180,117 @@ private fun BottomSheet(
     handler: UriHandler = LocalUriHandler.current
 ) = ModalBottomSheet(
     sheetState = state.sheetState,
-    onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) },
-    contentWindowInsets = { WindowInsets.systemBars }
+    onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
 ) {
-    if (Preferences.token != null) ListItem(
-        headlineContent = {
-            Text(
-                text = stringResource(
-                    if (person.isPersonFavoured) text_remove_fav else text_add_fav
+    if (Preferences.token != null) {
+        ListItem(
+            headlineContent = {
+                Text(
+                    text = stringResource(
+                        if (person.isPersonFavoured) text_remove_fav else text_add_fav
+                    )
                 )
-            )
-        },
-        modifier = Modifier.clickable {
-            onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind, person.isPersonFavoured))
-        },
-        leadingContent = {
-            Icon(
-                imageVector = Icons.Default.Favorite,
-                contentDescription = null,
-                tint = if (person.isPersonFavoured) Color.Red else LocalContentColor.current
-            )
-        }
-    )
-    if (person.website.isNotEmpty()) ListItem(
-        headlineContent = { Text("Сайт") },
-        modifier = Modifier.clickable { handler.openUri(person.website) },
-        leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
-    )
+            },
+            modifier = Modifier.clickable {
+                onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind, person.isPersonFavoured))
+            },
+            leadingContent = {
+                Icon(
+                    imageVector = Icons.Default.Favorite,
+                    contentDescription = null,
+                    tint = if (person.isPersonFavoured) Color.Red else LocalContentColor.current
+                )
+            }
+        )
+    }
+    if (person.website.isNotEmpty()) {
+        ListItem(
+            headlineContent = { Text("Сайт") },
+            modifier = Modifier.clickable { handler.openUri(person.website) },
+            leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
+        )
+    }
 }
 
 @Composable
-private fun Roles(roles: List<List<String>>) = Column(verticalArrangement = spacedBy(8.dp)) {
-    ParagraphTitle(stringResource(text_information))
-    Column { roles.let { it.forEach { (first, second) -> Text("$first: $second") } } }
-}
+private fun PersonHeader(person: Person) =
+    Row(Modifier.fillMaxWidth(), spacedBy(16.dp), CenterVertically) {
+        AsyncImage(
+            model = person.image,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(130.dp)
+                .aspectRatio(2f / 3f)
+                .clip(MaterialTheme.shapes.medium)
+                .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
+        )
+
+        Column(Modifier.weight(1f), Arrangement.spacedBy(12.dp)) {
+            Names(person.russian, person.english, person.japanese)
+
+            if (person.birthday != null || person.deathday != null) {
+                HorizontalDivider()
+            }
+
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                person.birthday?.let {
+                    LabelInfoItem(stringResource(R.string.text_birthday), it)
+                }
+                person.deathday?.let {
+                    LabelInfoItem(stringResource(R.string.text_deathday), it)
+                }
+            }
+        }
+    }
+
+@Composable
+fun LabelInfoItem(label: String, value: String, modifier: Modifier = Modifier) =
+    Column(modifier) {
+        Text(
+            text = label,
+            style = MaterialTheme.typography.labelMedium.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                fontWeight = FontWeight.Light
+            )
+        )
+        Text(
+            text = value,
+            style = MaterialTheme.typography.labelLarge.copy(
+                fontWeight = FontWeight.SemiBold
+            )
+        )
+    }
+
+@Composable
+private fun Roles(roles: List<List<String>>) =
+    Column(verticalArrangement = spacedBy(8.dp)) {
+        ParagraphTitle(stringResource(R.string.text_roles))
+        Column {
+            roles.forEachIndexed { index, (name, count) ->
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                ) {
+                    Text(
+                        text = name,
+                        modifier = Modifier.weight(1f),
+                        style = MaterialTheme.typography.bodyLarge
+                    )
+                    Text(
+                        text = count,
+                        style = MaterialTheme.typography.titleMedium.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+
+                if (index < roles.size - 1) {
+                    HorizontalDivider()
+                }
+            }
+        }
+    }

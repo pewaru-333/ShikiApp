@@ -35,6 +35,7 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import org.application.shikiapp.models.ui.list.News
 import org.application.shikiapp.models.viewModels.NewsViewModel
+import org.application.shikiapp.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
