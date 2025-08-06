@@ -1,0 +1,4 @@
+— Added more information to display when viewing anime, manga, ranobe, and person pages.
+— Added sorting of user's anime and manga rating lists.
+— The design of a large number of user interface components has been changed.
+— Lots of minor improvements and a few minor bug fixes.
