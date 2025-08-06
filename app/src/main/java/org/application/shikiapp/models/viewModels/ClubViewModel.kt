@@ -52,7 +52,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<UserBasic>(UserBasic::id) { page, params ->
+            CommonPaging(UserBasic::id) { page, params ->
                 Network.clubs.getMembers(clubId, page, params.loadSize)
             }
         }
@@ -66,7 +66,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<BasicInfo>(BasicInfo::id) { page, params ->
+            CommonPaging(BasicInfo::id) { page, params ->
                 Network.clubs.getCharacters(clubId, page, params.loadSize)
             }
         }
@@ -81,7 +81,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<AnimeBasic>(AnimeBasic::id) { page, params ->
+            CommonPaging(AnimeBasic::id) { page, params ->
                 Network.clubs.getAnime(clubId, page, params.loadSize)
             }
         }
@@ -96,7 +96,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<MangaBasic>(MangaBasic::id) { page, params ->
+            CommonPaging(MangaBasic::id) { page, params ->
                 Network.clubs.getManga(clubId, page, params.loadSize)
             }
         }
@@ -111,7 +111,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<MangaBasic>(MangaBasic::id) { page, params ->
+            CommonPaging(MangaBasic::id) { page, params ->
                 Network.clubs.getRanobe(clubId, page, params.loadSize)
             }
         }
@@ -141,7 +141,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<ClubImages>(ClubImages::id) { page, params ->
+            CommonPaging(ClubImages::id) { page, params ->
                 Network.clubs.getImages(clubId, page, params.loadSize)
             }
         }
