@@ -20,6 +20,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
@@ -53,7 +54,7 @@ import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.states.CatalogState
 import org.application.shikiapp.models.states.FiltersState
-import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
@@ -67,8 +68,9 @@ import org.application.shikiapp.utils.extensions.toggle
 import org.application.shikiapp.utils.navigation.Screen
 import org.application.shikiapp.utils.setScore
 
-class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
-    private val args = saved.toRoute<Screen.Catalog>()
+class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
+    private val args: Screen.Catalog
+        get() = saved.toRoute<Screen.Catalog>()
 
     private val _state = MutableStateFlow(CatalogState())
     val state = _state.asStateFlow()
@@ -76,23 +78,21 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
     private val _event = Channel<DrawerEvent?>()
     val event = _event.receiveAsFlow()
 
-    private val _navEvent = Channel<Boolean>()
-    val navEvent = _navEvent.receiveAsFlow().onStart { emit(args.showOngoing) }
+    private val _navEvent = Channel<Screen.Catalog>()
+    val navEvent = _navEvent.receiveAsFlow().onStart { emit(args) }
 
     private val filters = CatalogItem.entries.associateWith { MutableStateFlow(FiltersState()) }
-    private val pagers = mutableMapOf<CatalogItem, Flow<PagingData<Content>>>()
+    private val pagers = mutableMapOf<CatalogItem, Flow<PagingData<BasicContent>>>()
 
     private val _currentFilters = MutableStateFlow(FiltersState())
     val currentFilters = _currentFilters.asStateFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val list = _state.flatMapLatest { state ->
-        _currentFilters.flatMapLatest { currentFilters ->
-            pagers.getOrPut(state.menu) {
-                createPagingFlow(state.menu, currentFilters).cachedIn(viewModelScope)
-            }
+    val list = combine(_state, _currentFilters) { state, currentFilters ->
+        pagers.getOrPut(state.menu) {
+            createPagingFlow(state.menu, currentFilters).cachedIn(viewModelScope)
         }
-    }
+    }.flatMapLatest { it }
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val genres = _state.flatMapLatest {
@@ -101,7 +101,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             CatalogItem.MANGA, CatalogItem.RANOBE -> GraphQL.getMangaGenres()
             else -> flowOf(emptyList())
         }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(), emptyList())
+    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
 
 
     fun showFilters(menu: CatalogItem) = _state.update {
@@ -130,6 +130,12 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         filters.getValue(_state.value.menu).update { _currentFilters.value }
         _currentFilters.update { filters.getValue(menu).value }
 
+        args.linkedType?.let {
+            saved.keys().forEach { key ->
+                saved[key] = null
+            }
+        }
+
         _state.update {
             it.copy(
                 menu = menu,
@@ -151,7 +157,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
         ),
         pagingSourceFactory = {
             if (item == CatalogItem.CLUBS) {
-                CommonPaging(Content::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     fetchData(item, filtersState, page, params)
                 }
             } else {
@@ -178,6 +184,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             duration = query.duration.joinToString(","),
             rating = query.rating.joinToString(","),
             genre = query.genres.joinToString(","),
+            studio = query.studio,
             search = query.title
         )
 
@@ -190,6 +197,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             season = query.season.joinToString(","),
             score = setScore(query.status, query.score),
             genre = query.genres.joinToString(","),
+            publisher = query.publisher,
             search = query.title
         )
 
@@ -203,6 +211,7 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
             season = query.season.joinToString(","),
             score = setScore(query.status, query.score),
             genre = query.genres.joinToString(","),
+            publisher = query.publisher,
             search = query.title
         )
 
@@ -234,6 +243,8 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
 
     fun onEvent(event: FilterEvent) {
         when (event) {
+            FilterEvent.ClearFilters -> _currentFilters.update { FiltersState() }
+
             is SetOrder -> _currentFilters.update {
                 it.copy(order = event.order)
             }
@@ -313,8 +324,8 @@ class CatalogViewModel(saved: SavedStateHandle) : ViewModel() {
                 )
             }
 
-            is SetStudio -> {}
-            is SetPublisher -> {}
+            is SetStudio -> _currentFilters.update { it.copy(studio = event.studio) }
+            is SetPublisher -> _currentFilters.update { it.copy(publisher = event.publisher) }
             is SetFranchise -> {}
             is SetCensored -> {}
             is SetMyList -> {}
