@@ -17,7 +17,7 @@ class Person(
     @SerialName("website") val website: String,
     @SerialName("groupped_roles") val grouppedRoles: List<List<String>>,
     @SerialName("roles") val roles: List<Roles>?,
-    // @SerialName("works") val works: List<Works>?,
+    @SerialName("works") val works: List<Works>?,
     @SerialName("topic_id") val topicId: Long?,
     @SerialName("person_favoured") val personFavoured: Boolean,
     @SerialName("producer") val producer: Boolean,
@@ -44,9 +44,9 @@ data class Roles(
     val animes: List<AnimeBasic>
 )
 
-//@Serializable
-//data class Works(
-//    val anime: AnimeBasic?,
-//    val manga: MangaBasic?,
-//    val roles: Role?
-//)
+@Serializable
+data class Works(
+    val anime: AnimeBasic?,
+    val manga: MangaBasic?,
+    val role: String?
+)
