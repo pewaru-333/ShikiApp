@@ -3,7 +3,14 @@ package org.application.shikiapp.utils
 import android.icu.text.NumberFormat
 import android.text.format.DateUtils
 import android.util.Patterns
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.PlatformSpanStyle
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
+import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.intl.Locale
+import androidx.compose.ui.text.style.TextDecoration
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Date
 import org.application.shikiapp.utils.enums.Kind
@@ -20,16 +27,28 @@ import java.time.format.DateTimeParseException
 import java.time.format.FormatStyle
 
 
-fun convertDate(date: String): String {
-    val formatted = OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-    val millis = formatted.toInstant().toEpochMilli()
+fun getNextEpisode(date: Any?) = if (date !is String) BLANK
+else OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+    .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
 
-    return DateUtils.getRelativeTimeSpanString(
-        millis,
-        System.currentTimeMillis(),
-        DateUtils.DAY_IN_MILLIS
-    ).toString()
-}
+fun convertDate(date: Any?, offset: Boolean = true) = when {
+     date !is String ->  BLANK
+
+     offset -> {
+         val formatted = OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+         val millis = formatted.toInstant().toEpochMilli()
+
+          DateUtils.getRelativeTimeSpanString(
+             millis,
+             System.currentTimeMillis(),
+             DateUtils.DAY_IN_MILLIS
+         ).toString()
+     }
+
+     else -> {
+          LocalDate.parse(date).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+     }
+ }
 
 fun convertScore(score: Any?) = when (val result = score) {
     is String -> result.replace(".", ",")
@@ -114,6 +133,7 @@ fun getOngoingSeason(): String {
 }
 
 fun getSeason(text: Any?, kind: String?) = when (text) {
+    is Int -> ResourceText.StaticString(text.toString())
     is String -> when (text) {
         "?" -> ResourceText.StringResource(R.string.text_unknown)
         else -> when {
@@ -153,3 +173,31 @@ fun getSeason(text: Any?, kind: String?) = when (text) {
 
 fun setScore(status: Set<String>, score: Float) = if (Status.ANONS.name.lowercase() in status) null
 else score.toInt()
+
+fun localizeNames(text: String) : String {
+    val fullPattern = Regex("""<span class="name-en">(.*?)</span><span class="name-ru">(.*?)</span>""")
+    val englishPattern = Regex("""<span class="name-en">(.*?)</span>""")
+    val russianPattern = Regex("""<span class="name-ru">(.*?)</span>""")
+
+    var modifiedHtml = text.replace(fullPattern, """<span class="name-ru">$2</span>""")
+
+    if (!modifiedHtml.contains("<span class=\"name-ru\">")) {
+        modifiedHtml = modifiedHtml.replace(englishPattern, """<span class="name-en">$1</span>""")
+    }
+
+    return modifiedHtml
+        .replace(russianPattern, "$1")
+        .replace(englishPattern, "$1")
+}
+
+fun fromHtml(text: String?) = if (text == null) AnnotatedString(BLANK)
+else AnnotatedString.Companion.fromHtml(
+    htmlString = localizeNames(text),
+    linkStyles = TextLinkStyles(
+        SpanStyle(
+            color = Color(0xFF33BBFF),
+            textDecoration = TextDecoration.Companion.Underline,
+            platformStyle = PlatformSpanStyle.Companion.Default
+        )
+    )
+)
