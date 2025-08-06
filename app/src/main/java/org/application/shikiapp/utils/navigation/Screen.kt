@@ -5,7 +5,12 @@ import org.application.shikiapp.utils.enums.LinkedType
 
 sealed interface Screen {
     @Serializable
-    data class Catalog(val showOngoing: Boolean = false) : Screen
+    data class Catalog(
+        val studio: String? = null,
+        val publisher: String? = null,
+        val linkedType: LinkedType? = null,
+        val showOngoing: Boolean? = null
+    ) : Screen
 
     @Serializable
     object News : Screen
@@ -41,5 +46,9 @@ sealed interface Screen {
     data class NewsDetail(val id: Long) : Screen
 
     @Serializable
-    data class UserRates(val id: Long? = null, val type: LinkedType? = null, val editable: Boolean = false) : Screen
+    data class UserRates(
+        val id: Long? = null,
+        val type: LinkedType? = null,
+        val editable: Boolean = false
+    ) : Screen
 }
