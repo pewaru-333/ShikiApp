@@ -4,30 +4,30 @@ import androidx.annotation.StringRes
 import org.application.shikiapp.R
 import org.application.shikiapp.utils.navigation.Screen
 
-enum class LinkedType {
-    ANIME {
+enum class LinkedType(@StringRes val title: Int) {
+    ANIME(R.string.text_anime) {
         override fun navigateTo(contentId: String) = Screen.Anime(contentId)
-        override fun getTitleResId(status: WatchStatus) = status.titleAnime
+        override fun getWatchStatusTitle(status: WatchStatus) = status.titleAnime
     },
-    MANGA {
+    MANGA(R.string.text_manga) {
         override fun navigateTo(contentId: String) = Screen.Manga(contentId)
-        override fun getTitleResId(status: WatchStatus) = status.titleManga
+        override fun getWatchStatusTitle(status: WatchStatus) = status.titleManga
     },
-    RANOBE {
+    RANOBE(R.string.text_ranobe) {
         override fun navigateTo(contentId: String) = Screen.Manga(contentId)
-        override fun getTitleResId(status: WatchStatus) = status.titleManga
+        override fun getWatchStatusTitle(status: WatchStatus) = status.titleManga
     },
-    PERSON {
+    PERSON(R.string.blank) {
         override fun navigateTo(contentId: String) = Screen.Person(contentId.toLong())
-        override fun getTitleResId(status: WatchStatus) = R.string.blank
+        override fun getWatchStatusTitle(status: WatchStatus) = R.string.blank
     },
-    CHARACTER {
+    CHARACTER(R.string.blank) {
         override fun navigateTo(contentId: String) = Screen.Character(contentId)
-        override fun getTitleResId(status: WatchStatus) = R.string.blank
+        override fun getWatchStatusTitle(status: WatchStatus) = R.string.blank
     };
 
     @StringRes
-    abstract fun getTitleResId(status: WatchStatus): Int
+    abstract fun getWatchStatusTitle(status: WatchStatus): Int
     abstract fun navigateTo(contentId: String): Screen
 
     @StringRes
