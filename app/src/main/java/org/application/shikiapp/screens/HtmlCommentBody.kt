@@ -48,6 +48,7 @@ import coil3.request.ImageRequest
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.localizeNames
 import kotlin.math.min
 
 @Composable

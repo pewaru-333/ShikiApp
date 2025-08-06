@@ -13,7 +13,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import org.application.shikiapp.screens.localizeNames
 import org.application.shikiapp.utils.CommentContent.ImageContent
 import org.application.shikiapp.utils.CommentContent.LineBreakContent
 import org.application.shikiapp.utils.CommentContent.QuoteContent
