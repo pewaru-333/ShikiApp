@@ -2,15 +2,19 @@ package org.application.shikiapp.network.client
 
 import com.apollographql.apollo.api.Query
 import org.application.shikiapp.generated.AnimeAiringQuery
+import org.application.shikiapp.generated.AnimeExtraQuery
 import org.application.shikiapp.generated.AnimeGenresQuery
 import org.application.shikiapp.generated.AnimeListQuery
-import org.application.shikiapp.generated.AnimeQuery
-import org.application.shikiapp.generated.AnimeStatsQuery
+import org.application.shikiapp.generated.AnimeMainQuery
+import org.application.shikiapp.generated.AnimeTopicQuery
 import org.application.shikiapp.generated.CharacterListQuery
 import org.application.shikiapp.generated.CharacterQuery
+import org.application.shikiapp.generated.CharacterTopicQuery
+import org.application.shikiapp.generated.MangaExtraQuery
 import org.application.shikiapp.generated.MangaGenresQuery
 import org.application.shikiapp.generated.MangaListQuery
-import org.application.shikiapp.generated.MangaQuery
+import org.application.shikiapp.generated.MangaMainQuery
+import org.application.shikiapp.generated.MangaTopicQuery
 import org.application.shikiapp.generated.PeopleQuery
 import org.application.shikiapp.generated.UserRatesQuery
 import org.application.shikiapp.generated.UsersQuery
@@ -37,6 +41,7 @@ object GraphQL {
         duration: String?,
         rating: String?,
         genre: String?,
+        studio: String?,
         search: String?
     ) = getList(
         AnimeListQuery(
@@ -50,6 +55,7 @@ object GraphQL {
             duration = duration,
             rating = rating,
             genre = genre,
+            studio = studio,
             search = search
         )
     ) { it.animes.map(AnimeListQuery.Data.Anime::mapper) }
@@ -61,15 +67,17 @@ object GraphQL {
             .map(AnimeAiringQuery.Data.Anime::mapper)
             .getRandomTrending()
 
-    suspend fun getAnime(id: String) = Network.apollo.query(AnimeQuery(id)).execute()
+    suspend fun getAnimeMain(id: String) = Network.apollo.query(AnimeMainQuery(id)).execute()
+        .dataOrThrow().animes.first()
+
+    suspend fun getAnimeExtra(id: String) = Network.apollo.query(AnimeExtraQuery(id)).execute()
+        .dataOrThrow().animes.first()
+
+    suspend fun getAnimeTopic(id: String) = Network.apollo.query(AnimeTopicQuery(id)).execute()
         .dataOrThrow().animes.first()
 
     fun getAnimeGenres() = Network.apollo.query(AnimeGenresQuery()).toFlow()
         .mapToResult(AnimeGenresQuery.Data::genres)
-
-    suspend fun getAnimeStats(id: String) =
-        Network.apollo.query(AnimeStatsQuery(id)).execute()
-            .dataOrThrow().animes.first()
 
 // ============================================= Manga =============================================
 
@@ -82,6 +90,7 @@ object GraphQL {
         season: String?,
         score: Int?,
         genre: String?,
+        publisher: String?,
         search: String?
     ) = getList(
         MangaListQuery(
@@ -93,11 +102,18 @@ object GraphQL {
             season = season,
             score = score,
             genre = genre,
+            publisher = publisher,
             search = search
         )
     ) { it.mangas.map(MangaListQuery.Data.Manga::mapper) }
 
-    suspend fun getManga(id: String) = Network.apollo.query(MangaQuery(id)).execute()
+    suspend fun getMangaMain(id: String) = Network.apollo.query(MangaMainQuery(id)).execute()
+        .dataOrThrow().mangas.first()
+
+    suspend fun getMangaExtra(id: String) = Network.apollo.query(MangaExtraQuery(id)).execute()
+        .dataOrThrow().mangas.first()
+
+    suspend fun getMangaTopic(id: String) = Network.apollo.query(MangaTopicQuery(id)).execute()
         .dataOrThrow().mangas.first()
 
     fun getMangaGenres() = Network.apollo.query(MangaGenresQuery()).toFlow()
@@ -113,6 +129,9 @@ object GraphQL {
     suspend fun getCharacter(id: String) =
         Network.apollo.query(CharacterQuery(listOf(id))).execute()
             .dataOrThrow().characters.first()
+
+    suspend fun getCharacterTopic(id: String) = Network.apollo.query(CharacterTopicQuery(listOf(id))).execute()
+        .dataOrThrow().characters.first()
 
     suspend fun getPeople(
         page: Int,
