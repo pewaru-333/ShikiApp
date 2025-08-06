@@ -6,11 +6,12 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.AnimeState
 import org.application.shikiapp.models.ui.Anime
-import org.application.shikiapp.models.ui.mappers.mapper
+import org.application.shikiapp.models.ui.mappers.AnimeMapper
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
@@ -27,23 +28,25 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
             emit(Response.Loading)
 
             try {
-                val anime = asyncLoad { GraphQL.getAnime(animeId) }
-                val similar = asyncLoad { Network.anime.getSimilar(animeId) }
-                val links = asyncLoad { Network.anime.getLinks(animeId) }
-                val stats = asyncLoad { GraphQL.getAnimeStats(animeId) }
-                val favoured = Network.anime.getAnime(animeId).favoured
+                val topic = async { GraphQL.getAnimeTopic(animeId) }
+                val main = async { GraphQL.getAnimeMain(animeId) }
+                val extra = async { GraphQL.getAnimeExtra(animeId) }
 
-                val animeLoaded = anime.await()
-                val comments = getComments(animeLoaded.topic?.id?.toLong())
+                val franchise = async { Network.anime.getFranchise(animeId) }
+                val similar = async { Network.anime.getSimilar(animeId) }
+                val favoured = async { Network.anime.getAnime(animeId).favoured }
+
+                val comments = getComments(topic.await().topic?.id?.toLong())
 
                 emit(
                     Response.Success(
-                        animeLoaded.mapper(
+                        AnimeMapper.create(
+                            main = main.await(),
+                            extra = extra.await(),
+                            franchise = franchise.await(),
                             similar = similar.await(),
-                            links = links.await(),
-                            stats = stats.await(),
                             comments = comments,
-                            favoured = favoured
+                            favoured = favoured.await()
                         )
                     )
                 )
@@ -72,19 +75,10 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
                 ContentDetailEvent.Media.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
                 ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
                 ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
-                ContentDetailEvent.Media.ShowSimilar -> updateState {
-                    it.copy(
-                        showSimilar = !it.showSimilar,
-                        showSheet = !it.showSheet
-                    )
-                }
-
-                ContentDetailEvent.Media.ShowStats -> updateState {
-                    it.copy(
-                        showStats = !it.showStats,
-                        showSheet = !it.showSheet
-                    )
-                }
+                ContentDetailEvent.Media.ShowSimilar -> updateState { it.copy(showSimilar = !it.showSimilar) }
+                ContentDetailEvent.Media.ShowStats -> updateState { it.copy(showStats = !it.showStats) }
+                ContentDetailEvent.Media.ShowFansubbers -> updateState { it.copy(showFansubbers = !it.showFansubbers) }
+                ContentDetailEvent.Media.ShowFandubbers -> updateState { it.copy(showFandubbers = !it.showFandubbers) }
 
                 ContentDetailEvent.Media.ShowLinks -> updateState {
                     it.copy(

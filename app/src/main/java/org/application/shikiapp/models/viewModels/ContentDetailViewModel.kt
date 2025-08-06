@@ -5,7 +5,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import io.ktor.client.plugins.ClientRequestException
-import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
@@ -17,8 +16,7 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.extensions.toValue
 
 abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailEvent>() {
-    protected fun getComments(id: Long?, type: String = "Topic") = if (id == null) emptyFlow()
-    else Pager(
+    protected fun getComments(id: Long?, type: String = "Topic") = Pager(
         config = PagingConfig(
             pageSize = 15,
             enablePlaceholders = false

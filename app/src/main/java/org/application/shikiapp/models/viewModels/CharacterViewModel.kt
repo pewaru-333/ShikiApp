@@ -3,11 +3,12 @@ package org.application.shikiapp.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
-import org.application.shikiapp.models.ui.mappers.mapper
+import org.application.shikiapp.models.ui.mappers.CharacterMapper
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
@@ -24,13 +25,21 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
             emit(Response.Loading)
 
             try {
-                val character = asyncLoad { Network.content.getCharacter(id) }
-                val image = asyncLoad { GraphQL.getCharacter(id) }
+                val character = async { Network.content.getCharacter(id) }
+                val image = async { GraphQL.getCharacter(id) }
+                val topic = async { GraphQL.getCharacterTopic(id) }
 
-                val characterLoaded = character.await()
-                val comments = getComments(characterLoaded.topicId)
+                val comments = getComments(topic.await().topic?.id?.toLong())
 
-                emit(Response.Success(characterLoaded.mapper(image.await(), comments)))
+                emit(
+                    Response.Success(
+                        CharacterMapper.create(
+                            character = character.await(),
+                            image = image.await(),
+                            comments = comments
+                        )
+                    )
+                )
             } catch (e: Throwable) {
                 emit(Response.Error(e))
             }
@@ -41,16 +50,10 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
         when (event) {
             ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
 
+            ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
+
             is ContentDetailEvent.Character -> when (event) {
-                ContentDetailEvent.Character.ShowAnime -> updateState { it.copy(showAnime = !it.showAnime) }
-                ContentDetailEvent.Character.ShowManga -> updateState { it.copy(showManga = !it.showManga) }
                 ContentDetailEvent.Character.ShowSeyu -> updateState { it.copy(showSeyu = !it.showSeyu) }
-                ContentDetailEvent.Character.HideAll -> updateState {
-                    it.copy(
-                        showAnime = false,
-                        showManga = false
-                    )
-                }
 
                 is ContentDetailEvent.Character.ToggleFavourite -> toggleFavourite(
                     id = id,

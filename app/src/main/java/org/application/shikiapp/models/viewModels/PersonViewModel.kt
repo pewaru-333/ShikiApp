@@ -43,6 +43,8 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
 
             ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
 
+            ContentDetailEvent.Person.ShowWorks -> updateState { it.copy(showWorks = !it.showWorks) }
+
             is ContentDetailEvent.Person.ToggleFavourite -> toggleFavourite(
                 id = id,
                 type = LinkedType.PERSON,

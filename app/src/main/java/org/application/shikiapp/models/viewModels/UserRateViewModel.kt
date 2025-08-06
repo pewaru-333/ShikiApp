@@ -8,7 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.plugins.ClientRequestException
+import io.ktor.client.plugins.ResponseException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -17,7 +17,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.mapLatest
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
@@ -35,6 +35,7 @@ import org.application.shikiapp.events.RateEvent.SetVolumes
 import org.application.shikiapp.generated.type.UserRateTargetTypeEnum
 import org.application.shikiapp.models.data.NewRate
 import org.application.shikiapp.models.states.NewRateState
+import org.application.shikiapp.models.states.SortingState
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
@@ -42,6 +43,8 @@ import org.application.shikiapp.network.response.RatesResponse
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.LinkedType
+import org.application.shikiapp.utils.enums.OrderDirection
+import org.application.shikiapp.utils.enums.OrderRates
 import org.application.shikiapp.utils.enums.Score
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeValueOf
@@ -60,6 +63,9 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         .onStart { loadRates() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RatesResponse.Loading)
 
+    private val _orderState = MutableStateFlow(SortingState())
+    val orderState = _orderState.asStateFlow()
+
     private val _newRate = MutableStateFlow(NewRateState())
     val newRate = _newRate.asStateFlow()
 
@@ -67,14 +73,34 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     val changed = _changed.receiveAsFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val rates = _response.mapLatest { response ->
+    val rates = combine(_response, _orderState) { response, state ->
         if (response !is RatesResponse.Success) emptyMap()
         else response.rates
             .groupBy { Enum.safeValueOf<WatchStatus>(it.status) }
-            .mapValues { (key, value) -> value.sortedBy(UserRate::title) }
+            .mapValues { (key, value) ->
+                if (state.direction == OrderDirection.ASCENDING) {
+                    when (state.order) {
+                        OrderRates.TITLE -> value.sortedBy(UserRate::title)
+                        OrderRates.SCORE -> value.sortedBy(UserRate::score)
+                        OrderRates.EPISODES -> value.sortedBy(UserRate::episodes)
+                        OrderRates.KIND -> value.sortedBy(UserRate::kind)
+                        OrderRates.CREATED_AT -> value.sortedBy(UserRate::createdAt)
+                        OrderRates.UPDATE_AT -> value.sortedBy(UserRate::updatedAt)
+                    }
+                } else {
+                    when (state.order) {
+                        OrderRates.TITLE -> value.sortedByDescending(UserRate::title)
+                        OrderRates.SCORE -> value.sortedByDescending(UserRate::score)
+                        OrderRates.EPISODES -> value.sortedByDescending(UserRate::episodes)
+                        OrderRates.KIND -> value.sortedByDescending(UserRate::kind)
+                        OrderRates.CREATED_AT -> value.sortedByDescending(UserRate::createdAt)
+                        OrderRates.UPDATE_AT -> value.sortedByDescending(UserRate::updatedAt)
+                    }
+                }
+            }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(),
+        started = SharingStarted.WhileSubscribed(5000L),
         initialValue = emptyMap()
     )
 
@@ -123,9 +149,25 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 }
 
                 _response.emit(RatesResponse.Success(rates))
-            } catch (e: ClientRequestException) {
+            } catch (e: ResponseException) {
                 if (e.response.status.value == 403) _response.emit(RatesResponse.NoAccess)
                 else _response.emit(RatesResponse.Error)
+            }
+        }
+    }
+
+    fun onSortChanged(orderType: OrderRates) {
+        viewModelScope.launch {
+            _orderState.value.let { value ->
+                if (value.order == orderType) {
+                    if (value.direction == OrderDirection.ASCENDING) {
+                        _orderState.emit(SortingState(orderType, OrderDirection.DESCENDING))
+                    } else {
+                        _orderState.emit(SortingState())
+                    }
+                } else {
+                    _orderState.emit(SortingState(orderType, OrderDirection.ASCENDING))
+                }
             }
         }
     }
@@ -214,6 +256,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         val updatedRate = oldRates[index].copy(
                             status = newRate.status.toString(),
                             score = newRate.score?.score ?: 1,
+                            scoreString = newRate.score?.score.toString(),
                             chapters = newRate.chapters?.toInt() ?: 0,
                             episodes = newRate.episodes?.toInt() ?: 0,
                             volumes = newRate.volumes?.toInt() ?: 0,
@@ -331,7 +374,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         is SetStatus -> _newRate.update {
             it.copy(
                 status = event.status.name,
-                statusName = event.type.getTitleResId(event.status)
+                statusName = event.type.getWatchStatusTitle(event.status)
             )
         }
 
