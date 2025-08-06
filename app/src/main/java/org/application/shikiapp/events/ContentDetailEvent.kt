@@ -1,7 +1,7 @@
 package org.application.shikiapp.events
 
-import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.utils.enums.FavouriteItem
+import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.UserMenu
 
 sealed interface ContentDetailEvent {
@@ -16,6 +16,8 @@ sealed interface ContentDetailEvent {
         data object ShowSimilar : Media
         data object ShowStats : Media
         data object ShowLinks : Media
+        data object ShowFansubbers : Media
+        data object ShowFandubbers : Media
         data object ShowRate : Media
 
         data class ShowImage(val index: Int = 0) : Media
@@ -29,20 +31,19 @@ sealed interface ContentDetailEvent {
         }
 
         sealed interface Manga : ContentDetailEvent {
-            data class ToggleFavourite(val type: MangaKindEnum?, val favoured: Boolean) : Manga
+            data class ToggleFavourite(val type: Kind?, val favoured: Boolean) : Manga
         }
     }
 
     sealed interface Character : ContentDetailEvent {
-        data object ShowAnime : Character
-        data object ShowManga : Character
         data object ShowSeyu : Character
-        data object HideAll : Character
 
         data class ToggleFavourite(val favoured: Boolean) : Character
     }
 
     sealed interface Person : ContentDetailEvent {
+        data object ShowWorks : Person
+
         data class ToggleFavourite(val kind: String, val favoured: Boolean) : Person
     }
 
