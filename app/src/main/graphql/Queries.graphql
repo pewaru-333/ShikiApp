@@ -11,7 +11,7 @@ query AnimeList(
     $duration: DurationString,
     $rating: RatingString,
     $genre: String,
-    # $studio: String,
+    $studio: String,
     # $franchise: String,
     # $censored: Boolean,
     # $mylist: MylistString,
@@ -29,66 +29,59 @@ query AnimeList(
         rating: $rating,
         genre: $genre,
         censored: false,
+        studio: $studio,
         search: $search
     ) {
-        id
-        name
-        russian
-        kind
-        season
-        score
-        poster {
-            originalUrl
-            mainUrl
+        ...AnimeContent
+        airedOn {
+            date
         }
     }
 }
 
 query AnimeAiring($season: SeasonString) {
     animes(kind: "tv", status: "ongoing", season: $season, order: popularity, limit: 12) {
-        id
-        name
-        russian
-        poster {
-            originalUrl
-        }
+        ...AnimeBasic
     }
 }
 
-query Anime($id: String!) {
-    animes (ids: $id) {
-        id
-        name
-        russian
-        kind
-        rating
-        score
-        status
+query AnimeMain($id: String!) {
+    animes(ids: $id) {
+        ...AnimeContent
+        airedOn {
+            date
+        }
+        descriptionHtml
+        duration
         episodes
         episodesAired
-        season
-        descriptionHtml
-        poster {
-            originalUrl
+        externalLinks {
+            ...Link
         }
+        fandubbers
+        fansubbers
+        franchise
         genres {
-            russian
+            ...Genres
+        }
+        licenseNameRu
+        licensors
+        nextEpisodeAt
+        origin
+        rating
+        releasedOn {
+            date
+        }
+        screenshots {
+            originalUrl
         }
         studios {
             id
             name
+            imageUrl
         }
-        related {
-            ...RelatedFragment
-        }
-        characterRoles {
-            ...CharacterFragment
-        }
-        personRoles {
-            ...PersonFragment
-        }
-        screenshots {
-            originalUrl
+        userRate {
+            ...UserRateFragment
         }
         videos {
             url
@@ -96,29 +89,50 @@ query Anime($id: String!) {
             kind
             imageUrl
         }
-        topic {
-            id
+    }
+}
+
+query AnimeExtra($id: String!) {
+    animes(ids: $id) {
+        characterRoles {
+            ...CharacterRole
         }
-        userRate {
-            ...UserRateF
+        chronology {
+            ...AnimeContent
+            airedOn {
+                date
+            }
+            rating
+            releasedOn {
+                date
+            }
+        }
+        personRoles {
+            ...PersonRole
+        }
+        related {
+            ...RelatedFragment
+        }
+        scoresStats {
+            ...Scores
+        }
+        statusesStats {
+            ...Stats
         }
     }
 }
 
-query AnimeStats($id: String!) {
-    animes (ids: $id) {
-        scoresStats {
-            ...ScoresF
-        }
-        statusesStats {
-            ...StatsF
+query AnimeTopic($id: String!) {
+    animes(ids: $id) {
+        topic {
+            id
         }
     }
 }
 
 query AnimeGenres {
     genres(entryType: Anime) {
-        ...GenresF
+        ...Genres
     }
 }
 
@@ -133,7 +147,7 @@ query MangaList(
     $season: SeasonString,
     $score: Int,
     $genre: String,
-    # $publisher: String,
+    $publisher: String,
     # $franchise: String,
     # $censored: Boolean,
     # $mylist: MylistString,
@@ -148,84 +162,87 @@ query MangaList(
         season: $season,
         score: $score,
         genre: $genre,
+        publisher: $publisher,
         search: $search
     ) {
-        id
-        name
-        russian
-        kind
-        score
+        ...MangaContent
         airedOn {
             date
-        }
-        poster {
-            originalUrl
-            mainUrl
         }
     }
 }
 
-query Manga($id: String!) {
-    mangas (ids: $id) {
-        id
-        name
-        russian
-        kind
-        score
-        status
-        volumes
-        chapters
-        descriptionHtml
+query MangaMain($id: String!) {
+    mangas(ids: $id) {
+        ...MangaContent
         airedOn {
             date
         }
-        releasedOn {
-            date
+        chapters
+        descriptionHtml
+        externalLinks {
+            ...Link
         }
-        poster {
-            originalUrl
-        }
+        franchise
         genres {
-            russian
+            ...Genres
         }
+        licenseNameRu
+        licensors
         publishers {
             id
             name
         }
-        topic {
-            id
+        releasedOn {
+            date
         }
-        externalLinks {
-            id
-            kind
-            url
-            createdAt
-            updatedAt
+        userRate {
+            ...UserRateFragment
+        }
+        volumes
+    }
+}
+
+query MangaExtra($id: String!) {
+    mangas(ids: $id) {
+        characterRoles {
+            ...CharacterRole
+        }
+        chronology {
+            ...MangaContent
+            airedOn {
+                date
+            }
+            releasedOn {
+                date
+            }
+        }
+        personRoles {
+            ...PersonRole
         }
         related {
             ...RelatedFragment
         }
-        characterRoles {
-            ...CharacterFragment
-        }
-        personRoles {
-            ...PersonFragment
-        }
         scoresStats {
-            ...ScoresF
+            ...Scores
         }
         statusesStats {
-            ...StatsF
+            ...Stats
         }
-        userRate {
-            ...UserRateF
+    }
+}
+
+query MangaTopic($id: String!) {
+    mangas(ids: $id) {
+        topic {
+            id
         }
     }
 }
 
 query MangaGenres {
     genres(entryType: Manga) {
-        ...GenresF
+        ...Genres
     }
 }
 
@@ -233,13 +250,7 @@ query MangaGenres {
 
 query CharacterList($page: PositiveInt, $limit: PositiveInt, $search: String) {
     characters(page: $page, limit: $limit, search: $search) {
-        id
-        name
-        russian
-        poster {
-            originalUrl
-            mainUrl
-        }
+        ...CharacterBasic
     }
 }
 
@@ -247,6 +258,14 @@ query Character($id: [ID!]) {
     characters(ids: $id) {
         poster {
             originalUrl
+        }
+    }
+}
+
+query CharacterTopic($id: [ID!]) {
+    characters(ids: $id) {
+        topic {
+            id
         }
     }
 }
@@ -269,13 +288,7 @@ query People(
         isProducer: $isProducer,
         isMangaka: $isMangaka
     ) {
-        id
-        name
-        russian
-        poster {
-            originalUrl
-            mainUrl
-        }
+        ...PersonBasic
     }
 }
 
@@ -315,101 +328,128 @@ query UserRates(
         status: $status,
         order: $order
     ) {
-        id
-        score
-        status
-        text
-        rewatches
-        episodes
-        chapters
-        volumes
+        ...UserRateFragment
+        createdAt
+        updatedAt
         anime {
-            id
-            name
-            russian
-            kind
+            ...AnimeContent
             episodes
-            status
-            poster {
-                originalUrl
-            }
         }
         manga {
-            id
-            name
-            russian
-            kind
+            ...MangaContent
             chapters
-            status
-            poster {
-                originalUrl
-            }
         }
     }
 }
 
 # =========================================== Fragments ============================================
 
-fragment CharacterFragment on CharacterRole {
-    rolesRu
-    character {
-        id
-        name
-        russian
-        poster {
-            originalUrl
-        }
+fragment AnimeBasic on Anime {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
     }
 }
 
-fragment PersonFragment on PersonRole {
+fragment AnimeContent on Anime {
+    ...AnimeBasic
+    kind
+    season
+    status
+    score
+}
+
+fragment MangaBasic on Manga {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment MangaContent on Manga {
+    ...MangaBasic
+    kind
+    status
+    score
+}
+
+fragment CharacterBasic on Character {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment CharacterRole on CharacterRole {
+    rolesRu
+    character {
+        ...CharacterBasic
+    }
+}
+
+fragment PersonBasic on Person {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment PersonRole on PersonRole {
     rolesRu
     person {
-        id
-        name
-        russian
-        poster {
-            originalUrl
-        }
+        ...PersonBasic
     }
 }
 
 fragment RelatedFragment on Related {
     anime {
-        id
-        name
-        russian
-        poster {
-            originalUrl
+        ...AnimeContent
+        airedOn {
+            date
         }
     }
     manga {
-        id
-        name
-        russian
-        poster {
-            originalUrl
+        ...MangaContent
+        airedOn {
+            date
         }
     }
     relationText
 }
 
-fragment GenresF on Genre {
+fragment Genres on Genre {
     id
     russian
 }
 
-fragment ScoresF on ScoreStat {
+fragment Scores on ScoreStat {
     score
     count
 }
 
-fragment StatsF on StatusStat {
+fragment Stats on StatusStat {
     status
     count
 }
 
-fragment UserRateF on UserRate {
+fragment Link on ExternalLink {
+    kind
+    url
+}
+
+fragment UserRateFragment on UserRate {
     id
     status
     chapters
