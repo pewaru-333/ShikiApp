@@ -42,6 +42,14 @@ query AnimeList(
 query AnimeAiring($season: SeasonString) {
     animes(kind: "tv", status: "ongoing", season: $season, order: popularity, limit: 12) {
         ...AnimeBasic
+        score
+    }
+}
+
+query AnimeRandom {
+    animes(kind: "tv,movie,ona", status: "released", order: random, limit: 12, censored: true) {
+        ...AnimeBasic
+        score
     }
 }
 
@@ -83,6 +91,7 @@ query AnimeMain($id: String!) {
         userRate {
             ...UserRateFragment
         }
+        url
         videos {
             url
             name
@@ -199,6 +208,7 @@ query MangaMain($id: String!) {
         userRate {
             ...UserRateFragment
         }
+        url
         volumes
     }
 }
@@ -307,38 +317,6 @@ query Users(
         id
         nickname
         avatarUrl
-    }
-}
-
-# ========================================== User rates ============================================
-
-query UserRates(
-    $userId: ID,
-    $page: PositiveInt,
-    $limit: PositiveInt,
-    $targetType: UserRateTargetTypeEnum,
-    $status: UserRateStatusEnum
-    $order: UserRateOrderInputType
-) {
-    userRates(
-        userId: $userId,
-        page: $page,
-        limit: $limit,
-        targetType: $targetType,
-        status: $status,
-        order: $order
-    ) {
-        ...UserRateFragment
-        createdAt
-        updatedAt
-        anime {
-            ...AnimeContent
-            episodes
-        }
-        manga {
-            ...MangaContent
-            chapters
-        }
     }
 }
 
