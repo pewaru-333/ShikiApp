@@ -110,7 +110,7 @@ object MangaMapper {
         related = extra.related.orEmpty().map(MangaExtraQuery.Data.Manga.Related::mapper),
         releasedOn = convertDate(main.releasedOn?.date, false),
         score = main.score.let(::convertScore),
-        similar = similar.map(MangaBasic::toBasicContent),
+        similar = similar.map(MangaBasic::toContent),
         stats = Pair(
             first = extra.scoresStats?.let { scores ->
                 Statistics(
@@ -148,6 +148,7 @@ object MangaMapper {
                 status = it.status.rawValue,
                 text = it.text,
                 episodes = it.episodes,
+                episodesSorting = 0,
                 fullEpisodes = BLANK,
                 volumes = it.volumes,
                 chapters = it.chapters,
@@ -157,6 +158,7 @@ object MangaMapper {
                 updatedAt = OffsetDateTime.now()
             )
         },
+        url = main.url,
         volumes = main.volumes.toString()
     )
 }

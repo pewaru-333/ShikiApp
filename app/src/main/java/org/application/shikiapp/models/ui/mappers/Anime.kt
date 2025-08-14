@@ -9,6 +9,7 @@ import org.application.shikiapp.generated.AnimeAiringQuery
 import org.application.shikiapp.generated.AnimeExtraQuery
 import org.application.shikiapp.generated.AnimeListQuery
 import org.application.shikiapp.generated.AnimeMainQuery
+import org.application.shikiapp.generated.AnimeRandomQuery
 import org.application.shikiapp.generated.fragment.Link
 import org.application.shikiapp.generated.fragment.PersonRole
 import org.application.shikiapp.generated.fragment.RelatedFragment
@@ -121,7 +122,7 @@ object AnimeMapper {
         releasedOn = convertDate(main.releasedOn?.date, false),
         score = main.score.let(::convertScore),
         screenshots = main.screenshots.map(AnimeMainQuery.Data.Anime.Screenshot::originalUrl),
-        similar = similar.map(AnimeBasic::toBasicContent),
+        similar = similar.map(AnimeBasic::toContent),
         stats = Pair(
             first = extra.scoresStats?.let { scores ->
                 Statistics(
@@ -166,6 +167,7 @@ object AnimeMapper {
                 scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                 status = it.status.rawValue,
                 text = it.text,
+                episodesSorting = 0,
                 episodes = it.episodes,
                 fullEpisodes = getFull(main.episodes, main.status?.rawValue),
                 volumes = it.volumes,
@@ -176,6 +178,7 @@ object AnimeMapper {
                 updatedAt = OffsetDateTime.now()
             )
         },
+        url = main.url,
         videos = main.videos.map {
             Video(
                 url = it.url,
@@ -206,9 +209,9 @@ fun PersonRole.toBasicContent() = BasicContent(
 )
 
 fun RelatedFragment.mapper() = Related(
-    id = anime?.id ?: manga?.id ?: BLANK,
-    title = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name ?: BLANK,
-    poster = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl ?: BLANK,
+    id = anime?.id ?: manga?.id.orEmpty(),
+    title = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name.orEmpty(),
+    poster = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl.orEmpty(),
     kind = Enum.safeValueOf<Kind>(anime?.kind?.rawValue ?: manga?.kind?.rawValue),
     status = Enum.safeValueOf<Status>(anime?.status?.rawValue ?: manga?.status?.rawValue),
     season = getSeason(anime?.airedOn?.date ?: manga?.airedOn?.date, anime?.kind?.rawValue ?: manga?.kind?.rawValue),
@@ -227,10 +230,24 @@ fun AnimeListQuery.Data.Anime.mapper() = Content(
     score = score?.let(::convertScore)
 )
 
-fun AnimeAiringQuery.Data.Anime.mapper() = BasicContent(
+fun AnimeAiringQuery.Data.Anime.mapper() = Content(
     id = id,
     title = russian.orEmpty().ifEmpty(::name),
-    poster = poster?.originalUrl ?: BLANK
+    poster = poster?.originalUrl.orEmpty(),
+    kind = Kind.TV,
+    season = ResourceText.StaticString(BLANK),
+    score = score?.let(::convertScore),
+    status = Status.ONGOING
+)
+
+fun AnimeRandomQuery.Data.Anime.mapper() = Content(
+    id = id,
+    title = russian.orEmpty().ifEmpty(::name),
+    poster = poster?.originalUrl.orEmpty(),
+    kind = Kind.TV,
+    season = ResourceText.StaticString(BLANK),
+    score = score?.let(::convertScore),
+    status = Status.RELEASED
 )
 
 fun PagingData<Topic>.toAnimeContent() = map {
@@ -245,14 +262,4 @@ fun PagingData<Topic>.toAnimeContent() = map {
     )
 }
 
-fun PagingData<AnimeBasic>.toContent(): PagingData<BasicContent> = map {
-    Content(
-        id = it.id.toString(),
-        title = it.russian.orEmpty().ifEmpty(it::name),
-        kind = Enum.safeValueOf<Kind>(it.kind),
-        status = Enum.safeValueOf<Status>(it.status),
-        season = getSeason(it.airedOn, it.kind),
-        poster = it.image.original,
-        score = it.score?.let(::convertScore)
-    )
-}
+fun PagingData<AnimeBasic>.toContent(): PagingData<BasicContent> = map(AnimeBasic::toContent)

@@ -1,40 +1,30 @@
 package org.application.shikiapp.models.ui.mappers
 
-import org.application.shikiapp.generated.UserRatesQuery
-import org.application.shikiapp.generated.type.UserRateTargetTypeEnum
+import org.application.shikiapp.models.data.BaseRate
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.extensions.safeValueOf
 import org.application.shikiapp.utils.getFull
 import java.time.OffsetDateTime
 
-fun UserRatesQuery.Data.UserRate.mapper(type: UserRateTargetTypeEnum) = UserRate(
-    id = id.toLong(),
-    contentId = anime?.id ?: manga?.id!!,
-    title = type.let {
-        if (it == UserRateTargetTypeEnum.Anime) anime?.russian ?: anime?.name!!
-        else manga?.russian ?: manga?.name!!
-    },
-    poster = type.let {
-        if (it == UserRateTargetTypeEnum.Anime) anime?.poster?.originalUrl!!
-        else manga?.poster?.originalUrl!!
-    },
-    kind = Enum.safeValueOf<Kind>(
-        type.let {
-            if (it == UserRateTargetTypeEnum.Anime) anime?.kind?.rawValue
-            else manga?.kind?.rawValue
-        }
-    ).title,
+
+fun BaseRate.mapper() = UserRate(
+    id = id,
+    contentId = (anime?.id ?: manga?.id ?: 0).toString(),
+    title = anime?.russian ?: manga?.russian ?: anime?.name ?: manga?.name.orEmpty(),
+    poster = anime?.image?.original ?: manga?.image?.original.orEmpty(),
+    kind = Enum.safeValueOf<Kind>(anime?.kind ?: manga?.kind).title,
     score = score,
     scoreString = score.let { if (it != 0) it else '-' }.toString(),
-    status = status.rawValue,
+    status = status,
     text = text,
-    episodes = episodes,
-    fullEpisodes = getFull(anime?.episodes, anime?.status?.rawValue),
-    volumes = volumes,
-    chapters = chapters,
+    episodes = episodes ?: 0,
+    episodesSorting = anime?.episodes ?: manga?.chapters ?: 0,
+    fullEpisodes = getFull(anime?.episodes, anime?.status),
+    volumes = volumes ?: 0,
+    chapters = chapters ?: 0,
     rewatches = rewatches,
-    fullChapters = getFull(manga?.chapters, manga?.status?.rawValue),
-    createdAt = OffsetDateTime.parse(createdAt.toString()),
-    updatedAt = OffsetDateTime.parse(updatedAt.toString())
+    fullChapters = getFull(manga?.chapters, manga?.status),
+    createdAt = OffsetDateTime.parse(createdAt),
+    updatedAt = OffsetDateTime.parse(updatedAt)
 )

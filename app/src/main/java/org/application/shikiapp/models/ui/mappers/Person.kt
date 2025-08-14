@@ -39,6 +39,7 @@ fun Person.mapper(comments: Flow<PagingData<Comment>>): org.application.shikiapp
         relatedList = works,
         relatedMap = works.groupBy(Related::linkedType).toSortedMap(),
         russian = russian,
+        url = url,
         website = website,
     )
 }
