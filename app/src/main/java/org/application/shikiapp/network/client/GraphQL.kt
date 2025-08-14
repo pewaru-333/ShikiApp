@@ -6,6 +6,7 @@ import org.application.shikiapp.generated.AnimeExtraQuery
 import org.application.shikiapp.generated.AnimeGenresQuery
 import org.application.shikiapp.generated.AnimeListQuery
 import org.application.shikiapp.generated.AnimeMainQuery
+import org.application.shikiapp.generated.AnimeRandomQuery
 import org.application.shikiapp.generated.AnimeTopicQuery
 import org.application.shikiapp.generated.CharacterListQuery
 import org.application.shikiapp.generated.CharacterQuery
@@ -16,10 +17,8 @@ import org.application.shikiapp.generated.MangaListQuery
 import org.application.shikiapp.generated.MangaMainQuery
 import org.application.shikiapp.generated.MangaTopicQuery
 import org.application.shikiapp.generated.PeopleQuery
-import org.application.shikiapp.generated.UserRatesQuery
 import org.application.shikiapp.generated.UsersQuery
 import org.application.shikiapp.generated.type.OrderEnum
-import org.application.shikiapp.generated.type.UserRateTargetTypeEnum
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.utils.enums.Order
@@ -66,6 +65,10 @@ object GraphQL {
             .dataOrThrow().animes
             .map(AnimeAiringQuery.Data.Anime::mapper)
             .getRandomTrending()
+
+    suspend fun getRandom() = Network.apollo.query(AnimeRandomQuery()).execute()
+        .dataOrThrow().animes
+        .map(AnimeRandomQuery.Data.Anime::mapper)
 
     suspend fun getAnimeMain(id: String) = Network.apollo.query(AnimeMainQuery(id)).execute()
         .dataOrThrow().animes.first()
@@ -162,24 +165,6 @@ object GraphQL {
             search = search
         )
     ) { it.users.map(UsersQuery.Data.User::toContent) }
-
-    suspend fun getUserRates(
-        userId: Long,
-        page: Int,
-        limit: Int,
-        type: UserRateTargetTypeEnum
-    ) = getList(
-        UserRatesQuery(
-            userId = userId.toString(),
-            page = page,
-            limit = limit,
-            targetType = type,
-            status = null,
-            order = null
-        )
-    ) {
-        it.userRates.map { it.mapper(type) }
-    }
 
     private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) =
         try {
