@@ -19,6 +19,7 @@ import org.application.shikiapp.utils.CommentContent.QuoteContent
 import org.application.shikiapp.utils.CommentContent.SpoilerContent
 import org.application.shikiapp.utils.CommentContent.TextContent
 import org.jsoup.Jsoup
+import org.jsoup.nodes.Document
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
@@ -32,12 +33,22 @@ sealed interface CommentContent {
 }
 
 object HtmlParser {
+    private fun preprocessHtml(document: Document) {
+        document.select(".b-spoiler_inline").forEach { spoilerElement ->
+            val contentHtml = spoilerElement.selectFirst("span")?.html().orEmpty()
+
+            spoilerElement.html(contentHtml)
+        }
+    }
+
     fun parseComment(html: String): List<CommentContent> {
         val localizedHtml = localizeNames(html)
         val document = Jsoup.parseBodyFragment(localizedHtml, BASE_URL).apply {
             select("div.right-text").remove()
             select(".b-replies").remove()
         }
+
+        preprocessHtml(document)
 
         return parseNodes(document.body().childNodes())
     }
@@ -70,14 +81,13 @@ object HtmlParser {
                         contentList.add(QuoteContent(author, parseComment(quoteHtml)))
                     }
 
-                    node.hasClass("b-spoiler_inline") -> {
-                        val spoilerContent = parseNodes(node.selectFirst("span")?.childNodes() ?: emptyList())
-                        contentList.add(SpoilerContent("Спойлер", spoilerContent))
-                    }
-
                     node.hasClass("b-spoiler_block") -> {
-                        val title = node.selectFirst("span")?.text() ?: "Спойлер"
-                        val contentNodes = node.selectFirst("div")?.childNodes() ?: emptyList()
+                        val titleSpan = node.selectFirst("span")
+                        val title = titleSpan?.text()?.trim() ?: "Спойлер"
+
+                        titleSpan?.remove()
+
+                        val contentNodes = node.selectFirst("div")?.childNodes() ?: node.childNodes()
                         contentList.add(SpoilerContent(title, parseNodes(contentNodes)))
                     }
 
@@ -102,6 +112,9 @@ object HtmlParser {
 
                     node.tagName() == "br" -> contentList.add(LineBreakContent)
                 }
+            } else if (isBlockContainer(node)) {
+                makeInlineGroup()
+                contentList.addAll(parseNodes(node.childNodes()))
             } else {
                 inlineNodes.add(node)
             }
@@ -160,10 +173,18 @@ object HtmlParser {
 
     private fun isBlockElement(node: Node) = node is Element &&
             (node.hasClass("b-quote") ||
-                    node.hasClass("b-spoiler_inline") ||
                     node.hasClass("b-spoiler_block") ||
                     node.hasClass("b-image")
                     || node.tagName() == "br")
+
+    private fun isBlockContainer(node: Node): Boolean {
+        if (node !is Element) return false
+
+        return when (node.tagName()) {
+            "div", "p", "center" -> true
+            else -> false
+        }
+    }
 
     fun getStyleForElement(element: Element) = when (element.tagName()) {
         "s" -> SpanStyle(textDecoration = TextDecoration.LineThrough)

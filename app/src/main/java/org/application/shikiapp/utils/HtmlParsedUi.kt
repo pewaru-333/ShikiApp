@@ -50,7 +50,7 @@ import androidx.core.net.toUri
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
-import org.application.shikiapp.screens.LoadingScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
 
 @Composable
 fun HtmlComment(text: String) {
@@ -146,15 +146,15 @@ private fun RenderContent(
                 }
 
             AsyncImage(
-                    model = content.previewUrl,
-                    contentDescription = null,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(finalWidth, finalHeight)
-                        .padding(vertical = 4.dp)
-                        .clip(RoundedCornerShape(8.dp))
-                        .clickable { onImageClick(content.fullUrl ?: content.previewUrl) }
-                )
+                model = content.previewUrl,
+                contentDescription = null,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .size(finalWidth, finalHeight)
+                    .padding(vertical = 4.dp)
+                    .clip(RoundedCornerShape(8.dp))
+                    .clickable { onImageClick(content.fullUrl ?: content.previewUrl) }
+            )
         }
 
         is CommentContent.SpoilerContent -> {
