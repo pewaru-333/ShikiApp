@@ -1,0 +1,4 @@
+— Added the "Open in browser" option for content pages.
+— The appearance of some user interface elements has been changed.
+— Fixed long loading of the user's anime/manga list and favorites.
+— Fixed navigation errors on the content pages.
