@@ -3,12 +3,10 @@
 package org.application.shikiapp.models.states
 
 import androidx.compose.material3.ExperimentalMaterial3Api
-import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.enums.UserMenu
 
 data class UserState(
     val menu: UserMenu? = null,
-    val favouriteTab: FavouriteItem = FavouriteItem.ANIME,
     val isFriend: Boolean = false,
     val showSettings: Boolean = false,
     val showComments: Boolean = false,
