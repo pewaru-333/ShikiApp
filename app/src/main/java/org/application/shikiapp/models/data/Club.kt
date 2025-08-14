@@ -21,8 +21,8 @@ class Club : ClubBasic() {
     @SerialName("description_html")
     val descriptionHtml: String? = null
 
-    @SerialName("thread_id")
-    val threadId: Long = 0L
+//    @SerialName("thread_id")
+//    val threadId: Long = 0L
 
     @SerialName("topic_id")
     val topicId: Long = 0L
@@ -30,14 +30,14 @@ class Club : ClubBasic() {
     @SerialName("user_role")
     val userRole: String? = null
 
-    @SerialName("style_id")
-    val styleId: Long? = null
+//    @SerialName("style_id")
+//    val styleId: Long? = null
 
     @SerialName("images")
     val images: List<ClubImages> = emptyList()
 
-    @SerialName("members")
-    val members: List<UserBasic> = emptyList()
+//    @SerialName("members")
+//    val members: List<UserBasic> = emptyList()
 
     @SerialName("animes")
     val animes: List<AnimeBasic> = emptyList()

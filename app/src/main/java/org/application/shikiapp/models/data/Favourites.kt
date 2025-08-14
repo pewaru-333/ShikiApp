@@ -1,7 +1,6 @@
 package org.application.shikiapp.models.data
 
 import kotlinx.serialization.Serializable
-import org.application.shikiapp.utils.BLANK
 
 @Serializable
 data class Favourites(
@@ -17,9 +16,9 @@ data class Favourites(
 
 @Serializable
 data class Favourite(
-    val id: Long = 0L,
-    val name: String = BLANK,
-    val russian: String? = null,
-    val image: String = BLANK,
-    val url: String? = null
+    val id: Long,
+    val name: String,
+    val russian: String?,
+    val image: String,
+    val url: String?
 )

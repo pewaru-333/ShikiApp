@@ -11,8 +11,8 @@ class Character : BasicInfo() {
     @SerialName("japanese")
     val japanese: String? = null
 
-    @SerialName("description")
-    val description: String? = null
+//    @SerialName("description")
+//    val description: String? = null
 
     @SerialName("description_html")
     val descriptionHTML: String? = null

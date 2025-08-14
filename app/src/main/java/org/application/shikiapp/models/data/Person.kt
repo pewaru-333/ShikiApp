@@ -4,7 +4,7 @@ import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 @Serializable
-class Person(
+data class Person(
     @SerialName("id") val id: Long,
     @SerialName("name") val name: String,
     @SerialName("russian") val russian: String?,
@@ -13,7 +13,7 @@ class Person(
     @SerialName("japanese") val japanese: String,
     @SerialName("job_title") val jobTitle: String,
     // @SerialName("birth_on") val birthOn: Date? = null,
-    @SerialName("deceased_on") val deceasedOn: Date? = null,
+    @SerialName("deceased_on") val deceasedOn: Date?,
     @SerialName("website") val website: String,
     @SerialName("groupped_roles") val grouppedRoles: List<List<String>>,
     @SerialName("roles") val roles: List<Roles>?,
@@ -28,14 +28,14 @@ class Person(
     @SerialName("seyu_favoured") val seyuFavoured: Boolean,
     @SerialName("updated_at") val updatedAt: String,
     //  @SerialName("thread_id") val threadId: Long?,
-    @SerialName("birthday") val birthday: Date? = null
+    @SerialName("birthday") val birthday: Date?
 )
 
 @Serializable
 data class Date(
-    val day: Int? = null,
-    val month: Int? = null,
-    val year: Int? = null
+    val day: Int?,
+    val month: Int?,
+    val year: Int?
 )
 
 @Serializable
