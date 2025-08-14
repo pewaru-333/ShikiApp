@@ -45,6 +45,7 @@ object CharacterMapper {
             relatedMap = relatedList.groupBy(Related::linkedType).toSortedMap(),
             russian = character.russian,
             seyu = character.seyu.map(BasicInfo::toBasicContent),
+            url = character.url
         )
     }
 }
