@@ -3,7 +3,6 @@
 
     <!-- Описание -->
     <string name="text_authors">Авторы</string>
-    <string name="text_chapters">Главы: %1$s / %2$s</string>
     <string name="text_character">Персонаж</string>
     <string name="text_episodes">Эпизоды</string>
     <string name="text_external_links">На других сайтах</string>
@@ -15,7 +14,6 @@
     <string name="text_screenshots">Кадры</string>
     <string name="text_similar">Похожее</string>
     <string name="text_statistics">Статистика</string>
-    <string name="text_studio">Студия</string>
     <string name="text_user_rates">Оценки пользователей</string>
     <string name="text_volumes">Тома</string>
 
@@ -37,7 +35,6 @@
     <string name="text_producer">Продюсер</string>
     <string name="text_ranobe">Ранобэ</string>
     <string name="text_roles">Роли</string>
-    <string name="text_works">Работы</string>
     <string name="text_video">Видео</string>
     <string name="text_users">Пользователи</string>
 
@@ -171,7 +168,6 @@
     <string name="text_episode_duration">Длительность эпизода</string>
     <string name="text_filters">Фильтры</string>
     <string name="text_genres">Жанры</string>
-    <string name="text_information">Информация</string>
     <string name="text_kind">Тип</string>
     <string name="text_rating">Рейтинг</string>
     <string name="text_score">Оценка</string>
@@ -185,14 +181,11 @@
     <!-- Оценка -->
     <string name="text_comment">Комментарий</string>
     <string name="text_rate_chapters">Главы</string>
-    <string name="text_rate_episodes">Эпизоды: %1$s / %2$s</string>
-    <string name="text_rate_score">Оценка: %1$s</string>
     <string name="text_rereadings">Повторных чтений</string>
     <string name="text_rewatches">Повторных просмотров</string>
 
     <!-- Пользователь -->
     <string name="text_about_me">Обо мне</string>
-    <string name="text_achievements">Достижения</string>
     <string name="text_anime_list">Список аниме</string>
     <string name="text_clubs">Клубы</string>
     <string name="text_comments">Комментарии</string>
@@ -215,9 +208,7 @@
     <string name="text_remove">Удалить</string>
     <string name="text_remove_fav">Удалить из избранного</string>
     <string name="text_save">Сохранить</string>
-    <string name="text_show_all_m">Показать всю</string>
     <string name="text_show_all_s">Показать весь</string>
-    <string name="text_show_all_w">Показать все</string>
 
     <string name="text_add_friend">Добавить в друзья</string>
     <string name="text_remove_friend">Удалить из друзей</string>
@@ -248,6 +239,7 @@
     <string name="blank" />
     <string name="text_empty">Пусто</string>
     <string name="text_login">Вход</string>
+    <string name="text_open_in_browser">Открыть в браузере</string>
     <string name="text_to_profile">В профиль</string>
     <string name="text_to_settings">В настройки</string>
     <string name="text_settings">Настройки</string>
