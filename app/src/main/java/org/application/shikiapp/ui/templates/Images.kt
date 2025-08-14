@@ -7,19 +7,24 @@ import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.size
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.unit.dp
+import coil3.compose.AsyncImage
 import coil3.compose.SubcomposeAsyncImage
 import coil3.compose.SubcomposeAsyncImageContent
 import org.application.shikiapp.R
@@ -83,4 +88,16 @@ fun AnimatedAsyncImage(
             )
         }
     }
+)
+
+@Composable
+fun Poster(link: String) = AsyncImage(
+    model = link,
+    contentDescription = null,
+    contentScale = ContentScale.FillHeight,
+    filterQuality = FilterQuality.High,
+    modifier = Modifier
+        .size(175.dp, 300.dp)
+        .clip(MaterialTheme.shapes.medium)
+        .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
 )
