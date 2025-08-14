@@ -1,10 +1,10 @@
 package org.application.shikiapp.events
 
-import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.UserMenu
 
 sealed interface ContentDetailEvent {
+    data object OpenLink : ContentDetailEvent
     data object ShowComments : ContentDetailEvent
     data object ShowSheet : ContentDetailEvent
 
@@ -56,6 +56,5 @@ sealed interface ContentDetailEvent {
         data object ShowDialogToggleFriend : User
 
         data class PickMenu(val menu: UserMenu? = null) : User
-        data class PickFavouriteTab(val tab: FavouriteItem) : User
     }
 }
