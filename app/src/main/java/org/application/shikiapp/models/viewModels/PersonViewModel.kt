@@ -37,6 +37,8 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
     }
 
     override fun onEvent(event: ContentDetailEvent) {
+        super.onEvent(event)
+
         when (event) {
             ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
             ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }

@@ -6,7 +6,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -19,8 +18,7 @@ abstract class BaseViewModel<D, S, E>() : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Response.Loading)
 
     private val _state = MutableStateFlow(initState())
-    open val state = _state.asStateFlow()
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), initState())
+    open val state = _state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), initState())
 
     protected suspend fun emit(state: Response<D, Throwable>) = _response.emit(state)
     protected fun updateState(update: (S) -> S) = _state.update(update)

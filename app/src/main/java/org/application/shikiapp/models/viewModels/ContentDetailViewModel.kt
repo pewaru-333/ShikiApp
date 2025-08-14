@@ -5,6 +5,8 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
 import io.ktor.client.plugins.ClientRequestException
+import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
@@ -16,6 +18,9 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.extensions.toValue
 
 abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailEvent>() {
+    private val _openLink = Channel<Unit>()
+    val openLink = _openLink.receiveAsFlow()
+
     protected fun getComments(id: Long?, type: String = "Topic") = Pager(
         config = PagingConfig(
             pageSize = 15,
@@ -40,6 +45,14 @@ abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailE
             } finally {
                 loadData()
             }
+        }
+    }
+
+    override fun onEvent(event: ContentDetailEvent) {
+        when (event) {
+            ContentDetailEvent.OpenLink -> viewModelScope.launch { _openLink.send(Unit) }
+
+            else -> Unit
         }
     }
 }

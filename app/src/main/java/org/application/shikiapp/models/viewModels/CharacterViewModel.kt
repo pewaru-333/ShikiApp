@@ -1,5 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.models.viewModels
 
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
@@ -47,7 +50,10 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
     }
 
     override fun onEvent(event: ContentDetailEvent) {
+        super.onEvent(event)
+
         when (event) {
+            ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
             ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
 
             ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }

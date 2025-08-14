@@ -5,6 +5,7 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
@@ -26,12 +27,20 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
             emit(Response.Loading)
 
             try {
-                val trending = asyncLoad { GraphQL.getTrending() }
+                val trending = async { GraphQL.getTrending() }
+                val random = async { GraphQL.getRandom() }
                 val topicsUpdates = getTopicsUpdates()
 
-                emit(Response.Success(AnimeCalendar(trending.await(), topicsUpdates)))
+                emit(
+                    Response.Success(
+                        AnimeCalendar(
+                            trending = trending.await(),
+                            random = random.await(),
+                            updates = topicsUpdates
+                        )
+                    )
+                )
             } catch (e: Throwable) {
-                e.printStackTrace()
                 emit(Response.Error(e))
             }
         }
@@ -45,11 +54,11 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
 
     private fun getTopicsUpdates() = Pager(
         config = PagingConfig(
-            pageSize = 10,
+            pageSize = 20,
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging<Topic>(Topic::id) { page, params ->
+            CommonPaging(Topic::id) { page, params ->
                 Network.topics.getTopicsUpdates(page, params.loadSize)
             }
         }

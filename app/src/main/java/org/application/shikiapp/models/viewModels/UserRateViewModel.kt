@@ -3,17 +3,19 @@ package org.application.shikiapp.models.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.util.fastFilterNotNull
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
@@ -32,12 +34,12 @@ import org.application.shikiapp.events.RateEvent.SetScore
 import org.application.shikiapp.events.RateEvent.SetStatus
 import org.application.shikiapp.events.RateEvent.SetText
 import org.application.shikiapp.events.RateEvent.SetVolumes
-import org.application.shikiapp.generated.type.UserRateTargetTypeEnum
+import org.application.shikiapp.models.data.BaseRate
 import org.application.shikiapp.models.data.NewRate
 import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.models.states.SortingState
 import org.application.shikiapp.models.ui.UserRate
-import org.application.shikiapp.network.client.GraphQL
+import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.RatesResponse
 import org.application.shikiapp.utils.BLANK
@@ -82,7 +84,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     when (state.order) {
                         OrderRates.TITLE -> value.sortedBy(UserRate::title)
                         OrderRates.SCORE -> value.sortedBy(UserRate::score)
-                        OrderRates.EPISODES -> value.sortedBy(UserRate::episodes)
+                        OrderRates.EPISODES -> value.sortedBy(UserRate::episodesSorting)
                         OrderRates.KIND -> value.sortedBy(UserRate::kind)
                         OrderRates.CREATED_AT -> value.sortedBy(UserRate::createdAt)
                         OrderRates.UPDATE_AT -> value.sortedBy(UserRate::updatedAt)
@@ -91,7 +93,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     when (state.order) {
                         OrderRates.TITLE -> value.sortedByDescending(UserRate::title)
                         OrderRates.SCORE -> value.sortedByDescending(UserRate::score)
-                        OrderRates.EPISODES -> value.sortedByDescending(UserRate::episodes)
+                        OrderRates.EPISODES -> value.sortedByDescending(UserRate::episodesSorting)
                         OrderRates.KIND -> value.sortedByDescending(UserRate::kind)
                         OrderRates.CREATED_AT -> value.sortedByDescending(UserRate::createdAt)
                         OrderRates.UPDATE_AT -> value.sortedByDescending(UserRate::updatedAt)
@@ -126,32 +128,41 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
             try {
                 while (moreDataAvailable) {
-                    val calls = (1..5).map {
-                        async {
-                            try {
-                                GraphQL.getUserRates(
-                                    userId = userId,
-                                    page = page + it,
-                                    limit = 50,
-                                    type = Enum.safeValueOf<UserRateTargetTypeEnum>(type.name)
-                                )
-                            } catch (_: Throwable) {
-                                emptyList()
+                    val calls = coroutineScope {
+                        (1..5).map {
+                            async {
+                                if (type == LinkedType.ANIME) {
+                                    Network.rates.getAnimeRates(
+                                        id = userId,
+                                        page = page + it,
+                                        limit = 250
+                                    )
+                                } else {
+                                    Network.rates.getMangaRates(
+                                        id = userId,
+                                        page = page + it,
+                                        limit = 250
+                                    )
+                                }
                             }
                         }
                     }
 
-                    val results = calls.awaitAll()
-                    rates.addAll(results.flatten())
+                    val results = calls.awaitAll().fastFilterNotNull()
+                    rates.addAll(results.flatten().map(BaseRate::mapper))
 
-                    moreDataAvailable = results.any { it.size == 50 }
+                    moreDataAvailable = results.any { it.size == 250 }
                     page += 5
                 }
 
-                _response.emit(RatesResponse.Success(rates))
-            } catch (e: ResponseException) {
-                if (e.response.status.value == 403) _response.emit(RatesResponse.NoAccess)
-                else _response.emit(RatesResponse.Error)
+                _response.emit(RatesResponse.Success(rates.distinctBy(UserRate::id)))
+            } catch (e: ClientRequestException) {
+                _response.emit(
+                    if (e.response.status.value == 403) RatesResponse.NoAccess
+                    else RatesResponse.Error
+                )
+            } catch (_: Throwable) {
+                _response.emit(RatesResponse.Error)
             }
         }
     }

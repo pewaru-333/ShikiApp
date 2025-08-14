@@ -17,15 +17,17 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.models.data.Favourites
 import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.ui.History
 import org.application.shikiapp.models.ui.User
+import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.mappers.mapper
+import org.application.shikiapp.models.ui.mappers.toBasicContentMap
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.navigation.Screen
 
 open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailViewModel<User, UserState>() {
@@ -67,8 +69,8 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
     protected val clubs: Deferred<List<ClubBasic>>
         get() = asyncLoad { Network.user.getClubs(userId) }
 
-    protected val favourites: Deferred<Favourites>
-        get() = asyncLoad { Network.user.getFavourites(userId) }
+    protected val favourites: Deferred<Map<FavouriteItem, List<BasicContent>>>
+        get() = asyncLoad { Network.user.getFavourites(userId).toBasicContentMap() }
 
     protected val comments: Flow<PagingData<Comment>>
         get() = getComments(userId, "User")
@@ -119,8 +121,6 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                 ContentDetailEvent.User.ShowDialogToggleFriend -> updateState { it.copy(showDialogToggleFriend = !it.showDialogToggleFriend) }
 
                 is ContentDetailEvent.User.PickMenu -> updateState { it.copy(menu = event.menu) }
-
-                is ContentDetailEvent.User.PickFavouriteTab -> updateState { it.copy(favouriteTab = event.tab) }
             }
 
             else -> Unit
