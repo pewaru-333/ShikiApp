@@ -130,7 +130,13 @@ import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CatalogViewModel
+import org.application.shikiapp.ui.templates.CatalogCardItem
+import org.application.shikiapp.ui.templates.CatalogGridItem
+import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.ParagraphTitle
+import org.application.shikiapp.ui.templates.UserGridItem
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.CatalogItem
 import org.application.shikiapp.utils.enums.CatalogItem.ANIME
@@ -395,7 +401,7 @@ private fun DialogFilters(
     enter = scaleIn(),
     exit = scaleOut()
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(

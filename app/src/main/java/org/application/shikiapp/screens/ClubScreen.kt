@@ -82,6 +82,11 @@ import org.application.shikiapp.models.ui.Club
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.viewModels.ClubViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.BasicContentItem
+import org.application.shikiapp.ui.templates.CatalogGridItem
+import org.application.shikiapp.ui.templates.Comments
+import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.ClubMenu
@@ -270,7 +275,7 @@ private fun Members(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -345,7 +350,7 @@ private fun Content(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -416,7 +421,7 @@ private fun Images(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -478,7 +483,7 @@ private fun Clubs(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -490,7 +495,7 @@ private fun Clubs(
         LazyColumn(contentPadding = padding) {
             items(clubs.itemCount, clubs.itemKey(BasicContent::id)) { index ->
                 clubs[index]?.let {
-                    OneLineImage(
+                    BasicContentItem(
                         name = it.title,
                         link = it.poster,
                         modifier = Modifier.clickable {

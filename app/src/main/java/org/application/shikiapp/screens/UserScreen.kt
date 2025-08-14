@@ -5,6 +5,7 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
@@ -13,14 +14,15 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ExitToApp
@@ -45,10 +47,14 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
@@ -68,9 +74,21 @@ import org.application.shikiapp.models.ui.list.Dialog
 import org.application.shikiapp.models.viewModels.UserMessagesViewModel
 import org.application.shikiapp.models.viewModels.UserViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.Comments
+import org.application.shikiapp.ui.templates.DialogClubs
+import org.application.shikiapp.ui.templates.DialogFavourites
+import org.application.shikiapp.ui.templates.DialogFriends
+import org.application.shikiapp.ui.templates.DialogHistory
+import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.Statistics
+import org.application.shikiapp.ui.templates.UserBriefItem
+import org.application.shikiapp.ui.templates.UserMenuItems
 import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.HtmlComment
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -102,6 +120,8 @@ fun UserView(
     val friends = user.friends.collectAsLazyPagingItems()
     val history = user.history.collectAsLazyPagingItems()
     val comments = user.comments.collectAsLazyPagingItems()
+
+    val listStates = FavouriteItem.entries.map { rememberLazyListState() }
 
     Scaffold(
         topBar = {
@@ -200,18 +220,17 @@ fun UserView(
 
     DialogFavourites(
         favourites = user.favourites,
-        tab = state.favouriteTab,
         visible = state.showFavourite,
-        setTab = { onEvent(ContentDetailEvent.User.PickFavouriteTab(it)) },
-        onNavigate = onNavigate,
+        listStates = listStates,
         hide = { onEvent(ContentDetailEvent.User.PickMenu()) },
+        onNavigate = onNavigate,
     )
 
     DialogHistory(
         history = history,
         visible = state.showHistory,
-        onNavigate = onNavigate,
         hide = { onEvent(ContentDetailEvent.User.PickMenu()) },
+        onNavigate = onNavigate,
     )
 
     if (state.showDialogToggleFriend) {
@@ -292,7 +311,7 @@ private fun DialogUserDialogs(
         }
     }
 
-    BackHandler {
+    BackHandler(visible) {
         if (state.dialogId == null || userId != null) hide()
         else model.showDialogs()
     }
@@ -364,27 +383,55 @@ private fun UserDialog(
             modifier = Modifier.weight(1f),
             verticalArrangement = Arrangement.Top,
             reverseLayout = true,
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding())
+            contentPadding = values
         ) {
             items(messages.data) { message ->
-                Column {
-                    ListItem(
-                        modifier = Modifier.offset(x = (-8).dp),
-                        headlineContent = { Text(message.userNickname) },
-                        supportingContent = { Text(message.lastDate) },
-                        leadingContent = {
-                            AsyncImage(
-                                model = message.userAvatar,
-                                contentDescription = null,
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape)
-                                    .clickable { onNavigate(Screen.User(message.userId)) }
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(12.dp, 10.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { onNavigate(Screen.User(message.userId)) }
+                    ) {
+                        AsyncImage(
+                            model = message.userAvatar,
+                            contentDescription = null,
+                            contentScale = ContentScale.Crop,
+                            filterQuality = FilterQuality.High,
+                            modifier = Modifier
+                                .size(56.dp)
+                                .clip(CircleShape)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                        )
+
+                        Spacer(Modifier.width(12.dp))
+
+                        Column(Modifier.weight(1f)) {
+                            Text(
+                                text = message.userNickname,
+                                style = MaterialTheme.typography.titleSmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    fontSize = 16.sp,
+                                    fontWeight = FontWeight.SemiBold
+                                )
+                            )
+                            Text(
+                                text = message.lastDate,
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    fontSize = 13.sp
+                                )
                             )
                         }
-                    )
+                    }
 
-                    HtmlCommentBody(message.lastMessage)
+                    Spacer(Modifier.height(8.dp))
+
+                    HtmlComment(message.lastMessage)
                 }
             }
         }

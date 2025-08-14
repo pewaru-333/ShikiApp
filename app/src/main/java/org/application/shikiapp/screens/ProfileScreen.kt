@@ -42,6 +42,7 @@ import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.viewModels.ProfileViewModel
 import org.application.shikiapp.network.response.LoginResponse
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.utils.AUTH_SCOPES
 import org.application.shikiapp.utils.AUTH_URL
 import org.application.shikiapp.utils.CLIENT_ID

@@ -25,9 +25,11 @@ import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
@@ -35,6 +37,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
@@ -45,6 +48,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_add_fav
 import org.application.shikiapp.R.string.text_remove_fav
@@ -53,17 +57,36 @@ import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.viewModels.PersonViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.Comments
+import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.Names
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.ParagraphTitle
+import org.application.shikiapp.ui.templates.Profiles
+import org.application.shikiapp.ui.templates.ProfilesFull
+import org.application.shikiapp.ui.templates.Related
+import org.application.shikiapp.ui.templates.RelatedFull
+import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
 fun PersonScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
+    val context = LocalContext.current
+
     val model = viewModel<PersonViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(model.openLink) {
+        model.openLink.collectLatest {
+            context.openLinkInBrowser((response as Success).data.url)
+        }
+    }
 
     when (val data = response) {
         is Response.Error -> ErrorScreen(model::loadData)
@@ -94,12 +117,10 @@ private fun PersonView(
                         comments = comments,
                         onEvent = { onEvent(ContentDetailEvent.ShowComments) }
                     )
-                    if (Preferences.token != null || person.website.isNotEmpty()) {
-                        IconButton(
-                            onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                            content = { Icon(Icons.Outlined.MoreVert, null) }
-                        )
-                    }
+                    IconButton(
+                        onClick = { onEvent(ContentDetailEvent.ShowSheet) },
+                        content = { Icon(Icons.Outlined.MoreVert, null) }
+                    )
                 }
             )
         }
@@ -167,46 +188,63 @@ private fun PersonView(
     )
 
     if (state.showSheet) {
-        BottomSheet(person, state, onEvent)
+        BottomSheet(
+            sheetState = state.sheetState,
+            website = person.website,
+            kind = person.personKind,
+            isFavourite = person.isPersonFavoured,
+            onEvent = onEvent
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun BottomSheet(
-    person: Person,
-    state: PersonState,
+fun BottomSheet(
+    sheetState: SheetState,
+    website: String = BLANK,
+    kind: String = BLANK,
+    isFavourite: Boolean = false,
+    handler: UriHandler = LocalUriHandler.current,
     onEvent: (ContentDetailEvent) -> Unit,
-    handler: UriHandler = LocalUriHandler.current
-) = ModalBottomSheet(
-    sheetState = state.sheetState,
-    onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
 ) {
-    if (Preferences.token != null) {
-        ListItem(
-            headlineContent = {
-                Text(
-                    text = stringResource(
-                        if (person.isPersonFavoured) text_remove_fav else text_add_fav
+    ModalBottomSheet(
+        sheetState = sheetState,
+        onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
+    ) {
+        if (Preferences.token != null) {
+            ListItem(
+                headlineContent = {
+                    Text(stringResource(if (isFavourite) text_remove_fav else text_add_fav))
+                },
+                leadingContent = {
+                    Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = if (isFavourite) Color.Red else LocalContentColor.current
                     )
-                )
-            },
-            modifier = Modifier.clickable {
-                onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind, person.isPersonFavoured))
-            },
-            leadingContent = {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = null,
-                    tint = if (person.isPersonFavoured) Color.Red else LocalContentColor.current
-                )
-            }
-        )
-    }
-    if (person.website.isNotEmpty()) {
+                },
+                modifier = Modifier.clickable {
+                    if (kind.isNotEmpty()) {
+                        onEvent(ContentDetailEvent.Person.ToggleFavourite(kind, isFavourite))
+                    } else {
+                        onEvent(ContentDetailEvent.Character.ToggleFavourite(isFavourite))
+                    }
+                }
+            )
+        }
+
+        if (website.isNotEmpty()) {
+            ListItem(
+                headlineContent = { Text("Официальный сайт") },
+                modifier = Modifier.clickable { handler.openUri(website) },
+                leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
+            )
+        }
+
         ListItem(
-            headlineContent = { Text("Сайт") },
-            modifier = Modifier.clickable { handler.openUri(person.website) },
+            headlineContent = { Text("Открыть в браузере") },
+            modifier = Modifier.clickable { onEvent(ContentDetailEvent.OpenLink) },
             leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
         )
     }

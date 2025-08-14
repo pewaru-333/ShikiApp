@@ -4,50 +4,57 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.application.shikiapp.events.CalendarEvent
 import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
-import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CalendarViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.CalendarOngoingCard
+import org.application.shikiapp.ui.templates.CatalogCardItem
+import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
+import org.application.shikiapp.ui.templates.ParagraphTitle
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
@@ -64,6 +71,7 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarView(
     animeCalendar: AnimeCalendar,
@@ -71,19 +79,71 @@ private fun CalendarView(
     onEvent: (CalendarEvent) -> Unit,
     onNavigate: (Screen) -> Unit
 ) {
+    val scope = rememberCoroutineScope()
+    val tabs = listOf("Подборка", "Расписание")
+    val pagerState = rememberPagerState(pageCount = tabs::size)
+
     val topics = animeCalendar.updates.collectAsLazyPagingItems()
 
-    Scaffold { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                Trending(animeCalendar.trending, onNavigate)
+    fun onScroll(page: Int) {
+        scope.launch {
+            pagerState.animateScrollToPage(page)
+        }
+    }
+
+    LaunchedEffect(pagerState) {
+        snapshotFlow(pagerState::currentPage).collectLatest { page ->
+            if (page != pagerState.settledPage) {
+                onScroll(page)
+            }
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = { Text("Обновления") }
+            )
+        }
+    ) { values ->
+        Column {
+            PrimaryTabRow(pagerState.currentPage, Modifier.padding(values)) {
+                tabs.forEachIndexed { index, tab ->
+                    Tab(
+                        selected = pagerState.currentPage == index,
+                        onClick = { onScroll(index) },
+                        text = { Text(tab) }
+                    )
+                }
             }
 
-            item {
-                AnimeUpdates(topics, onEvent, onNavigate)
+            HorizontalPager(pagerState) { tab ->
+                when (tab) {
+                    0 -> LazyColumn(
+                        contentPadding = PaddingValues(horizontal =  8.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        item {
+                            Trending(animeCalendar.trending, onNavigate)
+                        }
+
+                        item {
+                            Random(animeCalendar.random, onNavigate)
+                        }
+
+                        item {
+                            Updates(topics, onEvent, onNavigate)
+                        }
+                    }
+
+                    1 -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text(
+                            text = "На данный момент календарь выхода серий отключён на стороне сервера",
+                            modifier = Modifier.padding(horizontal = 16.dp),
+                            textAlign = TextAlign.Center
+                        )
+                    }
+                }
             }
         }
     }
@@ -97,47 +157,43 @@ private fun CalendarView(
 }
 
 @Composable
-private fun Trending(trending: List<BasicContent>, onNavigate: (Screen) -> Unit) = Column {
+private fun Trending(trending: List<Content>, onNavigate: (Screen) -> Unit) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle("Сейчас на экранах")
         IconButton(
-            onClick = { onNavigate(Screen.Catalog(showOngoing = true)) }
-        ) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowForward, null)
-        }
+            onClick = { onNavigate(Screen.Catalog(showOngoing = true)) },
+            content = { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
+        )
     }
-    LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        items(trending, BasicContent::id) { anime ->
-            Column(
-                modifier = Modifier
-                    .width(129.dp)
-                    .clickable { onNavigate(Screen.Anime(anime.id)) }
-            ) {
-                AsyncImage(
-                    model = anime.poster,
-                    contentDescription = null,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(181.dp)
-                        .border(0.5.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(8.dp))
-                        .clip(RoundedCornerShape(8.dp))
-                )
-                Text(
-                    text = anime.title,
-                    modifier = Modifier.padding(horizontal = 4.dp),
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.titleSmall
-                )
-            }
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(trending, Content::id) { anime ->
+            CalendarOngoingCard(
+                title = anime.title,
+                score = anime.score,
+                poster = anime.poster,
+                onNavigate = { onNavigate(Screen.Anime(anime.id)) }
+            )
         }
     }
 }
 
 @Composable
-private fun AnimeUpdates(
+private fun Random(trending: List<Content>, onNavigate: (Screen) -> Unit) = Column {
+    ParagraphTitle("Случайное", Modifier.padding(bottom = 8.dp))
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        items(trending, Content::id) { anime ->
+            CalendarOngoingCard(
+                title = anime.title,
+                score = anime.score,
+                poster = anime.poster,
+                onNavigate = { onNavigate(Screen.Anime(anime.id)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun Updates(
     updates: LazyPagingItems<Content>,
     onEvent: (CalendarEvent) -> Unit,
     onNavigate: (Screen) -> Unit
@@ -145,40 +201,21 @@ private fun AnimeUpdates(
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle("Обновления аниме")
         IconButton(
-            onClick = { onEvent(CalendarEvent.ShowFullUpdates) }
-        ) {
-            Icon(Icons.AutoMirrored.Outlined.ArrowForward, null)
-        }
+            onClick = { onEvent(CalendarEvent.ShowFullUpdates) },
+            content = { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
+        )
     }
 
     if (updates.loadState.refresh is LoadState.Loading) LoadingScreen()
-    else LazyRow(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
+    else LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(updates.itemCount.coerceAtMost(12)) { index ->
             updates[index]?.let { anime ->
-                Column(
-                    modifier = Modifier
-                        .width(129.dp)
-                        .clickable { onNavigate(Screen.Anime(anime.id)) }
-                ) {
-                    AsyncImage(
-                        model = anime.poster,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(181.dp)
-                            .border(0.5.dp, MaterialTheme.colorScheme.onSurface, RoundedCornerShape(8.dp))
-                            .clip(RoundedCornerShape(8.dp))
-                    )
-                    Text(
-                        text = anime.title,
-                        modifier = Modifier.padding(horizontal = 4.dp),
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                        style = MaterialTheme.typography.titleSmall
-                    )
-                }
+                CalendarOngoingCard(
+                    title = anime.title,
+                    poster = anime.poster,
+                    score = null,
+                    onNavigate = { onNavigate(Screen.Anime(anime.id)) }
+                )
             }
         }
     }
@@ -196,7 +233,7 @@ private fun AnimeUpdatesFull(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -213,12 +250,14 @@ private fun AnimeUpdatesFull(
         else LazyColumn(contentPadding = values) {
             items(updates.itemCount) { index ->
                 updates[index]?.let { anime ->
-                    CatalogListItem(
+                    CatalogCardItem(
                         title = anime.title,
                         kind = anime.kind,
                         season = anime.season,
+                        status = anime.status,
                         image = anime.poster,
-                        click = { onNavigate(Screen.Anime(anime.id)) }
+                        onClick = { onNavigate(Screen.Anime(anime.id)) },
+                        score = anime.score
                     )
                 }
             }

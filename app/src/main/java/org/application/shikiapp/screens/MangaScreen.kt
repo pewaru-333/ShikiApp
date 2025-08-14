@@ -20,14 +20,17 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
+import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_kind
 import org.application.shikiapp.R.string.text_publisher
@@ -38,17 +41,42 @@ import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.viewModels.MangaViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.BottomSheet
+import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.CreateRate
+import org.application.shikiapp.ui.templates.Description
+import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
+import org.application.shikiapp.ui.templates.LinksSheet
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.Poster
+import org.application.shikiapp.ui.templates.Profiles
+import org.application.shikiapp.ui.templates.ProfilesFull
+import org.application.shikiapp.ui.templates.Related
+import org.application.shikiapp.ui.templates.RelatedFull
+import org.application.shikiapp.ui.templates.ScoreInfo
+import org.application.shikiapp.ui.templates.SimilarFull
+import org.application.shikiapp.ui.templates.Statistics
+import org.application.shikiapp.ui.templates.StatusInfo
 import org.application.shikiapp.utils.enums.LinkedType
+import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
 fun MangaScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
+    val context = LocalContext.current
+
     val model = viewModel<MangaViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(model.openLink) {
+        model.openLink.collectLatest {
+            context.openLinkInBrowser((response as Success).data.url)
+        }
+    }
 
     when (val data = response) {
         is Response.Error -> ErrorScreen(model::loadData)
@@ -274,7 +302,14 @@ private fun MangaView(
             rate = manga.userRate,
             favoured = manga.favoured,
             onEvent = onEvent,
-            toggleFavourite = { onEvent(ContentDetailEvent.Media.Manga.ToggleFavourite(manga.kindEnum, manga.favoured)) }
+            toggleFavourite = {
+                onEvent(
+                    ContentDetailEvent.Media.Manga.ToggleFavourite(
+                        manga.kindEnum,
+                        manga.favoured
+                    )
+                )
+            }
         )
 
         state.showRate -> CreateRate(

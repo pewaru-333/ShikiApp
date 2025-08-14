@@ -23,10 +23,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerDefaults
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -46,8 +44,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.ScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -91,6 +89,8 @@ import org.application.shikiapp.network.response.RatesResponse.Error
 import org.application.shikiapp.network.response.RatesResponse.Loading
 import org.application.shikiapp.network.response.RatesResponse.NoAccess
 import org.application.shikiapp.network.response.RatesResponse.Success
+import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.RateChapters
 import org.application.shikiapp.ui.templates.RateEpisodes
@@ -133,11 +133,19 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     }
 
     LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::settledPage).collectLatest(::onScroll)
+        snapshotFlow(pagerState::currentPage).collectLatest { page ->
+            if (page != pagerState.settledPage) {
+                onScroll(page)
+            }
+        }
     }
 
     LaunchedEffect(model.type) {
         pagerState.requestScrollToPage(0)
+    }
+
+    LaunchedEffect(orderState) {
+        listStates[pagerState.currentPage].scrollToItem(0)
     }
 
     LaunchedEffect(true) {
@@ -147,10 +155,9 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     }
 
     when (response) {
-        NoAccess -> Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_profile_closed)) }
         RatesResponse.Unlogged -> UnloggedScreen(onNavigate)
         Error -> ErrorScreen(model::loadRates)
-        is Success, Loading -> Scaffold(
+        is Success, Loading, NoAccess -> Scaffold(
             topBar = {
                 TopAppBar(
                     navigationIcon = { if (!model.editable) NavigationIcon(back) },
@@ -173,18 +180,15 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
             }
         ) { values ->
             if (response is Loading) LoadingScreen()
+            else if (response is NoAccess) Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_profile_closed)) }
             else Column(Modifier.padding(values)) {
-                ScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
+                PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
                     WatchStatus.entries.forEach { status ->
                         Tab(
                             selected = pagerState.currentPage == status.ordinal,
-                            onClick = { onScroll(status.ordinal) }
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(8.dp, 12.dp),
-                                text = stringResource(model.type.getWatchStatusTitle(status))
-                            )
-                        }
+                            onClick = { onScroll(status.ordinal) },
+                            text = { Text(stringResource(model.type.getWatchStatusTitle(status))) }
+                        )
                     }
                 }
 
@@ -202,14 +206,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
                     }
                 }
 
-                HorizontalPager(
-                    state = pagerState,
-                    key = { WatchStatus.entries[it] },
-                    flingBehavior = PagerDefaults.flingBehavior(
-                        state = pagerState,
-                        snapPositionalThreshold = 0.05f
-                    )
-                ) { page ->
+                HorizontalPager(pagerState) { page ->
                     UserRateList(
                         rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
                         listState = listStates[page],
@@ -339,6 +336,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, onIncr
             if (progressValue != null) {
                 LinearProgressIndicator(
                     progress = { progressValue.coerceIn(0f, 1f) },
+                    drawStopIndicator = {},
                     modifier = Modifier
                         .weight(1f)
                         .height(8.dp)
@@ -448,9 +446,8 @@ private fun UserRateList(
             }
         }
     } else {
-        itemsIndexed(rates, key = { index, item -> item.id }) { index, rate ->
+        items(rates, UserRate::id) { rate ->
             UserRateCard(
-                modifier = Modifier.animateItem(),
                 rate = rate,
                 type = type,
                 editable = editable,
@@ -459,7 +456,7 @@ private fun UserRateList(
                 onGetRate = getRate
             )
 
-            if (index < rates.size - 1) {
+            if (rate != rates.lastOrNull()) {
                 HorizontalDivider(Modifier.padding(horizontal = 12.dp))
             }
         }

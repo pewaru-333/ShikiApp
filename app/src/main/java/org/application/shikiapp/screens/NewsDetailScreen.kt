@@ -43,6 +43,10 @@ import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.viewModels.NewsDetailViewModel
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.ui.templates.AnimatedAsyncImage
+import org.application.shikiapp.ui.templates.Comments
+import org.application.shikiapp.ui.templates.DialogScreenshot
+import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.navigation.Screen
 

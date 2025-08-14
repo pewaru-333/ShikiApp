@@ -39,12 +39,14 @@ import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.res.painterResource
@@ -57,6 +59,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_anime
 import org.application.shikiapp.R.string.text_episodes
@@ -72,18 +75,45 @@ import org.application.shikiapp.models.viewModels.AnimeViewModel
 import org.application.shikiapp.network.response.Response.Error
 import org.application.shikiapp.network.response.Response.Loading
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.BottomSheet
+import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.CreateRate
+import org.application.shikiapp.ui.templates.Description
+import org.application.shikiapp.ui.templates.DialogScreenshot
+import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
+import org.application.shikiapp.ui.templates.LinksSheet
+import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.ParagraphTitle
+import org.application.shikiapp.ui.templates.Poster
+import org.application.shikiapp.ui.templates.Profiles
+import org.application.shikiapp.ui.templates.ProfilesFull
+import org.application.shikiapp.ui.templates.Related
+import org.application.shikiapp.ui.templates.RelatedFull
+import org.application.shikiapp.ui.templates.ScoreInfo
+import org.application.shikiapp.ui.templates.SheetColumn
+import org.application.shikiapp.ui.templates.SimilarFull
+import org.application.shikiapp.ui.templates.Statistics
+import org.application.shikiapp.ui.templates.StatusInfo
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.VideoKind
+import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
 fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
+    val context = LocalContext.current
+
     val model = viewModel<AnimeViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
+
+    LaunchedEffect(model.openLink) {
+        model.openLink.collectLatest {
+            context.openLinkInBrowser((response as Success).data.url)
+        }
+    }
 
     when (val data = response) {
         is Error -> ErrorScreen(model::loadData)
@@ -533,7 +563,7 @@ private fun Screenshots(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(
@@ -574,7 +604,7 @@ private fun Video(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(onBack = hide)
+    BackHandler(visible, hide)
     Scaffold(
         topBar = {
             TopAppBar(

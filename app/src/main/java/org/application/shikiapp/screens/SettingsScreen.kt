@@ -46,7 +46,7 @@ import org.application.shikiapp.utils.extensions.valueToText
 fun SettingsScreen(visible: Boolean, onBack: () -> Unit) {
     val context = LocalContext.current
 
-    BackHandler(onBack = onBack)
+    BackHandler(visible, onBack)
     AnimatedVisibility(
         visible = visible,
         enter = slideInHorizontally(initialOffsetX = { it }),
