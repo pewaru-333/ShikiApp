@@ -3,19 +3,18 @@ package org.application.shikiapp.models.ui
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.Comment
-import org.application.shikiapp.models.data.Favourites
-import org.application.shikiapp.models.data.UserBasic
+import org.application.shikiapp.models.ui.list.BasicContent
+import org.application.shikiapp.utils.enums.FavouriteItem
 
 data class User(
     val about: AnnotatedString,
     val avatar: String,
-    val clubs: List<ClubBasic>,
+    val clubs: List<BasicContent>,
     val comments: Flow<PagingData<Comment>>,
     val commonInfo: AnnotatedString,
-    val favourites: Favourites,
-    val friends: Flow<PagingData<UserBasic>>,
+    val favourites: Map<FavouriteItem, List<BasicContent>>,
+    val friends: Flow<PagingData<BasicContent>>,
     val history: Flow<PagingData<History>>,
     val id: Long,
     val inFriends: Boolean,

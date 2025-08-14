@@ -38,11 +38,12 @@ data class Anime(
     val releasedOn: String,
     val score: String,
     val screenshots: List<String>,
-    val similar: List<BasicContent>,
+    val similar: List<Content>,
     val stats: Pair<Statistics?, Statistics?>,
     val status: Int,
     val studio: Studio?,
     val title: String,
     val userRate: UserRate?,
+    val url: String,
     val videos: List<Video>
 )

@@ -22,5 +22,6 @@ data class Person(
     val relatedList: List<Related>,
     val relatedMap: Map<LinkedType, List<Related>>,
     val russian: String?,
+    val url: String,
     val website: String
 )

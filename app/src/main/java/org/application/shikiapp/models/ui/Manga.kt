@@ -36,10 +36,11 @@ data class Manga(
     val related: List<Related>,
     val releasedOn: String,
     val score: String,
-    val similar: List<BasicContent>,
+    val similar: List<Content>,
     val stats: Pair<Statistics?, Statistics?>,
     val status: Int,
     val title: String,
     val userRate: UserRate?,
+    val url: String,
     val volumes: String
 )

@@ -22,4 +22,5 @@ data class Character(
     val relatedMap: Map<LinkedType, List<Related>>,
     val russian: String?,
     val seyu: List<BasicContent>,
+    val url: String
 )

@@ -8,6 +8,7 @@ data class UserRate(
     val contentId: String,
     val createdAt: OffsetDateTime,
     val episodes: Int,
+    val episodesSorting: Int,
     val fullChapters: String,
     val fullEpisodes: String,
     val id: Long,
