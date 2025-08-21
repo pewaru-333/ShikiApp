@@ -1,0 +1,308 @@
+<resources>
+    <string name="app_name">ShikiApp</string>
+
+    <!-- Описание -->
+    <string name="text_authors">Authors</string>
+    <string name="text_character">Character</string>
+    <string name="text_episodes">Episodes</string>
+    <string name="text_external_links">On other sites</string>
+    <string name="text_favourite">Favorites</string>
+    <string name="text_image_of">Image %1$d of %2$d</string>
+    <string name="text_in_lists">In lists</string>
+    <string name="text_publisher">Publisher</string>
+    <string name="text_related">Related</string>
+    <string name="text_screenshots">Screenshots</string>
+    <string name="text_similar">Similar</string>
+    <string name="text_statistics">Statistics</string>
+    <string name="text_user_rates">User ratings</string>
+    <string name="text_volumes">Volumes</string>
+
+    <!-- Каталог -->
+    <string name="text_airing">Airing now</string>
+    <string name="text_anime">Anime</string>
+    <string name="text_calendar">Calendar</string>
+    <string name="text_catalog">Catalog</string>
+    <string name="text_characters">Characters</string>
+    <string name="text_chronology">Chronology</string>
+    <string name="text_date_from">from %1$s</string>
+    <string name="text_date_till">to %1$s</string>
+    <string name="text_description">Description</string>
+    <string name="text_directly">Directly</string>
+    <string name="text_episode">Episode</string>
+    <string name="text_episode_next">Next episode</string>
+    <string name="text_featured">Featured</string>
+    <string name="text_franchise">Franchise</string>
+    <string name="text_lists">Lists</string>
+    <string name="text_manga">Manga</string>
+    <string name="text_mangaka">Mangaka</string>
+    <string name="text_mangakas">Mangakas</string>
+    <string name="text_members">Members</string>
+    <string name="text_news">News</string>
+    <string name="text_news_one">News detail</string>
+    <string name="text_official_site">Official site</string>
+    <string name="text_others">Others</string>
+    <string name="text_people">People</string>
+    <string name="text_pictures">Pictures</string>
+    <string name="text_producer">Producer</string>
+    <string name="text_random">Random</string>
+    <string name="text_ranobe">Light novel</string>
+    <string name="text_roles">Roles</string>
+    <string name="text_schedule">Schedule</string>
+    <string name="text_show_all_u">Show all</string>
+    <string name="text_source">Source</string>
+    <string name="text_spoiler">Spoiler</string>
+    <string name="text_studio">Studio</string>
+    <string name="text_subtitles">Subtitles</string>
+    <string name="text_updates">Updates</string>
+    <string name="text_updates_anime">Anime updates</string>
+    <string name="text_users">Users</string>
+    <string name="text_voices">Voice actors</string>
+
+    <string name="text_video">Videos</string>
+    <string name="text_video_character_trailers">Character trailers</string>
+    <string name="text_video_episodes_preview">Episode previews</string>
+
+    <!-- Статус просмотра/прочтения -->
+    <string name="status_planned">Planned</string>
+    <string name="status_watching_anime">Watching</string>
+    <string name="status_watching_manga">Reading</string>
+    <string name="status_rewatching_anime">Rewatching</string>
+    <string name="status_rewatching_manga">Rereading</string>
+    <string name="status_completed_anime">Completed</string>
+    <string name="status_completed_manga">Completed</string>
+    <string name="status_on_hold">On hold</string>
+    <string name="status_dropped">Dropped</string>
+
+    <!-- Статус выхода/печати -->
+    <string name="status_anons">Announced</string>
+    <string name="status_ongoing_anime">Airing</string>
+    <string name="status_ongoing_manga">Publishing</string>
+    <string name="status_released_anime">Released</string>
+    <string name="status_released_manga">Published</string>
+    <string name="status_paused_manga">Paused</string>
+    <string name="status_paused_discontinued">Discontinued</string>
+
+    <!-- Тип контента -->
+    <string name="kind_anime_tv">TV Series</string>
+    <string name="kind_anime_tv_13">Short</string>
+    <string name="kind_anime_tv_24">Medium</string>
+    <string name="kind_anime_tv_48">Long</string>
+    <string name="kind_anime_movie">Movie</string>
+    <string name="kind_anime_ova">OVA</string>
+    <string name="kind_anime_ona">ONA</string>
+    <string name="kind_anime_special">Special</string>
+    <string name="kind_anime_tv_special">TV Special</string>
+    <string name="kind_anime_music">Music</string>
+    <string name="kind_anime_pv">PV</string>
+    <string name="kind_anime_cm">CM</string>
+
+    <string name="kind_manga_manga">Manga</string>
+    <string name="kind_manga_manhwa">Manhwa</string>
+    <string name="kind_manga_manhua">Manhua</string>
+    <string name="kind_manga_one_shot">One-shot</string>
+    <string name="kind_manga_doujin">Doujinshi</string>
+
+    <string name="kind_ranobe_light_novel">Light novel</string>
+    <string name="kind_ranobe_novel">Novel</string>
+
+    <!-- Типы связей во франшизе -->
+    <string name="relation_kind_adaptation">Adaptation</string>
+    <string name="relation_kind_alternative_setting">Alternative setting</string>
+    <string name="relation_kind_alternative_version">Alternative version</string>
+    <string name="relation_kind_character">Character</string>
+    <string name="relation_kind_full_story">Full story</string>
+    <string name="relation_kind_other">Other</string>
+    <string name="relation_kind_parent_story">Parent story</string>
+    <string name="relation_kind_prequel">Prequel</string>
+    <string name="relation_kind_sequel">Sequel</string>
+    <string name="relation_kind_side_story">Side story</string>
+    <string name="relation_kind_spin_off">Spin-off</string>
+    <string name="relation_kind_summary">Summary</string>
+
+    <!-- Первоисточник -->
+    <string name="origin_original">Original</string>
+    <string name="origin_manga">Manga</string>
+    <string name="origin_web_manga">Web manga</string>
+    <string name="origin_four_koma_manga">4-koma manga</string>
+    <string name="origin_novel">Novel</string>
+    <string name="origin_web_novel">Web novel</string>
+    <string name="origin_visual_novel">Visual novel</string>
+    <string name="origin_light_novel">Light novel</string>
+    <string name="origin_game">Game</string>
+    <string name="origin_card_game">Card game</string>
+    <string name="origin_music">Music</string>
+    <string name="origin_radio">Radio</string>
+    <string name="origin_book">Book</string>
+    <string name="origin_picture_book">Picture book</string>
+    <string name="origin_mixed_media">Mixed media</string>
+    <string name="origin_other">Other</string>
+    <string name="origin_unknown">Unknown</string>
+
+    <!-- Возрастной рейтинг -->
+    <string name="rating_none">No rating</string>
+    <string name="rating_g">G</string>
+    <string name="rating_pg">PG</string>
+    <string name="rating_pg_13">PG-13</string>
+    <string name="rating_r">R-17+</string>
+    <string name="rating_r_plus">R+</string>
+    <string name="rating_rx">R-18</string>
+
+    <!-- Порядок сортировки -->
+    <string name="order_id">By ID ↑</string>
+    <string name="order_id_desc">By ID ↓</string>
+    <string name="order_ranked">By score</string>
+    <string name="order_kind">By type</string>
+    <string name="order_popularity">By popularity</string>
+    <string name="order_name">By name</string>
+    <string name="order_aired_on">By release date</string>
+    <string name="order_episodes">By episodes</string>
+    <string name="order_chapters">By chapters</string>
+    <string name="order_status">By status</string>
+    <string name="order_random">Random</string>
+    <string name="order_created_at">By date added</string>
+    <string name="order_created_at_asc">By date added ↑</string>
+    <string name="order_created_at_desc">By date added ↓</string>
+    <string name="order_updated_at">By date updated</string>
+
+    <!-- Длительность эпизода -->
+    <string name="duration_S">Under 10 min</string>
+    <string name="duration_D">Under 30 min</string>
+    <string name="duration_F">Over 30 min</string>
+
+    <!-- Оценка -->
+    <string name="score_1">1 - Appalling</string>
+    <string name="score_2">2 - Horrible</string>
+    <string name="score_3">3 - Very Bad</string>
+    <string name="score_4">4 - Bad</string>
+    <string name="score_5">5 - Average</string>
+    <string name="score_6">6 - Fine</string>
+    <string name="score_7">7 - Good</string>
+    <string name="score_8">8 - Very Good</string>
+    <string name="score_9">9 - Great</string>
+    <string name="score_10">10 - Masterpiece</string>
+
+    <!-- Времена года -->
+    <string name="season_winter">Winter</string>
+    <string name="season_spring">Spring</string>
+    <string name="season_summer">Summer</string>
+    <string name="season_autumn">Autumn</string>
+
+    <!-- Фильтры -->
+    <string name="text_end_year">End year</string>
+    <string name="text_episode_duration">Episode duration</string>
+    <string name="text_filters">Filters</string>
+    <string name="text_genres">Genres</string>
+    <string name="text_kind">Type</string>
+    <string name="text_rating">Rating</string>
+    <string name="text_score">Score</string>
+    <string name="text_search">Search</string>
+    <string name="text_season">Season</string>
+    <string name="text_seyu">Voice Actor</string>
+    <string name="text_sorting">Sort by</string>
+    <string name="text_start_year">Start year</string>
+    <string name="text_status">Status</string>
+
+    <!-- Оценка -->
+    <string name="text_comment">Comment</string>
+    <string name="text_rate_chapters">Chapters</string>
+    <string name="text_rereadings">Rereads</string>
+    <string name="text_rewatches">Rewatches</string>
+
+    <!-- Пользователь -->
+    <string name="text_about_me">About me</string>
+    <string name="text_anime_list">Anime list</string>
+    <string name="text_clubs">Clubs</string>
+    <string name="text_comments">Comments</string>
+    <string name="text_dialogs">Dialogs</string>
+    <string name="text_friends">Friends</string>
+    <string name="text_history">History</string>
+    <string name="text_manga_list">Manga list</string>
+    <string name="text_profile">Profile</string>
+    <string name="text_profile_closed">Profile is private</string>
+
+    <!-- Действия -->
+    <string name="text_add_fav">Add to favorites</string>
+    <string name="text_add_rate">Add to list</string>
+    <string name="text_confirm">Confirm</string>
+    <string name="text_cancel">Cancel</string>
+    <string name="text_change">Change</string>
+    <string name="text_change_rate">Change rating</string>
+    <string name="text_close">Close</string>
+    <string name="text_rate">Rate</string>
+    <string name="text_remove">Remove</string>
+    <string name="text_remove_fav">Remove from favorites</string>
+    <string name="text_save">Save</string>
+    <string name="text_show_all_s">Show all</string>
+
+    <string name="text_add_friend">Add friend</string>
+    <string name="text_remove_friend">Remove friend</string>
+
+    <string name="text_join_club">Join club</string>
+    <string name="text_leave_club">Leave club</string>
+
+    <!-- Настройки -->
+    <string name="preference_category_app_view">Appearance</string>
+    <string name="preference_category_system">System</string>
+
+    <string name="preference_list_view">List view</string>
+    <string name="preference_list_view_column">List</string>
+    <string name="preference_list_view_grid">Grid</string>
+
+    <string name="preference_theme">App theme</string>
+    <string name="preference_theme_system">System</string>
+    <string name="preference_theme_light">Light</string>
+    <string name="preference_theme_dark">Dark</string>
+    <string name="preference_theme_dark_amoled">Dark AMOLED</string>
+
+    <string name="preference_dynamic_colors">Dynamic colors</string>
+
+    <string name="preference_cache_size">Cache size</string>
+    <string name="preference_cache_size_mb">%1$d MB</string>
+
+    <string name="preference_language">App language</string>
+
+    <!-- Другое -->
+    <string name="blank" />
+    <string name="text_empty">Empty</string>
+    <string name="text_error">Error!</string>
+    <string name="text_error_loading">Loading error!</string>
+    <string name="text_loading">Loading</string>
+    <string name="text_login">Login</string>
+    <string name="text_open_in_browser">Open in browser</string>
+    <string name="text_settings">Settings</string>
+    <string name="text_to_profile">Go to profile</string>
+    <string name="text_to_settings">Go to settings</string>
+    <string name="text_try_again">Try again</string>
+    <string name="text_unknown">Unknown</string>
+
+    <string name="text_image">image</string>
+    <string name="text_quote">quote</string>
+    <string name="text_spoiler_l">spoiler</string>
+
+    <string name="text_birthday">Birth date</string>
+    <string name="text_deathday">Date of death</string>
+
+    <string name="text_add_app_links">To enable login, add supported links in the settings</string>
+    <string name="text_forward_to_browser">You will be redirected to the login page in your browser</string>
+    <string name="text_login_to_modify_lists">To manage your lists, you need to log in</string>
+
+    <string name="text_enter_message">Enter a message</string>
+    <string name="text_pay_attention">Please note!</string>
+
+    <string name="text_sure_to_delete_dialog">Are you sure you want to delete the entire conversation with %1$s?</string>
+
+    <string name="text_successfully_joined_club">Successfully joined the club!</string>
+    <string name="text_unsuccessfully_joined_club">Failed to join the club!</string>
+
+    <string name="text_successfully_leave_club">Successfully left the club!</string>
+    <string name="text_unsuccessfully_leave_club">Failed to leave the club!</string>
+
+    <string name="text_confirm_remove_friend">Are you sure you want to remove this user from your friends?</string>
+    <string name="text_confirm_add_friend">Are you sure you want to add this user to your friends?</string>
+
+    <string name="text_applied_immediately">applied immediately</string>
+    <string name="text_repeat_the_loading">Retry loading</string>
+
+    <string name="text_error_open_link">Failed to open link</string>
+    <string name="text_no_browser">No suitable browser found on the device</string>
+</resources>
