@@ -9,7 +9,6 @@ sealed interface ContentDetailEvent {
     data object ShowSheet : ContentDetailEvent
 
     sealed interface Media : ContentDetailEvent {
-        data object Reload : Media
         data object ShowAuthors : Media
         data object ShowCharacters : Media
         data object ShowRelated : Media
@@ -19,6 +18,7 @@ sealed interface ContentDetailEvent {
         data object ShowFansubbers : Media
         data object ShowFandubbers : Media
         data object ShowRate : Media
+        data object ChangeRate : Media
 
         data class ShowImage(val index: Int = 0) : Media
         data class SetImage(val index: Int) : Media
@@ -27,24 +27,24 @@ sealed interface ContentDetailEvent {
             data object ShowScreenshots : Anime
             data object ShowVideo : Anime
 
-            data class ToggleFavourite(val favoured: Boolean) : Anime
+            data object ToggleFavourite : Anime
         }
 
         sealed interface Manga : ContentDetailEvent {
-            data class ToggleFavourite(val type: Kind?, val favoured: Boolean) : Manga
+            data class ToggleFavourite(val type: Kind?) : Manga
         }
     }
 
     sealed interface Character : ContentDetailEvent {
         data object ShowSeyu : Character
 
-        data class ToggleFavourite(val favoured: Boolean) : Character
+        data object ToggleFavourite : Character
     }
 
     sealed interface Person : ContentDetailEvent {
         data object ShowWorks : Person
 
-        data class ToggleFavourite(val kind: String, val favoured: Boolean) : Person
+        data class ToggleFavourite(val kind: String) : Person
     }
 
     sealed interface User : ContentDetailEvent {
