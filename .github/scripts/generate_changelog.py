@@ -14,7 +14,7 @@ def get_previous_tag():
         if len(tags) < 2:
             return None
 
-        previous_tag = tags[1]
+        previous_tag = tags[0]
         print(f"Найден предыдущий тег: {previous_tag}", file=sys.stderr)
         return previous_tag
 
