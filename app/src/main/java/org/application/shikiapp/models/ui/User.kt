@@ -3,7 +3,6 @@ package org.application.shikiapp.models.ui
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.utils.enums.FavouriteItem
 

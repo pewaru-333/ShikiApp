@@ -3,7 +3,6 @@ package org.application.shikiapp.models.ui
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.models.data.Comment
 
 data class NewsDetail(
     val title: String,

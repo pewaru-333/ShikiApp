@@ -2,8 +2,8 @@ package org.application.shikiapp.models.ui
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.ui.list.BasicContent
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.enums.LinkedType
 
 data class Person(
@@ -12,10 +12,10 @@ data class Person(
     val comments: Flow<PagingData<Comment>>,
     val deathday: String?,
     val english: String?,
+    val favoured: AsyncData<Boolean>,
     val grouppedRoles: List<List<String>>,
     val id: Long,
     val image: String,
-    val isPersonFavoured: Boolean,
     val japanese: String,
     val jobTitle: String,
     val personKind: String,

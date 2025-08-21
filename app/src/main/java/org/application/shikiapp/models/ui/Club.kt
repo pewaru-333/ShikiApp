@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.models.data.ClubCommentPolicy
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.ClubJoinPolicy
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.ui.list.BasicContent
 

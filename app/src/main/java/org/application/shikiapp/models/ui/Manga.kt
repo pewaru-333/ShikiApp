@@ -3,9 +3,9 @@ package org.application.shikiapp.models.ui
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.RelationKind
 
@@ -17,7 +17,7 @@ data class Manga(
     val chronology: List<Content>,
     val comments: Flow<PagingData<Comment>>,
     val description: AnnotatedString,
-    val favoured: Boolean,
+    val favoured: AsyncData<Boolean>,
     val franchise: String,
     val franchiseList: Map<RelationKind, List<Franchise>>,
     val genres: List<String>?,
@@ -40,7 +40,7 @@ data class Manga(
     val stats: Pair<Statistics?, Statistics?>,
     val status: Int,
     val title: String,
-    val userRate: UserRate?,
+    val userRate: AsyncData<UserRate?>,
     val url: String,
     val volumes: String
 )
