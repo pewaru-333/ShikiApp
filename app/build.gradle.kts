@@ -24,13 +24,17 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 26
-        versionName = "alpha-0.4.1"
+        versionCode = 27
+        versionName = "alpha-0.4.2"
     }
 
     dependenciesInfo {
         includeInApk = false
         includeInBundle = false
+    }
+
+    androidResources {
+        generateLocaleConfig = true
     }
 
     buildTypes {
