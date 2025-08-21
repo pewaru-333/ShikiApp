@@ -18,10 +18,11 @@ const val GRANT_TYPE = "authorization_code"
 const val PREF_GROUP_APP_VIEW = "app_view"
 const val PREF_GROUP_APP_SYSTEM = "app_system"
 
-const val PREF_APP_THEME = "app_theme"
 const val PREF_APP_CACHE = "app_cache"
-const val PREF_DYNAMIC_COLORS = "dynamic_colors"
+const val PREF_APP_LANGUAGE = "app_language"
+const val PREF_APP_THEME = "app_theme"
 const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
+const val PREF_DYNAMIC_COLORS = "dynamic_colors"
 
 const val ACCESS_TOKEN = "access_token"
 const val REFRESH_TOKEN = "refresh_token"
