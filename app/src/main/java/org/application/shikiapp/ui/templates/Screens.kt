@@ -10,6 +10,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
+import org.application.shikiapp.R
 
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier) =
@@ -20,6 +22,6 @@ fun LoadingScreen(modifier: Modifier = Modifier) =
 @Composable
 fun ErrorScreen(retry: () -> Unit = {}) =
     Column(Modifier.fillMaxSize(), Arrangement.Center, Alignment.CenterHorizontally) {
-        Text("Ошибка загрузки!")
-        Button(retry) { Text("Повторить") }
+        Text(stringResource(R.string.text_error_loading))
+        Button(retry) { Text(stringResource(R.string.text_try_again)) }
     }

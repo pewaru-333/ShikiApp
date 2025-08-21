@@ -18,7 +18,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import org.application.shikiapp.R
-import org.application.shikiapp.models.data.Comment
+import org.application.shikiapp.models.ui.Comment
 
 @Composable
 fun IconComment(comments: LazyPagingItems<Comment>, onEvent: () -> Unit) {

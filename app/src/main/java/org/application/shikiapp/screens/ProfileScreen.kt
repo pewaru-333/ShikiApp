@@ -14,6 +14,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
@@ -42,7 +43,6 @@ import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.viewModels.ProfileViewModel
 import org.application.shikiapp.network.response.LoginResponse
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.utils.AUTH_SCOPES
 import org.application.shikiapp.utils.AUTH_URL
 import org.application.shikiapp.utils.CLIENT_ID
@@ -62,7 +62,7 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibil
 
     when (val data = loginState) {
         is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.User.ShowSettings) }
-        is LoginResponse.Logging -> LoadingScreen()
+        is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.User.ShowSettings) }
         is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.User.ShowSettings) }
         is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut, visibility)
 
@@ -74,8 +74,14 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibil
         onBack = { model.onEvent(ContentDetailEvent.User.ShowSettings) }
     )
 
-    LaunchedEffect(state.showSettings) {
-        visibility.toggle(state.showSettings)
+
+
+    LaunchedEffect(state.showSettings, state.menu, state.showDialogs) {
+        if (state.showSettings || state.menu != null || state.showDialogs) {
+            visibility.hide()
+        } else {
+            visibility.show()
+        }
     }
 }
 
@@ -164,17 +170,55 @@ private fun LoginScreen(openSettings: () -> Unit) {
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun ErrorScreen(reload: () -> Unit, openSettings: () -> Unit) =
-    Box(Modifier.fillMaxSize()) {
-        IconButton(
-            onClick = openSettings,
-            modifier = Modifier.align(Alignment.TopEnd),
-            content = { Icon(Icons.Outlined.Settings, null) }
-        )
-        FilledTonalButton(
-            onClick = reload,
-            modifier = Modifier.align(Alignment.Center),
-            content = { Text("Повторить загрузку") }
+private fun LoadingScreen(openSettings: () -> Unit) = Scaffold(
+    topBar = {
+        TopAppBar(
+            title = {},
+            actions = {
+                IconButton(
+                    onClick = openSettings,
+                    content = { Icon(Icons.Outlined.Settings, null) }
+                )
+            }
         )
     }
+) { values ->
+    Box(
+        content = { CircularProgressIndicator() },
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(values)
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun ErrorScreen(reload: () -> Unit, openSettings: () -> Unit) = Scaffold(
+    topBar = {
+        TopAppBar(
+            title = {},
+            actions = {
+                IconButton(
+                    onClick = openSettings,
+                    content = { Icon(Icons.Outlined.Settings, null) }
+                )
+            }
+        )
+    }
+) { values ->
+    Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(values),
+        content = {
+            FilledTonalButton(
+                onClick = reload,
+                content = { Text(stringResource(R.string.text_repeat_the_loading)) }
+            )
+        }
+    )
+}

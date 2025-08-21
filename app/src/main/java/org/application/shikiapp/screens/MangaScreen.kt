@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -95,6 +96,7 @@ private fun MangaView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val listState = rememberLazyListState()
     val comments = manga.comments.collectAsLazyPagingItems()
 
     Scaffold(
@@ -167,7 +169,7 @@ private fun MangaView(
                         item {
                             DetailBox(
                                 icon = R.drawable.vector_anime,
-                                label = "Издательство",
+                                label = stringResource(R.string.text_publisher),
                                 value = publisher.title,
                                 onClick = {
                                     onNavigate(
@@ -186,7 +188,7 @@ private fun MangaView(
                             item {
                                 DetailBox(
                                     icon = R.drawable.vector_similar,
-                                    label = "Похожее",
+                                    label = stringResource(R.string.text_similar),
                                     onClick = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
                                 )
                             }
@@ -249,6 +251,7 @@ private fun MangaView(
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -302,21 +305,14 @@ private fun MangaView(
             rate = manga.userRate,
             favoured = manga.favoured,
             onEvent = onEvent,
-            toggleFavourite = {
-                onEvent(
-                    ContentDetailEvent.Media.Manga.ToggleFavourite(
-                        manga.kindEnum,
-                        manga.favoured
-                    )
-                )
-            }
+            toggleFavourite = { onEvent(ContentDetailEvent.Media.Manga.ToggleFavourite(manga.kindEnum)) }
         )
 
         state.showRate -> CreateRate(
             id = manga.id,
             type = LinkedType.MANGA,
-            rateF = manga.userRate,
-            reload = { onEvent(ContentDetailEvent.Media.Reload) },
+            rateF = manga.userRate.getValue(),
+            reload = { onEvent(ContentDetailEvent.Media.ChangeRate) },
             hide = { onEvent(ContentDetailEvent.Media.ShowRate) })
 
         state.showLinks -> LinksSheet(

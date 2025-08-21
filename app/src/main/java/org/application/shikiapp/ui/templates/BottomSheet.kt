@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.List
 import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.Edit
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
@@ -39,14 +40,16 @@ import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.ui.ExternalLink
 import org.application.shikiapp.models.ui.UserRate
+import org.application.shikiapp.network.response.AsyncData
+import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.Preferences
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(
     state: SheetState,
-    rate: UserRate?,
-    favoured: Boolean,
+    rate: AsyncData<UserRate?>,
+    favoured: AsyncData<Boolean>,
     toggleFavourite: () -> Unit,
     onEvent: (ContentDetailEvent) -> Unit,
 ) = ModalBottomSheet(
@@ -55,23 +58,51 @@ fun BottomSheet(
 ) {
     if (Preferences.token != null) {
         ListItem(
-            leadingContent = { Icon(Icons.Outlined.Edit, null) },
+            modifier = Modifier.clickable { onEvent(ContentDetailEvent.Media.ShowRate) },
             headlineContent = {
-                Text(stringResource(rate?.let { R.string.text_change_rate } ?: R.string.text_add_rate))
+                Text(
+                    text = stringResource(
+                        when (val data = rate) {
+                            AsyncData.Loading -> R.string.text_loading
+                            is AsyncData.Success -> if (data.data == null) R.string.text_add_rate
+                            else R.string.text_change_rate
+                        }
+                    )
+                )
             },
-            modifier = Modifier.clickable {
-                onEvent(ContentDetailEvent.Media.ShowRate)
+            leadingContent = {
+                when (rate) {
+                    AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
+                    is AsyncData.Success -> Icon(Icons.Outlined.Edit, null)
+                }
             }
         )
         ListItem(
-            headlineContent = { Text(stringResource(if (favoured) R.string.text_remove_fav else R.string.text_add_fav)) },
-            modifier = Modifier.clickable(onClick = toggleFavourite),
-            leadingContent = {
-                Icon(
-                    imageVector = Icons.Default.Favorite,
-                    contentDescription = null,
-                    tint = if (favoured) Color.Red else LocalContentColor.current
+            modifier = Modifier
+                .clickable(
+                    enabled = favoured is AsyncData.Success,
+                    onClick = toggleFavourite
+                ),
+            headlineContent = {
+                Text(
+                    text = stringResource(
+                        when (val data = favoured) {
+                            AsyncData.Loading -> R.string.text_loading
+                            is AsyncData.Success -> if (data.data) R.string.text_remove_fav
+                            else R.string.text_add_fav
+                        }
+                    )
                 )
+            },
+            leadingContent = {
+                when (val data = favoured) {
+                    AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
+                    is AsyncData.Success -> Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = if (data.data) Color.Red else LocalContentColor.current
+                    )
+                }
             }
         )
     }
@@ -112,6 +143,68 @@ fun SheetColumn(list: List<String>, state: SheetState, label: String, onHide: ()
 
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun BottomSheet(
+    sheetState: SheetState,
+    website: String = BLANK,
+    kind: String = BLANK,
+    favoured: AsyncData<Boolean> = AsyncData.Success(false),
+    handler: UriHandler = LocalUriHandler.current,
+    onEvent: (ContentDetailEvent) -> Unit,
+) = ModalBottomSheet(
+    sheetState = sheetState,
+    onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
+) {
+    if (Preferences.token != null) {
+        ListItem(
+            modifier = Modifier
+                .clickable(enabled = favoured is AsyncData.Success) {
+                    if (kind.isNotEmpty()) {
+                        onEvent(ContentDetailEvent.Person.ToggleFavourite(kind))
+                    } else {
+                        onEvent(ContentDetailEvent.Character.ToggleFavourite)
+                    }
+                },
+            headlineContent = {
+                Text(
+                    text = stringResource(
+                        when (val data = favoured) {
+                            AsyncData.Loading -> R.string.text_loading
+                            is AsyncData.Success -> if (data.data) R.string.text_remove_fav
+                            else R.string.text_add_fav
+                        }
+                    )
+                )
+            },
+            leadingContent = {
+                when (val data = favoured) {
+                    AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
+                    is AsyncData.Success -> Icon(
+                        imageVector = Icons.Default.Favorite,
+                        contentDescription = null,
+                        tint = if (data.data) Color.Red else LocalContentColor.current
+                    )
+                }
+            }
+        )
+    }
+
+    if (website.isNotEmpty()) {
+        ListItem(
+            headlineContent = { Text(stringResource(R.string.text_official_site)) },
+            modifier = Modifier.clickable { handler.openUri(website) },
+            leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
+        )
+    }
+
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.text_open_in_browser)) },
+        modifier = Modifier.clickable { onEvent(ContentDetailEvent.OpenLink) },
+        leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
+    )
+}
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable

@@ -57,10 +57,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import org.application.shikiapp.R
-import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.UserMessagesState
 import org.application.shikiapp.models.states.UserState
@@ -69,6 +69,7 @@ import org.application.shikiapp.models.states.showDialogDelete
 import org.application.shikiapp.models.states.showFavourite
 import org.application.shikiapp.models.states.showFriends
 import org.application.shikiapp.models.states.showHistory
+import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.User
 import org.application.shikiapp.models.ui.list.Dialog
 import org.application.shikiapp.models.viewModels.UserMessagesViewModel
@@ -80,6 +81,7 @@ import org.application.shikiapp.ui.templates.DialogFavourites
 import org.application.shikiapp.ui.templates.DialogFriends
 import org.application.shikiapp.ui.templates.DialogHistory
 import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.Statistics
@@ -90,6 +92,7 @@ import org.application.shikiapp.utils.HtmlComment
 import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
+import org.application.shikiapp.utils.extensions.getLastMessage
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -117,6 +120,7 @@ fun UserView(
     back: () -> Unit,
     visibility: NavigationBarVisibility? = null
 ) {
+    val listState = rememberLazyListState()
     val friends = user.friends.collectAsLazyPagingItems()
     val history = user.history.collectAsLazyPagingItems()
     val comments = user.comments.collectAsLazyPagingItems()
@@ -137,7 +141,7 @@ fun UserView(
                     }
                 },
                 actions = {
-                    TopBarActions(user, onEvent, comments.itemCount > 0)
+                    TopBarActions(user, onEvent, comments)
                 }
             )
         }
@@ -185,12 +189,17 @@ fun UserView(
         }
     }
 
-    LaunchedEffect(state.menu, state.showDialogs) {
-        visibility?.toggle(state.menu != null || state.showDialogs)
+    LaunchedEffect(state.showSettings, state.menu, state.showDialogs) {
+        if (state.showSettings || state.menu != null || state.showDialogs) {
+            visibility?.hide()
+        } else {
+            visibility?.show()
+        }
     }
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -242,7 +251,7 @@ fun UserView(
 private fun TopBarActions(
     user: User,
     onEvent: (ContentDetailEvent) -> Unit,
-    showComments: Boolean
+    comments: LazyPagingItems<Comment>
 ) {
     when {
         Preferences.userId == user.id -> {
@@ -257,13 +266,10 @@ private fun TopBarActions(
         }
 
         else -> {
-            if (showComments) {
-                IconButton(
-                    onClick = { onEvent(ContentDetailEvent.ShowComments) }
-                ) {
-                    Icon(painterResource(vector_comments), null)
-                }
-            }
+            IconComment(
+                comments = comments,
+                onEvent = { onEvent(ContentDetailEvent.ShowComments) }
+            )
 
             if (Preferences.token != null && Preferences.userId != user.id) {
                 IconButton(
@@ -496,7 +502,7 @@ private fun AllUserDialogs(
                     Text(
                         minLines = 2,
                         maxLines = 2,
-                        text = dialog.lastMessage,
+                        text = dialog.lastMessage.getLastMessage().asString(),
                         overflow = TextOverflow.Ellipsis
                     )
                 }

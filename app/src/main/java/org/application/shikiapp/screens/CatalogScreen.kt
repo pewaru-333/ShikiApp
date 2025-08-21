@@ -70,6 +70,7 @@ import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -93,6 +94,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.first
 import org.application.shikiapp.R
 import org.application.shikiapp.R.drawable.vector_filter
 import org.application.shikiapp.R.string.text_catalog
@@ -168,6 +171,10 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
 
     val focus = LocalFocusManager.current
 
+    LaunchedEffect(state.showFiltersA, state.showFiltersM, state.showFiltersR) {
+        visibility.toggle(state.showFiltersA || state.showFiltersM || state.showFiltersR)
+    }
+
     LaunchedEffect(Unit) {
         model.event.collectLatest {
             when (it) {
@@ -193,9 +200,18 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
         }
     }
 
-    LaunchedEffect(filters, state.showFiltersA, state.showFiltersM, state.showFiltersR) {
-        state.listStates[state.menu]?.scrollToItem(0)
-        state.gridStates[state.menu]?.scrollToItem(0)
+    LaunchedEffect(filters) {
+        val listState = state.listStates[state.menu]
+        val gridState = state.gridStates[state.menu]
+
+        snapshotFlow {
+            (listState?.layoutInfo?.totalItemsCount ?: 0) + (gridState?.layoutInfo?.totalItemsCount ?: 0)
+        }
+            .drop(1)
+            .first { it > 0 }
+
+        listState?.scrollToItem(0)
+        gridState?.scrollToItem(0)
     }
 
     ModalNavigationDrawer(
@@ -282,30 +298,26 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                     paddingValues = values,
                     onNavigate = onNavigate
                 )
-
-                DialogFilters(
-                    genres = genres,
-                    filters = filters,
-                    visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
-                    event = model::onEvent,
-                    hide = model::hideFilters,
-                    type = when (state.menu) {
-                        RANOBE -> LinkedType.RANOBE
-                        MANGA -> LinkedType.MANGA
-                        ANIME -> LinkedType.ANIME
-                        else -> null
-                    }
-                )
-            }
-
-            if (state.showFiltersP) {
-                DialogFiltersP(filters.roles, model::onEvent, model::hideFilters)
-            }
-
-            LaunchedEffect(state.showFiltersA, state.showFiltersM, state.showFiltersR) {
-                visibility.toggle(state.showFiltersA || state.showFiltersM || state.showFiltersR)
             }
         }
+    }
+
+    DialogFilters(
+        genres = genres,
+        filters = filters,
+        visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
+        event = model::onEvent,
+        hide = model::hideFilters,
+        type = when (state.menu) {
+            RANOBE -> LinkedType.RANOBE
+            MANGA -> LinkedType.MANGA
+            ANIME -> LinkedType.ANIME
+            else -> null
+        }
+    )
+
+    if (state.showFiltersP) {
+        DialogFiltersP(filters.roles, model::onEvent, model::hideFilters)
     }
 }
 
@@ -416,7 +428,7 @@ private fun DialogFilters(
                             )
                         )
                         Text(
-                            text = "применяются сразу",
+                            text = stringResource(R.string.text_applied_immediately),
                             style = MaterialTheme.typography.labelSmall.copy(
                                 fontSize = 12.sp
                             )

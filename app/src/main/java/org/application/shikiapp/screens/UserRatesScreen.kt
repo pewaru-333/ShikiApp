@@ -1,8 +1,13 @@
 package org.application.shikiapp.screens
 
-import android.widget.Toast
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.SpaceBetween
@@ -34,6 +39,7 @@ import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.FilledTonalButton
@@ -82,6 +88,9 @@ import org.application.shikiapp.R.string.text_save
 import org.application.shikiapp.events.RateEvent
 import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.models.states.SortingState
+import org.application.shikiapp.models.states.UserRateState
+import org.application.shikiapp.models.states.UserRateUiEvent
+import org.application.shikiapp.models.states.rememberRateState
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.network.response.RatesResponse
@@ -104,6 +113,8 @@ import org.application.shikiapp.utils.enums.OrderDirection
 import org.application.shikiapp.utils.enums.OrderRates
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
+import org.application.shikiapp.utils.extensions.pairwise
+import org.application.shikiapp.utils.extensions.showToast
 import org.application.shikiapp.utils.navigation.Screen
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -119,8 +130,11 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     val pagerState = rememberPagerState(pageCount = WatchStatus.entries::size)
     val listStates = WatchStatus.entries.map { rememberLazyListState() }
 
+    val rateState = rememberRateState()
     val rates by model.rates.collectAsStateWithLifecycle()
     val newRate by model.newRate.collectAsStateWithLifecycle()
+
+    val type by model.type.collectAsStateWithLifecycle()
 
     fun onScroll(page: Int) {
         scope.launch {
@@ -140,17 +154,40 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
         }
     }
 
-    LaunchedEffect(model.type) {
-        pagerState.requestScrollToPage(0)
+    LaunchedEffect(type) {
+        snapshotFlow { type }
+            .pairwise()
+            .collectLatest { (old, new) ->
+                if (new != old) {
+                    pagerState.requestScrollToPage(0)
+                }
+            }
     }
 
-    LaunchedEffect(orderState) {
-        listStates[pagerState.currentPage].scrollToItem(0)
+    LaunchedEffect(Unit) {
+        snapshotFlow { orderState }
+            .pairwise()
+            .collectLatest { (old, new) ->
+                if (new != old) {
+                    listStates[pagerState.currentPage].requestScrollToItem(0)
+                }
+            }
     }
 
-    LaunchedEffect(true) {
-        model.changed.collectLatest {
-            Toast.makeText(context, if (it) "Успешно!" else "Ошибка!", Toast.LENGTH_SHORT).show()
+    LaunchedEffect(Unit) {
+        model.rateUiEvent.collectLatest { event ->
+            when(event) {
+                UserRateUiEvent.Error -> context.showToast(R.string.text_error)
+
+                is UserRateUiEvent.IncrementStart -> rateState.onIncrementStart(event.rateId)
+                UserRateUiEvent.IncrementFinish -> rateState.onIncrementFinish()
+
+                is UserRateUiEvent.UpdateStart -> rateState.onUpdateStart(event.rateId)
+                UserRateUiEvent.UpdateFinish -> rateState.onUpdateFinish()
+
+                is UserRateUiEvent.DeleteStart -> rateState.onDeleteStart(event.rateId)
+                UserRateUiEvent.DeleteFinish -> rateState.onDeleteFinish()
+            }
         }
     }
 
@@ -161,16 +198,16 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
             topBar = {
                 TopAppBar(
                     navigationIcon = { if (!model.editable) NavigationIcon(back) },
-                    title = { Text(stringResource(model.type.getListTitle())) },
+                    title = { Text(stringResource(type.getListTitle())) },
                     actions = {
                         if (model.editable) {
                             FilledIconToggleButton(
-                                checked = model.type == LinkedType.ANIME,
+                                checked = type == LinkedType.ANIME,
                                 onCheckedChange = { model.setLinkedType(LinkedType.ANIME) },
                                 content = { Icon(painterResource(R.drawable.vector_anime), null) }
                             )
                             FilledIconToggleButton(
-                                checked = model.type == LinkedType.MANGA,
+                                checked = type == LinkedType.MANGA,
                                 onCheckedChange = { model.setLinkedType(LinkedType.MANGA) },
                                 content = { Icon(painterResource(R.drawable.vector_manga), null) }
                             )
@@ -187,7 +224,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
                         Tab(
                             selected = pagerState.currentPage == status.ordinal,
                             onClick = { onScroll(status.ordinal) },
-                            text = { Text(stringResource(model.type.getWatchStatusTitle(status))) }
+                            text = { Text(stringResource(type.getWatchStatusTitle(status))) }
                         )
                     }
                 }
@@ -196,12 +233,12 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
                     contentPadding = PaddingValues(horizontal = 16.dp),
                     horizontalArrangement = spacedBy(8.dp)
                 ) {
-                    items(OrderRates.entries) { type ->
+                    items(OrderRates.entries) { order ->
                         SortChip(
-                            order = type,
+                            order = order,
                             state = orderState,
-                            type = model.type,
-                            onClick = { model.onSortChanged(type) }
+                            type = type,
+                            onClick = { model.onSortChanged(order) }
                         )
                     }
                 }
@@ -210,9 +247,10 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
                     UserRateList(
                         rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
                         listState = listStates[page],
-                        type = model.type,
+                        type = type,
                         getRate = model::getRate,
                         editable = model.editable,
+                        rateState = rateState,
                         increment = model::increment,
                         onNavigate = onNavigate
                     )
@@ -224,7 +262,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     if (model.showEditDialog) {
         DialogEditRate(
             state = newRate,
-            type = model.type,
+            type = type,
             onEvent = model::onEvent,
             onUpdate = model::update,
             onDelete = model::delete,
@@ -309,7 +347,9 @@ private fun DialogEditRate(
 )
 
 @Composable
-private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, onIncrement: (Long) -> Unit) {
+private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateState: UserRateState, onIncrement: (Long) -> Unit) {
+    val isIncrementing = rateState.isIncrementing(rate.id)
+
     val current = if (type == LinkedType.ANIME) rate.episodes else rate.chapters
     val maximum = (if (type == LinkedType.ANIME) rate.fullEpisodes else rate.fullChapters).toIntOrNull()
 
@@ -345,11 +385,17 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, onIncr
             }
 
             if (editable && WatchStatus.WATCHING.name.equals(rate.status, true)) {
-                FilledTonalIconButton(
-                    modifier = Modifier.size(32.dp),
-                    onClick = { onIncrement(rate.id) },
-                    content = { Icon(Icons.Default.Add, null) }
-                )
+                AnimatedContent(isIncrementing) {
+                    if (it) {
+                        CircularProgressIndicator(Modifier.size(32.dp))
+                    } else {
+                        FilledTonalIconButton(
+                            modifier = Modifier.size(32.dp),
+                            onClick = { onIncrement(rate.id) },
+                            content = { Icon(Icons.Default.Add, null) }
+                        )
+                    }
+                }
             }
         }
     }
@@ -361,70 +407,86 @@ private fun UserRateCard(
     rate: UserRate,
     type: LinkedType,
     editable: Boolean,
+    rateState: UserRateState,
     modifier: Modifier = Modifier,
     onGetRate: (UserRate) -> Unit,
     onIncrement: (Long) -> Unit,
     onNavigate: (Screen) -> Unit
-) = Row(
-    horizontalArrangement = spacedBy(16.dp),
-    modifier = modifier
-        .height(175.dp)
-        .combinedClickable(
-            onClick = { onNavigate(type.navigateTo(rate.contentId)) },
-            onLongClick = { if (editable) onGetRate(rate) }
-        )
-        .padding(12.dp)
-) {
-    AsyncImage(
-        model = rate.poster,
-        contentDescription = null,
-        contentScale = ContentScale.Crop,
+) = Box(modifier.height(175.dp), Alignment.Center) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(16.dp),
         modifier = Modifier
-            .width(100.dp)
-            .fillMaxHeight()
-            .clip(MaterialTheme.shapes.medium)
-            .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
-    )
-
-    Column(Modifier.fillMaxHeight()) {
-        Text(
-            text = rate.title,
-            maxLines = 2,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold,
+            .fillMaxSize()
+            .combinedClickable(
+                enabled = !rateState.isEditing(rate.id),
+                onClick = { onNavigate(type.navigateTo(rate.contentId)) },
+                onLongClick = { if (editable) onGetRate(rate) }
             )
+            .padding(12.dp)
+    ) {
+        AsyncImage(
+            model = rate.poster,
+            contentDescription = null,
+            contentScale = ContentScale.Crop,
+            modifier = Modifier
+                .width(100.dp)
+                .fillMaxHeight()
+                .clip(MaterialTheme.shapes.medium)
+                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
         )
 
-        Spacer(Modifier.height(4.dp))
-
-        Row(Modifier, spacedBy(8.dp), CenterVertically) {
+        Column(Modifier.fillMaxHeight()) {
             Text(
-                text = stringResource(rate.kind),
-                style = MaterialTheme.typography.bodySmall
+                text = rate.title,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.SemiBold,
+                )
             )
-        }
 
-        Spacer(Modifier.height(8.dp))
+            Spacer(Modifier.height(4.dp))
 
-        if (rate.score > 0) {
-            Row(verticalAlignment = CenterVertically) {
-                Icon(Icons.Default.Star, null, Modifier.size(18.dp), Color(0xFFFFC319))
-
-                Spacer(Modifier.width(4.dp))
-
+            Row(Modifier, Arrangement.spacedBy(8.dp), Alignment.CenterVertically) {
                 Text(
-                    text = rate.scoreString,
-                    style = MaterialTheme.typography.bodyLarge.copy(
-                        fontWeight = FontWeight.SemiBold
-                    )
+                    text = stringResource(rate.kind),
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
+
+            Spacer(Modifier.height(8.dp))
+
+            if (rate.score > 0) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(Icons.Default.Star, null, Modifier.size(18.dp), Color(0xFFFFC319))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = rate.scoreString,
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            Progress(rate, type, editable, rateState, onIncrement)
         }
+    }
 
-        Spacer(Modifier.weight(1f))
-
-        Progress(rate, type, editable, onIncrement)
+    AnimatedVisibility(rateState.isEditing(rate.id), Modifier, fadeIn(), fadeOut()) {
+        Box(
+            contentAlignment = Alignment.Center,
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colorScheme.scrim.copy(alpha = 0.3f))
+                .clickable(false) { /* Отключение клика по карточке под загрузкой */ },
+        ) {
+            CircularProgressIndicator(
+                color = MaterialTheme.colorScheme.onPrimary
+            )
+        }
     }
 }
 
@@ -432,6 +494,7 @@ private fun UserRateCard(
 @Composable
 private fun UserRateList(
     rates: List<UserRate>,
+    rateState: UserRateState,
     listState: LazyListState,
     getRate: (UserRate) -> Unit,
     type: LinkedType,
@@ -451,9 +514,10 @@ private fun UserRateList(
                 rate = rate,
                 type = type,
                 editable = editable,
-                onIncrement = increment,
+                rateState = rateState,
                 onNavigate = onNavigate,
-                onGetRate = getRate
+                onGetRate = getRate,
+                onIncrement = increment
             )
 
             if (rate != rates.lastOrNull()) {

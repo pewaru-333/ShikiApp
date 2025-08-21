@@ -10,10 +10,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,7 +25,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -36,7 +34,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import org.application.shikiapp.R
-import org.application.shikiapp.R.drawable.vector_comments
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
@@ -46,6 +43,7 @@ import org.application.shikiapp.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.DialogScreenshot
 import org.application.shikiapp.ui.templates.ErrorScreen
+import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.navigation.Screen
@@ -75,6 +73,7 @@ fun NewsDetailView(
     back: () -> Unit
 ) {
     val handler = LocalUriHandler.current
+    val listState = rememberLazyListState()
     val comments = news.comments.collectAsLazyPagingItems()
 
     Scaffold(
@@ -82,14 +81,7 @@ fun NewsDetailView(
             TopAppBar(
                 title = { Text(stringResource(R.string.text_news_one)) },
                 navigationIcon = { NavigationIcon(back) },
-                actions = {
-                    if (news.commentsCount > 0)
-                        IconButton(
-                            onClick = { onEvent(ContentDetailEvent.ShowComments) }
-                        ) {
-                            Icon(painterResource(vector_comments), null)
-                        }
-                }
+                actions = { IconComment(comments) { onEvent(ContentDetailEvent.ShowComments) } }
             )
         }
     ) { values ->
@@ -175,6 +167,7 @@ fun NewsDetailView(
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate

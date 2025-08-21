@@ -16,10 +16,12 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.ArrowForward
+import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -35,6 +37,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -44,6 +47,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
+import org.application.shikiapp.R
 import org.application.shikiapp.events.CalendarEvent
 import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
@@ -57,33 +61,16 @@ import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.ParagraphTitle
 import org.application.shikiapp.utils.navigation.Screen
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(onNavigate: (Screen) -> Unit) {
     val model = viewModel<CalendarViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen(model::loadData)
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> CalendarView(data.data, state, model::onEvent, onNavigate)
-        else -> Unit
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun CalendarView(
-    animeCalendar: AnimeCalendar,
-    state: AnimeCalendarState,
-    onEvent: (CalendarEvent) -> Unit,
-    onNavigate: (Screen) -> Unit
-) {
     val scope = rememberCoroutineScope()
-    val tabs = listOf("Подборка", "Расписание")
+    val tabs = listOf(stringResource(R.string.text_featured), stringResource(R.string.text_schedule))
     val pagerState = rememberPagerState(pageCount = tabs::size)
-
-    val topics = animeCalendar.updates.collectAsLazyPagingItems()
 
     fun onScroll(page: Int) {
         scope.launch {
@@ -102,7 +89,13 @@ private fun CalendarView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Обновления") }
+                title = { Text(stringResource(R.string.text_updates)) },
+                actions = {
+                    IconButton(
+                        onClick = { model.onEvent(CalendarEvent.Reload) },
+                        content = { Icon(Icons.Outlined.Refresh, null) }
+                    )
+                }
             )
         }
     ) { values ->
@@ -117,33 +110,53 @@ private fun CalendarView(
                 }
             }
 
-            HorizontalPager(pagerState) { tab ->
-                when (tab) {
-                    0 -> LazyColumn(
-                        contentPadding = PaddingValues(horizontal =  8.dp),
-                        verticalArrangement = Arrangement.spacedBy(16.dp)
-                    ) {
-                        item {
-                            Trending(animeCalendar.trending, onNavigate)
-                        }
+            when (val data = response) {
+                is Response.Error -> ErrorScreen(model::loadData)
+                is Response.Loading -> LoadingScreen()
+                is Response.Success -> CalendarView(data.data, state, pagerState, model::onEvent, onNavigate)
 
-                        item {
-                            Random(animeCalendar.random, onNavigate)
-                        }
+                else -> Unit
+            }
+        }
+    }
+}
 
-                        item {
-                            Updates(topics, onEvent, onNavigate)
-                        }
-                    }
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun CalendarView(
+    calendar: AnimeCalendar,
+    state: AnimeCalendarState,
+    pagerState: PagerState,
+    onEvent: (CalendarEvent) -> Unit,
+    onNavigate: (Screen) -> Unit
+) {
+    val topics = calendar.updates.collectAsLazyPagingItems()
 
-                    1 -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text(
-                            text = "На данный момент календарь выхода серий отключён на стороне сервера",
-                            modifier = Modifier.padding(horizontal = 16.dp),
-                            textAlign = TextAlign.Center
-                        )
-                    }
+    HorizontalPager(pagerState) { tab ->
+        when (tab) {
+            0 -> LazyColumn(
+                contentPadding = PaddingValues(horizontal = 8.dp),
+                verticalArrangement = Arrangement.spacedBy(16.dp)
+            ) {
+                item {
+                    Trending(calendar.trending, onNavigate)
                 }
+
+                item {
+                    Random(calendar.random, onNavigate)
+                }
+
+                item {
+                    Updates(topics, onEvent, onNavigate)
+                }
+            }
+
+            1 -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                Text(
+                    text = "На данный момент календарь выхода серий отключён на стороне сервера",
+                    modifier = Modifier.padding(horizontal = 16.dp),
+                    textAlign = TextAlign.Center
+                )
             }
         }
     }
@@ -159,7 +172,7 @@ private fun CalendarView(
 @Composable
 private fun Trending(trending: List<Content>, onNavigate: (Screen) -> Unit) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-        ParagraphTitle("Сейчас на экранах")
+        ParagraphTitle(stringResource(R.string.text_airing))
         IconButton(
             onClick = { onNavigate(Screen.Catalog(showOngoing = true)) },
             content = { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
@@ -179,7 +192,7 @@ private fun Trending(trending: List<Content>, onNavigate: (Screen) -> Unit) = Co
 
 @Composable
 private fun Random(trending: List<Content>, onNavigate: (Screen) -> Unit) = Column {
-    ParagraphTitle("Случайное", Modifier.padding(bottom = 8.dp))
+    ParagraphTitle(stringResource(R.string.text_random), Modifier.padding(bottom = 8.dp))
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(trending, Content::id) { anime ->
             CalendarOngoingCard(
@@ -199,7 +212,7 @@ private fun Updates(
     onNavigate: (Screen) -> Unit
 ) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-        ParagraphTitle("Обновления аниме")
+        ParagraphTitle(stringResource(R.string.text_updates_anime))
         IconButton(
             onClick = { onEvent(CalendarEvent.ShowFullUpdates) },
             content = { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
@@ -237,7 +250,7 @@ private fun AnimeUpdatesFull(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Обновления") },
+                title = { Text(stringResource(R.string.text_updates)) },
                 navigationIcon = {
                     IconButton(hide) {
                         Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)

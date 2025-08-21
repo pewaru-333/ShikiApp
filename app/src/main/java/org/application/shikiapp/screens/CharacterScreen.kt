@@ -31,6 +31,7 @@ import org.application.shikiapp.models.ui.Character
 import org.application.shikiapp.models.viewModels.CharacterViewModel
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.Description
 import org.application.shikiapp.ui.templates.ErrorScreen
@@ -77,6 +78,7 @@ private fun CharacterView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val listState = rememberLazyListState()
     val comments = character.comments.collectAsLazyPagingItems()
 
     Scaffold(
@@ -143,6 +145,7 @@ private fun CharacterView(
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -167,7 +170,7 @@ private fun CharacterView(
     if (state.showSheet) {
         BottomSheet(
             sheetState = state.sheetState,
-            isFavourite = character.favoured,
+            favoured = character.favoured,
             onEvent = onEvent
         )
     }

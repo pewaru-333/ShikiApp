@@ -20,6 +20,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
@@ -101,3 +102,26 @@ fun Poster(link: String) = AsyncImage(
         .clip(MaterialTheme.shapes.medium)
         .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
 )
+
+@Composable
+fun rememberLoadingEffect(shimmerColor: Color = Color.Companion.LightGray): Brush {
+    val transition = rememberInfiniteTransition()
+    val translateAnim = transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1000f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = FastOutSlowInEasing),
+            repeatMode = RepeatMode.Restart
+        )
+    )
+
+    return Brush.linearGradient(
+        start = Offset.Zero,
+        end = Offset(translateAnim.value, translateAnim.value),
+        colors = listOf(
+            shimmerColor.copy(alpha = 0.6f),
+            shimmerColor.copy(alpha = 0.2f),
+            shimmerColor.copy(alpha = 0.6f)
+        )
+    )
+}

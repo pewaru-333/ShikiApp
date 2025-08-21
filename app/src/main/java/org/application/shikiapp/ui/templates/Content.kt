@@ -123,7 +123,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
 
     Column(Modifier.animateContentSize()) {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            ParagraphTitle("Описание", Modifier.padding(bottom = 4.dp))
+            ParagraphTitle(stringResource(R.string.text_description), Modifier.padding(bottom = 4.dp))
 
             if (hasOverflow || maxLines > 8) {
                 IconButton(
@@ -170,7 +170,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                     Spacer(Modifier.width(8.dp))
 
                     Text(
-                        text = "Спойлер",
+                        text = stringResource(R.string.text_spoiler),
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold
                         )
@@ -378,8 +378,8 @@ fun Related(list: List<Related>, showAllRelated: () -> Unit, onNavigate: (Screen
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            ParagraphTitle("Связанное")
-            TextButton(showAllRelated) { Text("Показать всё") }
+            ParagraphTitle(stringResource(R.string.text_related))
+            TextButton(showAllRelated) { Text(stringResource(R.string.text_show_all_u)) }
         }
 
         LazyRow(
@@ -411,7 +411,11 @@ fun RelatedFull(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    val tabs = listOf("Напрямую", "Хронология", "Франшиза")
+    val tabs = listOf(
+        stringResource(R.string.text_directly),
+        stringResource(R.string.text_chronology),
+        stringResource(R.string.text_franchise)
+    )
 
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = tabs::size)
@@ -593,13 +597,13 @@ fun StatusInfo(@StringRes status: Int, airedOn: String, releasedOn: String) = Co
         text = buildString {
             airedOn.let {
                 if (it.isNotEmpty()) {
-                    append("с $it")
+                    append(stringResource(R.string.text_date_from, it))
                 }
             }
 
             releasedOn.let {
                 if (it.isNotEmpty()) {
-                    append(" по $it")
+                    append(" ${stringResource(R.string.text_date_till, it)}")
                 }
             }
         }
@@ -820,7 +824,7 @@ fun DialogScreenshot(
                 TopAppBar(
                     title = {
                         Text(
-                            stringResource(
+                            text = stringResource(
                                 R.string.text_image_of,
                                 pagerState.currentPage + 1,
                                 list.size
@@ -951,11 +955,7 @@ fun DialogHistory(
                             modifier = Modifier
                                 .size(80.dp, 121.dp)
                                 .clip(MaterialTheme.shapes.small)
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.outlineVariant,
-                                    MaterialTheme.shapes.small
-                                )
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
                         )
 
                         Spacer(Modifier.width(16.dp))

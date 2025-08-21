@@ -25,6 +25,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
@@ -127,6 +128,7 @@ private fun ClubView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val listState = rememberLazyListState()
     val members = club.members.collectAsLazyPagingItems()
     val images = club.images.collectAsLazyPagingItems()
     val clubs = club.clubs.collectAsLazyPagingItems()
@@ -227,9 +229,10 @@ private fun ClubView(
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
-        onNavigate = onNavigate,
-        hide = { onEvent(ClubEvent.ShowComments) }
+        hide = { onEvent(ClubEvent.ShowComments) },
+        onNavigate = onNavigate
     )
 
     when {

@@ -53,31 +53,22 @@ import kotlinx.coroutines.withContext
 import org.application.shikiapp.ui.templates.LoadingScreen
 
 @Composable
-fun HtmlComment(text: String) {
-    var content by remember { mutableStateOf<List<CommentContent>?>(null) }
+fun HtmlComment(commentContent: List<CommentContent>?) {
     var image by remember { mutableStateOf<String?>(null) }
 
-    LaunchedEffect(text) {
-        content = withContext(Dispatchers.Default) {
-            HtmlParser.parseComment(text)
-        }
-    }
+    BoxWithConstraints {
+        val containerMaxWidth = this.maxWidth
 
-    content?.let {
-        BoxWithConstraints {
-            val containerMaxWidth = this.maxWidth
-
-            Column {
-                it.forEach { item ->
-                    RenderContent(
-                        content = item,
-                        containerMaxWidth = containerMaxWidth,
-                        onImageClick = { image = it }
-                    )
-                }
+        Column {
+            commentContent?.forEach { item ->
+                RenderContent(
+                    content = item,
+                    containerMaxWidth = containerMaxWidth,
+                    onImageClick = { image = it }
+                )
             }
         }
-    } ?: LoadingScreen()
+    }
 
     if (image != null) {
         Dialog(

@@ -4,8 +4,10 @@ import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -38,9 +41,8 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
 import org.application.shikiapp.R
-import org.application.shikiapp.models.data.Comment
+import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.utils.HtmlComment
-import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
@@ -57,7 +59,7 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
                 .clickable { onNavigate(Screen.User(comment.userId)) }
         ) {
             AsyncImage(
-                model = comment.user.image.x160,
+                model = comment.userAvatar,
                 contentDescription = null,
                 contentScale = ContentScale.Crop,
                 filterQuality = FilterQuality.High,
@@ -71,7 +73,7 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
 
             Column(Modifier.weight(1f)) {
                 Text(
-                    text = comment.user.nickname,
+                    text = comment.userNickname,
                     style = MaterialTheme.typography.titleSmall.copy(
                         color = MaterialTheme.colorScheme.onSurface,
                         fontSize = 16.sp,
@@ -79,7 +81,7 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
                     )
                 )
                 Text(
-                    text = convertDate(comment.createdAt),
+                    text = comment.createdAt,
                     style = MaterialTheme.typography.bodySmall.copy(
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         fontSize = 13.sp
@@ -90,7 +92,7 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
 
         Spacer(Modifier.height(8.dp))
 
-        HtmlComment(comment.htmlBody.trimIndent())
+        HtmlComment(comment.commentContent)
     }
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -98,6 +100,7 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
 fun Comments(
     list: LazyPagingItems<Comment>,
     visible: Boolean,
+    listState: LazyListState,
     hide: () -> Unit,
     onNavigate: (Screen) -> Unit
 ) = AnimatedVisibility(
@@ -114,15 +117,17 @@ fun Comments(
             )
         }
     ) { values ->
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = values,
-            reverseLayout = true
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(values)
         ) {
-            when (list.loadState.refresh) {
-                is LoadState.Error -> item { ErrorScreen(list::retry) }
-                LoadState.Loading -> item { LoadingScreen() }
-                is LoadState.NotLoading -> items(list.itemCount, list.itemKey(Comment::id)) { index ->
+            LazyColumn(
+                state = listState,
+                modifier = Modifier.fillMaxSize(),
+                reverseLayout = true
+            ) {
+                items(list.itemCount, list.itemKey(Comment::id)) { index ->
                     list[index]?.let {
                         Comment(it, onNavigate)
 
@@ -131,9 +136,19 @@ fun Comments(
                         }
                     }
                 }
+
+                when (list.loadState.append) {
+                    is LoadState.Loading -> item { LoadingScreen() }
+                    is LoadState.Error -> item { ErrorScreen(list::retry) }
+                    else -> Unit
+                }
             }
-            if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-            if (list.loadState.hasError) item { ErrorScreen(list::retry) }
+
+            if (list.loadState.refresh is LoadState.Loading && list.itemCount == 0) {
+                LoadingScreen(Modifier.background(MaterialTheme.colorScheme.surface))
+            } else if (list.loadState.refresh is LoadState.Error && list.itemCount == 0) {
+                ErrorScreen(list::retry)
+            }
         }
     }
 }

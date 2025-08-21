@@ -20,6 +20,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
@@ -132,6 +133,7 @@ private fun AnimeView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val listState = rememberLazyListState()
     val comments = anime.comments.collectAsLazyPagingItems()
 
     Scaffold(
@@ -174,7 +176,7 @@ private fun AnimeView(
                         LabelInfoItem(stringResource(text_kind), stringResource(anime.kind))
                         LabelInfoItem(stringResource(text_episodes), anime.episodes)
                         StatusInfo(anime.status, anime.airedOn, anime.releasedOn)
-                        LabelInfoItem("Первоисточник", stringResource(anime.origin))
+                        LabelInfoItem(stringResource(R.string.text_source), stringResource(anime.origin))
                         ScoreInfo(anime.score)
                         LabelInfoItem(stringResource(R.string.text_rating), stringResource(anime.rating))
                     }
@@ -203,7 +205,7 @@ private fun AnimeView(
                         item {
                             DetailBox(
                                 icon = R.drawable.vector_anime,
-                                label = "Студия",
+                                label = stringResource(R.string.text_studio),
                                 value = studio.title,
                                 onClick = { onNavigate(Screen.Catalog(studio = studio.id)) }
                             )
@@ -213,7 +215,7 @@ private fun AnimeView(
                     item {
                         DetailBox(
                             icon = R.drawable.vector_timer,
-                            label = "Эпизод",
+                            label = stringResource(R.string.text_episode),
                             value = anime.duration
                         )
                     }
@@ -223,7 +225,7 @@ private fun AnimeView(
                             item {
                                 DetailBox(
                                     icon = R.drawable.vector_calendar,
-                                    label = "Следующий эпизод",
+                                    label = stringResource(R.string.text_episode_next),
                                     value = it
                                 )
                             }
@@ -235,7 +237,7 @@ private fun AnimeView(
                             item {
                                 DetailBox(
                                     icon = R.drawable.vector_similar,
-                                    label = "Похожее",
+                                    label = stringResource(R.string.text_similar),
                                     onClick = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
                                 )
                             }
@@ -253,7 +255,7 @@ private fun AnimeView(
                     item {
                         DetailBox(
                             icon = R.drawable.vector_subtitles,
-                            label = "Субтитры",
+                            label = stringResource(R.string.text_subtitles),
                             onClick = { onEvent(ContentDetailEvent.Media.ShowFansubbers) }
                         )
                     }
@@ -261,7 +263,7 @@ private fun AnimeView(
                     item {
                         DetailBox(
                             icon = R.drawable.vector_voice_actors,
-                            label = "Озвучка",
+                            label = stringResource(R.string.text_voices),
                             onClick = { onEvent(ContentDetailEvent.Media.ShowFandubbers) }
                         )
                     }
@@ -335,6 +337,7 @@ private fun AnimeView(
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -409,14 +412,14 @@ private fun AnimeView(
             rate = anime.userRate,
             favoured = anime.favoured,
             onEvent = onEvent,
-            toggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite(anime.favoured)) }
+            toggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) }
         )
 
         state.showRate -> CreateRate(
             id = anime.id,
             type = LinkedType.ANIME,
-            rateF = anime.userRate,
-            reload = { onEvent(ContentDetailEvent.Media.Reload) },
+            rateF = anime.userRate.getValue(),
+            reload = { onEvent(ContentDetailEvent.Media.ChangeRate) },
             hide = { onEvent(ContentDetailEvent.Media.ShowRate) }
         )
 
@@ -428,7 +431,7 @@ private fun AnimeView(
 
         state.showSheetContent -> SheetColumn(
             state = state.sheetColumn,
-            label = if (state.showFansubbers) "Субтитры" else "Озвучка",
+            label = stringResource(if (state.showFansubbers) R.string.text_subtitles else R.string.text_voices),
             list = if (state.showFansubbers) anime.fansubbers else anime.fandubbers,
             onHide = {
                 onEvent(
@@ -445,11 +448,7 @@ fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> U
     Box(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                MaterialTheme.shapes.medium
-            )
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
             .clickable(
                 enabled = onClick != null,
                 onClick = { onClick?.invoke() }
@@ -622,7 +621,7 @@ private fun Video(
             VideoKind.entries.forEach { entry ->
                 if (list.any { it.kind in entry.kinds })
                     item(span = StaggeredGridItemSpan.FullLine) {
-                        ParagraphTitle(entry.title, Modifier.padding(bottom = 4.dp))
+                        ParagraphTitle(stringResource(entry.title), Modifier.padding(bottom = 4.dp))
                     }
 
                 items(list.filter { it.kind in entry.kinds }.sortedBy(Video::name)) {

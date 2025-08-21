@@ -1,7 +1,6 @@
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
@@ -14,18 +13,13 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Favorite
 import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -35,12 +29,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.UriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -50,14 +40,13 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
-import org.application.shikiapp.R.string.text_add_fav
-import org.application.shikiapp.R.string.text_remove_fav
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.viewModels.PersonViewModel
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
@@ -69,8 +58,6 @@ import org.application.shikiapp.ui.templates.Profiles
 import org.application.shikiapp.ui.templates.ProfilesFull
 import org.application.shikiapp.ui.templates.Related
 import org.application.shikiapp.ui.templates.RelatedFull
-import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -105,6 +92,7 @@ private fun PersonView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val listState = rememberLazyListState()
     val comments = person.comments.collectAsLazyPagingItems()
 
     Scaffold(
@@ -166,6 +154,7 @@ private fun PersonView(
 
     Comments(
         list = comments,
+        listState = listState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -192,60 +181,8 @@ private fun PersonView(
             sheetState = state.sheetState,
             website = person.website,
             kind = person.personKind,
-            isFavourite = person.isPersonFavoured,
+            favoured = person.favoured,
             onEvent = onEvent
-        )
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun BottomSheet(
-    sheetState: SheetState,
-    website: String = BLANK,
-    kind: String = BLANK,
-    isFavourite: Boolean = false,
-    handler: UriHandler = LocalUriHandler.current,
-    onEvent: (ContentDetailEvent) -> Unit,
-) {
-    ModalBottomSheet(
-        sheetState = sheetState,
-        onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
-    ) {
-        if (Preferences.token != null) {
-            ListItem(
-                headlineContent = {
-                    Text(stringResource(if (isFavourite) text_remove_fav else text_add_fav))
-                },
-                leadingContent = {
-                    Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
-                        tint = if (isFavourite) Color.Red else LocalContentColor.current
-                    )
-                },
-                modifier = Modifier.clickable {
-                    if (kind.isNotEmpty()) {
-                        onEvent(ContentDetailEvent.Person.ToggleFavourite(kind, isFavourite))
-                    } else {
-                        onEvent(ContentDetailEvent.Character.ToggleFavourite(isFavourite))
-                    }
-                }
-            )
-        }
-
-        if (website.isNotEmpty()) {
-            ListItem(
-                headlineContent = { Text("Официальный сайт") },
-                modifier = Modifier.clickable { handler.openUri(website) },
-                leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
-            )
-        }
-
-        ListItem(
-            headlineContent = { Text("Открыть в браузере") },
-            modifier = Modifier.clickable { onEvent(ContentDetailEvent.OpenLink) },
-            leadingContent = { Icon(painterResource(R.drawable.vector_website), null) }
         )
     }
 }
