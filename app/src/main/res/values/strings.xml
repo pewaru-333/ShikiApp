@@ -18,10 +18,20 @@
     <string name="text_volumes">Тома</string>
 
     <!-- Каталог -->
+    <string name="text_airing">Сейчас на экранах</string>
     <string name="text_anime">Аниме</string>
     <string name="text_calendar">Календарь</string>
     <string name="text_catalog">Каталог</string>
     <string name="text_characters">Персонажи</string>
+    <string name="text_chronology">Хронология</string>
+    <string name="text_date_from">с %1$s</string>
+    <string name="text_date_till">по %1$s</string>
+    <string name="text_description">Описание</string>
+    <string name="text_directly">Напрямую</string>
+    <string name="text_episode">Эпизод</string>
+    <string name="text_episode_next">Следующий эпизод</string>
+    <string name="text_featured">Подборка</string>
+    <string name="text_franchise">Франшиза</string>
     <string name="text_lists">Списки</string>
     <string name="text_manga">Манга</string>
     <string name="text_mangaka">Мангака</string>
@@ -29,14 +39,28 @@
     <string name="text_members">Участники</string>
     <string name="text_news">Новости</string>
     <string name="text_news_one">Новость</string>
+    <string name="text_official_site">Официальный сайт</string>
     <string name="text_others">Прочие</string>
     <string name="text_people">Персоналии</string>
     <string name="text_pictures">Картинки</string>
     <string name="text_producer">Продюсер</string>
+    <string name="text_random">Случайное</string>
     <string name="text_ranobe">Ранобэ</string>
     <string name="text_roles">Роли</string>
-    <string name="text_video">Видео</string>
+    <string name="text_schedule">Расписание</string>
+    <string name="text_show_all_u">Показать всё</string>
+    <string name="text_source">Первоисточник</string>
+    <string name="text_spoiler">Спойлер</string>
+    <string name="text_studio">Студия</string>
+    <string name="text_subtitles">Субтитры</string>
+    <string name="text_updates">Обновления</string>
+    <string name="text_updates_anime">Обновления аниме</string>
     <string name="text_users">Пользователи</string>
+    <string name="text_voices">Озвучка</string>
+
+    <string name="text_video">Видео</string>
+    <string name="text_video_character_trailers">Трейлеры персонажей</string>
+    <string name="text_video_episodes_preview">Превью эпизодов</string>
 
     <!-- Статус просмотра/прочтения -->
     <string name="status_planned">Запланировано</string>
@@ -235,15 +259,25 @@
     <string name="preference_cache_size">Размер кэша</string>
     <string name="preference_cache_size_mb">%1$d МБ</string>
 
+    <string name="preference_language">Язык приложения</string>
+
     <!-- Другое -->
     <string name="blank" />
     <string name="text_empty">Пусто</string>
+    <string name="text_error">Ошибка!</string>
+    <string name="text_error_loading">Ошибка загрузки!</string>
+    <string name="text_loading">Загрузка</string>
     <string name="text_login">Вход</string>
     <string name="text_open_in_browser">Открыть в браузере</string>
+    <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
     <string name="text_to_settings">В настройки</string>
-    <string name="text_settings">Настройки</string>
+    <string name="text_try_again">Повторить</string>
     <string name="text_unknown">Неизвестно</string>
+
+    <string name="text_image">изображение</string>
+    <string name="text_quote">цитата</string>
+    <string name="text_spoiler_l">спойлер</string>
 
     <string name="text_birthday">Дата рождения</string>
     <string name="text_deathday">Дата смерти</string>
@@ -265,4 +299,10 @@
 
     <string name="text_confirm_remove_friend">Вы действительно хотите удалить данного пользователя из друзей?</string>
     <string name="text_confirm_add_friend">Вы действительно хотите добавить данного пользователя в друзья?</string>
+
+    <string name="text_applied_immediately">применяются сразу</string>
+    <string name="text_repeat_the_loading">Повторить загрузку</string>
+
+    <string name="text_error_open_link">Не удалось открыть ссылку</string>
+    <string name="text_no_browser">На устройстве не найден подходящий браузер</string>
 </resources>
