@@ -24,7 +24,11 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
 
     override fun loadData() {
         viewModelScope.launch {
-            emit(Response.Loading)
+            if (response.value !is Response.Success) {
+                emit(Response.Loading)
+            } else {
+                return@launch
+            }
 
             try {
                 val trending = async { GraphQL.getTrending() }
@@ -48,6 +52,12 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
 
     override fun onEvent(event: CalendarEvent) {
         when (event) {
+            CalendarEvent.Reload -> viewModelScope.launch {
+                emit(Response.Loading)
+
+                loadData()
+            }
+
             CalendarEvent.ShowFullUpdates -> updateState { it.copy(showFullUpdates = !it.showFullUpdates) }
         }
     }

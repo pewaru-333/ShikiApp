@@ -32,7 +32,9 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
 
     private fun getProfile() {
         viewModelScope.launch {
-            emit(LoginResponse.Logging)
+            if (response.value !is LoginResponse.Logged) {
+                emit(LoginResponse.Logging)
+            }
 
             try {
                 emit(

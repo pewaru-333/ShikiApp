@@ -3,7 +3,6 @@ package org.application.shikiapp.models.viewModels
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.util.fastFilterNotNull
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -38,6 +37,7 @@ import org.application.shikiapp.models.data.BaseRate
 import org.application.shikiapp.models.data.NewRate
 import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.models.states.SortingState
+import org.application.shikiapp.models.states.UserRateUiEvent
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.Network
@@ -55,7 +55,8 @@ import org.application.shikiapp.utils.navigation.Screen
 class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     private val args = runCatching { saved.toRoute<Screen.UserRates>() }.getOrNull()
 
-    var type = args?.type ?: LinkedType.ANIME
+    private val _type = MutableStateFlow(args?.type ?: LinkedType.ANIME)
+    val type = _type.asStateFlow()
 
     val editable = args?.editable ?: false
     val userId = if (editable) Preferences.userId else args?.id
@@ -71,8 +72,8 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     private val _newRate = MutableStateFlow(NewRateState())
     val newRate = _newRate.asStateFlow()
 
-    private val _changed = Channel<Boolean>()
-    val changed = _changed.receiveAsFlow()
+    private val _rateUiEvent = Channel<UserRateUiEvent>()
+    val rateUiEvent = _rateUiEvent.receiveAsFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
     val rates = combine(_response, _orderState) { response, state ->
@@ -109,7 +110,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     var showEditDialog by mutableStateOf(false)
         private set
 
-    fun loadRates() {
+    fun loadRates(type: LinkedType = _type.value) {
         if (userId == null) {
             return
         }
@@ -120,42 +121,40 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 return@launch
             }
 
-            _response.emit(RatesResponse.Loading)
+            if (_response.value !is RatesResponse.Success) {
+                _response.emit(RatesResponse.Loading)
+            }
 
-            val rates = mutableListOf<UserRate>()
-            var page = 0
+            val allRates = mutableListOf<UserRate>()
+            val threads = 5
+            var currentPage = 0
             var moreDataAvailable = true
 
             try {
                 while (moreDataAvailable) {
-                    val calls = coroutineScope {
-                        (1..5).map {
+                    val rates = coroutineScope {
+                        (1..threads).map { thread ->
                             async {
                                 if (type == LinkedType.ANIME) {
-                                    Network.rates.getAnimeRates(
-                                        id = userId,
-                                        page = page + it,
-                                        limit = 250
-                                    )
+                                    Network.rates.getAnimeRates(userId, currentPage + thread, 250)
                                 } else {
-                                    Network.rates.getMangaRates(
-                                        id = userId,
-                                        page = page + it,
-                                        limit = 250
-                                    )
+                                    Network.rates.getMangaRates(userId, currentPage + thread, 250)
                                 }
                             }
                         }
                     }
 
-                    val results = calls.awaitAll().fastFilterNotNull()
-                    rates.addAll(results.flatten().map(BaseRate::mapper))
+                    val ratesNotNull = rates.awaitAll().filterNotNull()
+                    allRates.addAll(ratesNotNull.flatten().map(BaseRate::mapper))
 
-                    moreDataAvailable = results.any { it.size == 250 }
-                    page += 5
+                    if (ratesNotNull.size < threads || ratesNotNull.any { it.size < 250 }) {
+                        moreDataAvailable = false
+                    } else {
+                        currentPage += threads
+                    }
                 }
 
-                _response.emit(RatesResponse.Success(rates.distinctBy(UserRate::id)))
+                _response.emit(RatesResponse.Success(allRates.distinctBy(UserRate::id)))
             } catch (e: ClientRequestException) {
                 _response.emit(
                     if (e.response.status.value == 403) RatesResponse.NoAccess
@@ -168,17 +167,15 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     fun onSortChanged(orderType: OrderRates) {
-        viewModelScope.launch {
-            _orderState.value.let { value ->
-                if (value.order == orderType) {
-                    if (value.direction == OrderDirection.ASCENDING) {
-                        _orderState.emit(SortingState(orderType, OrderDirection.DESCENDING))
-                    } else {
-                        _orderState.emit(SortingState())
-                    }
+        _orderState.update {
+            if (orderType == it.order) {
+                if (it.direction == OrderDirection.ASCENDING) {
+                    it.copy(direction = OrderDirection.DESCENDING)
                 } else {
-                    _orderState.emit(SortingState(orderType, OrderDirection.ASCENDING))
+                    it.copy(direction = OrderDirection.ASCENDING)
                 }
+            } else {
+                SortingState(orderType, OrderDirection.ASCENDING)
             }
         }
     }
@@ -188,18 +185,18 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     fun setLinkedType(type: LinkedType) {
-        if (type == this.type) {
-            return
+        _type.update { type }
+
+        viewModelScope.launch {
+            _response.emit(RatesResponse.Loading)
+
+            loadRates(type)
         }
-
-        this.type = type
-
-        loadRates()
     }
 
     fun getRate(rate: UserRate) {
         onEvent(SetRateId(rate.id.toString()))
-        onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), type))
+        onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), type.value))
         onEvent(SetScore(Score.entries.first { it.score == rate.score }))
         onEvent(SetChapters(rate.chapters.toString()))
         onEvent(SetEpisodes(rate.episodes.toString()))
@@ -242,6 +239,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             val currentState =  _response.value as? RatesResponse.Success ?: return@launch
             val newRate = _newRate.value
 
+            _rateUiEvent.send(UserRateUiEvent.UpdateStart(rateId.toLong()))
             showEditDialog = false
 
             try {
@@ -276,15 +274,15 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         )
 
                         val newRates = oldRates.toMutableList().apply { this[index] = updatedRate }
-                        _response.emit(RatesResponse.Success(newRates))
-                    }
 
-                    _changed.trySend(true)
+                        _response.emit(RatesResponse.Success(newRates))
+                        _rateUiEvent.send(UserRateUiEvent.UpdateFinish)
+                    }
                 } else {
-                    _changed.trySend(false)
+                    _rateUiEvent.send(UserRateUiEvent.Error)
                 }
             } catch (_: Throwable) {
-                _changed.trySend(false)
+                _rateUiEvent.send(UserRateUiEvent.Error)
             }
         }
     }
@@ -317,23 +315,26 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
     fun delete(rateId: String) {
         viewModelScope.launch {
+            _rateUiEvent.send(UserRateUiEvent.DeleteStart(rateId.toLong()))
+            showEditDialog = false
+
             try {
                 val request = Network.rates.delete(rateId.toLong())
 
                 if (request.status == HttpStatusCode.NoContent) {
-                    val currentResponse = _response.value
-                    if (currentResponse is RatesResponse.Success) {
-                        val updatedRates = currentResponse.rates.filterNot { it.id.toString() == rateId }
+                    with(_response.value) {
+                        if (this !is RatesResponse.Success) return@launch
 
-                        showEditDialog = false
+                        val updatedRates = rates.filterNot { it.id.toString() == rateId }
+
                         _response.emit(RatesResponse.Success(updatedRates))
-                        _changed.trySend(true)
+                        _rateUiEvent.send(UserRateUiEvent.DeleteFinish)
                     }
                 } else {
-                    _changed.trySend(false)
+                    _rateUiEvent.send(UserRateUiEvent.Error)
                 }
             } catch (_: Throwable) {
-                _changed.trySend(false)
+                _rateUiEvent.send(UserRateUiEvent.Error)
             }
         }
     }
@@ -353,28 +354,33 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
     fun increment(rateId: Long) {
         viewModelScope.launch {
-            val currentState = _response.value as? RatesResponse.Success ?: return@launch
+            _rateUiEvent.send(UserRateUiEvent.IncrementStart(rateId))
 
             try {
                 val request = Network.rates.increment(rateId)
 
                 if (request.status != HttpStatusCode.Created) {
-                    _changed.send(false)
+                    _rateUiEvent.send(UserRateUiEvent.Error)
+
                     return@launch
                 }
 
-                val newRates = currentState.rates.map { rate ->
-                    if (rate.id == rateId) {
-                        rate.copy(episodes = rate.episodes + 1)
-                    } else {
-                        rate
-                    }
-                }
+                with(_response.value) {
+                    if (this !is RatesResponse.Success) return@launch
 
-                _response.emit(RatesResponse.Success(newRates))
-                _changed.send(true)
+                    val newRates = rates.map { rate ->
+                        if (rate.id == rateId) {
+                            rate.copy(episodes = rate.episodes + 1)
+                        } else {
+                            rate
+                        }
+                    }
+
+                    _response.emit(RatesResponse.Success(newRates))
+                    _rateUiEvent.send(UserRateUiEvent.IncrementFinish)
+                }
             } catch (_: Exception) {
-                _changed.send(false)
+                _rateUiEvent.send(UserRateUiEvent.Error)
             }
         }
     }

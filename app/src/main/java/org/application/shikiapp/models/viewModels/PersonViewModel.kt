@@ -6,12 +6,14 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.Network
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
@@ -23,13 +25,17 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
 
     override fun loadData() {
         viewModelScope.launch {
-            emit(Response.Loading)
+            if (response.value !is Response.Success) {
+                emit(Response.Loading)
+            }
 
             try {
-                val person = Network.content.getPerson(id)
-                val comments = getComments(person.topicId)
+                coroutineScope {
+                    val person = Network.content.getPerson(id)
+                    setCommentParams(person.topicId)
 
-                emit(Response.Success(person.mapper(comments)))
+                    emit(Response.Success(person.mapper(comments)))
+                }
             } catch (e: Throwable) {
                 emit(Response.Error(e))
             }
@@ -47,12 +53,23 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
 
             ContentDetailEvent.Person.ShowWorks -> updateState { it.copy(showWorks = !it.showWorks) }
 
-            is ContentDetailEvent.Person.ToggleFavourite -> toggleFavourite(
-                id = id,
-                type = LinkedType.PERSON,
-                favoured = event.favoured,
-                kind = event.kind
-            )
+            is ContentDetailEvent.Person.ToggleFavourite -> with(response.value) {
+                if (this !is Response.Success) return
+
+                val isFavoured = data.favoured.getValue() ?: return
+                val newData = data.copy(favoured = AsyncData.Loading)
+
+                viewModelScope.launch {
+                    emit(Response.Success(newData))
+                }
+
+                toggleFavourite(
+                    id = id,
+                    type = LinkedType.PERSON,
+                    favoured = isFavoured,
+                    kind = event.kind
+                )
+            }
 
             else -> Unit
         }

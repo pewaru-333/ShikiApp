@@ -10,15 +10,20 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
+import androidx.paging.map
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
+import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
 import org.application.shikiapp.events.ClubEvent
@@ -42,6 +47,8 @@ import org.application.shikiapp.utils.navigation.Screen
 
 class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, ClubEvent>() {
     private val clubId = saved.toRoute<Screen.Club>().id
+
+    private val _commentParams = MutableStateFlow<Pair<Long?, String>>(Pair(null, "Topic"))
 
     private val _joinChannel = Channel<ResourceText>()
     val joinChannel = _joinChannel.receiveAsFlow()
@@ -150,6 +157,23 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
     @OptIn(ExperimentalCoroutinesApi::class)
+    val comments = _commentParams.filterNotNull().flatMapLatest { (id, type) ->
+        Pager(
+            config = PagingConfig(
+                pageSize = 15,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                CommonPaging(Comment::id) { page, params ->
+                    Network.topics.getComments(id, type, page, params.loadSize)
+                }
+            }
+        ).flow
+    }.map { it.map(Comment::mapper) }
+        .cachedIn(viewModelScope)
+        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+
+    @OptIn(ExperimentalCoroutinesApi::class)
     val content = state.flatMapLatest { state ->
         when (state.menu) {
             ClubMenu.ANIME -> animes
@@ -164,13 +188,17 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
 
     override fun loadData() {
         viewModelScope.launch {
-            emit(Response.Loading)
+            if (response.value !is Response.Success) {
+                emit(Response.Loading)
+            }
 
             try {
-                val club = asyncLoad { Network.clubs.getClub(clubId) }
+                val club = async { Network.clubs.getClub(clubId) }
                 val clubLoaded = club.await()
 
-                val comments = getComments(clubLoaded.topicId)
+                _commentParams.update {
+                    Pair(clubLoaded.topicId, "Topic")
+                }
 
                 updateState {
                     it.copy(
@@ -224,20 +252,6 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             }
         }
     }
-
-    private fun getComments(id: Long) = Pager(
-        config = PagingConfig(
-            pageSize = 15,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = {
-            CommonPaging<Comment>(Comment::id) { page, params ->
-                Network.topics.getComments(id, "Topic", page, params.loadSize)
-            }
-        }
-    ).flow
-        .cachedIn(viewModelScope)
-        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
     private fun joinClub() {
         viewModelScope.launch {

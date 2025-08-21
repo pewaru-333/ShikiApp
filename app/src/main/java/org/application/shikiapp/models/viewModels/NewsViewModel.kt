@@ -18,7 +18,7 @@ class NewsViewModel : ViewModel() {
     val newsList = Pager(
         config = PagingConfig(pageSize = 10, enablePlaceholders = false),
         pagingSourceFactory = {
-            CommonPaging<News>(News::id) { page, params ->
+            CommonPaging(News::id) { page, params ->
                 Network.topics.getNewsList(page, params.loadSize)
             }
         }

@@ -2,7 +2,6 @@ package org.application.shikiapp.models.viewModels
 
 import androidx.compose.material3.DrawerState
 import androidx.compose.material3.DrawerValue
-import androidx.compose.runtime.snapshots.SnapshotStateSet
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -102,7 +101,6 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             else -> flowOf(emptyList())
         }
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
-
 
     fun showFilters(menu: CatalogItem) = _state.update {
         when (menu) {
@@ -243,26 +241,18 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
 
     fun onEvent(event: FilterEvent) {
         when (event) {
-            FilterEvent.ClearFilters -> _currentFilters.update { FiltersState() }
+            FilterEvent.ClearFilters ->  _currentFilters.update { FiltersState() }
 
             is SetOrder -> _currentFilters.update {
                 it.copy(order = event.order)
             }
 
             is SetStatus -> _currentFilters.update {
-                it.copy(
-                    status = it.status.apply {
-                        toggle(event.status)
-                    }
-                )
+                it.copy(status = it.status.toggle(event.status))
             }
 
             is SetKind -> _currentFilters.update {
-                it.copy(
-                    kind = it.kind.apply {
-                        toggle(event.kind)
-                    }
-                )
+                it.copy(kind = it.kind.toggle(event.kind))
             }
 
             is SetSeasonYS -> if (event.year.length <= 4) {
@@ -274,11 +264,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             }
 
             is SetSeasonS -> _currentFilters.update {
-                it.copy(
-                    season = it.seasonS.apply {
-                        toggle(event.season)
-                    }
-                )
+                it.copy(season = it.seasonS.toggle(event.season))
             }
 
             is SetSeason -> {
@@ -286,7 +272,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                 val yearEnd = _currentFilters.value.seasonYF.toIntOrNull() ?: 2100
                 val selectedSeasons = _currentFilters.value.seasonS
 
-                val seasons = (yearStart..yearEnd).flatMapTo(SnapshotStateSet()) { year ->
+                val seasons = (yearStart..yearEnd).flatMapTo(HashSet()) { year ->
                     if (selectedSeasons.isEmpty()) listOf(year.toString())
                     else selectedSeasons.map { season -> "${season}_$year" }
                 }
@@ -295,33 +281,19 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             }
 
             is SetScore -> _currentFilters.update {
-                it.copy(
-                    score = event.score
-                )
+                it.copy(score = event.score)
             }
 
             is SetDuration -> _currentFilters.update {
-                it.copy(
-                    duration = it.duration.apply {
-                        toggle(event.duration)
-                    }
-                )
+                it.copy(duration = it.duration.toggle(event.duration))
             }
 
             is SetRating -> _currentFilters.update {
-                it.copy(
-                    rating = it.rating.apply {
-                        toggle(event.rating)
-                    }
-                )
+                it.copy(rating = it.rating.toggle(event.rating))
             }
 
             is SetGenre -> _currentFilters.update {
-                it.copy(
-                    genres = it.genres.apply {
-                        toggle(event.genre)
-                    }
-                )
+                it.copy(genres = it.genres.toggle(event.genre))
             }
 
             is SetStudio -> _currentFilters.update { it.copy(studio = event.studio) }
@@ -330,11 +302,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             is SetCensored -> {}
             is SetMyList -> {}
             is SetRole -> _currentFilters.update {
-                it.copy(
-                    roles = it.roles.apply {
-                        toggle(event.item)
-                    }
-                )
+                it.copy(roles = it.roles.toggle(event.item))
             }
 
             is SetTitle -> {
@@ -351,6 +319,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                 }
             }
         }
+
 
         _state.value.menu.let(pagers::remove)
     }

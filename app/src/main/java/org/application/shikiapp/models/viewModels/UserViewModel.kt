@@ -8,15 +8,12 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.data.ClubBasic
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.ui.History
@@ -72,17 +69,18 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
     protected val favourites: Deferred<Map<FavouriteItem, List<BasicContent>>>
         get() = asyncLoad { Network.user.getFavourites(userId).toBasicContentMap() }
 
-    protected val comments: Flow<PagingData<Comment>>
-        get() = getComments(userId, "User")
-
     override fun initState() = UserState()
 
     override fun loadData() {
         viewModelScope.launch {
-            emit(Response.Loading)
+            if (response.value !is Response.Success) {
+                emit(Response.Loading)
+            }
 
             try {
                 val userLoaded = user.await()
+
+                setCommentParams(userId, "User")
 
                 updateState {
                     it.copy(

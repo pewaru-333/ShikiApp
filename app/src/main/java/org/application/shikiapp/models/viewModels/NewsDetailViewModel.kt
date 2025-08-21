@@ -3,6 +3,7 @@ package org.application.shikiapp.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.NewsDetailState
@@ -20,11 +21,13 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
 
     override fun loadData() {
         viewModelScope.launch {
-            emit(Response.Loading)
+            if (response.value !is Response.Success) {
+                emit(Response.Loading)
+            }
 
             try {
-                val news = asyncLoad { Network.topics.getTopic(newsId) }
-                val comments = getComments(newsId)
+                val news = async { Network.topics.getTopic(newsId) }
+                setCommentParams(newsId)
 
                 emit(Response.Success(news.await().mapper(comments)))
             } catch (e: Throwable) {

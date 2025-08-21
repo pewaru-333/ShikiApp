@@ -7,6 +7,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.AnimeState
@@ -14,6 +15,7 @@ import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.ui.mappers.AnimeMapper
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
@@ -25,31 +27,35 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
 
     override fun loadData() {
         viewModelScope.launch {
-            emit(Response.Loading)
+            if (response.value !is Response.Success) {
+               emit(Response.Loading)
+            }
 
             try {
-                val topic = async { GraphQL.getAnimeTopic(animeId) }
-                val main = async { GraphQL.getAnimeMain(animeId) }
-                val extra = async { GraphQL.getAnimeExtra(animeId) }
+                coroutineScope {
+                    val topic = async { GraphQL.getAnimeTopic(animeId) }
+                    val main = async { GraphQL.getAnimeMain(animeId) }
+                    val extra = async { GraphQL.getAnimeExtra(animeId) }
 
-                val franchise = async { Network.anime.getFranchise(animeId) }
-                val similar = async { Network.anime.getSimilar(animeId) }
-                val favoured = async { Network.anime.getAnime(animeId).favoured }
+                    val franchise = async { Network.anime.getFranchise(animeId) }
+                    val similar = async { Network.anime.getSimilar(animeId) }
+                    val favoured = async { Network.anime.getAnime(animeId).favoured }
 
-                val comments = getComments(topic.await().topic?.id?.toLong())
+                    setCommentParams(topic.await().topic?.id?.toLong())
 
-                emit(
-                    Response.Success(
-                        AnimeMapper.create(
-                            main = main.await(),
-                            extra = extra.await(),
-                            franchise = franchise.await(),
-                            similar = similar.await(),
-                            comments = comments,
-                            favoured = favoured.await()
+                    emit(
+                        Response.Success(
+                            AnimeMapper.create(
+                                main = main.await(),
+                                extra = extra.await(),
+                                franchise = franchise.await(),
+                                similar = similar.await(),
+                                comments = comments,
+                                favoured = favoured.await()
+                            )
                         )
                     )
-                )
+                }
             } catch (e: Exception) {
                 emit(Response.Error(e))
             }
@@ -64,14 +70,22 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
             ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
 
             is ContentDetailEvent.Media -> when (event) {
-                ContentDetailEvent.Media.Reload -> viewModelScope.launch {
+                ContentDetailEvent.Media.ChangeRate -> with(response.value) {
+                    if (this !is Response.Success) return
+
+                    val newData = data.copy(userRate = AsyncData.Loading)
+
                     updateState {
                         it.copy(
                             showRate = !it.showRate,
                             showSheet = !it.showSheet
                         )
                     }
-                    loadData()
+
+                    viewModelScope.launch {
+                        emit(Response.Success(newData))
+                        loadData()
+                    }
                 }
 
                 ContentDetailEvent.Media.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
@@ -119,11 +133,22 @@ class AnimeViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Anime, An
                     it.copy(showVideo = !it.showVideo)
                 }
 
-                is ContentDetailEvent.Media.Anime.ToggleFavourite -> toggleFavourite(
-                    id = animeId,
-                    type = LinkedType.ANIME,
-                    favoured = event.favoured
-                )
+                is ContentDetailEvent.Media.Anime.ToggleFavourite -> with(response.value) {
+                    if (this !is Response.Success) return
+
+                    val isFavoured = data.favoured.getValue() ?: return
+                    val newData = data.copy(favoured = AsyncData.Loading)
+
+                    viewModelScope.launch {
+                        emit(Response.Success(newData))
+                    }
+
+                    toggleFavourite(
+                        id = animeId,
+                        type = LinkedType.ANIME,
+                        favoured = isFavoured
+                    )
+                }
             }
 
             else -> Unit
