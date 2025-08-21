@@ -34,8 +34,6 @@ import org.application.shikiapp.utils.extensions.refreshToken
 object Network {
     val client: HttpClient by lazy {
         HttpClient(Android) {
-            expectSuccess = true
-
             engine {
                 dispatcher = Dispatchers.IO
             }

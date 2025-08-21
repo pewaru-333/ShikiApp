@@ -24,6 +24,7 @@ import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.utils.enums.Order
 import org.application.shikiapp.utils.extensions.getRandomTrending
 import org.application.shikiapp.utils.extensions.mapToResult
+import org.application.shikiapp.utils.extensions.requestWithCache
 import org.application.shikiapp.utils.getOngoingSeason
 
 object GraphQL {
@@ -60,24 +61,35 @@ object GraphQL {
     ) { it.animes.map(AnimeListQuery.Data.Anime::mapper) }
 
 
-    suspend fun getTrending() =
-        Network.apollo.query(AnimeAiringQuery(getOngoingSeason())).execute()
-            .dataOrThrow().animes
-            .map(AnimeAiringQuery.Data.Anime::mapper)
-            .getRandomTrending()
+    suspend fun getTrending() = Network.apollo.requestWithCache(
+        cacheKey = "animes_trending",
+        query = AnimeAiringQuery(getOngoingSeason()),
+        dataSelector = { it.animes.map(AnimeAiringQuery.Data.Anime::mapper).getRandomTrending() }
+    )
 
-    suspend fun getRandom() = Network.apollo.query(AnimeRandomQuery()).execute()
-        .dataOrThrow().animes
-        .map(AnimeRandomQuery.Data.Anime::mapper)
+    suspend fun getRandom() = Network.apollo.requestWithCache(
+        cacheKey = "animes_random",
+        query = AnimeRandomQuery(),
+        dataSelector = { it.animes.map(AnimeRandomQuery.Data.Anime::mapper) }
+    )
 
-    suspend fun getAnimeMain(id: String) = Network.apollo.query(AnimeMainQuery(id)).execute()
-        .dataOrThrow().animes.first()
+    suspend fun getAnimeMain(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "anime_main:$id",
+        query = AnimeMainQuery(id),
+        dataSelector = { data -> data.animes.first() }
+    )
 
-    suspend fun getAnimeExtra(id: String) = Network.apollo.query(AnimeExtraQuery(id)).execute()
-        .dataOrThrow().animes.first()
+    suspend fun getAnimeExtra(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "anime_extra:$id",
+        query = AnimeExtraQuery(id),
+        dataSelector = { data -> data.animes.first() }
+    )
 
-    suspend fun getAnimeTopic(id: String) = Network.apollo.query(AnimeTopicQuery(id)).execute()
-        .dataOrThrow().animes.first()
+    suspend fun getAnimeTopic(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "anime_topic:$id",
+        query = AnimeTopicQuery(id),
+        dataSelector = { data -> data.animes.first() }
+    )
 
     fun getAnimeGenres() = Network.apollo.query(AnimeGenresQuery()).toFlow()
         .mapToResult(AnimeGenresQuery.Data::genres)
@@ -110,14 +122,23 @@ object GraphQL {
         )
     ) { it.mangas.map(MangaListQuery.Data.Manga::mapper) }
 
-    suspend fun getMangaMain(id: String) = Network.apollo.query(MangaMainQuery(id)).execute()
-        .dataOrThrow().mangas.first()
+    suspend fun getMangaMain(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "manga_main:$id",
+        query = MangaMainQuery(id),
+        dataSelector = { data -> data.mangas.first() }
+    )
 
-    suspend fun getMangaExtra(id: String) = Network.apollo.query(MangaExtraQuery(id)).execute()
-        .dataOrThrow().mangas.first()
+    suspend fun getMangaExtra(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "manga_extra:$id",
+        query = MangaExtraQuery(id),
+        dataSelector = { data -> data.mangas.first() }
+    )
 
-    suspend fun getMangaTopic(id: String) = Network.apollo.query(MangaTopicQuery(id)).execute()
-        .dataOrThrow().mangas.first()
+    suspend fun getMangaTopic(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "manga_topic:$id",
+        query = MangaTopicQuery(id),
+        dataSelector = { data -> data.mangas.first() }
+    )
 
     fun getMangaGenres() = Network.apollo.query(MangaGenresQuery()).toFlow()
         .mapToResult(MangaGenresQuery.Data::genres)
@@ -129,12 +150,17 @@ object GraphQL {
             it.characters.map(CharacterListQuery.Data.Character::mapper)
         }
 
-    suspend fun getCharacter(id: String) =
-        Network.apollo.query(CharacterQuery(listOf(id))).execute()
-            .dataOrThrow().characters.first()
+    suspend fun getCharacter(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "graphql_character:$id",
+        query = CharacterQuery(listOf(id)),
+        dataSelector = { data -> data.characters.first() }
+    )
 
-    suspend fun getCharacterTopic(id: String) = Network.apollo.query(CharacterTopicQuery(listOf(id))).execute()
-        .dataOrThrow().characters.first()
+    suspend fun getCharacterTopic(id: String) = Network.apollo.requestWithCache(
+        cacheKey = "graphql_character_topic:$id",
+        query = CharacterTopicQuery(listOf(id)),
+        dataSelector = { data -> data.characters.first() }
+    )
 
     suspend fun getPeople(
         page: Int,
