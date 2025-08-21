@@ -1,8 +1,11 @@
 package org.application.shikiapp.utils
 
+import android.app.Activity
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import android.content.SharedPreferences
+import android.os.Build
+import android.os.LocaleList
 import androidx.core.content.edit
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -14,8 +17,10 @@ import org.application.shikiapp.utils.enums.ListView
 import org.application.shikiapp.utils.enums.Theme
 import org.application.shikiapp.utils.extensions.getColorsFlow
 import org.application.shikiapp.utils.extensions.getEnum
+import org.application.shikiapp.utils.extensions.getSelectedLanguage
 import org.application.shikiapp.utils.extensions.getThemeFlow
 import org.application.shikiapp.utils.extensions.putEnum
+import java.util.Locale
 
 object Preferences : ViewModel() {
     private lateinit var auth: SharedPreferences
@@ -73,5 +78,27 @@ object Preferences : ViewModel() {
 
     fun setTheme(theme: Theme) = app.edit {
         putEnum(PREF_APP_THEME, theme)
+    }
+
+    fun getLanguage(context: Context?) = if (context == null) Locale.ENGLISH.language
+    else app.getString(PREF_APP_LANGUAGE, context.getSelectedLanguage()) ?: Locale.ENGLISH.language
+
+    fun changeLanguage(context: Context?) =
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) context
+        else {
+            val newLocale = Locale.forLanguageTag(getLanguage(context))
+            Locale.setDefault(newLocale)
+
+            val resources = context?.resources
+            val configuration = resources?.configuration
+            configuration?.setLocales(LocaleList(newLocale))
+
+            configuration?.let { context.createConfigurationContext(it) } ?: context
+        }
+
+    fun setLocale(context: Context, locale: String) {
+        app.edit { putString(PREF_APP_LANGUAGE, locale) }
+        changeLanguage(context)
+        (context as Activity).recreate()
     }
 }

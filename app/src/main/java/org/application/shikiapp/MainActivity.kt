@@ -1,5 +1,6 @@
 package org.application.shikiapp
 
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -13,6 +14,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import org.application.shikiapp.ui.theme.Theme
+import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.Menu
 import org.application.shikiapp.utils.extensions.isCurrentRoute
 import org.application.shikiapp.utils.extensions.rememberNavigationBarVisibility
@@ -50,5 +52,9 @@ class MainActivity : ComponentActivity() {
         super.onNewIntent(intent)
 
         navigator.safeDeepLink(intent)
+    }
+
+    override fun attachBaseContext(newBase: Context?) {
+        super.attachBaseContext(Preferences.changeLanguage(newBase))
     }
 }
