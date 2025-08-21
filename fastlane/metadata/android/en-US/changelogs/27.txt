@@ -1,0 +1,3 @@
+— Redesigned the appearance of some application components.
+— Fixed a bug that sometimes caused anime/manga/ranobe titles to be empty in the lists.
+— Now, when using the app, some screen states persist much longer.
