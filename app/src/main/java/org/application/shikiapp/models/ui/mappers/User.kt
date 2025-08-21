@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import org.application.shikiapp.generated.UsersQuery
 import org.application.shikiapp.models.data.ClubBasic
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.User
 import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.ui.History
@@ -20,7 +19,7 @@ import org.application.shikiapp.utils.getWatchStatus
 
 fun User.mapper(
     clubs: List<ClubBasic>,
-    comments: Flow<PagingData<Comment>>,
+    comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>,
     friends: Flow<PagingData<UserBasic>>,
     history: Flow<PagingData<History>>,
     favourites: Map<FavouriteItem, List<BasicContent>>

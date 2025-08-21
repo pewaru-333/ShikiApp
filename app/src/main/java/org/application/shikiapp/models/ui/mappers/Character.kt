@@ -9,11 +9,11 @@ import org.application.shikiapp.generated.fragment.CharacterRole
 import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.Character
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.MangaBasic
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
@@ -26,7 +26,7 @@ object CharacterMapper {
     fun create(
         character: Character,
         image: CharacterQuery.Data.Character,
-        comments: Flow<PagingData<Comment>>
+        comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>
     ): org.application.shikiapp.models.ui.Character {
         val relatedList = character.animes.map(AnimeBasic::toRelated) +
                 character.mangas.map(MangaBasic::toRelated)
@@ -36,7 +36,7 @@ object CharacterMapper {
             anime = character.animes.map(AnimeBasic::toContent),
             comments = comments,
             description = fromHtml(character.descriptionHTML),
-            favoured = character.favoured,
+            favoured = AsyncData.Success(character.favoured),
             id = character.id.toString(),
             japanese = character.japanese,
             manga = character.mangas.map(MangaBasic::toContent),

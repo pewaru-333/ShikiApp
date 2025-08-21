@@ -2,8 +2,8 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.News
+import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.fromHtml

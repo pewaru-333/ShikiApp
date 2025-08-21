@@ -2,6 +2,7 @@ package org.application.shikiapp.models.ui.mappers
 
 import org.application.shikiapp.models.data.FullMessage
 import org.application.shikiapp.models.ui.list.Dialog
+import org.application.shikiapp.utils.HtmlParser
 import org.application.shikiapp.utils.convertDate
 
 fun org.application.shikiapp.models.data.Dialog.toDialog() = Dialog(
@@ -9,7 +10,7 @@ fun org.application.shikiapp.models.data.Dialog.toDialog() = Dialog(
     userId = targetUser.id,
     userNickname = targetUser.nickname,
     userAvatar = targetUser.image.x160,
-    lastMessage = message.htmlBody,
+    lastMessage = HtmlParser.parseComment(message.htmlBody),
     lastDate = convertDate(message.createdAt)
 )
 
@@ -18,6 +19,6 @@ fun FullMessage.toDialogMessage() = Dialog(
     userId = from.id,
     userNickname = from.nickname,
     userAvatar = from.image.x160,
-    lastMessage = htmlBody,
+    lastMessage = HtmlParser.parseComment(htmlBody),
     lastDate = convertDate(createdAt)
 )

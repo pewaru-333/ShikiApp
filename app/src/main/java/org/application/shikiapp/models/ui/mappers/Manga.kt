@@ -19,6 +19,7 @@ import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.utils.ROLES_RUSSIAN
@@ -43,7 +44,7 @@ object MangaMapper {
         extra: MangaExtraQuery.Data.Manga,
         franchise: Franchise,
         similar: List<MangaBasic>,
-        comments: Flow<PagingData<Comment>>,
+        comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>,
         favoured: Boolean,
     ) = Manga(
         airedOn = convertDate(main.airedOn?.date, false),
@@ -66,7 +67,7 @@ object MangaMapper {
         },
         comments = comments,
         description = fromHtml(main.descriptionHtml),
-        favoured = favoured,
+        favoured = AsyncData.Success(favoured),
         franchise = main.franchise.orEmpty(),
         franchiseList = franchise.let {
             it.links.filter { it.sourceId == franchise.currentId }.map { link ->
@@ -136,28 +137,30 @@ object MangaMapper {
         ),
         status = Enum.safeValueOf<Status>(main.status?.rawValue).mangaTitle,
         title = main.russian?.let { "$it / ${main.name}" } ?: main.name,
-        userRate = main.userRate?.let {
-            UserRate(
-                id = it.id.toLong(),
-                contentId = main.id,
-                title = main.russian.orEmpty().ifEmpty(main::name),
-                poster = main.poster?.originalUrl.orEmpty(),
-                kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
-                score = it.score,
-                scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
-                status = it.status.rawValue,
-                text = it.text,
-                episodes = it.episodes,
-                episodesSorting = 0,
-                fullEpisodes = BLANK,
-                volumes = it.volumes,
-                chapters = it.chapters,
-                rewatches = it.rewatches,
-                fullChapters = BLANK,
-                createdAt = OffsetDateTime.now(),
-                updatedAt = OffsetDateTime.now()
-            )
-        },
+        userRate = AsyncData.Success(
+            main.userRate?.let {
+                UserRate(
+                    id = it.id.toLong(),
+                    contentId = main.id,
+                    title = main.russian.orEmpty().ifEmpty(main::name),
+                    poster = main.poster?.originalUrl.orEmpty(),
+                    kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
+                    score = it.score,
+                    scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
+                    status = it.status.rawValue,
+                    text = it.text,
+                    episodes = it.episodes,
+                    episodesSorting = 0,
+                    fullEpisodes = BLANK,
+                    volumes = it.volumes,
+                    chapters = it.chapters,
+                    rewatches = it.rewatches,
+                    fullChapters = BLANK,
+                    createdAt = OffsetDateTime.now(),
+                    updatedAt = OffsetDateTime.now()
+                )
+            }
+        ),
         url = main.url,
         volumes = main.volumes.toString()
     )

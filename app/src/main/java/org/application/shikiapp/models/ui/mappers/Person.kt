@@ -4,16 +4,16 @@ import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.PeopleQuery
 import org.application.shikiapp.models.data.BasicInfo
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Person
 import org.application.shikiapp.models.data.Roles
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
+import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.enums.LinkedKind
 import org.application.shikiapp.utils.getBirthday
 import org.application.shikiapp.utils.getDeathday
 
-fun Person.mapper(comments: Flow<PagingData<Comment>>): org.application.shikiapp.models.ui.Person {
+fun Person.mapper(comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>): org.application.shikiapp.models.ui.Person {
     val works = works.orEmpty().map {
         it.anime?.toRelated(it.role.orEmpty()) ?: it.manga!!.toRelated(it.role.orEmpty())
     }
@@ -27,7 +27,7 @@ fun Person.mapper(comments: Flow<PagingData<Comment>>): org.application.shikiapp
         grouppedRoles = grouppedRoles,
         id = id,
         image = image.original,
-        isPersonFavoured = personFavoured || producerFavoured || mangakaFavoured || seyuFavoured,
+        favoured = AsyncData.Success(personFavoured || producerFavoured || mangakaFavoured || seyuFavoured),
         japanese = japanese,
         jobTitle = jobTitle,
         personKind = when {

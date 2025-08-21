@@ -6,7 +6,6 @@ import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.ClubImages
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.UserBasic
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.utils.fromHtml
@@ -19,7 +18,7 @@ fun Club.mapper(
     ranobe: Flow<PagingData<BasicContent>>,
     characters: Flow<PagingData<BasicContent>>,
     clubs: Flow<PagingData<BasicContent>>,
-    comments: Flow<PagingData<Comment>>
+    comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>
 ) = org.application.shikiapp.models.ui.Club(
     id = id,
     topicId = topicId,
