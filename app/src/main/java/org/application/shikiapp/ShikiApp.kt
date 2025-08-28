@@ -50,7 +50,7 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
         .diskCachePolicy(CachePolicy.ENABLED)
         .diskCache {
             DiskCache.Builder()
-                .maxSizeBytes(Preferences.cache * 1024 * 1024L)
+                .maxSizeBytes(Preferences.cache.toLong() * 1024 * 1024L)
                 .directory(context.cacheDir)
                 .build()
         }
