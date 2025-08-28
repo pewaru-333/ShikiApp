@@ -12,7 +12,8 @@
 
 <div align="center">
 
-[<img src="/IzzyOnDroid.png" alt="Get it on IzzyOnDroid" height=100/>](https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp)
+[<img src="IzzyOnDroid.png" align="top" alt="Get it on IzzyOnDroid" height=80px/>](https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp)
+[<img src="F-Droid.svg" align="top" alt="Get it on F-Droid" height="80px">](https://f-droid.org/packages/org.application.shikiapp/)
 
 </div>
 
