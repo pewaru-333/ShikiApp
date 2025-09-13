@@ -61,6 +61,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import org.application.shikiapp.R
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.UserMessagesState
 import org.application.shikiapp.models.states.UserState
@@ -89,7 +90,6 @@ import org.application.shikiapp.ui.templates.UserBriefItem
 import org.application.shikiapp.ui.templates.UserMenuItems
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.HtmlComment
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.extensions.getLastMessage
