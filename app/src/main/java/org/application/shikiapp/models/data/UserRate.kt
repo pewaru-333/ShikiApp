@@ -40,6 +40,7 @@ data class BaseRate(
 
 @Serializable
 data class NewRate(
+    @SerialName("id") val id: Long? = null,
     @SerialName("user_id") val userId: Long? = null,
     @SerialName("target_id") val targetId: Long? = null,
     @SerialName("target_type") val targetType: String? = null,
