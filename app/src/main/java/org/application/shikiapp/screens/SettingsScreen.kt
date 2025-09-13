@@ -10,11 +10,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -31,18 +27,16 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.Preference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.createPreferenceFlow
-import me.zhanghai.compose.preference.listPreference
 import me.zhanghai.compose.preference.preferenceCategory
-import me.zhanghai.compose.preference.switchPreference
 import org.application.shikiapp.R
+import org.application.shikiapp.di.Preferences
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.theme.isDynamicColorAvailable
 import org.application.shikiapp.utils.CACHE_LIST
-import org.application.shikiapp.utils.PREF_APP_CACHE
-import org.application.shikiapp.utils.PREF_DYNAMIC_COLORS
 import org.application.shikiapp.utils.PREF_GROUP_APP_SYSTEM
 import org.application.shikiapp.utils.PREF_GROUP_APP_VIEW
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.ListView
 import org.application.shikiapp.utils.enums.Theme
 import org.application.shikiapp.utils.extensions.getDisplayRegionName
@@ -55,6 +49,11 @@ import java.util.Locale
 fun SettingsScreen(visible: Boolean, onBack: () -> Unit) {
     val context = LocalContext.current
 
+    val listView by Preferences.listViewFlow.collectAsStateWithLifecycle(ListView.COLUMN)
+    val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle(false)
+    val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
+    val cache by Preferences.cacheFlow.collectAsStateWithLifecycle(16)
+
     BackHandler(visible, onBack)
     AnimatedVisibility(
         visible = visible,
@@ -65,11 +64,7 @@ fun SettingsScreen(visible: Boolean, onBack: () -> Unit) {
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(R.string.text_settings)) },
-                    navigationIcon = {
-                        IconButton(onBack) {
-                            Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
-                        }
-                    }
+                    navigationIcon = { NavigationIcon(onBack) }
                 )
             }
         ) { values ->
@@ -81,14 +76,12 @@ fun SettingsScreen(visible: Boolean, onBack: () -> Unit) {
                     )
 
                     item {
-                        var value by remember { mutableStateOf(Preferences.listView) }
-
                         ListPreference(
-                            value = value,
-                            onValueChange = { value = it; Preferences.listView = it },
+                            value = listView,
+                            onValueChange = Preferences::setListView,
                             values = ListView.entries,
                             title = { Text(stringResource(R.string.preference_list_view)) },
-                            summary = { Text(stringResource(value.title)) },
+                            summary = { Text(stringResource(listView.title)) },
                             valueToText = { it.title.valueToText(context) }
                         )
                     }
@@ -99,33 +92,35 @@ fun SettingsScreen(visible: Boolean, onBack: () -> Unit) {
                     )
 
                     item {
-                        val value by Preferences.theme.collectAsStateWithLifecycle()
-
                         ListPreference(
-                            value = value,
+                            value = theme,
                             onValueChange = Preferences::setTheme,
                             values = Theme.entries,
                             title = { Text(stringResource(R.string.preference_theme)) },
-                            summary = { Text(stringResource(value.title)) },
+                            summary = { Text(stringResource(theme.title)) },
                             valueToText = { it.title.valueToText(context) }
                         )
                     }
 
-                    switchPreference(
-                        key = PREF_DYNAMIC_COLORS,
-                        defaultValue = false,
-                        title = { Text(stringResource(R.string.preference_dynamic_colors)) },
-                        enabled = { isDynamicColorAvailable() }
-                    )
+                    item {
+                        SwitchPreference(
+                            value = dynamicColors,
+                            onValueChange = Preferences::setDynamicColors,
+                            title = { Text(stringResource(R.string.preference_dynamic_colors)) },
+                            enabled = isDynamicColorAvailable()
+                        )
+                    }
 
-                    listPreference(
-                        key = PREF_APP_CACHE,
-                        defaultValue = CACHE_LIST[0],
-                        values = CACHE_LIST,
-                        title = { Text(stringResource(R.string.preference_cache_size)) },
-                        summary = { Text(stringResource(R.string.preference_cache_size_mb, it)) },
-                        valueToText = { it.valueToText(context, R.string.preference_cache_size_mb) }
-                    )
+                    item {
+                        ListPreference(
+                            value = cache,
+                            onValueChange = Preferences::setCache,
+                            values = CACHE_LIST,
+                            title = { Text(stringResource(R.string.preference_cache_size)) },
+                            summary = { Text(stringResource(R.string.preference_cache_size_mb, cache)) },
+                            valueToText = { it.valueToText(context, R.string.preference_cache_size_mb) }
+                        )
+                    }
 
                     item {
                         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) {
