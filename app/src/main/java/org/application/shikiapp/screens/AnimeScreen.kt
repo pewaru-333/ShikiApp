@@ -73,13 +73,14 @@ import org.application.shikiapp.models.states.showSheetContent
 import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.ui.Video
 import org.application.shikiapp.models.viewModels.AnimeViewModel
+import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.network.response.Response.Error
 import org.application.shikiapp.network.response.Response.Loading
 import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
-import org.application.shikiapp.ui.templates.CreateRate
 import org.application.shikiapp.ui.templates.Description
+import org.application.shikiapp.ui.templates.DialogEditRate
 import org.application.shikiapp.ui.templates.DialogScreenshot
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
@@ -133,8 +134,16 @@ private fun AnimeView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val rateModel = viewModel<UserRateViewModel>()
+    val rate = anime.userRate.getValue()
+    val newRate by rateModel.newRate.collectAsStateWithLifecycle()
+
     val listState = rememberLazyListState()
     val comments = anime.comments.collectAsLazyPagingItems()
+
+    LaunchedEffect(Unit) {
+        rate?.let { rateModel.getRate(it, LinkedType.ANIME) }
+    }
 
     Scaffold(
         topBar = {
@@ -415,12 +424,31 @@ private fun AnimeView(
             toggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) }
         )
 
-        state.showRate -> CreateRate(
-            id = anime.id,
+        state.showRate -> DialogEditRate(
+            state = newRate,
             type = LinkedType.ANIME,
-            rateF = anime.userRate.getValue(),
-            reload = { onEvent(ContentDetailEvent.Media.ChangeRate) },
-            hide = { onEvent(ContentDetailEvent.Media.ShowRate) }
+            isExists = rate != null,
+            onEvent = rateModel::onEvent,
+            onDismiss = { onEvent(ContentDetailEvent.Media.ShowRate) },
+            onCreate = { type ->
+                rateModel.create(
+                    id = anime.id,
+                    targetType = type,
+                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                )
+            },
+            onUpdate = {
+                rateModel.update(
+                    rateId = rate?.id.toString(),
+                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                )
+            },
+            onDelete = {
+                rateModel.delete(
+                    rateId = rate?.id.toString(),
+                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                )
+            }
         )
 
         state.showLinks -> LinksSheet(
@@ -448,7 +476,11 @@ fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> U
     Box(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                MaterialTheme.shapes.medium
+            )
             .clickable(
                 enabled = onClick != null,
                 onClick = { onClick?.invoke() }
