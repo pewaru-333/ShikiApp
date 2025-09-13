@@ -72,6 +72,7 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.ClubEvent
 import org.application.shikiapp.models.data.ClubImages
 import org.application.shikiapp.models.data.UserBasic
@@ -89,7 +90,6 @@ import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.ClubMenu
 import org.application.shikiapp.utils.navigation.Screen
 
