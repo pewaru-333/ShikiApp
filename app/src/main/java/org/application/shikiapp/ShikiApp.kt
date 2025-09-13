@@ -15,16 +15,23 @@ import coil3.memory.MemoryCache
 import coil3.network.NetworkFetcher
 import coil3.request.CachePolicy
 import coil3.request.crossfade
+import org.application.shikiapp.di.AppModule
+import org.application.shikiapp.di.AppModuleInitializer
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.network.client.CoilClient
 import org.application.shikiapp.network.client.ImageInterceptor
-import org.application.shikiapp.utils.Preferences
 
 class ShikiApp : Application(), SingletonImageLoader.Factory {
+
+    companion object {
+        lateinit var app: AppModule
+            private set
+    }
 
     override fun onCreate() {
         super.onCreate()
 
-        Preferences.getInstance(this)
+        app = AppModuleInitializer(applicationContext)
     }
 
     @OptIn(ExperimentalCoilApi::class)
