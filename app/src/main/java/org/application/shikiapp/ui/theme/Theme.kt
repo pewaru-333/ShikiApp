@@ -17,7 +17,7 @@ import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.application.shikiapp.utils.Preferences
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.utils.enums.Theme
 
 private val lightScheme = lightColorScheme(
@@ -100,17 +100,17 @@ private val darkScheme = darkColorScheme(
 fun Theme(content: @Composable () -> Unit) {
     val activity = LocalContext.current as ComponentActivity
 
-    val darkState by Preferences.theme.collectAsStateWithLifecycle()
-    val dynamicColor by Preferences.dynamicColors.collectAsStateWithLifecycle()
+    val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
+    val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle(false)
 
-    val darkTheme = when (darkState) {
+    val darkTheme = when (theme) {
         Theme.LIGHT -> false
         Theme.DARK, Theme.DARK_AMOLED -> true
         else -> isSystemInDarkTheme()
     }
 
     val baseColors = when {
-        isDynamicColorAvailable() && dynamicColor ->
+        isDynamicColorAvailable() && dynamicColors ->
             if (darkTheme) dynamicDarkColorScheme(activity)
             else dynamicLightColorScheme(activity)
 
@@ -118,7 +118,7 @@ fun Theme(content: @Composable () -> Unit) {
         else -> lightScheme
     }
 
-    val colors = if (darkState != Theme.DARK_AMOLED) baseColors else baseColors.copy(
+    val colors = if (theme != Theme.DARK_AMOLED) baseColors else baseColors.copy(
         background = androidx.compose.ui.graphics.Color.Black,
         surface = androidx.compose.ui.graphics.Color.Black
     )
