@@ -17,6 +17,7 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.network.calls.Anime
 import org.application.shikiapp.network.calls.Clubs
 import org.application.shikiapp.network.calls.Content
@@ -27,7 +28,6 @@ import org.application.shikiapp.network.calls.User
 import org.application.shikiapp.network.calls.UserRates
 import org.application.shikiapp.utils.API_URL
 import org.application.shikiapp.utils.GRAPH_URL
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.extensions.refreshToken
 
 
