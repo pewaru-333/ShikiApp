@@ -31,14 +31,11 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Star
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
@@ -47,14 +44,12 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -81,33 +76,22 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
-import org.application.shikiapp.R.string.text_cancel
-import org.application.shikiapp.R.string.text_change
 import org.application.shikiapp.R.string.text_profile_closed
-import org.application.shikiapp.R.string.text_save
-import org.application.shikiapp.events.RateEvent
-import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.models.states.SortingState
 import org.application.shikiapp.models.states.UserRateState
 import org.application.shikiapp.models.states.UserRateUiEvent
 import org.application.shikiapp.models.states.rememberRateState
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.viewModels.UserRateViewModel
-import org.application.shikiapp.network.response.RatesResponse
 import org.application.shikiapp.network.response.RatesResponse.Error
 import org.application.shikiapp.network.response.RatesResponse.Loading
 import org.application.shikiapp.network.response.RatesResponse.NoAccess
 import org.application.shikiapp.network.response.RatesResponse.Success
+import org.application.shikiapp.network.response.RatesResponse.Unlogged
+import org.application.shikiapp.ui.templates.DialogEditRate
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
-import org.application.shikiapp.ui.templates.RateChapters
-import org.application.shikiapp.ui.templates.RateEpisodes
-import org.application.shikiapp.ui.templates.RateRewatches
-import org.application.shikiapp.ui.templates.RateScore
-import org.application.shikiapp.ui.templates.RateStatus
-import org.application.shikiapp.ui.templates.RateText
-import org.application.shikiapp.ui.templates.RateVolumes
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.OrderDirection
 import org.application.shikiapp.utils.enums.OrderRates
@@ -176,7 +160,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
 
     LaunchedEffect(Unit) {
         model.rateUiEvent.collectLatest { event ->
-            when(event) {
+            when (event) {
                 UserRateUiEvent.Error -> context.showToast(R.string.text_error)
 
                 is UserRateUiEvent.IncrementStart -> rateState.onIncrementStart(event.rateId)
@@ -192,7 +176,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     }
 
     when (response) {
-        RatesResponse.Unlogged -> UnloggedScreen(onNavigate)
+        Unlogged -> UnloggedScreen(onNavigate)
         Error -> ErrorScreen(model::loadRates)
         is Success, Loading, NoAccess -> Scaffold(
             topBar = {
@@ -263,6 +247,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
         DialogEditRate(
             state = newRate,
             type = type,
+            isExists = true,
             onEvent = model::onEvent,
             onUpdate = model::update,
             onDelete = model::delete,
@@ -301,50 +286,6 @@ private fun UnloggedScreen(onNavigate: (Screen) -> Unit) =
             }
         }
     }
-
-@Composable
-private fun DialogEditRate(
-    state: NewRateState,
-    type: LinkedType,
-    onEvent: (RateEvent) -> Unit,
-    onUpdate: (String) -> Unit,
-    onDelete: (String) -> Unit,
-    onDismiss: () -> Unit
-) = AlertDialog(
-    onDismissRequest = onDismiss,
-    dismissButton = { TextButton(onDismiss) { Text(stringResource(text_cancel)) } },
-    confirmButton = {
-        TextButton(
-            content = { Text(stringResource(text_save)) },
-            enabled = !state.status.isNullOrEmpty(),
-            onClick = { onUpdate(state.id) }
-        )
-    },
-    title = {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
-            Text(stringResource(text_change))
-            IconButton(
-                onClick = { onDelete(state.id) },
-                content = { Icon(painterResource(R.drawable.vector_trash), null) }
-            )
-        }
-    },
-    text = {
-        Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
-            RateStatus(onEvent, state.statusName, type)
-            if (type == LinkedType.ANIME) {
-                RateEpisodes(onEvent, state.episodes)
-            }
-            if (type == LinkedType.MANGA) {
-                RateChapters(onEvent, state.chapters)
-                RateVolumes(onEvent, state.volumes)
-            }
-            RateScore(onEvent, state.score)
-            RateRewatches(onEvent, state.rewatches, type)
-            RateText(onEvent, state.text)
-        }
-    }
-)
 
 @Composable
 private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateState: UserRateState, onIncrement: (Long) -> Unit) {

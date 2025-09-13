@@ -1,15 +1,14 @@
 package org.application.shikiapp.ui.templates
 
 import androidx.annotation.StringRes
-import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.SpaceBetween
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.Close
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -23,119 +22,161 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.lifecycle.viewmodel.compose.viewModel
 import org.application.shikiapp.R
+import org.application.shikiapp.R.string.text_cancel
 import org.application.shikiapp.events.RateEvent
-import org.application.shikiapp.models.ui.UserRate
-import org.application.shikiapp.models.viewModels.UserRateViewModel
+import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.Score
 import org.application.shikiapp.utils.enums.WatchStatus
-import org.application.shikiapp.utils.extensions.safeValueOf
+import kotlin.enums.EnumEntries
 
 @Composable
-fun CreateRate(id: String, type: LinkedType, rateF: UserRate?, reload: () -> Unit, hide: () -> Unit) {
-    val model = viewModel<UserRateViewModel>()
-    val state by model.newRate.collectAsStateWithLifecycle()
-    val exists by rememberSaveable { mutableStateOf(rateF != null) }
-
-    LaunchedEffect(rateF) {
-        rateF?.let { rate ->
-            model.onEvent(RateEvent.SetRateId(rate.id.toString()))
-            model.onEvent(RateEvent.SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), type))
-            model.onEvent(RateEvent.SetScore(Score.entries.first { it.score == rate.score }))
-            model.onEvent(RateEvent.SetChapters(rate.chapters.toString()))
-            model.onEvent(RateEvent.SetEpisodes(rate.episodes.toString()))
-            model.onEvent(RateEvent.SetVolumes(rate.volumes.toString()))
-            model.onEvent(RateEvent.SetRewatches(rate.rewatches.toString()))
-            model.onEvent(RateEvent.SetText(rate.text))
-        }
-    }
-
-    AlertDialog(
-        onDismissRequest = hide,
-        confirmButton = {
-            TextButton(
-                content = { Text(stringResource(R.string.text_save)) },
-                enabled = !state.status.isNullOrEmpty(),
-                onClick = {
-                    if (exists) model.update(state.id, reload)
-                    else model.create(id, type, reload)
-                }
-            )
-        },
-        dismissButton = {
-            if (exists) {
-                TextButton(
-                    onClick = { model.delete(state.id, reload) },
-                    content = { Text(stringResource(R.string.text_remove)) }
+fun DialogEditRate(
+    state: NewRateState,
+    type: LinkedType,
+    isExists: Boolean,
+    onEvent: (RateEvent) -> Unit = {},
+    onCreate: (LinkedType) -> Unit = {},
+    onUpdate: (String) -> Unit = {},
+    onDelete: (String) -> Unit = {},
+    onDismiss: () -> Unit = {}
+) = AlertDialog(
+    onDismissRequest = onDismiss,
+    dismissButton = { TextButton(onDismiss) { Text(stringResource(text_cancel)) } },
+    confirmButton = {
+        TextButton(
+            content = { Text(stringResource(R.string.text_save)) },
+            enabled = !state.status.isNullOrEmpty(),
+            onClick = {
+                if (isExists) onUpdate(state.id)
+                else onCreate(type)
+            }
+        )
+    },
+    title = {
+        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+            Text(stringResource(if (isExists) R.string.text_change else R.string.text_rate))
+            if (isExists) {
+                IconButton(
+                    onClick = { onDelete(state.id) },
+                    content = { Icon(painterResource(R.drawable.vector_trash), null) }
                 )
             }
-        },
-        title = {
-            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-                Text(stringResource(if (exists) R.string.text_change else R.string.text_rate))
-                IconButton(hide) { Icon(Icons.Outlined.Close, null) }
-            }
-        },
-        text = {
-            Column(Modifier.verticalScroll(rememberScrollState()), Arrangement.spacedBy(16.dp)) {
-                RateStatus(model::onEvent, state.statusName, type)
-                if (type == LinkedType.ANIME) {
-                    RateEpisodes(model::onEvent, state.episodes)
-                }
-                if (type == LinkedType.MANGA) {
-                    RateChapters(model::onEvent, state.chapters)
-                    RateVolumes(model::onEvent, state.volumes)
-                }
-                RateScore(model::onEvent, state.score)
-                RateRewatches(model::onEvent, state.rewatches, type)
-                RateText(model::onEvent, state.text)
-            }
         }
-    )
-}
+    },
+    text = {
+        RateFieldsAll(
+            state = state,
+            type = type,
+            onEvent = onEvent
+        )
+    }
+)
 
 @Composable
+fun RateFieldsAll(state: NewRateState, type: LinkedType, onEvent: (RateEvent) -> Unit) =
+    Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
+        RateDropMenu(
+            items = WatchStatus.entries,
+            title = state.statusName,
+            label = R.string.text_status,
+            itemTitle = { stringResource(type.getWatchStatusTitle(it)) },
+            onEvent = { onEvent(RateEvent.SetStatus(it, type)) }
+        )
+
+        if (type == LinkedType.ANIME) {
+            RateField(R.string.text_episodes, state.episodes) {
+                onEvent(RateEvent.SetEpisodes(it))
+            }
+        }
+
+        if (type == LinkedType.MANGA) {
+            RateField(R.string.text_rate_chapters, state.chapters) {
+                onEvent(RateEvent.SetChapters(it))
+            }
+            RateField(R.string.text_volumes, state.volumes) {
+                onEvent(RateEvent.SetVolumes(it))
+            }
+        }
+
+        RateDropMenu(
+            items = Score.entries,
+            title = state.score?.title,
+            label = R.string.text_score,
+            itemTitle = { stringResource(it.title) },
+            onEvent = { onEvent(RateEvent.SetScore(it)) }
+        )
+
+        RateField(
+            label = if (type == LinkedType.ANIME) R.string.text_rewatches else R.string.text_rereadings,
+            value = state.rewatches,
+            onValueChange = { onEvent(RateEvent.SetRewatches(it)) }
+        )
+
+        RateField(
+            label = R.string.text_comment,
+            value = state.text,
+            onValueChange = { onEvent(RateEvent.SetText(it)) },
+            singleLine = false,
+            keyboardOptions = KeyboardOptions(imeAction = ImeAction.None)
+        )
+    }
+
 @OptIn(ExperimentalMaterial3Api::class)
-fun RateStatus(event: (RateEvent) -> Unit, @StringRes statusName: Int, type: LinkedType) {
+@Composable
+fun <T : Enum<T>> RateDropMenu(
+    items: EnumEntries<T>,
+    @StringRes title: Int?,
+    @StringRes label: Int,
+    itemTitle: @Composable (T) -> String,
+    onEvent: (T) -> Unit
+) {
     var flag by remember { mutableStateOf(false) }
 
-    ExposedDropdownMenuBox(flag, { flag = it }) {
+    ExposedDropdownMenuBox(
+        expanded = flag,
+        onExpandedChange = { flag = it }
+    ) {
         OutlinedTextField(
-            value = stringResource(statusName),
+            value = stringResource(title ?: R.string.blank),
             onValueChange = {},
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-            label = { Text(stringResource(R.string.text_status)) },
+            label = { Text(stringResource(label)) },
             readOnly = true,
             singleLine = true,
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
         )
-        ExposedDropdownMenu(flag, { flag = false }) {
-            WatchStatus.entries.forEach {
+        ExposedDropdownMenu(
+            expanded = flag,
+            onDismissRequest = { flag = false }
+        ) {
+            items.forEach {
                 DropdownMenuItem(
-                    onClick = { event(RateEvent.SetStatus(it, type)); flag = false },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     text = {
                         Text(
-                            text = stringResource(type.getWatchStatusTitle(it)),
+                            text = itemTitle(it),
                             style = MaterialTheme.typography.bodyLarge
                         )
+                    },
+                    onClick = {
+                        onEvent(it)
+                        flag = false
                     }
                 )
             }
@@ -143,76 +184,20 @@ fun RateStatus(event: (RateEvent) -> Unit, @StringRes statusName: Int, type: Lin
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RateScore(event: (RateEvent) -> Unit, score: Score?) {
-    var flag by remember { mutableStateOf(false) }
-
-    ExposedDropdownMenuBox(flag, { flag = it }) {
-        OutlinedTextField(
-            value = stringResource(score?.title ?: R.string.blank),
-            onValueChange = {},
-            modifier = Modifier
-                .fillMaxWidth()
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable),
-            label = { Text(stringResource(R.string.text_score)) },
-            readOnly = true,
-            singleLine = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-        )
-        ExposedDropdownMenu(flag, { flag = false }) {
-            Score.entries.forEach {
-                DropdownMenuItem(
-                    text = {
-                        Text(
-                            text = stringResource(it.title),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    },
-                    onClick = { event(RateEvent.SetScore(it)); flag = false },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding
-                )
-            }
-        }
-    }
-}
-
-@Composable
-fun RateEpisodes(event: (RateEvent) -> Unit, episodes: String?) = OutlinedTextField(
-    value = episodes.orEmpty(),
-    onValueChange = { event(RateEvent.SetEpisodes(it)) },
-    label = { Text(stringResource(R.string.text_episodes)) },
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-)
-
-@Composable
-fun RateVolumes(event: (RateEvent) -> Unit, volumes: String?) = OutlinedTextField(
-    value = volumes.orEmpty(),
-    onValueChange = { event(RateEvent.SetVolumes(it)) },
-    label = { Text(stringResource(R.string.text_volumes)) },
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-)
-
-@Composable
-fun RateChapters(event: (RateEvent) -> Unit, chapters: String?) = OutlinedTextField(
-    value = chapters.orEmpty(),
-    onValueChange = { event(RateEvent.SetChapters(it)) },
-    label = { Text(stringResource(R.string.text_rate_chapters)) },
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-)
-
-@Composable
-fun RateRewatches(event: (RateEvent) -> Unit, count: String?, type: LinkedType) = OutlinedTextField(
-    value = count.orEmpty(),
-    onValueChange = { event(RateEvent.SetRewatches(it)) },
-    label = { Text(stringResource(if (type == LinkedType.ANIME) R.string.text_rewatches else R.string.text_rereadings)) },
-    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-)
-
-@Composable
-fun RateText(event: (RateEvent) -> Unit, text: String?) = OutlinedTextField(
-    value = text.orEmpty(),
-    onValueChange = { event(RateEvent.SetText(it)) },
-    label = { Text(stringResource(R.string.text_comment)) }
+fun RateField(
+    @StringRes label: Int,
+    value: String?,
+    singleLine: Boolean = true,
+    keyboardOptions: KeyboardOptions = KeyboardOptions(
+        keyboardType = KeyboardType.Number,
+        imeAction = ImeAction.Next
+    ),
+    onValueChange: (String) -> Unit
+) = OutlinedTextField(
+    value = value.orEmpty(),
+    onValueChange = onValueChange,
+    label = { Text(stringResource(label)) },
+    keyboardOptions = keyboardOptions,
+    singleLine = singleLine
 )
