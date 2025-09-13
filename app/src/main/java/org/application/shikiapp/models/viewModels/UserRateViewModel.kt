@@ -8,6 +8,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -24,6 +25,7 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.RateEvent
 import org.application.shikiapp.events.RateEvent.SetChapters
 import org.application.shikiapp.events.RateEvent.SetEpisodes
@@ -42,8 +44,6 @@ import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.RatesResponse
-import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.OrderDirection
 import org.application.shikiapp.utils.enums.OrderRates
@@ -194,14 +194,14 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun getRate(rate: UserRate) {
+    fun getRate(rate: UserRate, linkedType: LinkedType = type.value) {
         onEvent(SetRateId(rate.id.toString()))
-        onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), type.value))
+        onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), linkedType))
         onEvent(SetScore(Score.entries.first { it.score == rate.score }))
-        onEvent(SetChapters(rate.chapters.toString()))
-        onEvent(SetEpisodes(rate.episodes.toString()))
-        onEvent(SetVolumes(rate.volumes.toString()))
-        onEvent(SetRewatches(rate.rewatches.toString()))
+        onEvent(SetChapters(rate.chapters.takeIf { it > 0 }?.toString()))
+        onEvent(SetEpisodes(rate.episodes.takeIf { it > 0 }?.toString()))
+        onEvent(SetVolumes(rate.volumes.takeIf { it > 0 }?.toString()))
+        onEvent(SetRewatches(rate.rewatches.takeIf { it > 0 }?.toString()))
         onEvent(SetText(rate.text))
 
         showEditDialog = true
@@ -210,22 +210,22 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     fun create(id: String, targetType: LinkedType, reload: () -> Unit) {
         viewModelScope.launch {
             try {
-                val newRate = _newRate.value
-
-                Network.rates.createRate(
-                    NewRate(
-                        userId = Preferences.userId,
-                        targetId = id.toLong(),
-                        targetType = targetType.name.lowercase().replaceFirstChar(Char::uppercase),
-                        status = newRate.status.toString().lowercase(),
-                        score = newRate.score?.score.toString(),
-                        chapters = newRate.chapters,
-                        episodes = newRate.episodes,
-                        volumes = newRate.volumes,
-                        rewatches = newRate.rewatches,
-                        text = newRate.text
+                with(_newRate.value) {
+                    Network.rates.createRate(
+                        NewRate(
+                            userId = Preferences.userId,
+                            targetId = id.toLong(),
+                            targetType = targetType.name.lowercase().replaceFirstChar(Char::uppercase),
+                            status = status.toString().lowercase(),
+                            score = score?.score.toString(),
+                            chapters = chapters,
+                            episodes = episodes,
+                            volumes = volumes,
+                            rewatches = rewatches,
+                            text = text
+                        )
                     )
-                )
+                }
             } catch (_: Throwable) {
 
             } finally {
@@ -237,40 +237,42 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     fun update(rateId: String) {
         viewModelScope.launch {
             val currentState =  _response.value as? RatesResponse.Success ?: return@launch
-            val newRate = _newRate.value
 
             _rateUiEvent.send(UserRateUiEvent.UpdateStart(rateId.toLong()))
             showEditDialog = false
 
             try {
-                val request = Network.rates.updateRate(
-                    id = rateId.toLong(),
-                    newRate = NewRate(
-                        userId = Preferences.userId,
-                        status = newRate.status.toString().lowercase(),
-                        score = newRate.score?.score.toString(),
-                        chapters = newRate.chapters,
-                        episodes = newRate.episodes,
-                        volumes = newRate.volumes,
-                        rewatches = newRate.rewatches,
-                        text = newRate.text
+                val request = with(_newRate.value) {
+                    Network.rates.updateRate(
+                        id = rateId.toLong(),
+                        newRate = NewRate(
+                            userId = Preferences.userId,
+                            status = status.toString().lowercase(),
+                            score = score?.score.toString(),
+                            chapters = chapters,
+                            episodes = episodes,
+                            volumes = volumes,
+                            rewatches = rewatches,
+                            text = text
+                        )
                     )
-                )
+                }
 
                 if (request.status == HttpStatusCode.OK) {
+                    val responseRate = request.body<NewRate>()
                     val oldRates = currentState.rates
                     val index = oldRates.indexOfFirst { it.id.toString() == rateId }
 
                     if (index != -1) {
                         val updatedRate = oldRates[index].copy(
-                            status = newRate.status.toString(),
-                            score = newRate.score?.score ?: 1,
-                            scoreString = newRate.score?.score.toString(),
-                            chapters = newRate.chapters?.toInt() ?: 0,
-                            episodes = newRate.episodes?.toInt() ?: 0,
-                            volumes = newRate.volumes?.toInt() ?: 0,
-                            rewatches = newRate.rewatches?.toInt() ?: 0,
-                            text = newRate.text
+                            status = responseRate.status.toString(),
+                            score = responseRate.score?.toIntOrNull() ?: 0,
+                            scoreString = responseRate.score.let { if (it?.toIntOrNull() != 0) it else '-' }.toString(),
+                            chapters = responseRate.chapters?.toIntOrNull() ?: 0,
+                            episodes = responseRate.episodes?.toIntOrNull() ?: 0,
+                            volumes = responseRate.volumes?.toIntOrNull() ?: 0,
+                            rewatches = responseRate.rewatches?.toIntOrNull() ?: 0,
+                            text = responseRate.text
                         )
 
                         val newRates = oldRates.toMutableList().apply { this[index] = updatedRate }
@@ -290,21 +292,21 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     fun update(rateId: String, reload: () -> Unit) {
         viewModelScope.launch {
             try {
-                val newRate = _newRate.value
-
-                Network.rates.updateRate(
-                    id = rateId.toLong(),
-                    newRate = NewRate(
-                        userId = Preferences.userId,
-                        status = newRate.status.toString().lowercase(),
-                        score = newRate.score?.score.toString(),
-                        chapters = newRate.chapters,
-                        episodes = newRate.episodes,
-                        volumes = newRate.volumes,
-                        rewatches = newRate.rewatches,
-                        text = newRate.text
+                with(_newRate.value) {
+                    Network.rates.updateRate(
+                        id = rateId.toLong(),
+                        newRate = NewRate(
+                            userId = Preferences.userId,
+                            status = status.toString().lowercase(),
+                            score = score?.score.toString(),
+                            chapters = chapters,
+                            episodes = episodes,
+                            volumes = volumes,
+                            rewatches = rewatches,
+                            text = text
+                        )
                     )
-                )
+                }
             } catch (_: Throwable) {
 
             } finally {
@@ -370,7 +372,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
                     val newRates = rates.map { rate ->
                         if (rate.id == rateId) {
-                            rate.copy(episodes = rate.episodes + 1)
+                            if (_type.value == LinkedType.ANIME) {
+                                rate.copy(episodes = rate.episodes + 1)
+                            } else
+                                rate.copy(chapters = rate.chapters + 1)
                         } else {
                             rate
                         }
@@ -413,6 +418,6 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 _newRate.update { it.copy(rewatches = rewatches) }
         }
 
-        is SetText -> _newRate.update { it.copy(text = event.text ?: BLANK) }
+        is SetText -> _newRate.update { it.copy(text = event.text.orEmpty()) }
     }
 }
