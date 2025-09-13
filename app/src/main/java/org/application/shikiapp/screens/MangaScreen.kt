@@ -41,12 +41,13 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.viewModels.MangaViewModel
+import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
-import org.application.shikiapp.ui.templates.CreateRate
 import org.application.shikiapp.ui.templates.Description
+import org.application.shikiapp.ui.templates.DialogEditRate
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.LinksSheet
@@ -96,8 +97,16 @@ private fun MangaView(
     onNavigate: (Screen) -> Unit,
     back: () -> Unit
 ) {
+    val rateModel = viewModel<UserRateViewModel>()
+    val rate = manga.userRate.getValue()
+    val newRate by rateModel.newRate.collectAsStateWithLifecycle()
+
     val listState = rememberLazyListState()
     val comments = manga.comments.collectAsLazyPagingItems()
+
+    LaunchedEffect(Unit) {
+        rate?.let { rateModel.getRate(it, LinkedType.MANGA) }
+    }
 
     Scaffold(
         topBar = {
@@ -308,12 +317,32 @@ private fun MangaView(
             toggleFavourite = { onEvent(ContentDetailEvent.Media.Manga.ToggleFavourite(manga.kindEnum)) }
         )
 
-        state.showRate -> CreateRate(
-            id = manga.id,
+        state.showRate -> DialogEditRate(
+            state = newRate,
             type = LinkedType.MANGA,
-            rateF = manga.userRate.getValue(),
-            reload = { onEvent(ContentDetailEvent.Media.ChangeRate) },
-            hide = { onEvent(ContentDetailEvent.Media.ShowRate) })
+            isExists = rate != null,
+            onEvent = rateModel::onEvent,
+            onDismiss = { onEvent(ContentDetailEvent.Media.ShowRate) },
+            onCreate = { type ->
+                rateModel.create(
+                    id = manga.id,
+                    targetType = type,
+                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                )
+            },
+            onUpdate = {
+                rateModel.update(
+                    rateId = rate?.id.toString(),
+                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                )
+            },
+            onDelete = {
+                rateModel.delete(
+                    rateId = rate?.id.toString(),
+                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                )
+            }
+        )
 
         state.showLinks -> LinksSheet(
             list = manga.links,
