@@ -37,12 +37,12 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import org.application.shikiapp.R
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.ui.ExternalLink
 import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.Preferences
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
