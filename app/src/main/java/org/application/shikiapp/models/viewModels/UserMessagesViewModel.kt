@@ -4,6 +4,7 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.data.FullMessage
 import org.application.shikiapp.models.data.MessageToSend
@@ -15,7 +16,6 @@ import org.application.shikiapp.models.ui.mappers.toDialogMessage
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.Preferences
 
 class UserMessagesViewModel() : ContentDetailViewModel<List<Dialog>, UserMessagesState>() {
     private val _messages = MutableStateFlow<Response<List<Dialog>, Throwable>>(Response.Loading)
