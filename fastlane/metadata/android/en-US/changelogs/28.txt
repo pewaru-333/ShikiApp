@@ -1,0 +1,2 @@
+— Fixed an issue where the change in the number of manga chapters read was not immediately displayed.
+— Fixed a bug that sometimes led to an "eternal" download when the user's rate was changed.

@@ -1,16 +1,16 @@
 [versions]
-apolloApi = "4.3.2"
+apolloApi = "4.3.3"
 coilCompose = "3.3.0"
-composeBom = "2025.08.00"
-composeLifecycle = "2.9.2"
-composeNavigation = "2.9.3"
+composeBom = "2025.09.00"
+composeLifecycle = "2.9.3"
+composeNavigation = "2.9.4"
 composePaging = "3.3.6"
 composePreferences = "2.1.0"
 gradle = "8.11.1"
-jsoup = "1.21.1"
-kotlin = "2.2.10"
+jsoup = "1.21.2"
+kotlin = "2.2.20"
 kotlinxSerializationJson = "1.9.0"
-ktor = "3.2.3"
+ktor = "3.3.0"
 zoomableImageCoil3 = "0.16.0"
 
 [libraries]
