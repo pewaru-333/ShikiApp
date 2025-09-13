@@ -1,49 +1,43 @@
 package org.application.shikiapp.utils
 
-import android.app.Activity
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
-import android.content.SharedPreferences
 import android.os.Build
 import android.os.LocaleList
 import androidx.core.content.edit
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.viewModelScope
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.utils.enums.ListView
 import org.application.shikiapp.utils.enums.Theme
-import org.application.shikiapp.utils.extensions.getColorsFlow
+import org.application.shikiapp.utils.extensions.getActivity
 import org.application.shikiapp.utils.extensions.getEnum
+import org.application.shikiapp.utils.extensions.getEnumFlow
+import org.application.shikiapp.utils.extensions.getFlow
 import org.application.shikiapp.utils.extensions.getSelectedLanguage
-import org.application.shikiapp.utils.extensions.getThemeFlow
 import org.application.shikiapp.utils.extensions.putEnum
 import java.util.Locale
 
-object Preferences : ViewModel() {
-    private lateinit var auth: SharedPreferences
-    lateinit var app: SharedPreferences
+class Preferences(context: Context) {
+    private val auth = context.getSharedPreferences("auth_${context.packageName}", MODE_PRIVATE)
+    val app = context.getSharedPreferences("preferences_${context.packageName}", MODE_PRIVATE)
 
-    lateinit var theme: StateFlow<Theme>
-    lateinit var dynamicColors: StateFlow<Boolean>
-
-    fun getInstance(context: Context) {
-        app = context.getSharedPreferences("preferences_${context.packageName}", MODE_PRIVATE)
-        auth = context.getSharedPreferences("auth_${context.packageName}", MODE_PRIVATE)
-        theme = app.getThemeFlow()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), Theme.SYSTEM)
-        dynamicColors = app.getColorsFlow()
-            .stateIn(viewModelScope, SharingStarted.WhileSubscribed(), false)
-    }
-
-    var listView: ListView
+    val listView: ListView
         get() = app.getEnum(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
-        set(value) = app.edit { putEnum(PREF_CATALOG_LIST_VIEW, value) }
+
+    val listViewFlow: Flow<ListView>
+        get() = app.getEnumFlow(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
 
     val cache: Int
         get() = app.getInt(PREF_APP_CACHE, 16)
+
+    val cacheFlow: Flow<Int>
+        get() = app.getFlow(PREF_APP_CACHE, 16)
+
+    val theme: Flow<Theme>
+        get() = app.getEnumFlow(PREF_APP_THEME, Theme.SYSTEM)
+
+    val dynamicColors: Flow<Boolean>
+        get() = app.getFlow(PREF_DYNAMIC_COLORS, false)
 
     val userId: Long
         get() = auth.getLong(USER_ID, 0L)
@@ -76,21 +70,31 @@ object Preferences : ViewModel() {
         putLong(USER_ID, userId)
     }
 
+    fun setListView(view: ListView) = app.edit {
+        putEnum(PREF_CATALOG_LIST_VIEW, view)
+    }
+
     fun setTheme(theme: Theme) = app.edit {
         putEnum(PREF_APP_THEME, theme)
     }
 
-    fun getLanguage(context: Context?) = if (context == null) Locale.ENGLISH.language
-    else app.getString(PREF_APP_LANGUAGE, context.getSelectedLanguage()) ?: Locale.ENGLISH.language
+    fun setDynamicColors(flag: Boolean) = app.edit {
+        putBoolean(PREF_DYNAMIC_COLORS, flag)
+    }
 
-    fun changeLanguage(context: Context?) =
+    fun setCache(cache: Int) = app.edit {
+        putInt(PREF_APP_CACHE, cache)
+    }
+
+    fun getLanguage(context: Context) = app.getString(PREF_APP_LANGUAGE, context.getSelectedLanguage()) ?: Locale.ENGLISH.language
+
+    fun changeLanguage(context: Context) =
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) context
         else {
             val newLocale = Locale.forLanguageTag(getLanguage(context))
             Locale.setDefault(newLocale)
 
-            val resources = context?.resources
-            val configuration = resources?.configuration
+            val configuration = context.resources?.configuration
             configuration?.setLocales(LocaleList(newLocale))
 
             configuration?.let { context.createConfigurationContext(it) } ?: context
@@ -99,6 +103,14 @@ object Preferences : ViewModel() {
     fun setLocale(context: Context, locale: String) {
         app.edit { putString(PREF_APP_LANGUAGE, locale) }
         changeLanguage(context)
-        (context as Activity).recreate()
+        context.getActivity()?.recreate()
+    }
+
+    companion object {
+        @Volatile
+        private var INSTANCE: Preferences? = null
+
+        fun getInstance(context: Context) =
+            INSTANCE ?: synchronized(this) { Preferences(context) }.also { INSTANCE = it }
     }
 }
