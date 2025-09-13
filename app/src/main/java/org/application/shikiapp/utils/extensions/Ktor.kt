@@ -8,10 +8,10 @@ import io.ktor.http.parameters
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CLIENT_SECRET
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.REFRESH_TOKEN
 import org.application.shikiapp.utils.TOKEN_URL
 
