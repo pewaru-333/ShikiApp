@@ -24,8 +24,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 27
-        versionName = "alpha-0.4.2"
+        versionCode = 28
+        versionName = "alpha-0.4.3"
     }
 
     dependenciesInfo {
