@@ -7,11 +7,11 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.LoginResponse
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.navigation.Screen.Login
 import java.net.UnknownHostException
 
