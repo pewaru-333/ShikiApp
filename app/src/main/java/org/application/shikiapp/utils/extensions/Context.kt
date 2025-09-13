@@ -1,6 +1,7 @@
 package org.application.shikiapp.utils.extensions
 
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.verify.domain.DomainVerificationManager
@@ -9,6 +10,7 @@ import android.content.res.XmlResourceParser
 import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
+import androidx.activity.ComponentActivity
 import androidx.core.app.LocaleManagerCompat
 import androidx.core.net.toUri
 import org.application.shikiapp.R
@@ -16,6 +18,11 @@ import org.application.shikiapp.utils.BASE_URL
 import org.xmlpull.v1.XmlPullParser
 import java.util.Locale
 
+fun Context.getActivity(): ComponentActivity? = when (this) {
+    is ComponentActivity -> this
+    is ContextWrapper -> baseContext.getActivity()
+    else -> null
+}
 
 fun Context.appLinksSettings() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) Intent()
 else Intent(
