@@ -112,6 +112,7 @@ import org.application.shikiapp.R.string.text_season
 import org.application.shikiapp.R.string.text_sorting
 import org.application.shikiapp.R.string.text_start_year
 import org.application.shikiapp.R.string.text_status
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.DrawerEvent
 import org.application.shikiapp.events.FilterEvent
 import org.application.shikiapp.events.FilterEvent.SetDuration
@@ -140,7 +141,6 @@ import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.ParagraphTitle
 import org.application.shikiapp.ui.templates.UserGridItem
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.CatalogItem
 import org.application.shikiapp.utils.enums.CatalogItem.ANIME
 import org.application.shikiapp.utils.enums.CatalogItem.CHARACTERS
