@@ -2,8 +2,8 @@ package org.application.shikiapp.models.states
 
 import androidx.annotation.StringRes
 import org.application.shikiapp.R
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.utils.BLANK
-import org.application.shikiapp.utils.Preferences
 import org.application.shikiapp.utils.enums.Score
 
 data class NewRateState(
