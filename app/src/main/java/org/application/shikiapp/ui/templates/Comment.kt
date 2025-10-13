@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.ui.templates
 
 import androidx.activity.compose.BackHandler
@@ -95,7 +97,6 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
         HtmlComment(comment.commentContent)
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Comments(
     list: LazyPagingItems<Comment>,

@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.ui.templates
 
 import androidx.activity.compose.BackHandler
@@ -36,25 +38,16 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.KeyboardArrowDown
-import androidx.compose.material.icons.outlined.KeyboardArrowUp
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
@@ -131,10 +124,9 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                         maxLines = if (maxLines == 8) Int.MAX_VALUE else 8
                     }
                 ) {
-                    Icon(
-                        contentDescription = null,
-                        imageVector = if (maxLines == 8) Icons.Outlined.KeyboardArrowDown
-                        else Icons.Outlined.KeyboardArrowUp,
+                    VectorIcon(
+                        resId = if (maxLines == 8) R.drawable.vector_keyboard_arrow_down
+                        else R.drawable.vector_keyboard_arrow_up
                     )
                 }
             }
@@ -160,11 +152,10 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                     .padding(12.dp, 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        contentDescription = null,
+                    VectorIcon(
                         modifier = Modifier.size(20.dp),
-                        imageVector = if (isVisible) Icons.Default.KeyboardArrowDown
-                        else Icons.AutoMirrored.Filled.KeyboardArrowRight,
+                        resId = if (isVisible) R.drawable.vector_keyboard_arrow_down
+                        else R.drawable.vector_keyboard_arrow_up
                     )
 
                     Spacer(Modifier.width(8.dp))
@@ -252,7 +243,6 @@ fun Names(russian: String?, english: String?, japanese: String?) =
         }
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SimilarFull(
     list: List<Content>,
@@ -298,7 +288,7 @@ fun Profiles(
 ) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle(title)
-        IconButton(onShowFull) { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
+        IconButton(onShowFull) { VectorIcon(R.drawable.vector_arrow_forward) }
     }
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(list) {
@@ -335,7 +325,6 @@ fun Profiles(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ProfilesFull(
     list: List<BasicContent>,
@@ -398,7 +387,6 @@ fun Related(list: List<Related>, showAllRelated: () -> Unit, onNavigate: (Screen
     }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 fun RelatedFull(
     related: List<Related>,
     chronology: List<Content>,
@@ -444,7 +432,7 @@ fun RelatedFull(
         }
     ) { values ->
         Column(Modifier.padding(values)) {
-            TabRow(pagerState.currentPage) {
+            PrimaryTabRow(pagerState.currentPage) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
                         selected = pagerState.currentPage == index,
@@ -514,7 +502,6 @@ fun RelatedFull(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RelatedFull(
     related: Map<LinkedType, List<Related>>,
@@ -567,7 +554,7 @@ fun ScoreInfo(score: String) = Column {
         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light)
     )
     Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
-        Icon(Icons.Default.Star, null, Modifier.size(16.dp), Color(0xFFFFC319))
+        VectorIcon(R.drawable.vector_star, Modifier.size(16.dp), Color(0xFFFFC319))
         Text(
             text = score,
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
@@ -717,7 +704,6 @@ fun Statuses(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate: (Screen) -> Unit) =
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -728,7 +714,7 @@ fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate:
                 label = R.string.text_anime_list,
                 content = {
                     TextButton(
-                        onClick = { onNavigate(Screen.UserRates(id, LinkedType.ANIME)) },
+                        onClick = { onNavigate(Screen.UserRates(id.toString(), LinkedType.ANIME)) },
                         content = { Text(stringResource(R.string.text_show_all_s)) }
                     )
                 }
@@ -744,7 +730,7 @@ fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate:
                 label = R.string.text_manga_list,
                 content = {
                     TextButton(
-                        onClick = { onNavigate(Screen.UserRates(id, LinkedType.MANGA)) },
+                        onClick = { onNavigate(Screen.UserRates(id.toString(), LinkedType.MANGA)) },
                         content = { Text(stringResource(R.string.text_show_all_s)) }
                     )
                 }
@@ -752,7 +738,6 @@ fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate:
         }
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Statistics(statistics: Pair<Statistics?, Statistics?>, visible: Boolean, hide: () -> Unit) =
     AnimatedVisibility(
@@ -796,7 +781,6 @@ fun Statistics(statistics: Pair<Statistics?, Statistics?>, visible: Boolean, hid
         }
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogScreenshot(
     list: List<String>,
@@ -844,7 +828,6 @@ fun DialogScreenshot(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogFavourites(
     favourites: Map<FavouriteItem, List<BasicContent>>,
@@ -915,8 +898,6 @@ fun DialogFavourites(
     }
 }
 
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogHistory(
     history: LazyPagingItems<History>,
@@ -1004,7 +985,6 @@ fun DialogHistory(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogFriends(
     friends: LazyPagingItems<BasicContent>,
@@ -1031,7 +1011,6 @@ fun DialogFriends(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogClubs(
     clubs: List<BasicContent>,
@@ -1090,7 +1069,7 @@ fun UserMenuItems(setMenu: (UserMenu) -> Unit) =
                     FilterChip(
                         selected = true,
                         label = { Text(stringResource(entry.title)) },
-                        trailingIcon = { Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null) },
+                        trailingIcon = { VectorIcon(R.drawable.vector_keyboard_arrow_right) },
                         onClick = { setMenu(entry) },
                         modifier = Modifier
                             .height(48.dp)
