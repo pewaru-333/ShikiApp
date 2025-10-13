@@ -6,23 +6,27 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.consumeWindowInsets
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
-import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.sp
-import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navDeepLink
 import org.application.shikiapp.screens.AnimeScreen
 import org.application.shikiapp.screens.CalendarScreen
@@ -39,8 +43,8 @@ import org.application.shikiapp.screens.UserScreen
 import org.application.shikiapp.utils.BASE_PATH
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.enums.Menu
-import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.extensions.isCurrentRoute
+import org.application.shikiapp.utils.extensions.toBottomBarItem
 import org.application.shikiapp.utils.navigation.Screen.Anime
 import org.application.shikiapp.utils.navigation.Screen.Calendar
 import org.application.shikiapp.utils.navigation.Screen.Catalog
@@ -52,13 +56,43 @@ import org.application.shikiapp.utils.navigation.Screen.NewsDetail
 import org.application.shikiapp.utils.navigation.Screen.Person
 import org.application.shikiapp.utils.navigation.Screen.Profile
 import org.application.shikiapp.utils.navigation.Screen.User
+import kotlin.reflect.KClass
 
 @Composable
-fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility, modifier: Modifier) {
+fun Navigation(navigator: NavHostController) {
+    val barVisibility = LocalBarVisibility.current
+    val backStack by navigator.currentBackStackEntryAsState()
+
+    val routes = remember { Menu.entries.map { it.route::class } }
+
+    LaunchedEffect(backStack, barVisibility) {
+        if (routes.any { backStack.isCurrentRoute(it) }) barVisibility.show()
+        else barVisibility.hide()
+    }
+
+    Scaffold(
+        content = { AppNavHost(navigator, Modifier.padding(it)) },
+        bottomBar = {
+            AnimatedVisibility(
+                visible = barVisibility.isVisible,
+                enter = expandVertically(),
+                exit = shrinkVertically()
+            ) {
+                BottomNavigationBar(
+                    selected = { backStack.isCurrentRoute(it) },
+                    onClick = { navigator.toBottomBarItem(it) }
+                )
+            }
+        }
+    )
+}
+
+@Composable
+private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
     NavHost(navigator, News, modifier.consumeWindowInsets(WindowInsets.systemBars)) {
         // Bottom menu items //
         composable<Catalog> {
-            CatalogScreen(visibility, navigator::navigate)
+            CatalogScreen(navigator::navigate)
         }
         composable<Calendar> {
             CalendarScreen(navigator::navigate)
@@ -73,7 +107,7 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
                 }
             )
         ) {
-            ProfileScreen(navigator::navigate, visibility)
+            ProfileScreen(navigator::navigate)
         }
 
         // Screens //
@@ -131,32 +165,26 @@ fun Navigation(navigator: NavHostController, visibility: NavigationBarVisibility
             NewsDetail(navigator::navigate, navigator::navigateUp)
         }
         composable<Screen.UserRates> {
-            UserRates(visibility, navigator::navigate, navigator::navigateUp)
+            UserRates(navigator::navigate, navigator::navigateUp)
         }
     }
-}
 
 @Composable
-fun BottomNavigationBar(backStack: NavBackStackEntry?, visible: Boolean, onClick: (Screen) -> Unit) =
-    AnimatedVisibility(
-        visible = Menu.entries.any { backStack.isCurrentRoute(it.route::class) } && visible,
-        enter = expandVertically(),
-        exit = shrinkVertically()
-    ) {
+private fun BottomNavigationBar(selected: (route: KClass<*>) -> Boolean, onClick: (Screen) -> Unit) =
         NavigationBar {
             Menu.entries.forEach { screen ->
                 NavigationBarItem(
-                    selected = backStack.isCurrentRoute(screen.route::class),
+                    selected = selected(screen.route::class),
                     alwaysShowLabel = false,
                     icon = { Icon(painterResource(screen.icon), null) },
                     onClick = { onClick(screen.route) },
                     label = {
-                        BasicText(
+                        Text(
                             text = stringResource(screen.title),
                             softWrap = false,
-                            style = LocalTextStyle.current.copy(
-                                color = LocalContentColor.current
-                            ),
+//                            style = LocalTextStyle.current.copy(
+//                                color = LocalContentColor.current
+//                            ),
                             autoSize = TextAutoSize.StepBased(
                                 minFontSize = 1.sp,
                                 maxFontSize = LocalTextStyle.current.fontSize,
@@ -167,4 +195,3 @@ fun BottomNavigationBar(backStack: NavBackStackEntry?, visible: Boolean, onClick
                 )
             }
         }
-    }
