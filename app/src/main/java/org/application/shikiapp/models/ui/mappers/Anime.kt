@@ -15,7 +15,6 @@ import org.application.shikiapp.generated.fragment.PersonRole
 import org.application.shikiapp.generated.fragment.RelatedFragment
 import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Franchise
 import org.application.shikiapp.models.data.Topic
 import org.application.shikiapp.models.ui.Anime
