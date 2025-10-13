@@ -59,7 +59,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     val type = _type.asStateFlow()
 
     val editable = args?.editable ?: false
-    val userId = if (editable) Preferences.userId else args?.id
+    val userId = if (editable) Preferences.userId else args?.id?.toLongOrNull()
 
     private val _response = MutableStateFlow<RatesResponse>(RatesResponse.Loading)
     val response = _response.asStateFlow()

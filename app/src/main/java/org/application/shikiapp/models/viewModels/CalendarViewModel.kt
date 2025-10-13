@@ -9,9 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
-import org.application.shikiapp.events.CalendarEvent
 import org.application.shikiapp.models.data.Topic
-import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
 import org.application.shikiapp.models.ui.mappers.toAnimeContent
 import org.application.shikiapp.network.client.GraphQL
@@ -19,8 +17,10 @@ import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.network.response.Response
 
-class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, CalendarEvent>() {
-    override fun initState() = AnimeCalendarState()
+class CalendarViewModel : BaseViewModel<AnimeCalendar, Unit, Unit>() {
+    override fun initState() = Unit
+
+    override fun onEvent(event: Unit) = Unit
 
     override fun loadData() {
         viewModelScope.launch {
@@ -50,15 +50,11 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, AnimeCalendarState, Calen
         }
     }
 
-    override fun onEvent(event: CalendarEvent) {
-        when (event) {
-            CalendarEvent.Reload -> viewModelScope.launch {
-                emit(Response.Loading)
+    fun reload() {
+        viewModelScope.launch {
+            emit(Response.Loading)
 
-                loadData()
-            }
-
-            CalendarEvent.ShowFullUpdates -> updateState { it.copy(showFullUpdates = !it.showFullUpdates) }
+            loadData()
         }
     }
 
