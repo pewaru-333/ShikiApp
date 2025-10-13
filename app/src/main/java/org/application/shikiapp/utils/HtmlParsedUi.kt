@@ -18,14 +18,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,9 +43,8 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.core.net.toUri
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
-import org.application.shikiapp.ui.templates.LoadingScreen
+import org.application.shikiapp.R
+import org.application.shikiapp.ui.templates.VectorIcon
 
 @Composable
 fun HtmlComment(commentContent: List<CommentContent>?) {
@@ -161,10 +155,10 @@ private fun RenderContent(
                     .padding(12.dp, 8.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = if (isVisible) Icons.Default.KeyboardArrowDown else Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
-                        modifier = Modifier.size(20.dp)
+                    VectorIcon(
+                        modifier = Modifier.size(20.dp),
+                        resId = if (isVisible) R.drawable.vector_keyboard_arrow_down
+                        else R.drawable.vector_keyboard_arrow_right,
                     )
 
                     Spacer(Modifier.width(8.dp))
