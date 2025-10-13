@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.clickable
@@ -38,32 +40,25 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.NewsDetailState
 import org.application.shikiapp.models.ui.NewsDetail
 import org.application.shikiapp.models.viewModels.NewsDetailViewModel
-import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.ui.templates.AnimatedAsyncImage
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.DialogScreenshot
-import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsDetail(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val model = viewModel<NewsDetailViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen(model::loadData)
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> NewsDetailView(data.data, state, model::onEvent, onNavigate, back)
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { newsDetail ->
+        NewsDetailView(newsDetail, state, model::onEvent, onNavigate, back)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsDetailView(
     news: NewsDetail,

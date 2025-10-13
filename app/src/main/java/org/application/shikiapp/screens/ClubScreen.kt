@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import android.widget.Toast
@@ -30,12 +32,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Close
-import androidx.compose.material.icons.outlined.Done
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
@@ -83,17 +79,17 @@ import org.application.shikiapp.models.states.showMembers
 import org.application.shikiapp.models.ui.Club
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.viewModels.ClubViewModel
-import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BasicContentItem
 import org.application.shikiapp.ui.templates.CatalogGridItem
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.enums.ClubMenu
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val context = LocalContext.current
@@ -103,12 +99,8 @@ fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val state by model.state.collectAsStateWithLifecycle()
     val content = model.content.collectAsLazyPagingItems()
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen()
-        Response.Loading -> LoadingScreen()
-        is Response.Success -> ClubView(data.data, state, content, model::onEvent, onNavigate, back)
-
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { club ->
+        ClubView(club, state, content, model::onEvent, onNavigate, back)
     }
 
     LaunchedEffect(Unit) {
@@ -118,7 +110,6 @@ fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ClubView(
     club: Club,
@@ -149,7 +140,7 @@ private fun ClubView(
                     IconButton(
                         onClick = { onEvent(ClubEvent.ShowBottomSheet) }
                     ) {
-                        Icon(Icons.Outlined.MoreVert, null)
+                        VectorIcon(R.drawable.vector_more)
                     }
                 }
             )
@@ -255,7 +246,7 @@ private fun ClubMenuItems(onEvent: (ClubEvent) -> Unit) =
                         label = { Text(stringResource(it.title)) },
                         onClick = { onEvent(ClubEvent.PickItem(it)) },
                         trailingIcon = {
-                            Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                            VectorIcon(R.drawable.vector_keyboard_arrow_right)
                         },
                         modifier = Modifier
                             .height(48.dp)
@@ -266,7 +257,6 @@ private fun ClubMenuItems(onEvent: (ClubEvent) -> Unit) =
         }
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Members(
     members: LazyPagingItems<UserBasic>,
@@ -338,9 +328,6 @@ private fun Members(
     }
 }
 
-
-
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Content(
     content: LazyPagingItems<BasicContent>,
@@ -358,11 +345,7 @@ private fun Content(
         topBar = {
             TopAppBar(
                 title = { state.menu?.let { Text(stringResource(it.title)) } },
-                navigationIcon = {
-                    IconButton(hide) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
-                    }
-                }
+                navigationIcon = { NavigationIcon(hide) }
             )
         }
     ) { padding ->
@@ -412,7 +395,6 @@ private fun Content(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Images(
     images: LazyPagingItems<ClubImages>,
@@ -474,7 +456,6 @@ private fun Images(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun Clubs(
     clubs: LazyPagingItems<BasicContent>,
@@ -511,11 +492,9 @@ private fun Clubs(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun BottomSheet(state: ClubState, onEvent: (ClubEvent) -> Unit) = ModalBottomSheet(
-    onDismissRequest = { onEvent(ClubEvent.ShowBottomSheet) },
-    sheetState = state.sheetState
+    onDismissRequest = { onEvent(ClubEvent.ShowBottomSheet) }
 ) {
     ListItem(
         headlineContent = { Text(stringResource(R.string.text_clubs)) },
@@ -527,13 +506,13 @@ private fun BottomSheet(state: ClubState, onEvent: (ClubEvent) -> Unit) = ModalB
         if (state.isMember) {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.text_leave_club)) },
-                leadingContent = { Icon(Icons.Outlined.Close, null) },
+                leadingContent = { VectorIcon(R.drawable.vector_close) },
                 modifier = Modifier.clickable { onEvent(ClubEvent.LeaveClub) }
             )
         } else {
             ListItem(
                 headlineContent = { Text(stringResource(R.string.text_join_club)) },
-                leadingContent = { Icon(Icons.Outlined.Done, null) },
+                leadingContent = { VectorIcon(R.drawable.vector_check) },
                 modifier = Modifier.clickable { onEvent(ClubEvent.JoinClub) }
             )
         }

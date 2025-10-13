@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import android.content.Intent
@@ -10,14 +12,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -43,19 +41,21 @@ import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.viewModels.ProfileViewModel
 import org.application.shikiapp.network.response.LoginResponse
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.AUTH_SCOPES
 import org.application.shikiapp.utils.AUTH_URL
 import org.application.shikiapp.utils.CLIENT_ID
 import org.application.shikiapp.utils.CODE
 import org.application.shikiapp.utils.REDIRECT_URI
-import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.extensions.appLinksSettings
 import org.application.shikiapp.utils.extensions.isDomainVerified
+import org.application.shikiapp.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibility) {
+fun ProfileScreen(onNavigate: (Screen) -> Unit) {
+    val barVisibility = LocalBarVisibility.current
+
     val model = viewModel<ProfileViewModel>()
     val loginState by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
@@ -64,7 +64,7 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibil
         is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.User.ShowSettings) }
         is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.User.ShowSettings) }
         is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.User.ShowSettings) }
-        is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut, visibility)
+        is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut, barVisibility)
 
         else -> Unit
     }
@@ -74,18 +74,15 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit, visibility: NavigationBarVisibil
         onBack = { model.onEvent(ContentDetailEvent.User.ShowSettings) }
     )
 
-
-
     LaunchedEffect(state.showSettings, state.menu, state.showDialogs) {
         if (state.showSettings || state.menu != null || state.showDialogs) {
-            visibility.hide()
+            barVisibility.hide()
         } else {
-            visibility.show()
+            barVisibility.show()
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoginScreen(openSettings: () -> Unit) {
     val context = LocalContext.current
@@ -111,7 +108,7 @@ private fun LoginScreen(openSettings: () -> Unit) {
             TopAppBar(
                 title = {},
                 actions = {
-                    IconButton(openSettings) { Icon(Icons.Outlined.Settings, null) }
+                    IconButton(openSettings) { VectorIcon(R.drawable.vector_settings) }
                 }
             )
         }
@@ -135,7 +132,7 @@ private fun LoginScreen(openSettings: () -> Unit) {
                         }
                     ) {
                         Text(stringResource(R.string.text_login))
-                        Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                        VectorIcon(R.drawable.vector_keyboard_arrow_right)
                     }
 
                     Text(
@@ -163,14 +160,13 @@ private fun LoginScreen(openSettings: () -> Unit) {
                     }
                 ) {
                     Text(stringResource(R.string.text_to_settings))
-                    Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                    VectorIcon(R.drawable.vector_keyboard_arrow_right)
                 }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun LoadingScreen(openSettings: () -> Unit) = Scaffold(
     topBar = {
@@ -179,7 +175,7 @@ private fun LoadingScreen(openSettings: () -> Unit) = Scaffold(
             actions = {
                 IconButton(
                     onClick = openSettings,
-                    content = { Icon(Icons.Outlined.Settings, null) }
+                    content = { VectorIcon(R.drawable.vector_settings) }
                 )
             }
         )
@@ -194,7 +190,6 @@ private fun LoadingScreen(openSettings: () -> Unit) = Scaffold(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun ErrorScreen(reload: () -> Unit, openSettings: () -> Unit) = Scaffold(
     topBar = {
@@ -203,7 +198,7 @@ private fun ErrorScreen(reload: () -> Unit, openSettings: () -> Unit) = Scaffold
             actions = {
                 IconButton(
                     onClick = openSettings,
-                    content = { Icon(Icons.Outlined.Settings, null) }
+                    content = { VectorIcon(R.drawable.vector_settings) }
                 )
             }
         )

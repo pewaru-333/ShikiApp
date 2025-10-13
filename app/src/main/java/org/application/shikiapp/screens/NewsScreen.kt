@@ -41,7 +41,6 @@ import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.rememberLoadingEffect
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun NewsScreen(onNavigate: (Screen) -> Unit) {
     val newsViewModel = viewModel<NewsViewModel>()

@@ -1,7 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -10,10 +11,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,16 +40,14 @@ import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.viewModels.MangaViewModel
 import org.application.shikiapp.models.viewModels.UserRateViewModel
-import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.Description
 import org.application.shikiapp.ui.templates.DialogEditRate
-import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.LinksSheet
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.Poster
 import org.application.shikiapp.ui.templates.Profiles
@@ -62,6 +58,7 @@ import org.application.shikiapp.ui.templates.ScoreInfo
 import org.application.shikiapp.ui.templates.SimilarFull
 import org.application.shikiapp.ui.templates.Statistics
 import org.application.shikiapp.ui.templates.StatusInfo
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
@@ -80,15 +77,11 @@ fun MangaScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
         }
     }
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen(model::loadData)
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> MangaView(data.data, state, model::onEvent, onNavigate, back)
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { manga ->
+        MangaView(manga, state, model::onEvent, onNavigate, back)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun MangaView(
     manga: Manga,
@@ -102,6 +95,10 @@ private fun MangaView(
     val newRate by rateModel.newRate.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
+    val authorsState = rememberLazyListState()
+    val charactersState = rememberLazyListState()
+    val similarState = rememberLazyListState()
+
     val comments = manga.comments.collectAsLazyPagingItems()
 
     LaunchedEffect(Unit) {
@@ -120,14 +117,14 @@ private fun MangaView(
                     )
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                        content = { Icon(Icons.Outlined.MoreVert, null) }
+                        content = { VectorIcon(R.drawable.vector_more) }
                     )
                 }
             )
         }
     ) { values ->
         LazyColumn(
-            verticalArrangement = spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             contentPadding = PaddingValues(
                 start = 8.dp,
                 top = values.calculateTopPadding(),
@@ -142,7 +139,7 @@ private fun MangaView(
                 )
             }
             item {
-                Row(horizontalArrangement = spacedBy(8.dp)) {
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     Poster(manga.poster)
                     Column(Modifier.height(300.dp), Arrangement.SpaceBetween) {
                         LabelInfoItem(stringResource(text_kind), stringResource(manga.kindString))
@@ -161,7 +158,7 @@ private fun MangaView(
 
             manga.genres?.let {
                 item {
-                    LazyRow(horizontalArrangement = spacedBy(4.dp)) {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                         items(it) {
                             SuggestionChip(onClick = {}, label = { Text(it) })
                         }
@@ -178,7 +175,7 @@ private fun MangaView(
                         item {
                             DetailBox(
                                 icon = R.drawable.vector_anime,
-                                label = stringResource(R.string.text_publisher),
+                                label = stringResource(text_publisher),
                                 value = publisher.title,
                                 onClick = {
                                     onNavigate(
@@ -279,7 +276,7 @@ private fun MangaView(
         list = if (state.showCharacters) manga.charactersAll else manga.personAll,
         visible = state.showCharacters || state.showAuthors,
         title = stringResource(if (state.showCharacters) R.string.text_characters else R.string.text_authors),
-        state = if (state.showCharacters) state.lazyCharacters else state.lazyAuthors,
+        state = if (state.showCharacters) charactersState else authorsState,
         onHide = {
             onEvent(
                 if (state.showCharacters) ContentDetailEvent.Media.ShowCharacters
@@ -296,7 +293,7 @@ private fun MangaView(
 
     SimilarFull(
         hide = { onEvent(ContentDetailEvent.Media.ShowSimilar) },
-        listState = state.lazySimilar,
+        listState = similarState,
         visible = state.showSimilar,
         list = manga.similar,
         onNavigate = { onNavigate(Screen.Manga(it)) }
@@ -310,7 +307,6 @@ private fun MangaView(
 
     when {
         state.showSheet -> BottomSheet(
-            state = state.sheetBottom,
             rate = manga.userRate,
             favoured = manga.favoured,
             onEvent = onEvent,
@@ -346,7 +342,6 @@ private fun MangaView(
 
         state.showLinks -> LinksSheet(
             list = manga.links,
-            state = state.sheetLinks,
             hide = { onEvent(ContentDetailEvent.Media.ShowLinks) })
     }
 }

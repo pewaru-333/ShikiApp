@@ -1,17 +1,16 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.SpaceBetween
-import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,10 +31,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.KeyboardArrowRight
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledIconToggleButton
@@ -57,8 +52,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.Center
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -92,19 +85,20 @@ import org.application.shikiapp.ui.templates.DialogEditRate
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.OrderDirection
 import org.application.shikiapp.utils.enums.OrderRates
 import org.application.shikiapp.utils.enums.WatchStatus
-import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.extensions.pairwise
 import org.application.shikiapp.utils.extensions.showToast
+import org.application.shikiapp.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit, back: () -> Unit) {
+fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     val context = LocalContext.current
+    val barVisibility = LocalBarVisibility.current
 
     val model = viewModel<UserRateViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
@@ -127,7 +121,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
     }
 
     LaunchedEffect(Unit) {
-        visibility.toggle(!model.editable)
+        barVisibility.toggle(!model.editable)
     }
 
     LaunchedEffect(pagerState) {
@@ -181,7 +175,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
         is Success, Loading, NoAccess -> Scaffold(
             topBar = {
                 TopAppBar(
-                    navigationIcon = { if (!model.editable) NavigationIcon(back) },
+                    navigationIcon = { if (!model.editable) NavigationIcon(onBack) },
                     title = { Text(stringResource(type.getListTitle())) },
                     actions = {
                         if (model.editable) {
@@ -201,7 +195,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
             }
         ) { values ->
             if (response is Loading) LoadingScreen()
-            else if (response is NoAccess) Box(Modifier.fillMaxSize(), Center) { Text(stringResource(text_profile_closed)) }
+            else if (response is NoAccess) Box(Modifier.fillMaxSize(), Alignment.Center) { Text(stringResource(text_profile_closed)) }
             else Column(Modifier.padding(values)) {
                 PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
                     WatchStatus.entries.forEach { status ->
@@ -215,7 +209,7 @@ fun UserRates(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit,
 
                 LazyRow(
                     contentPadding = PaddingValues(horizontal = 16.dp),
-                    horizontalArrangement = spacedBy(8.dp)
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                 ) {
                     items(OrderRates.entries) { order ->
                         SortChip(
@@ -282,7 +276,7 @@ private fun UnloggedScreen(onNavigate: (Screen) -> Unit) =
                 onClick = { onNavigate(Screen.Profile) }
             ) {
                 Text(stringResource(R.string.text_to_profile))
-                Icon(Icons.AutoMirrored.Outlined.KeyboardArrowRight, null)
+                VectorIcon(R.drawable.vector_keyboard_arrow_right)
             }
         }
     }
@@ -298,7 +292,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
     val progressValue = maximum?.let { if (it > 0) current.toFloat() / it else 0f }
 
     Column {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
             Text(
                 text = stringResource(if (type == LinkedType.ANIME) R.string.text_episodes else R.string.text_rate_chapters),
                 style = MaterialTheme.typography.bodySmall
@@ -313,7 +307,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
 
         Spacer(Modifier.height(4.dp))
 
-        Row(Modifier, spacedBy(8.dp), CenterVertically) {
+        Row(Modifier, Arrangement.spacedBy(8.dp), Alignment.CenterVertically) {
             if (progressValue != null) {
                 LinearProgressIndicator(
                     progress = { progressValue.coerceIn(0f, 1f) },
@@ -333,7 +327,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
                         FilledTonalIconButton(
                             modifier = Modifier.size(32.dp),
                             onClick = { onIncrement(rate.id) },
-                            content = { Icon(Icons.Default.Add, null) }
+                            content = { VectorIcon(R.drawable.vector_add) }
                         )
                     }
                 }
@@ -342,7 +336,6 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun UserRateCard(
     rate: UserRate,
@@ -399,7 +392,7 @@ private fun UserRateCard(
 
             if (rate.score > 0) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(Icons.Default.Star, null, Modifier.size(18.dp), Color(0xFFFFC319))
+                    VectorIcon(R.drawable.vector_star, Modifier.size(18.dp), Color(0xFFFFC319))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = rate.scoreString,
@@ -431,7 +424,6 @@ private fun UserRateCard(
     }
 }
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun UserRateList(
     rates: List<UserRate>,
@@ -445,7 +437,7 @@ private fun UserRateList(
 ) = LazyColumn(Modifier.fillMaxSize(), listState) {
     if (rates.isEmpty()) {
         item {
-            Box(Modifier.fillParentMaxSize(), Center) {
+            Box(Modifier.fillParentMaxSize(), Alignment.Center) {
                 Text(stringResource(R.string.text_empty))
             }
         }

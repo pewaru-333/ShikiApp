@@ -1,14 +1,20 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.activity.compose.BackHandler
+import androidx.annotation.StringRes
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -20,37 +26,40 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.GridItemSpan
 import androidx.compose.foundation.lazy.grid.LazyGridScope
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Menu
-import androidx.compose.material.icons.outlined.Refresh
-import androidx.compose.material.icons.outlined.Search
+import androidx.compose.foundation.text.input.InputTransformation
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.maxLength
+import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.then
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DismissibleDrawerSheet
+import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Label
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.MenuAnchorType
-import androidx.compose.material3.ModalDrawerSheet
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
@@ -63,22 +72,22 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDrawerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.LocalFocusManager
-import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
@@ -96,41 +105,23 @@ import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import org.application.shikiapp.R
-import org.application.shikiapp.R.drawable.vector_filter
-import org.application.shikiapp.R.string.text_catalog
-import org.application.shikiapp.R.string.text_close
-import org.application.shikiapp.R.string.text_end_year
-import org.application.shikiapp.R.string.text_episode_duration
-import org.application.shikiapp.R.string.text_filters
-import org.application.shikiapp.R.string.text_genres
-import org.application.shikiapp.R.string.text_kind
-import org.application.shikiapp.R.string.text_rating
-import org.application.shikiapp.R.string.text_score
-import org.application.shikiapp.R.string.text_search
-import org.application.shikiapp.R.string.text_season
-import org.application.shikiapp.R.string.text_sorting
-import org.application.shikiapp.R.string.text_start_year
-import org.application.shikiapp.R.string.text_status
 import org.application.shikiapp.di.Preferences
-import org.application.shikiapp.events.DrawerEvent
 import org.application.shikiapp.events.FilterEvent
 import org.application.shikiapp.events.FilterEvent.SetDuration
 import org.application.shikiapp.events.FilterEvent.SetGenre
-import org.application.shikiapp.events.FilterEvent.SetKind
 import org.application.shikiapp.events.FilterEvent.SetOrder
 import org.application.shikiapp.events.FilterEvent.SetRating
-import org.application.shikiapp.events.FilterEvent.SetRole
-import org.application.shikiapp.events.FilterEvent.SetScore
 import org.application.shikiapp.events.FilterEvent.SetSeason
-import org.application.shikiapp.events.FilterEvent.SetSeasonS
-import org.application.shikiapp.events.FilterEvent.SetSeasonYF
-import org.application.shikiapp.events.FilterEvent.SetSeasonYS
 import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetTitle
 import org.application.shikiapp.generated.fragment.Genres
 import org.application.shikiapp.models.states.CatalogState
+import org.application.shikiapp.models.states.DialogFilters
+import org.application.shikiapp.models.states.ExpandedFilters
 import org.application.shikiapp.models.states.FiltersState
+import org.application.shikiapp.models.states.isFiltersVisible
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CatalogViewModel
@@ -141,9 +132,9 @@ import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.ParagraphTitle
 import org.application.shikiapp.ui.templates.UserGridItem
+import org.application.shikiapp.ui.templates.VectorIcon
+import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.enums.CatalogItem
-import org.application.shikiapp.utils.enums.CatalogItem.ANIME
-import org.application.shikiapp.utils.enums.CatalogItem.CHARACTERS
 import org.application.shikiapp.utils.enums.CatalogItem.CLUBS
 import org.application.shikiapp.utils.enums.CatalogItem.MANGA
 import org.application.shikiapp.utils.enums.CatalogItem.PEOPLE
@@ -158,35 +149,38 @@ import org.application.shikiapp.utils.enums.PeopleFilterItem
 import org.application.shikiapp.utils.enums.Rating
 import org.application.shikiapp.utils.enums.Season
 import org.application.shikiapp.utils.enums.Status
-import org.application.shikiapp.utils.extensions.NavigationBarVisibility
+import org.application.shikiapp.utils.extensions.pairwise
+import org.application.shikiapp.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> Unit) {
+fun CatalogScreen(onNavigate: (Screen) -> Unit) {
+    val barVisibility = LocalBarVisibility.current
+
+    val scope = rememberCoroutineScope()
+    val drawerState = rememberDrawerState(DrawerValue.Closed)
+
     val model = viewModel<CatalogViewModel>()
     val state by model.state.collectAsStateWithLifecycle()
     val filters by model.currentFilters.collectAsStateWithLifecycle()
     val genres by model.genres.collectAsStateWithLifecycle()
 
-    val focus = LocalFocusManager.current
+    val listStates = CatalogItem.entries.associateWith { rememberLazyListState() }
+    val gridStates = CatalogItem.entries.associateWith { rememberLazyGridState() }
 
-    LaunchedEffect(state.showFiltersA, state.showFiltersM, state.showFiltersR) {
-        visibility.toggle(state.showFiltersA || state.showFiltersM || state.showFiltersR)
-    }
-
-    LaunchedEffect(Unit) {
-        model.event.collectLatest {
-            when (it) {
-                DrawerEvent.Clear -> focus.clearFocus()
-                DrawerEvent.Click -> if (state.drawerState.isOpen) state.drawerState.close()
-                else state.drawerState.open()
-                null -> Unit
+    fun toggleDrawer() {
+        scope.launch {
+            drawerState.apply {
+                if (isClosed) open() else close()
             }
         }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(state.dialogFilter) {
+        barVisibility.toggle(state.isFiltersVisible)
+    }
+
+    LaunchedEffect(model.navEvent) {
         model.navEvent.collectLatest { args ->
             when {
                 args.studio != null -> model.onEvent(FilterEvent.SetStudio(args.studio))
@@ -201,25 +195,34 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
     }
 
     LaunchedEffect(filters) {
-        val listState = state.listStates[state.menu]
-        val gridState = state.gridStates[state.menu]
+        snapshotFlow { filters }
+            .pairwise()
+            .collectLatest { (old, new) ->
+                if (new != old) {
+                    scope.launch {
+                        val listState = listStates[state.menu]
+                        val gridState = gridStates[state.menu]
 
-        snapshotFlow {
-            (listState?.layoutInfo?.totalItemsCount ?: 0) + (gridState?.layoutInfo?.totalItemsCount ?: 0)
-        }
-            .drop(1)
-            .first { it > 0 }
+                        snapshotFlow {
+                            (listState?.layoutInfo?.totalItemsCount ?: 0) +
+                                    (gridState?.layoutInfo?.totalItemsCount ?: 0)
+                        }
+                            .drop(1)
+                            .first { it > 0 }
 
-        listState?.scrollToItem(0)
-        gridState?.scrollToItem(0)
+                        listState?.scrollToItem(0)
+                        gridState?.scrollToItem(0)
+                    }
+                }
+            }
     }
 
     ModalNavigationDrawer(
-        drawerState = state.drawerState,
+        drawerState = drawerState,
         drawerContent = {
-            ModalDrawerSheet(Modifier.width(260.dp)) {
+            DismissibleDrawerSheet(drawerState, Modifier.width(260.dp)) {
                 Text(
-                    text = stringResource(text_catalog),
+                    text = stringResource(R.string.text_catalog),
                     modifier = Modifier.padding(16.dp),
                     style = MaterialTheme.typography.headlineSmall
                 )
@@ -227,9 +230,9 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                 CatalogItem.entries.forEach { item ->
                     NavigationDrawerItem(
                         selected = state.menu == item,
-                        onClick = { model.pick(item) },
+                        onClick = { model.pick(item); toggleDrawer() },
                         modifier = Modifier.padding(NavigationDrawerItemDefaults.ItemPadding),
-                        icon = { Icon(painterResource(item.icon), null) },
+                        icon = { VectorIcon(item.icon) },
                         label = {
                             Text(
                                 text = stringResource(item.title),
@@ -249,38 +252,26 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
             topBar = {
                 CenterAlignedTopAppBar(
                     title = {
-                        TextField(
-                            value = state.search,
+                        SearchField(
+                            text = state.search,
                             onValueChange = { model.onEvent(SetTitle(it)) },
-                            modifier = Modifier.fillMaxWidth(),
-                            placeholder = { Text(stringResource(text_search)) },
-                            singleLine = true,
-                            trailingIcon = {
-                                if (state.search.isEmpty()) Icon(Icons.Outlined.Search, null)
-                            },
-                            colors = TextFieldDefaults.colors(
-                                focusedContainerColor = MaterialTheme.colorScheme.surface,
-                                unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-                                focusedIndicatorColor = Color.Transparent,
-                                unfocusedIndicatorColor = Color.Transparent,
-                                disabledIndicatorColor = Color.Transparent,
-                            )
+                            onClear = { model.onEvent(SetTitle(BLANK)) }
                         )
                     },
                     modifier = Modifier.drawBehind {
                         drawLine(Color.LightGray, Offset(0f, size.height), Offset(size.width, size.height), 4f)
                     },
                     navigationIcon = {
-                        IconButton(model::onDrawerClick) { Icon(Icons.Outlined.Menu, null) }
+                        IconButton(::toggleDrawer) { VectorIcon(R.drawable.vector_menu) }
                     },
                     actions = {
-                        if (state.menu !in listOf(CHARACTERS, USERS, CLUBS)) {
+                        if (state.menu.showFilter) {
                             IconButton(
                                 onClick = { model.showFilters(state.menu) },
                                 content = {
                                     BadgedBox(
                                         badge = { if (filters != FiltersState()) Badge() },
-                                        content = { Icon(painterResource(vector_filter), null) }
+                                        content = { VectorIcon(R.drawable.vector_filter) }
                                     )
                                 }
                             )
@@ -293,8 +284,10 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
                 val catalogList = model.list.collectAsLazyPagingItems()
 
                 CatalogList(
+                    menu = state.menu,
                     list = catalogList,
-                    state = state,
+                    listState = listStates.getValue(state.menu),
+                    gridState = gridStates.getValue(state.menu),
                     paddingValues = values,
                     onNavigate = onNavigate
                 )
@@ -303,37 +296,82 @@ fun CatalogScreen(visibility: NavigationBarVisibility, onNavigate: (Screen) -> U
     }
 
     DialogFilters(
-        genres = genres,
+        state = state,
         filters = filters,
-        visible = state.showFiltersA || state.showFiltersM || state.showFiltersR,
-        event = model::onEvent,
-        hide = model::hideFilters,
-        type = when (state.menu) {
-            RANOBE -> LinkedType.RANOBE
-            MANGA -> LinkedType.MANGA
-            ANIME -> LinkedType.ANIME
-            else -> null
-        }
+        visible = state.isFiltersVisible,
+        type = state.menu.linkedType,
+        genres = genres,
+        onExpandedChange = model::toggleExpandedFilter,
+        onFilterEvent = model::onEvent,
+        onHide = model::showFilters
     )
 
-    if (state.showFiltersP) {
-        DialogFiltersP(filters.roles, model::onEvent, model::hideFilters)
+    if (state.dialogFilter == DialogFilters.People) {
+        DialogFiltersP(
+            checked = { it in filters.roles },
+            onValueChange = { model.onEvent(FilterEvent.SetRole(it)) },
+            onHide = model::showFilters
+        )
     }
+}
+
+@Composable
+private fun SearchField(text: String, onValueChange: (String) -> Unit, onClear: () -> Unit) {
+    val textFieldState = rememberTextFieldState(text)
+
+    LaunchedEffect(textFieldState) {
+        snapshotFlow { textFieldState.text.toString() }
+            .pairwise()
+            .collectLatest { (old, new) ->
+                if (old != new) {
+                    onValueChange(new)
+                }
+            }
+    }
+
+    LaunchedEffect(text) {
+        if (text.isEmpty()) {
+            textFieldState.clearText()
+        }
+    }
+
+    TextField(
+        state = textFieldState,
+        modifier = Modifier.fillMaxWidth(),
+        placeholder = { Text(stringResource(R.string.text_search)) },
+        lineLimits = TextFieldLineLimits.SingleLine,
+        trailingIcon = {
+            if (textFieldState.text.isEmpty()) {
+                VectorIcon(R.drawable.vector_search)
+            } else {
+                IconButton(onClear) { VectorIcon(R.drawable.vector_close) }
+            }
+        },
+        colors = TextFieldDefaults.colors(
+            focusedContainerColor = MaterialTheme.colorScheme.surface,
+            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+            focusedIndicatorColor = Color.Transparent,
+            unfocusedIndicatorColor = Color.Transparent,
+            disabledIndicatorColor = Color.Transparent,
+        )
+    )
 }
 
 // ============================================= Lists =============================================
 
 @Composable
 private fun CatalogList(
+    menu: CatalogItem,
     list: LazyPagingItems<BasicContent>,
-    state: CatalogState,
+    listState: LazyListState,
+    gridState: LazyGridState,
     paddingValues: PaddingValues,
     onNavigate: (Screen) -> Unit
 ) = when (list.loadState.refresh) {
     LoadState.Loading -> LoadingScreen()
     is LoadState.Error -> ErrorScreen(list::retry)
     is LoadState.NotLoading -> {
-        when (state.menu) {
+        when (menu) {
             USERS, CLUBS -> LazyVerticalGrid(
                 columns = GridCells.FixedSize(70.dp),
                 contentPadding = paddingValues,
@@ -345,7 +383,7 @@ private fun CatalogList(
                         UserGridItem(
                             title = it.title,
                             imageUrl = it.poster,
-                            onClick = { onNavigate(state.menu.navigateTo(it.id)) }
+                            onClick = { onNavigate(menu.navigateTo(it.id)) }
                         )
                     }
                 }
@@ -364,10 +402,10 @@ private fun CatalogList(
             else -> if (Preferences.listView == ListView.COLUMN)
                 LazyColumn(
                     contentPadding = paddingValues,
-                    state = state.listStates.getValue(state.menu)
+                    state = listState
                 ) {
                     contentList(list) {
-                        onNavigate(state.menu.navigateTo(it))
+                        onNavigate(menu.navigateTo(it))
                     }
                     if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
                     if (list.loadState.hasError) item { ErrorScreen(list::retry) }
@@ -376,11 +414,11 @@ private fun CatalogList(
                 columns = GridCells.FixedSize(116.dp),
                 contentPadding = PaddingValues(0.dp, paddingValues.calculateTopPadding().plus(8.dp)),
                 horizontalArrangement = Arrangement.SpaceAround,
-                verticalArrangement = spacedBy(4.dp),
-                state = state.gridStates.getValue(state.menu)
+                verticalArrangement = Arrangement.spacedBy(4.dp),
+                state = gridState
             ) {
                 contentList(list) {
-                    onNavigate(state.menu.navigateTo(it))
+                    onNavigate(menu.navigateTo(it))
                 }
                 if (list.loadState.append == LoadState.Loading) {
                     item(
@@ -399,84 +437,156 @@ private fun CatalogList(
 // ======================================= Dialogs Filters ========================================
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun DialogFilters(
-    genres: List<Genres>,
+    state: CatalogState,
     filters: FiltersState,
     visible: Boolean,
+    genres: List<Genres>,
     type: LinkedType?,
-    event: (FilterEvent) -> Unit,
-    hide: () -> Unit
-) = AnimatedVisibility(
-    modifier = Modifier.zIndex(10f),
-    visible = visible,
-    enter = scaleIn(),
-    exit = scaleOut()
+    onExpandedChange: (ExpandedFilters) -> Unit,
+    onFilterEvent: (FilterEvent) -> Unit,
+    onHide: () -> Unit
 ) {
-    BackHandler(visible, hide)
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                navigationIcon = { NavigationIcon(hide) },
-                title = {
-                    Column {
-                        Text(
-                            text = stringResource(text_filters),
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontSize = 22.sp,
-                                lineHeight = 28.sp
+    val density = LocalDensity.current
+
+    AnimatedVisibility(
+        modifier = Modifier.zIndex(10f),
+        visible = visible,
+        exit = slideOutVertically() + shrinkVertically() + fadeOut(),
+        enter = slideInVertically {
+            with(density) { -40.dp.roundToPx() }
+        } + expandVertically(
+            expandFrom = Alignment.Top
+        ) + fadeIn(
+            initialAlpha = 0.3f
+        )
+    ) {
+        BackHandler(visible, onHide)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    navigationIcon = { NavigationIcon(onHide) },
+                    title = {
+                        Column {
+                            Text(
+                                text = stringResource(R.string.text_filters),
+                                style = MaterialTheme.typography.headlineSmall.copy(
+                                    fontSize = 22.sp,
+                                    lineHeight = 28.sp
+                                )
                             )
-                        )
-                        Text(
-                            text = stringResource(R.string.text_applied_immediately),
-                            style = MaterialTheme.typography.labelSmall.copy(
-                                fontSize = 12.sp
+                            Text(
+                                text = stringResource(R.string.text_applied_immediately),
+                                style = MaterialTheme.typography.labelSmall.copy(
+                                    fontSize = 12.sp
+                                )
                             )
+                        }
+                    },
+                    actions = {
+                        IconButton(
+                            onClick = { onFilterEvent(FilterEvent.ClearFilters) },
+                            content = { VectorIcon(R.drawable.vector_refresh) }
                         )
                     }
-                },
-                actions = {
-                    IconButton(
-                        onClick = { event(FilterEvent.ClearFilters) },
-                        content = { Icon(Icons.Outlined.Refresh, null) }
+                )
+            }
+        ) { values ->
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(
+                    start = 8.dp,
+                    top = values.calculateTopPadding(),
+                    end = 8.dp,
+                    bottom = 16.dp
+                )
+            ) {
+                item {
+                    Sorting(
+                        order = filters.order,
+                        onClick = { onFilterEvent(SetOrder(it)) }
                     )
                 }
-            )
-        }
-    ) { values ->
-        LazyColumn(
-            verticalArrangement = spacedBy(12.dp),
-            contentPadding = PaddingValues(
-                start = 8.dp,
-                top = values.calculateTopPadding(),
-                end = 8.dp,
-                bottom = 16.dp
-            )
-        ) {
-            item { Sorting(event, filters.order) }
-            item { Status(event, filters.status, type) }
-            item { Kind(event, filters.kind, type) }
-            item { Season(filters.seasonYS, filters.seasonYF, filters.seasonS, event) }
-            item { Score(event, filters.score) }
-            if (type == LinkedType.ANIME) {
-                item { Duration(event, filters.duration) }
-                item { Rating(event, filters.rating) }
+                item {
+                    Status(
+                        type = type,
+                        isExpanded = ExpandedFilters.Status in state.expandedFilters,
+                        onExpandedChange = { onExpandedChange(ExpandedFilters.Status) },
+                        selected = { it in filters.status },
+                        onClick = { onFilterEvent(SetStatus(it)) }
+                    )
+                }
+                item {
+                    Kind(
+                        type = type,
+                        isExpanded = ExpandedFilters.Kind in state.expandedFilters,
+                        onExpandedChange = { onExpandedChange(ExpandedFilters.Kind) },
+                        selected = { it in filters.kind },
+                        onClick = { onFilterEvent(FilterEvent.SetKind(it)) }
+                    )
+                }
+                item {
+                    Season(
+                        seasonYS = filters.seasonYearStart,
+                        seasonYF = filters.seasonYearFinal,
+                        isExpanded = ExpandedFilters.Season in state.expandedFilters,
+                        onExpandedChange = { onExpandedChange(ExpandedFilters.Season) },
+                        seasonSelected = { it in filters.seasonYearSeason },
+                        onEvent = onFilterEvent
+                    )
+                }
+                item {
+                    Score(
+                        score = filters.score,
+                        isExpanded = ExpandedFilters.Score in state.expandedFilters,
+                        onExpandedChange = { onExpandedChange(ExpandedFilters.Score) },
+                        onValueChange = { onFilterEvent(FilterEvent.SetScore(it)) }
+                    )
+                }
+
+                if (type == LinkedType.ANIME) {
+                    item {
+                        Duration(
+                            isExpanded = ExpandedFilters.Duration in state.expandedFilters,
+                            onExpandedChange = { onExpandedChange(ExpandedFilters.Duration) },
+                            selected = { it in filters.duration },
+                            onClick = { onFilterEvent(SetDuration(it)) }
+                        )
+                    }
+                    item {
+                        Rating(
+                            isExpanded = ExpandedFilters.Rating in state.expandedFilters,
+                            onExpandedChange = { onExpandedChange(ExpandedFilters.Rating) },
+                            selected = { it in filters.rating },
+                            onClick = { onFilterEvent(SetRating(it)) }
+                        )
+                    }
+                }
+
+                item {
+                    Genres(
+                        genres = genres,
+                        isExpanded = ExpandedFilters.Genres in state.expandedFilters,
+                        onExpandedChange = { onExpandedChange(ExpandedFilters.Genres) },
+                        selected = { it in filters.genres },
+                        onClick = { onFilterEvent(SetGenre(it)) }
+                    )
+                }
             }
-            item { Genres(event, genres, filters.genres) }
         }
     }
 }
 
 @Composable
 private fun DialogFiltersP(
-    roles: Set<PeopleFilterItem>,
-    event: (FilterEvent) -> Unit,
-    hide: () -> Unit
+    checked: (PeopleFilterItem) -> Boolean,
+    onValueChange: (PeopleFilterItem) -> Unit,
+    onHide: () -> Unit
 ) = AlertDialog(
-    onDismissRequest = hide,
+    onDismissRequest = onHide,
     confirmButton = {},
-    dismissButton = { TextButton(hide) { Text(stringResource(text_close)) } },
-    title = { Text(stringResource(text_filters)) },
+    dismissButton = { TextButton(onHide) { Text(stringResource(R.string.text_close)) } },
+    title = { Text(stringResource(R.string.text_filters)) },
     text = {
         Column {
             PeopleFilterItem.entries.forEach { entry ->
@@ -486,12 +596,12 @@ private fun DialogFiltersP(
                         .fillMaxWidth()
                         .height(56.dp)
                         .toggleable(
-                            value = entry in roles,
-                            onValueChange = { event(SetRole(entry)) },
+                            value = checked(entry),
+                            onValueChange = { onValueChange(entry) },
                             role = Role.Checkbox
                         )
                 ) {
-                    Checkbox(entry in roles, null)
+                    Checkbox(checked(entry), null)
                     Text(
                         text = stringResource(entry.title),
                         modifier = Modifier.padding(start = 16.dp),
@@ -505,12 +615,11 @@ private fun DialogFiltersP(
 
 // ============================================ Filters ===========================================
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun Sorting(event: (FilterEvent) -> Unit, order: Order) {
+private fun Sorting(order: Order, onClick: (Order) -> Unit) {
     var flag by remember { mutableStateOf(false) }
 
-    ParagraphTitle(stringResource(text_sorting))
+    ParagraphTitle(stringResource(R.string.text_sorting))
     ExposedDropdownMenuBox(
         expanded = flag,
         onExpandedChange = { flag = it },
@@ -524,7 +633,7 @@ private fun Sorting(event: (FilterEvent) -> Unit, order: Order) {
             trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
             colors = ExposedDropdownMenuDefaults.textFieldColors(),
             modifier = Modifier
-                .menuAnchor(MenuAnchorType.PrimaryNotEditable)
+                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 .fillMaxWidth()
         )
         ExposedDropdownMenu(
@@ -533,7 +642,7 @@ private fun Sorting(event: (FilterEvent) -> Unit, order: Order) {
         ) {
             Order.entries.forEach { entry ->
                 DropdownMenuItem(
-                    onClick = { event(SetOrder(entry)); flag = false },
+                    onClick = { onClick(entry); flag = false },
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
                     text = {
                         Text(
@@ -548,49 +657,60 @@ private fun Sorting(event: (FilterEvent) -> Unit, order: Order) {
 }
 
 @Composable
-private fun Status(event: (FilterEvent) -> Unit, status: Set<String>, type: LinkedType?) {
-    ParagraphTitle(stringResource(text_status))
-    Column {
-        Status.entries.filter { type in it.types }.forEach { entry ->
-            ListItem(
-                colors = ListItemDefaults.colors(Color.Transparent),
-                headlineContent = {
-                    Text(
-                        stringResource(
-                            if (type == LinkedType.ANIME) entry.animeTitle ?: R.string.text_unknown
-                            else entry.mangaTitle
+private fun Status(
+    type: LinkedType?,
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    selected: (String) -> Boolean,
+    onClick: (String) -> Unit
+) {
+    val filteredStatuses = remember(type) {
+        Status.entries.filter { type in it.types }
+    }
+
+    AnimatedColumn(R.string.text_status, isExpanded, onExpandedChange) {
+        FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
+            filteredStatuses.forEach { entry ->
+                FilterChip(
+                    modifier = Modifier.height(36.dp),
+                    selected = selected(entry.name.lowercase()),
+                    onClick = { onClick(entry.name.lowercase()) },
+                    label = {
+                        Text(
+                            text = stringResource(
+                                id = if (type == LinkedType.ANIME) entry.animeTitle ?: R.string.text_unknown
+                                else entry.mangaTitle
+                            )
                         )
-                    )
-                },
-                leadingContent = {
-                    Checkbox(
-                        checked = entry.name.lowercase() in status,
-                        onCheckedChange = null
-                    )
-                },
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.medium)
-                    .toggleable(
-                        value = entry.name.lowercase() in status,
-                        onValueChange = { event(SetStatus(entry.name.lowercase())) },
-                        role = Role.Checkbox
-                    )
-            )
+                    }
+                )
+            }
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Kind(event: (FilterEvent) -> Unit, kind: Set<String>, type: LinkedType?) {
-    ParagraphTitle(stringResource(text_kind))
-    FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
-        Kind.entries.filter { it.linkedType == type }.forEach {
-            FilterChip(
-                modifier = Modifier.height(36.dp),
-                selected = it.name.lowercase() in kind,
-                onClick = { event(SetKind(it.name.lowercase())) },
-                label = { Text(stringResource(it.title)) })
+private fun Kind(
+    type: LinkedType?,
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    selected: (String) -> Boolean,
+    onClick: (String) -> Unit
+) {
+    val linkedKinds = remember(type) {
+        Kind.entries.filter { it.linkedType == type }
+    }
+
+    AnimatedColumn(R.string.text_kind, isExpanded, onExpandedChange) {
+        FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
+            linkedKinds.forEach {
+                FilterChip(
+                    modifier = Modifier.height(36.dp),
+                    selected = selected(it.name.lowercase()),
+                    onClick = { onClick(it.name.lowercase()) },
+                    label = { Text(stringResource(it.title)) }
+                )
+            }
         }
     }
 }
@@ -599,142 +719,195 @@ private fun Kind(event: (FilterEvent) -> Unit, kind: Set<String>, type: LinkedTy
 private fun Season(
     seasonYS: String,
     seasonYF: String,
-    seasonS: Set<String>,
-    event: (FilterEvent) -> Unit
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    seasonSelected: (String) -> Boolean,
+    onEvent: (SetSeason) -> Unit
 ) {
-    ParagraphTitle(stringResource(text_season), Modifier.padding(bottom = 8.dp))
-    Column(Modifier, spacedBy(8.dp)) {
-        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp)) {
-            OutlinedTextField(
-                value = seasonYS,
-                onValueChange = {
-                    if (it.isDigitsOnly()) {
-                        event(SetSeasonYS(it)); event(SetSeason)
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                label = { Text(stringResource(text_start_year)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
-            OutlinedTextField(
-                value = seasonYF,
-                onValueChange = {
-                    if (it.isDigitsOnly()) {
-                        event(SetSeasonYF(it)); event(SetSeason)
-                    }
-                },
-                modifier = Modifier.weight(1f),
-                label = { Text(stringResource(text_end_year)) },
-                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-            )
+
+    @Composable
+    fun LocalTextField(
+        text: String,
+        onValueChange: (String) -> Unit,
+        modifier: Modifier = Modifier,
+        @StringRes label: Int
+    ) {
+        val textFieldState = rememberTextFieldState(text)
+
+        LaunchedEffect(textFieldState) {
+            snapshotFlow { textFieldState.text.toString() }.collectLatest(onValueChange)
         }
 
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-            Season.entries.forEach {
-                FilterChip(
-                    modifier = Modifier.height(36.dp),
-                    selected = it.name.lowercase() in seasonS,
-                    onClick = { event(SetSeasonS(it.name.lowercase())); event(SetSeason) },
-                    label = { Text(stringResource(it.title)) }
-                )
+        LaunchedEffect(text) {
+            if (text.isEmpty()) {
+                textFieldState.clearText()
             }
         }
-    }
-}
 
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun Score(event: (FilterEvent) -> Unit, score: Float) {
-    val interactionSource = remember(::MutableInteractionSource)
-
-    ParagraphTitle(stringResource(text_score))
-    Column {
-        Slider(
-            value = score,
-            onValueChange = { event(SetScore(it)) },
-            steps = 8,
-            valueRange = 1f..10f,
-            interactionSource = interactionSource,
-            thumb = {
-                Label(
-                    interactionSource = interactionSource,
-                    label = {
-                        PlainTooltip(Modifier.sizeIn(maxWidth = 30.dp)) {
-                            Text(
-                                text = score.toInt().toString(),
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                ) {
-                    Icon(
-                        imageVector = Icons.Filled.Star,
-                        contentDescription = null,
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                        tint = Color(0xFFFFC319)
-                    )
+        OutlinedTextField(
+            state = textFieldState,
+            modifier = modifier,
+            label = { Text(stringResource(label)) },
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            inputTransformation = InputTransformation.maxLength(4).then {
+                if (!asCharSequence().isDigitsOnly()) {
+                    revertAllChanges()
                 }
             }
         )
     }
+
+    AnimatedColumn(R.string.text_season, isExpanded, onExpandedChange) {
+        Column(Modifier, Arrangement.spacedBy(8.dp)) {
+            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp)) {
+                LocalTextField(
+                    text = seasonYS,
+                    onValueChange = { onEvent(SetSeason.SetStartYear(it)) },
+                    modifier = Modifier.weight(1f),
+                    label = R.string.text_start_year
+                )
+                LocalTextField(
+                    text = seasonYF,
+                    onValueChange = { onEvent(SetSeason.SetFinalYear(it)) },
+                    modifier = Modifier.weight(1f),
+                    label = R.string.text_end_year
+                )
+            }
+
+            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                Season.entries.forEach {
+                    FilterChip(
+                        modifier = Modifier.height(36.dp),
+                        selected = seasonSelected(it.name.lowercase()),
+                        onClick = { onEvent(SetSeason.ToggleSeasonYear(it.name.lowercase())) },
+                        label = { Text(stringResource(it.title)) }
+                    )
+                }
+            }
+        }
+    }
 }
 
 @Composable
-private fun Duration(event: (FilterEvent) -> Unit, duration: Set<String>) {
-    ParagraphTitle(stringResource(text_episode_duration))
-    Column {
-        Duration.entries.forEach { entry ->
-            ListItem(
-                colors = ListItemDefaults.colors(Color.Transparent),
-                headlineContent = { Text(stringResource(entry.title)) },
-                leadingContent = {
-                    Checkbox(
-                        checked = entry.name.lowercase() in duration,
-                        onCheckedChange = null
-                    )
-                },
-                modifier = Modifier
-                    .clip(MaterialTheme.shapes.medium)
-                    .toggleable(
-                        value = entry.name.lowercase() in duration,
-                        onValueChange = { event(SetDuration(entry.name.lowercase())) },
-                        role = Role.Checkbox
-                    )
+private fun Score(
+    score: Float,
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    onValueChange: (Float) -> Unit
+) {
+    val interactionSource = remember(::MutableInteractionSource)
+
+    AnimatedColumn(R.string.text_score, isExpanded, onExpandedChange) {
+        Column {
+            Slider(
+                value = score,
+                onValueChange = onValueChange,
+                steps = 8,
+                valueRange = 1f..10f,
+                interactionSource = interactionSource,
+                thumb = {
+                    Label(
+                        interactionSource = interactionSource,
+                        label = {
+                            PlainTooltip(Modifier.sizeIn(maxWidth = 30.dp)) {
+                                Text(
+                                    text = score.toInt().toString(),
+                                    modifier = Modifier.fillMaxWidth(),
+                                    textAlign = TextAlign.Center
+                                )
+                            }
+                        }
+                    ) {
+                        VectorIcon(
+                            resId = R.drawable.vector_star,
+                            modifier = Modifier.size(ButtonDefaults.IconSize),
+                            tint = Color(0xFFFFC319)
+                        )
+                    }
+                }
             )
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Rating(event: (FilterEvent) -> Unit, rating: Set<String>) {
-    ParagraphTitle(stringResource(text_rating))
-    FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
+private fun Duration(
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    selected: (String) -> Boolean,
+    onClick: (String) -> Unit
+) = AnimatedColumn(R.string.text_episode_duration, isExpanded, onExpandedChange) {
+    FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
+        Duration.entries.forEach { entry ->
+            FilterChip(
+                modifier = Modifier.height(36.dp),
+                selected = selected(entry.name.lowercase()),
+                onClick = { onClick(entry.name.lowercase()) },
+                label = { Text(stringResource(entry.title)) }
+            )
+        }
+    }
+}
+
+@Composable
+private fun Rating(
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    selected: (String) -> Boolean,
+    onClick: (String) -> Unit
+) = AnimatedColumn(R.string.text_rating, isExpanded, onExpandedChange) {
+    FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
         Rating.entries.forEach {
             FilterChip(
                 modifier = Modifier.height(36.dp),
-                selected = it.name.lowercase() in rating,
-                onClick = { event(SetRating(it.name.lowercase())) },
+                selected = selected(it.name.lowercase()),
+                onClick = { onClick(it.name.lowercase()) },
                 label = { Text(stringResource(it.title)) })
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<Genres>, genres: Set<String>) {
-    ParagraphTitle(stringResource(text_genres))
-    FlowRow(Modifier, spacedBy(8.dp), spacedBy(12.dp)) {
-        allGenres.forEach { genre ->
+private fun Genres(
+    genres: List<Genres>,
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    selected: (String) -> Boolean,
+    onClick: (String) -> Unit
+) = AnimatedColumn(R.string.text_genres, isExpanded, onExpandedChange) {
+    FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
+        genres.forEach { genre ->
             key(genre.id) {
                 FilterChip(
                     modifier = Modifier.height(36.dp),
-                    selected = genre.id in genres,
-                    onClick = { event(SetGenre(genre.id)) },
+                    selected = selected(genre.id),
+                    onClick = { onClick(genre.id) },
                     label = { Text(genre.russian) }
                 )
             }
+        }
+    }
+}
+
+@Composable
+private fun AnimatedColumn(
+    @StringRes label: Int,
+    isExpanded: Boolean,
+    onExpandedChange: () -> Unit,
+    content: @Composable () -> Unit
+) = Column {
+    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+        ParagraphTitle(stringResource(label))
+        IconButton(onExpandedChange) {
+            VectorIcon(
+                resId = if (isExpanded) R.drawable.vector_keyboard_arrow_up
+                else R.drawable.vector_keyboard_arrow_down
+            )
+        }
+    }
+    AnimatedContent(isExpanded) { isExpanded ->
+        if (isExpanded) {
+            content()
         }
     }
 }
@@ -744,7 +917,7 @@ private fun Genres(event: (FilterEvent) -> Unit, allGenres: List<Genres>, genres
 private fun LazyListScope.contentList(list: LazyPagingItems<BasicContent>, onNavigate: (String) -> Unit) =
     items(list.itemCount, list.itemKey(BasicContent::id)) { index ->
         list[index]?.let { item ->
-            when(item) {
+            when (item) {
                 is Content -> {
                     CatalogCardItem(
                         title = item.title,

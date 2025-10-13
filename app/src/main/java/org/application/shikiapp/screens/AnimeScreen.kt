@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.activity.compose.BackHandler
@@ -26,11 +28,6 @@ import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
 import androidx.compose.foundation.lazy.staggeredgrid.items
 import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -74,18 +71,15 @@ import org.application.shikiapp.models.ui.Anime
 import org.application.shikiapp.models.ui.Video
 import org.application.shikiapp.models.viewModels.AnimeViewModel
 import org.application.shikiapp.models.viewModels.UserRateViewModel
-import org.application.shikiapp.network.response.Response.Error
-import org.application.shikiapp.network.response.Response.Loading
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.Description
 import org.application.shikiapp.ui.templates.DialogEditRate
 import org.application.shikiapp.ui.templates.DialogScreenshot
-import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.LinksSheet
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.ParagraphTitle
 import org.application.shikiapp.ui.templates.Poster
@@ -98,6 +92,7 @@ import org.application.shikiapp.ui.templates.SheetColumn
 import org.application.shikiapp.ui.templates.SimilarFull
 import org.application.shikiapp.ui.templates.Statistics
 import org.application.shikiapp.ui.templates.StatusInfo
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.VideoKind
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
@@ -117,15 +112,11 @@ fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
         }
     }
 
-    when (val data = response) {
-        is Error -> ErrorScreen(model::loadData)
-        is Loading -> LoadingScreen()
-        is Success -> AnimeView(data.data, state, model::onEvent, onNavigate, back)
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { anime ->
+        AnimeView(anime, state, model::onEvent, onNavigate, back)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AnimeView(
     anime: Anime,
@@ -139,6 +130,10 @@ private fun AnimeView(
     val newRate by rateModel.newRate.collectAsStateWithLifecycle()
 
     val listState = rememberLazyListState()
+    val authorsState = rememberLazyListState()
+    val charactersState = rememberLazyListState()
+    val similarState = rememberLazyListState()
+
     val comments = anime.comments.collectAsLazyPagingItems()
 
     LaunchedEffect(Unit) {
@@ -157,7 +152,7 @@ private fun AnimeView(
                     )
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                        content = { Icon(Icons.Outlined.MoreVert, null) }
+                        content = { VectorIcon(R.drawable.vector_more) }
                     )
                 }
             )
@@ -363,7 +358,7 @@ private fun AnimeView(
 
     SimilarFull(
         list = anime.similar,
-        listState = state.lazySimilar,
+        listState = similarState,
         visible = state.showSimilar,
         onNavigate = { onNavigate(Screen.Anime(it)) },
         hide = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
@@ -379,7 +374,7 @@ private fun AnimeView(
         list = if (state.showCharacters) anime.charactersAll else anime.personAll,
         visible = state.showCharacters || state.showAuthors,
         title = stringResource(if (state.showCharacters) R.string.text_characters else R.string.text_authors),
-        state = if (state.showCharacters) state.lazyCharacters else state.lazyAuthors,
+        state = if (state.showCharacters) charactersState else authorsState,
         onHide = {
             onEvent(
                 if (state.showCharacters) ContentDetailEvent.Media.ShowCharacters
@@ -417,7 +412,6 @@ private fun AnimeView(
 
     when {
         state.showSheet -> BottomSheet(
-            state = state.sheetBottom,
             rate = anime.userRate,
             favoured = anime.favoured,
             onEvent = onEvent,
@@ -453,12 +447,10 @@ private fun AnimeView(
 
         state.showLinks -> LinksSheet(
             list = anime.links,
-            state = state.sheetLinks,
             hide = { onEvent(ContentDetailEvent.Media.ShowLinks) }
         )
 
         state.showSheetContent -> SheetColumn(
-            state = state.sheetColumn,
             label = stringResource(if (state.showFansubbers) R.string.text_subtitles else R.string.text_voices),
             list = if (state.showFansubbers) anime.fansubbers else anime.fandubbers,
             onHide = {
@@ -512,9 +504,8 @@ fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> U
                     )
                 }
                 if (onClick != null) {
-                    Icon(
-                        imageVector = Icons.AutoMirrored.Filled.KeyboardArrowRight,
-                        contentDescription = null,
+                    VectorIcon(
+                        resId = R.drawable.vector_keyboard_arrow_right,
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -545,7 +536,7 @@ private fun Screenshots(list: List<String>, show: (Int) -> Unit, hide: () -> Uni
     Column(verticalArrangement = spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_screenshots), Modifier.padding(bottom = 4.dp))
-            IconButton(hide) { Icon(Icons.AutoMirrored.Filled.ArrowForward, null) }
+            IconButton(hide) { VectorIcon(R.drawable.vector_arrow_forward) }
         }
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
             itemsIndexed(list.take(6)) { index, item ->
@@ -566,7 +557,7 @@ private fun Video(list: List<Video>, show: () -> Unit, uri: UriHandler = LocalUr
     Column(verticalArrangement = spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(text_video), Modifier.padding(bottom = 4.dp))
-            IconButton(show) { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
+            IconButton(show) { VectorIcon(R.drawable.vector_arrow_forward) }
         }
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
             items(list.take(3)) {
@@ -583,7 +574,6 @@ private fun Video(list: List<Video>, show: () -> Unit, uri: UriHandler = LocalUr
     }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun Screenshots(
     list: List<String>,
     visible: Boolean,
@@ -624,7 +614,6 @@ private fun Screenshots(
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun Video(
     list: List<Video>,
     visible: Boolean,

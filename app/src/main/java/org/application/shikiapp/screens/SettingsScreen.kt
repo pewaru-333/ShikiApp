@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import android.content.Intent
@@ -44,7 +46,6 @@ import org.application.shikiapp.utils.extensions.getLanguageList
 import org.application.shikiapp.utils.extensions.valueToText
 import java.util.Locale
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(visible: Boolean, onBack: () -> Unit) {
     val context = LocalContext.current

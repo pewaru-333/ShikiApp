@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.activity.compose.BackHandler
@@ -18,12 +20,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ArrowBack
-import androidx.compose.material.icons.automirrored.outlined.ArrowForward
-import androidx.compose.material.icons.outlined.Refresh
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -33,13 +30,17 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
@@ -48,8 +49,6 @@ import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
-import org.application.shikiapp.events.CalendarEvent
-import org.application.shikiapp.models.states.AnimeCalendarState
 import org.application.shikiapp.models.ui.AnimeCalendar
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.viewModels.CalendarViewModel
@@ -58,24 +57,35 @@ import org.application.shikiapp.ui.templates.CalendarOngoingCard
 import org.application.shikiapp.ui.templates.CatalogCardItem
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
+import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.ParagraphTitle
+import org.application.shikiapp.ui.templates.VectorIcon
+import org.application.shikiapp.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CalendarScreen(onNavigate: (Screen) -> Unit) {
+    val barVisibility = LocalBarVisibility.current
+
     val model = viewModel<CalendarViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
-    val state by model.state.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
     val tabs = listOf(stringResource(R.string.text_featured), stringResource(R.string.text_schedule))
     val pagerState = rememberPagerState(pageCount = tabs::size)
 
+    var showFullUpdates by rememberSaveable {
+        mutableStateOf(false)
+    }
+
     fun onScroll(page: Int) {
         scope.launch {
             pagerState.animateScrollToPage(page)
         }
+    }
+
+    LaunchedEffect(showFullUpdates) {
+        barVisibility.toggle(showFullUpdates)
     }
 
     LaunchedEffect(pagerState) {
@@ -90,12 +100,7 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.text_updates)) },
-                actions = {
-                    IconButton(
-                        onClick = { model.onEvent(CalendarEvent.Reload) },
-                        content = { Icon(Icons.Outlined.Refresh, null) }
-                    )
-                }
+                actions = { IconButton(model::reload) { VectorIcon(R.drawable.vector_refresh) } }
             )
         }
     ) { values ->
@@ -113,21 +118,35 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
             when (val data = response) {
                 is Response.Error -> ErrorScreen(model::loadData)
                 is Response.Loading -> LoadingScreen()
-                is Response.Success -> CalendarView(data.data, state, pagerState, model::onEvent, onNavigate)
+                is Response.Success -> CalendarView(
+                    calendar = data.data,
+                    pagerState = pagerState,
+                    onShow = { showFullUpdates = true },
+                    onNavigate = onNavigate
+                )
 
                 else -> Unit
             }
         }
     }
+
+    if (response is Response.Success) {
+        val topics = (response as Response.Success<AnimeCalendar>).data.updates.collectAsLazyPagingItems()
+
+        AnimeUpdatesFull(
+            updates = topics,
+            visible = showFullUpdates,
+            onNavigate = onNavigate,
+            onHide = { showFullUpdates = false }
+        )
+    }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CalendarView(
     calendar: AnimeCalendar,
-    state: AnimeCalendarState,
     pagerState: PagerState,
-    onEvent: (CalendarEvent) -> Unit,
+    onShow: () -> Unit,
     onNavigate: (Screen) -> Unit
 ) {
     val topics = calendar.updates.collectAsLazyPagingItems()
@@ -147,7 +166,7 @@ private fun CalendarView(
                 }
 
                 item {
-                    Updates(topics, onEvent, onNavigate)
+                    Updates(topics, onShow, onNavigate)
                 }
             }
 
@@ -160,13 +179,6 @@ private fun CalendarView(
             }
         }
     }
-
-    AnimeUpdatesFull(
-        updates = topics,
-        visible = state.showFullUpdates,
-        onNavigate = onNavigate,
-        hide = { onEvent(CalendarEvent.ShowFullUpdates) }
-    )
 }
 
 @Composable
@@ -175,7 +187,7 @@ private fun Trending(trending: List<Content>, onNavigate: (Screen) -> Unit) = Co
         ParagraphTitle(stringResource(R.string.text_airing))
         IconButton(
             onClick = { onNavigate(Screen.Catalog(showOngoing = true)) },
-            content = { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
+            content = { VectorIcon(R.drawable.vector_arrow_forward) }
         )
     }
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -206,17 +218,10 @@ private fun Random(trending: List<Content>, onNavigate: (Screen) -> Unit) = Colu
 }
 
 @Composable
-private fun Updates(
-    updates: LazyPagingItems<Content>,
-    onEvent: (CalendarEvent) -> Unit,
-    onNavigate: (Screen) -> Unit
-) = Column {
+private fun Updates(updates: LazyPagingItems<Content>, onShow: () -> Unit, onNavigate: (Screen) -> Unit) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle(stringResource(R.string.text_updates_anime))
-        IconButton(
-            onClick = { onEvent(CalendarEvent.ShowFullUpdates) },
-            content = { Icon(Icons.AutoMirrored.Outlined.ArrowForward, null) }
-        )
+        IconButton(onShow) { VectorIcon(R.drawable.vector_arrow_forward) }
     }
 
     if (updates.loadState.refresh is LoadState.Loading) LoadingScreen()
@@ -234,28 +239,24 @@ private fun Updates(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun AnimeUpdatesFull(
     updates: LazyPagingItems<Content>,
     visible: Boolean,
     onNavigate: (Screen) -> Unit,
-    hide: () -> Unit,
+    onHide: () -> Unit,
 ) = AnimatedVisibility(
     visible = visible,
+    modifier = Modifier.zIndex(10f),
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    BackHandler(visible, hide)
+    BackHandler(visible, onHide)
     Scaffold(
         topBar = {
             TopAppBar(
                 title = { Text(stringResource(R.string.text_updates)) },
-                navigationIcon = {
-                    IconButton(hide) {
-                        Icon(Icons.AutoMirrored.Outlined.ArrowBack, null)
-                    }
-                }
+                navigationIcon = { NavigationIcon(onHide) }
             )
         }
     ) { values ->

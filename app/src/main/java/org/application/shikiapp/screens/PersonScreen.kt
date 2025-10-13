@@ -1,8 +1,9 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,11 +13,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -26,7 +24,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
@@ -44,13 +41,11 @@ import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.PersonState
 import org.application.shikiapp.models.ui.Person
 import org.application.shikiapp.models.viewModels.PersonViewModel
-import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
-import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.Names
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.ParagraphTitle
@@ -58,6 +53,7 @@ import org.application.shikiapp.ui.templates.Profiles
 import org.application.shikiapp.ui.templates.ProfilesFull
 import org.application.shikiapp.ui.templates.Related
 import org.application.shikiapp.ui.templates.RelatedFull
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -75,16 +71,12 @@ fun PersonScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
         }
     }
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen(model::loadData)
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> PersonView(data.data, state, model::onEvent, onNavigate, back)
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { person ->
+        PersonView(person, state, model::onEvent, onNavigate, back)
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun PersonView(
     person: Person,
     state: PersonState,
@@ -107,7 +99,7 @@ private fun PersonView(
                     )
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                        content = { Icon(Icons.Outlined.MoreVert, null) }
+                        content = { VectorIcon(R.drawable.vector_more) }
                     )
                 }
             )
@@ -115,7 +107,7 @@ private fun PersonView(
     ) { values ->
         LazyColumn(
             contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = spacedBy(16.dp)
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
                 PersonHeader(person)
@@ -178,7 +170,6 @@ private fun PersonView(
 
     if (state.showSheet) {
         BottomSheet(
-            sheetState = state.sheetState,
             website = person.website,
             kind = person.personKind,
             favoured = person.favoured,
@@ -189,7 +180,7 @@ private fun PersonView(
 
 @Composable
 private fun PersonHeader(person: Person) =
-    Row(Modifier.fillMaxWidth(), spacedBy(16.dp), CenterVertically) {
+    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp), Alignment.CenterVertically) {
         AsyncImage(
             model = person.image,
             contentDescription = null,
@@ -239,7 +230,7 @@ fun LabelInfoItem(label: String, value: String, modifier: Modifier = Modifier) =
 
 @Composable
 private fun Roles(roles: List<List<String>>) =
-    Column(verticalArrangement = spacedBy(8.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ParagraphTitle(stringResource(R.string.text_roles))
         Column {
             roles.forEachIndexed { index, (name, count) ->

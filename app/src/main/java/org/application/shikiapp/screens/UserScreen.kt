@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.activity.compose.BackHandler
@@ -24,11 +26,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.ExitToApp
-import androidx.compose.material.icons.automirrored.outlined.Send
-import androidx.compose.material.icons.outlined.Email
-import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -76,6 +73,7 @@ import org.application.shikiapp.models.ui.list.Dialog
 import org.application.shikiapp.models.viewModels.UserMessagesViewModel
 import org.application.shikiapp.models.viewModels.UserViewModel
 import org.application.shikiapp.network.response.Response
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.DialogClubs
 import org.application.shikiapp.ui.templates.DialogFavourites
@@ -88,29 +86,25 @@ import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.Statistics
 import org.application.shikiapp.ui.templates.UserBriefItem
 import org.application.shikiapp.ui.templates.UserMenuItems
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.HtmlComment
 import org.application.shikiapp.utils.enums.FavouriteItem
-import org.application.shikiapp.utils.extensions.NavigationBarVisibility
 import org.application.shikiapp.utils.extensions.getLastMessage
+import org.application.shikiapp.utils.navigation.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val model = viewModel<UserViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen()
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> UserView(data.data, state, model::onEvent, onNavigate, back)
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { user ->
+        UserView(user, state, model::onEvent, onNavigate, back)
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun UserView(
     user: User,
@@ -134,7 +128,7 @@ fun UserView(
                 navigationIcon = {
                     if (Preferences.userId == user.id) {
                         IconButton(back) {
-                            Icon(Icons.AutoMirrored.Outlined.ExitToApp, null)
+                            VectorIcon(R.drawable.vector_exit_app)
                         }
                     } else {
                         NavigationIcon(back)
@@ -257,11 +251,11 @@ private fun TopBarActions(
         Preferences.userId == user.id -> {
             IconButton(
                 onClick = { onEvent(ContentDetailEvent.User.ShowDialogs) },
-                content = { Icon(Icons.Outlined.Email, null) }
+                content = { VectorIcon(R.drawable.vector_mail) }
             )
             IconButton(
                 onClick = { onEvent(ContentDetailEvent.User.ShowSettings) },
-                content = { Icon(Icons.Outlined.Settings, null) }
+                content = { VectorIcon(R.drawable.vector_settings) }
             )
         }
 
@@ -287,13 +281,12 @@ private fun TopBarActions(
 
             IconButton(
                 onClick = { onEvent(ContentDetailEvent.User.ShowDialogs) },
-                content = { Icon(Icons.Outlined.Email, null) }
+                content = { VectorIcon(R.drawable.vector_mail) }
             )
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DialogUserDialogs(
     hide: () -> Unit,
@@ -459,9 +452,9 @@ private fun UserDialog(
             )
 
             IconButton(
+                onClick = sendMessage,
                 enabled = state.text.isNotEmpty(),
-                content = { Icon(Icons.AutoMirrored.Outlined.Send, null) },
-                onClick = sendMessage
+                content = { VectorIcon(R.drawable.vector_send) }
             )
         }
     }
