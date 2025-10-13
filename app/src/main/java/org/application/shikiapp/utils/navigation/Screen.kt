@@ -47,7 +47,7 @@ sealed interface Screen {
 
     @Serializable
     data class UserRates(
-        val id: Long? = null,
+        val id: String? = null,
         val type: LinkedType? = null,
         val editable: Boolean = false
     ) : Screen
