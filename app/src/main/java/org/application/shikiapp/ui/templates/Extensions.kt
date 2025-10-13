@@ -13,8 +13,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import org.application.shikiapp.R
 import org.application.shikiapp.models.ui.list.BasicContent
-import org.application.shikiapp.ui.templates.ErrorScreen
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.utils.navigation.Screen
 
 fun LazyListScope.friends(list: LazyPagingItems<BasicContent>, onNavigate: (Screen) -> Unit) {
