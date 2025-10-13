@@ -1,8 +1,5 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package org.application.shikiapp.models.states
 
-import androidx.compose.material3.ExperimentalMaterial3Api
 import org.application.shikiapp.utils.enums.UserMenu
 
 data class UserState(
