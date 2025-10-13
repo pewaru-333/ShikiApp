@@ -1,7 +1,8 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.ui.templates
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
@@ -12,10 +13,6 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.layout.windowInsetsBottomHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.outlined.List
-import androidx.compose.material.icons.filled.Favorite
-import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -24,7 +21,6 @@ import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.SheetState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -44,16 +40,13 @@ import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.BLANK
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(
-    state: SheetState,
     rate: AsyncData<UserRate?>,
     favoured: AsyncData<Boolean>,
     toggleFavourite: () -> Unit,
     onEvent: (ContentDetailEvent) -> Unit,
 ) = ModalBottomSheet(
-    sheetState = state,
     onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) },
 ) {
     if (Preferences.token != null) {
@@ -73,7 +66,7 @@ fun BottomSheet(
             leadingContent = {
                 when (rate) {
                     AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
-                    is AsyncData.Success -> Icon(Icons.Outlined.Edit, null)
+                    is AsyncData.Success -> VectorIcon(R.drawable.vector_edit)
                 }
             }
         )
@@ -97,9 +90,8 @@ fun BottomSheet(
             leadingContent = {
                 when (val data = favoured) {
                     AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
-                    is AsyncData.Success -> Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
+                    is AsyncData.Success -> VectorIcon(
+                        resId = R.drawable.vector_favorite,
                         tint = if (data.data) Color.Red else LocalContentColor.current
                     )
                 }
@@ -108,7 +100,7 @@ fun BottomSheet(
     }
     ListItem(
         headlineContent = { Text(stringResource(R.string.text_external_links)) },
-        leadingContent = { Icon(Icons.AutoMirrored.Outlined.List, null) },
+        leadingContent = { VectorIcon(R.drawable.vector_list) },
         modifier = Modifier.clickable { onEvent(ContentDetailEvent.Media.ShowLinks) }
     )
     ListItem(
@@ -118,10 +110,9 @@ fun BottomSheet(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SheetColumn(list: List<String>, state: SheetState, label: String, onHide: () -> Unit) =
-    ModalBottomSheet(onHide, sheetState = state) {
+fun SheetColumn(list: List<String>, label: String, onHide: () -> Unit) =
+    ModalBottomSheet(onHide) {
         Row(Modifier.fillMaxWidth()) {
             Text(
                 text = label,
@@ -144,17 +135,14 @@ fun SheetColumn(list: List<String>, state: SheetState, label: String, onHide: ()
         Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
     }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BottomSheet(
-    sheetState: SheetState,
     website: String = BLANK,
     kind: String = BLANK,
     favoured: AsyncData<Boolean> = AsyncData.Success(false),
     handler: UriHandler = LocalUriHandler.current,
     onEvent: (ContentDetailEvent) -> Unit,
 ) = ModalBottomSheet(
-    sheetState = sheetState,
     onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
 ) {
     if (Preferences.token != null) {
@@ -181,9 +169,8 @@ fun BottomSheet(
             leadingContent = {
                 when (val data = favoured) {
                     AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
-                    is AsyncData.Success -> Icon(
-                        imageVector = Icons.Default.Favorite,
-                        contentDescription = null,
+                    is AsyncData.Success -> VectorIcon(
+                        resId = R.drawable.vector_favorite,
                         tint = if (data.data) Color.Red else LocalContentColor.current
                     )
                 }
@@ -206,14 +193,12 @@ fun BottomSheet(
     )
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun LinksSheet(
     list: List<ExternalLink>,
-    state: SheetState,
     hide: () -> Unit,
     handler: UriHandler = LocalUriHandler.current
-) = ModalBottomSheet(hide, sheetState = state) {
+) = ModalBottomSheet(hide) {
     LazyColumn {
         items(list) {
             ListItem(
