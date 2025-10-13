@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalMaterial3Api::class)
+
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
@@ -5,10 +7,7 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.outlined.MoreVert
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -23,20 +22,19 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
+import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_character
 import org.application.shikiapp.R.string.text_seyu
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
 import org.application.shikiapp.models.viewModels.CharacterViewModel
-import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.Description
-import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
-import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.Names
 import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.Poster
@@ -44,6 +42,7 @@ import org.application.shikiapp.ui.templates.Profiles
 import org.application.shikiapp.ui.templates.ProfilesFull
 import org.application.shikiapp.ui.templates.Related
 import org.application.shikiapp.ui.templates.RelatedFull
+import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -61,16 +60,12 @@ fun CharacterScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
         }
     }
 
-    when (val data = response) {
-        is Response.Error -> ErrorScreen(model::loadData)
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> CharacterView(data.data, state, model::onEvent, onNavigate, back)
-        else -> Unit
+    AnimatedScreen(response, model::loadData) { character ->
+        CharacterView(character, state, model::onEvent, onNavigate, back)
     }
 }
 
 @Composable
-@OptIn(ExperimentalMaterial3Api::class)
 private fun CharacterView(
     character: Character,
     state: CharacterState,
@@ -93,7 +88,7 @@ private fun CharacterView(
                     )
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                        content = { Icon(Icons.Outlined.MoreVert, null) }
+                        content = { VectorIcon(R.drawable.vector_more) }
                     )
                 }
             )
@@ -169,7 +164,6 @@ private fun CharacterView(
 
     if (state.showSheet) {
         BottomSheet(
-            sheetState = state.sheetState,
             favoured = character.favoured,
             onEvent = onEvent
         )
