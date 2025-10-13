@@ -1,8 +1,5 @@
 package org.application.shikiapp.models.data
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
 //@Serializable
 //data class Calendar(
 //    @SerialName("next_episode") val nextEpisode: Int,

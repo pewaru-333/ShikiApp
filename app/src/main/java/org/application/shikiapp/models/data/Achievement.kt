@@ -1,8 +1,5 @@
 package org.application.shikiapp.models.data
 
-import kotlinx.serialization.SerialName
-import kotlinx.serialization.Serializable
-
 //@Serializable
 //data class Achievement(
 //    @SerialName("id") val id: Long,
