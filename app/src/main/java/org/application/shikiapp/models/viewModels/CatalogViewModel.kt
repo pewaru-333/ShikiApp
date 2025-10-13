@@ -1,7 +1,7 @@
+@file:OptIn(FlowPreview::class, ExperimentalCoroutinesApi::class)
+
 package org.application.shikiapp.models.viewModels
 
-import androidx.compose.material3.DrawerState
-import androidx.compose.material3.DrawerValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -21,15 +21,13 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
+import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
-import org.application.shikiapp.events.DrawerEvent
 import org.application.shikiapp.events.FilterEvent
 import org.application.shikiapp.events.FilterEvent.SetCensored
 import org.application.shikiapp.events.FilterEvent.SetDuration
@@ -43,15 +41,13 @@ import org.application.shikiapp.events.FilterEvent.SetRating
 import org.application.shikiapp.events.FilterEvent.SetRole
 import org.application.shikiapp.events.FilterEvent.SetScore
 import org.application.shikiapp.events.FilterEvent.SetSeason
-import org.application.shikiapp.events.FilterEvent.SetSeasonS
-import org.application.shikiapp.events.FilterEvent.SetSeasonYF
-import org.application.shikiapp.events.FilterEvent.SetSeasonYS
 import org.application.shikiapp.events.FilterEvent.SetStatus
 import org.application.shikiapp.events.FilterEvent.SetStudio
 import org.application.shikiapp.events.FilterEvent.SetTitle
 import org.application.shikiapp.generated.type.MangaKindEnum
 import org.application.shikiapp.models.data.Club
 import org.application.shikiapp.models.states.CatalogState
+import org.application.shikiapp.models.states.ExpandedFilters
 import org.application.shikiapp.models.states.FiltersState
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.mappers.toContent
@@ -59,6 +55,7 @@ import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
 import org.application.shikiapp.network.paging.ContentPaging
+import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.enums.CatalogItem
 import org.application.shikiapp.utils.enums.PeopleFilterItem.MANGAKA
 import org.application.shikiapp.utils.enums.PeopleFilterItem.PRODUCER
@@ -74,9 +71,6 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     private val _state = MutableStateFlow(CatalogState())
     val state = _state.asStateFlow()
 
-    private val _event = Channel<DrawerEvent?>()
-    val event = _event.receiveAsFlow()
-
     private val _navEvent = Channel<Screen.Catalog>()
     val navEvent = _navEvent.receiveAsFlow().onStart { emit(args) }
 
@@ -84,44 +78,31 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     private val pagers = mutableMapOf<CatalogItem, Flow<PagingData<BasicContent>>>()
 
     private val _currentFilters = MutableStateFlow(FiltersState())
-    val currentFilters = _currentFilters.asStateFlow()
+    val currentFilters = _currentFilters.stateIn(viewModelScope, SharingStarted.Lazily, FiltersState())
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val list = combine(_state, _currentFilters) { state, currentFilters ->
         pagers.getOrPut(state.menu) {
             createPagingFlow(state.menu, currentFilters).cachedIn(viewModelScope)
         }
     }.flatMapLatest { it }
 
-    @OptIn(ExperimentalCoroutinesApi::class)
-    val genres = _state.flatMapLatest {
-        when (it.menu) {
-            CatalogItem.ANIME -> GraphQL.getAnimeGenres()
-            CatalogItem.MANGA, CatalogItem.RANOBE -> GraphQL.getMangaGenres()
-            else -> flowOf(emptyList())
-        }
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyList())
+    private val genresAnime = GraphQL.getAnimeGenres()
+    private val genresManga = GraphQL.getMangaGenres()
+    private val _genres = mapOf(
+        CatalogItem.ANIME to genresAnime,
+        CatalogItem.MANGA to genresManga,
+        CatalogItem.RANOBE to genresManga
+    )
 
-    fun showFilters(menu: CatalogItem) = _state.update {
-        when (menu) {
-            CatalogItem.ANIME -> it.copy(showFiltersA = true)
-            CatalogItem.MANGA -> it.copy(showFiltersM = true)
-            CatalogItem.RANOBE -> it.copy(showFiltersR = true)
-            CatalogItem.PEOPLE -> it.copy(showFiltersP = true)
-            else -> it
-        }
+    val genres = _state.flatMapLatest { _genres.getOrDefault(it.menu, emptyFlow()) }
+        .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    fun showFilters(menu: CatalogItem? = null) = _state.update {
+        it.copy(dialogFilter = menu?.dialogFilter)
     }
 
-    fun hideFilters() = _state.update {
-        it.copy(
-            showFiltersA = false, showFiltersM = false, showFiltersR = false, showFiltersP = false
-        )
-    }
-
-    fun onDrawerClick() {
-        viewModelScope.launch {
-            _event.send(DrawerEvent.Click)
-        }
+    fun toggleExpandedFilter(filter: ExpandedFilters) = _state.update {
+        it.copy(expandedFilters = it.expandedFilters.toggle(filter))
     }
 
     fun pick(menu: CatalogItem) {
@@ -138,16 +119,10 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             it.copy(
                 menu = menu,
                 search = _currentFilters.value.title,
-                drawerState = DrawerState(DrawerValue.Closed)
             )
-        }
-
-        viewModelScope.launch {
-            _event.send(DrawerEvent.Clear)
         }
     }
 
-    @OptIn(ExperimentalCoroutinesApi::class, FlowPreview::class)
     private fun createPagingFlow(item: CatalogItem, filtersState: FiltersState) = Pager(
         config = PagingConfig(
             pageSize = 50,
@@ -177,7 +152,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             order = query.order.name.lowercase(),
             kind = query.kind.joinToString(","),
             status = query.status.joinToString(","),
-            season = query.season.joinToString(","),
+            season = query.seasonSet.joinToString(","),
             score = setScore(query.status, query.score),
             duration = query.duration.joinToString(","),
             rating = query.rating.joinToString(","),
@@ -192,7 +167,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             order = query.order.name.lowercase(),
             kind = query.kind.joinToString(","),
             status = query.status.joinToString(","),
-            season = query.season.joinToString(","),
+            season = query.seasonSet.joinToString(","),
             score = setScore(query.status, query.score),
             genre = query.genres.joinToString(","),
             publisher = query.publisher,
@@ -206,7 +181,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             kind = if (query.kind.isNotEmpty()) query.kind.joinToString(",")
             else listOf(MangaKindEnum.light_novel, MangaKindEnum.novel).joinToString(","),
             status = query.status.joinToString(","),
-            season = query.season.joinToString(","),
+            season = query.seasonSet.joinToString(","),
             score = setScore(query.status, query.score),
             genre = query.genres.joinToString(","),
             publisher = query.publisher,
@@ -241,7 +216,10 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
 
     fun onEvent(event: FilterEvent) {
         when (event) {
-            FilterEvent.ClearFilters ->  _currentFilters.update { FiltersState() }
+            FilterEvent.ClearFilters -> {
+                _currentFilters.update { FiltersState() }
+                _state.update { it.copy(search = BLANK) }
+            }
 
             is SetOrder -> _currentFilters.update {
                 it.copy(order = event.order)
@@ -255,29 +233,25 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                 it.copy(kind = it.kind.toggle(event.kind))
             }
 
-            is SetSeasonYS -> if (event.year.length <= 4) {
-                _currentFilters.update { it.copy(seasonYS = event.year) }
-            }
-
-            is SetSeasonYF -> if (event.year.length <= 4) {
-                _currentFilters.update { it.copy(seasonYF = event.year) }
-            }
-
-            is SetSeasonS -> _currentFilters.update {
-                it.copy(season = it.seasonS.toggle(event.season))
-            }
-
             is SetSeason -> {
-                val yearStart = _currentFilters.value.seasonYS.toIntOrNull() ?: 1900
-                val yearEnd = _currentFilters.value.seasonYF.toIntOrNull() ?: 2100
-                val selectedSeasons = _currentFilters.value.seasonS
+                when (event) {
+                    is SetSeason.SetStartYear -> _currentFilters.update { it.copy(seasonYearStart = event.year) }
+                    is SetSeason.SetFinalYear -> _currentFilters.update { it.copy(seasonYearFinal = event.year) }
+                    is SetSeason.ToggleSeasonYear -> _currentFilters.update {
+                        it.copy(seasonYearSeason = it.seasonYearSeason.toggle(event.yearSeason))
+                    }
+                }
+
+                val yearStart = _currentFilters.value.seasonYearStart.toIntOrNull() ?: 1900
+                val yearEnd = _currentFilters.value.seasonYearFinal.toIntOrNull() ?: 2100
+                val selectedSeasons = _currentFilters.value.seasonYearSeason
 
                 val seasons = (yearStart..yearEnd).flatMapTo(HashSet()) { year ->
                     if (selectedSeasons.isEmpty()) listOf(year.toString())
                     else selectedSeasons.map { season -> "${season}_$year" }
                 }
 
-                _currentFilters.update { it.copy(season = seasons) }
+                _currentFilters.update { it.copy(seasonSet = seasons) }
             }
 
             is SetScore -> _currentFilters.update {
