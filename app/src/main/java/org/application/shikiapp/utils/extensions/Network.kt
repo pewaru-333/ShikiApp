@@ -97,7 +97,7 @@ suspend fun <QueryData : Query.Data, MappedData> ApolloClient.requestWithCache(
 }
 
 @OptIn(ApolloExperimental::class)
-suspend fun <QueryData : Query.Data, MappedData> ApolloClient.requestWithCache( // ИЗМЕНЕНИЕ: Убрали `: Any`
+suspend fun <QueryData : Query.Data, MappedData> ApolloClient.requestWithCache(
     cacheKey: String,
     query: Query<QueryData>,
     dataSelector: (QueryData) -> MappedData
