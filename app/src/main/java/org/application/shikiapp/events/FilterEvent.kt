@@ -6,13 +6,15 @@ import org.application.shikiapp.utils.enums.PeopleFilterItem
 sealed interface FilterEvent {
     data object ClearFilters : FilterEvent
 
+    sealed interface SetSeason : FilterEvent {
+        data class SetStartYear(val year: String) : SetSeason
+        data class SetFinalYear(val year: String) : SetSeason
+        data class ToggleSeasonYear(val yearSeason: String) : SetSeason
+    }
+
     data class SetOrder(val order: Order) : FilterEvent
     data class SetStatus(val status: String) : FilterEvent
     data class SetKind(val kind: String) : FilterEvent
-    data class SetSeasonYS(val year: String) : FilterEvent
-    data class SetSeasonYF(val year: String) : FilterEvent
-    data class SetSeasonS(val season: String) : FilterEvent
-    data object SetSeason : FilterEvent
     data class SetScore(val score: Float) : FilterEvent
     data class SetDuration(val duration: String) : FilterEvent
     data class SetRating(val rating: String) : FilterEvent
