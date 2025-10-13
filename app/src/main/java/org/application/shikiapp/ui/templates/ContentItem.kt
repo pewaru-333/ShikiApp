@@ -6,7 +6,6 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -17,14 +16,9 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -44,6 +38,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import org.application.shikiapp.R
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
@@ -52,7 +47,6 @@ import org.application.shikiapp.utils.enums.backgroundColor
 import org.application.shikiapp.utils.enums.textColor
 import org.application.shikiapp.utils.navigation.Screen
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CatalogCardItem(
     title: String,
@@ -93,9 +87,8 @@ fun CatalogCardItem(
                     .padding(8.dp)
             ) {
                 Row(Modifier.padding(6.dp, 4.dp), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
+                    VectorIcon(
+                        resId = R.drawable.vector_star,
                         tint = Color(0xFFFFC319),
                         modifier = Modifier.size(16.dp)
                     )
@@ -154,7 +147,6 @@ fun CatalogCardItem(
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
 @Composable
 fun CatalogCardItem(
     title: String,
@@ -228,9 +220,8 @@ fun CatalogGridItem(
                     .padding(8.dp),
             ) {
                 Row(Modifier.padding(6.dp, 4.dp), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Star,
-                        contentDescription = null,
+                    VectorIcon(
+                        resId = R.drawable.vector_star,
                         tint = Color(0xFFFFC319),
                         modifier = Modifier.size(16.dp)
                     )
@@ -253,7 +244,7 @@ fun CatalogGridItem(
                 .align(Alignment.BottomCenter)
                 .padding(4.dp),
         ) {
-            BasicText(
+            Text(
                 maxLines = 1,
                 modifier = Modifier.padding(4.dp),
                 style = MaterialTheme.typography.labelSmall.copy(
@@ -371,9 +362,8 @@ fun CalendarOngoingCard(title: String, score: String?, poster: String, onNavigat
                         .padding(8.dp)
                 ) {
                     Row(Modifier.padding(6.dp, 4.dp), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Default.Star,
-                            contentDescription = null,
+                        VectorIcon(
+                            resId = R.drawable.vector_star,
                             tint = Color(0xFFFFC319),
                             modifier = Modifier.size(16.dp)
                         )
@@ -436,7 +426,7 @@ fun RelatedCard(title: String, poster: String, relationText: String, onClick: ()
                     )
             )
 
-            BasicText(
+            Text(
                 maxLines = relationText.split(" ").size.coerceAtMost(3),
                 text = buildString {
                     relationText.uppercase().let { text ->
