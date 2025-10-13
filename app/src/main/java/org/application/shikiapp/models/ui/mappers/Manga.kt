@@ -10,7 +10,6 @@ import org.application.shikiapp.generated.MangaListQuery
 import org.application.shikiapp.generated.MangaMainQuery
 import org.application.shikiapp.generated.type.MangaKindEnum.light_novel
 import org.application.shikiapp.generated.type.MangaKindEnum.novel
-import org.application.shikiapp.models.data.Comment
 import org.application.shikiapp.models.data.Franchise
 import org.application.shikiapp.models.data.MangaBasic
 import org.application.shikiapp.models.ui.Manga
