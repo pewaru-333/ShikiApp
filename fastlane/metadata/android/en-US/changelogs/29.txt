@@ -1,0 +1,4 @@
+— The design of filters on the catalog page has been changed.
+— Fixed an issue where the time of year filter was not applied.
+— Fixed a bug that would not open the list of anime updates on the calendar page.
+— Many small improvements and optimization of the application.
