@@ -9,7 +9,7 @@ open class Message {
     val id: Long = 0L
     val kind: String = BLANK
     val read: Boolean = false
-    val body: String = BLANK
+    //val body: String? = null
 
     @SerialName("html_body")
     val htmlBody: String = BLANK
@@ -17,12 +17,12 @@ open class Message {
     @SerialName("created_at")
     val createdAt: String = BLANK
 
-    @SerialName("linked_id")
-    val linkedId: Long = 0L
+//    @SerialName("linked_id")
+//    val linkedId: Long = 0L
 
     @SerialName("linked_type")
     val linkedType: String? = null
-    val linked: String? = null
+    val linked: AnimeBasic? = null
 }
 
 @Serializable
@@ -43,4 +43,11 @@ data class MessageToSendShort(
     val kind: String,
     @SerialName("from_id") val fromId: Long,
     @SerialName("to_id") val toId: Long
+)
+
+@Serializable
+data class UnreadMessages(
+    val messages: Int,
+    val news: Int,
+    val notifications: Int
 )
