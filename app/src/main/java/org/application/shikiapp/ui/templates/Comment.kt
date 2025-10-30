@@ -9,6 +9,7 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -126,6 +127,7 @@ fun Comments(
             LazyColumn(
                 state = listState,
                 modifier = Modifier.fillMaxSize(),
+                verticalArrangement = Arrangement.Top,
                 reverseLayout = true
             ) {
                 items(list.itemCount, list.itemKey(Comment::id)) { index ->
