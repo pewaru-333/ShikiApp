@@ -219,6 +219,8 @@
     <string name="text_manga_list">Manga list</string>
     <string name="text_profile">Profile</string>
     <string name="text_profile_closed">Profile is private</string>
+    <string name="text_mail">Mail</string>
+    <string name="text_notifications">Notifications</string>
 
     <!-- Действия -->
     <string name="text_add_fav">Add to favorites</string>
@@ -267,6 +269,7 @@
     <string name="text_error_loading">Loading error!</string>
     <string name="text_loading">Loading</string>
     <string name="text_login">Login</string>
+    <string name="text_no_messages">No messages</string>
     <string name="text_open_in_browser">Open in browser</string>
     <string name="text_settings">Settings</string>
     <string name="text_to_profile">Go to profile</string>
@@ -289,6 +292,7 @@
     <string name="text_pay_attention">Please note!</string>
 
     <string name="text_sure_to_delete_dialog">Are you sure you want to delete the entire conversation with %1$s?</string>
+    <string name="text_sure_to_delete_all_notifications">Are you sure you want to clear the current list of notifications?</string>
 
     <string name="text_successfully_joined_club">Successfully joined the club!</string>
     <string name="text_unsuccessfully_joined_club">Failed to join the club!</string>
@@ -298,6 +302,10 @@
 
     <string name="text_confirm_remove_friend">Are you sure you want to remove this user from your friends?</string>
     <string name="text_confirm_add_friend">Are you sure you want to add this user to your friends?</string>
+
+    <string name="text_successfully_deleted_dialog">Dialog deleted successfully</string>
+    <string name="text_unsuccessfully_deleted_dialog">Error deleting dialog</string>
+
 
     <string name="text_applied_immediately">applied immediately</string>
     <string name="text_repeat_the_loading">Retry loading</string>

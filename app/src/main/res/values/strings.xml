@@ -216,7 +216,9 @@
     <string name="text_dialogs">Диалоги</string>
     <string name="text_friends">Друзья</string>
     <string name="text_history">История</string>
+    <string name="text_mail">Почта</string>
     <string name="text_manga_list">Список манги</string>
+    <string name="text_notifications">Уведомления</string>
     <string name="text_profile">Профиль</string>
     <string name="text_profile_closed">Профиль закрыт</string>
 
@@ -267,6 +269,7 @@
     <string name="text_error_loading">Ошибка загрузки!</string>
     <string name="text_loading">Загрузка</string>
     <string name="text_login">Вход</string>
+    <string name="text_no_messages">Нет сообщений</string>
     <string name="text_open_in_browser">Открыть в браузере</string>
     <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
@@ -289,6 +292,7 @@
     <string name="text_pay_attention">Обратите внимание!</string>
 
     <string name="text_sure_to_delete_dialog">Вы действительно хотите удалить всю переписку с пользователем %1$s?</string>
+    <string name="text_sure_to_delete_all_notifications">Вы действительно хотите очистить текущий список уведомлений?</string>
 
     <string name="text_successfully_joined_club">Вы вступили в клуб!</string>
     <string name="text_unsuccessfully_joined_club">Ошибка вступления в клуб!</string>
@@ -298,6 +302,9 @@
 
     <string name="text_confirm_remove_friend">Вы действительно хотите удалить данного пользователя из друзей?</string>
     <string name="text_confirm_add_friend">Вы действительно хотите добавить данного пользователя в друзья?</string>
+
+    <string name="text_successfully_deleted_dialog">Диалог удалён</string>
+    <string name="text_unsuccessfully_deleted_dialog">Ошибка при удалении диалога</string>
 
     <string name="text_applied_immediately">применяются сразу</string>
     <string name="text_repeat_the_loading">Повторить загрузку</string>
