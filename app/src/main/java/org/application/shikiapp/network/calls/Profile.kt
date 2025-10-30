@@ -5,6 +5,7 @@ import io.ktor.client.call.body
 import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
+import io.ktor.client.request.parameter
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -14,6 +15,7 @@ import org.application.shikiapp.models.data.Dialog
 import org.application.shikiapp.models.data.FullMessage
 import org.application.shikiapp.models.data.MessageToSend
 import org.application.shikiapp.models.data.Token
+import org.application.shikiapp.models.data.UnreadMessages
 import org.application.shikiapp.models.data.UserBrief
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.CLIENT_ID
@@ -21,6 +23,8 @@ import org.application.shikiapp.utils.CLIENT_SECRET
 import org.application.shikiapp.utils.GRANT_TYPE
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.TOKEN_URL
+import org.application.shikiapp.utils.enums.MessageType
+import org.application.shikiapp.utils.extensions.requestWithCache
 
 class Profile(private val client: HttpClient) {
     suspend fun getToken(code: String) = client.submitForm(
@@ -44,21 +48,51 @@ class Profile(private val client: HttpClient) {
     suspend fun deleteFavourite(linkedType: String, linkedId: Any) =
         client.delete("favorites/$linkedType/$linkedId")
 
-    suspend fun getDialogs() = client.get("dialogs").body<List<Dialog>>()
+    suspend fun getDialogs(): List<Dialog> = client.requestWithCache(
+        cacheKey = "user_dialogs",
+        url = "dialogs"
+    )
 
-    suspend fun getUserDialog(nickname: String) = client.get("dialogs/$nickname").body<List<FullMessage>>()
+    suspend fun getUserDialog(userId: Long, page: Int, limit: Int): List<FullMessage> =
+        client.get("dialogs/$userId") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body()
 
-    suspend fun deleteUserDialog(nickname: String) = client.delete("dialogs/$nickname")
+    suspend fun deleteUserDialog(userId: Long) = client.delete("dialogs/$userId")
+
+    suspend fun getMessages(userId: Long, type: MessageType, page: Int, limit: Int) =
+        client.get("users/$userId/messages") {
+            parameter("type", type.name.lowercase())
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body<List<FullMessage>>()
+
+    suspend fun getUnreadMessages(userId: Long) =
+        client.get("users/$userId/unread_messages").body<UnreadMessages>()
 
     suspend fun sendMessage(message: MessageToSend) = client.post("messages") {
         contentType(ContentType.Application.Json)
         setBody(message)
     }
 
+    suspend fun markRead(id: Long, isRead: Int) = client.post("messages/mark_read") {
+        parameter("ids", id)
+        parameter("is_read", isRead)
+    }
+
+    suspend fun markAllRead(type: MessageType) = client.post("messages/read_all") {
+        parameter("type", type.name.lowercase())
+    }
+
+    suspend fun deleteMessage(id: Long) = client.delete("messages/$id")
+
+    suspend fun deleteAllMessages(type: MessageType) = client.post("messages/delete_all") {
+        parameter("type", type.name.lowercase())
+    }
+
 //    suspend fun editMessage(id: Long, message: MessageToSend) = client.patch("messages/$id") {
 //        contentType(ContentType.Application.Json)
 //        setBody(message)
 //    }
-
-//    suspend fun deleteMessage(id: Long) = client.delete("messages/$id")
 }
