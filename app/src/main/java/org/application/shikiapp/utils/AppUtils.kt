@@ -31,12 +31,19 @@ fun getNextEpisode(date: Any?) = if (date !is String) BLANK
 else OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
     .format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.SHORT))
 
+fun convertDate() = DateUtils.getRelativeTimeSpanString(
+     OffsetDateTime.now().toInstant().toEpochMilli(),
+     System.currentTimeMillis(),
+     DateUtils.DAY_IN_MILLIS
+ ).toString()
+
 fun convertDate(date: Any?, offset: Boolean = true) = when {
-     date !is String ->  BLANK
+     date !is String -> BLANK
 
      offset -> {
-         val formatted = OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-         val millis = formatted.toInstant().toEpochMilli()
+         val millis = OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
+             .toInstant()
+             .toEpochMilli()
 
           DateUtils.getRelativeTimeSpanString(
              millis,
