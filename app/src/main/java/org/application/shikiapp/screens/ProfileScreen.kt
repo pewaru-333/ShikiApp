@@ -39,6 +39,8 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import io.ktor.http.URLBuilder
 import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
+import org.application.shikiapp.models.states.UserDialogState
+import org.application.shikiapp.models.states.showDialogs
 import org.application.shikiapp.models.viewModels.ProfileViewModel
 import org.application.shikiapp.network.response.LoginResponse
 import org.application.shikiapp.ui.templates.VectorIcon
@@ -61,21 +63,21 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = loginState) {
-        is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.User.ShowSettings) }
-        is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.User.ShowSettings) }
-        is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.User.ShowSettings) }
-        is LoginResponse.Logged -> UserView(data.user, state, model::onEvent, onNavigate, model::signOut, barVisibility)
+        is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
+        is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
+        is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
+        is LoginResponse.Logged -> UserView(data.user, state, model.mailManager, model::onEvent, onNavigate, model::signOut, barVisibility)
 
         else -> Unit
     }
 
     SettingsScreen(
-        visible = state.showSettings,
-        onBack = { model.onEvent(ContentDetailEvent.User.ShowSettings) }
+        visible = state.dialogState is UserDialogState.Settings,
+        onBack = { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
     )
 
-    LaunchedEffect(state.showSettings, state.menu, state.showDialogs) {
-        if (state.showSettings || state.menu != null || state.showDialogs) {
+    LaunchedEffect(state.dialogState, state.menu, state.showDialogs) {
+        if (state.dialogState != null || state.menu != null || state.showDialogs) {
             barVisibility.hide()
         } else {
             barVisibility.show()
