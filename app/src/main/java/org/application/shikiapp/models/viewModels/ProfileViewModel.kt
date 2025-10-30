@@ -48,6 +48,8 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                         )
                     )
                 )
+
+                mailManager.getUnreadMessages()
             } catch (e: Throwable) {
                 when (e) {
                     is UnknownHostException -> emit(LoginResponse.NetworkError)
