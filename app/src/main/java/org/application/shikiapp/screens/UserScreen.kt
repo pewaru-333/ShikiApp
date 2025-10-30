@@ -4,17 +4,21 @@ package org.application.shikiapp.screens
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.Crossfade
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.imePadding
@@ -25,52 +29,78 @@ import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.foundation.text.input.TextFieldLineLimits
+import androidx.compose.foundation.text.input.clearText
+import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Badge
+import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
+import androidx.paging.compose.itemKey
+import coil3.compose.AsyncImagePainter
+import coil3.compose.SubcomposeAsyncImage
+import coil3.compose.SubcomposeAsyncImageContent
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.application.shikiapp.R
 import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.ContentDetailEvent
+import org.application.shikiapp.models.states.UserDialogState
 import org.application.shikiapp.models.states.UserMessagesState
 import org.application.shikiapp.models.states.UserState
 import org.application.shikiapp.models.states.showClubs
-import org.application.shikiapp.models.states.showDialogDelete
+import org.application.shikiapp.models.states.showDialogUser
+import org.application.shikiapp.models.states.showDialogs
 import org.application.shikiapp.models.states.showFavourite
 import org.application.shikiapp.models.states.showFriends
 import org.application.shikiapp.models.states.showHistory
 import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.User
 import org.application.shikiapp.models.ui.list.Dialog
-import org.application.shikiapp.models.viewModels.UserMessagesViewModel
+import org.application.shikiapp.models.ui.list.Message
 import org.application.shikiapp.models.viewModels.UserViewModel
 import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.ui.templates.AnimatedScreen
@@ -79,18 +109,21 @@ import org.application.shikiapp.ui.templates.DialogClubs
 import org.application.shikiapp.ui.templates.DialogFavourites
 import org.application.shikiapp.ui.templates.DialogFriends
 import org.application.shikiapp.ui.templates.DialogHistory
+import org.application.shikiapp.ui.templates.DialogList
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.LoadingScreen
+import org.application.shikiapp.ui.templates.Messages
 import org.application.shikiapp.ui.templates.NavigationIcon
+import org.application.shikiapp.ui.templates.Notifications
 import org.application.shikiapp.ui.templates.Statistics
 import org.application.shikiapp.ui.templates.UserBriefItem
 import org.application.shikiapp.ui.templates.UserMenuItems
 import org.application.shikiapp.ui.templates.VectorIcon
-import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.HtmlComment
 import org.application.shikiapp.utils.enums.FavouriteItem
-import org.application.shikiapp.utils.extensions.getLastMessage
+import org.application.shikiapp.utils.enums.MessageType
+import org.application.shikiapp.utils.extensions.showToast
 import org.application.shikiapp.utils.navigation.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -101,7 +134,7 @@ fun UserScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
     val state by model.state.collectAsStateWithLifecycle()
 
     AnimatedScreen(response, model::loadData) { user ->
-        UserView(user, state, model::onEvent, onNavigate, back)
+        UserView(user, state, model.mailManager, model::onEvent, onNavigate, back)
     }
 }
 
@@ -109,17 +142,31 @@ fun UserScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 fun UserView(
     user: User,
     state: UserState,
+    mailManager: UserViewModel.MailManager,
     onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
     back: () -> Unit,
     visibility: NavigationBarVisibility? = null
 ) {
+    val context = LocalContext.current
+
     val listState = rememberLazyListState()
     val friends = user.friends.collectAsLazyPagingItems()
     val history = user.history.collectAsLazyPagingItems()
     val comments = user.comments.collectAsLazyPagingItems()
 
+    val mailState by mailManager.state.collectAsStateWithLifecycle()
+    val dialogs by mailManager.dialogs.collectAsStateWithLifecycle()
+    val news = mailManager.news.collectAsLazyPagingItems()
+    val notifications = mailManager.notifications.collectAsLazyPagingItems()
+    val newMessages by mailManager.newMessages.collectAsStateWithLifecycle()
+    val oldMessages = mailManager.oldMessages.collectAsLazyPagingItems()
+
     val listStates = FavouriteItem.entries.map { rememberLazyListState() }
+
+    LaunchedEffect(mailManager.dialogDeleteError) {
+        mailManager.dialogDeleteError.collectLatest(context::showToast)
+    }
 
     Scaffold(
         topBar = {
@@ -135,7 +182,7 @@ fun UserView(
                     }
                 },
                 actions = {
-                    TopBarActions(user, onEvent, comments)
+                    TopBarActions(user, state, comments, onEvent)
                 }
             )
         }
@@ -183,8 +230,8 @@ fun UserView(
         }
     }
 
-    LaunchedEffect(state.showSettings, state.menu, state.showDialogs) {
-        if (state.showSettings || state.menu != null || state.showDialogs) {
+    LaunchedEffect(state.dialogState, state.menu) {
+        if (state.dialogState != null || state.menu != null) {
             visibility?.hide()
         } else {
             visibility?.show()
@@ -194,17 +241,42 @@ fun UserView(
     Comments(
         list = comments,
         listState = listState,
-        visible = state.showComments,
+        visible = state.dialogState is UserDialogState.Comments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
     )
 
-    DialogUserDialogs(
+    DialogMail(
+        dialogs = dialogs,
+        news = news,
+        notifications = notifications,
+        loadData = mailManager::loadData,
         visible = state.showDialogs,
+        onShowDeleteAll = mailManager::showDialogDeleteAll,
+        onPickTab = mailManager::pickTab,
+        getDialog = mailManager::getDialog,
+        markAllRead = mailManager::markAllRead,
+        onMarkRead = mailManager::markRead,
+        onDelete = mailManager::deleteMessage,
         onNavigate = onNavigate,
-        dialogId = if (Preferences.userId == user.id) null else user.nickname,
-        userId = if (Preferences.userId == user.id) null else user.id,
-        hide = { onEvent(ContentDetailEvent.User.ShowDialogs) }
+        onHide = { onEvent(ContentDetailEvent.User.ToggleDialog(null)) }
+    )
+
+    UserDialog(
+        dialogMessages = oldMessages,
+        newMessages = newMessages,
+        state = mailState,
+        visible = state.showDialogUser,
+        onNavigate = onNavigate,
+        sendMessage = mailManager::sendMessage,
+        onShowDelete = mailManager::showDialogDelete,
+        onBack = {
+            onEvent(
+                ContentDetailEvent.User.ToggleDialog(
+                    dialog = if (mailState.isFromList) UserDialogState.DialogAll else null
+                )
+            )
+        }
     )
 
     DialogFriends(
@@ -236,7 +308,20 @@ fun UserView(
         onNavigate = onNavigate,
     )
 
-    if (state.showDialogToggleFriend) {
+    when {
+        state.showDeleteUserDialog -> DialogRemoveUserDialog(
+            nickname = mailState.userNickname.getValue().orEmpty(),
+            hide = mailManager::showDialogDelete,
+            remove = mailManager::removeDialog
+        )
+
+        mailState.showDeleteAll -> DialogRemoveAllNews(
+            onCancel = mailManager::showDialogDeleteAll,
+            onConfirm = mailManager::deleteAllMessages
+        )
+    }
+
+    if (state.dialogState is UserDialogState.ToggleFriend) {
         DialogToggleFriend(user.inFriends, onEvent)
     }
 }
@@ -244,17 +329,42 @@ fun UserView(
 @Composable
 private fun TopBarActions(
     user: User,
-    onEvent: (ContentDetailEvent) -> Unit,
-    comments: LazyPagingItems<Comment>
+    state: UserState,
+    comments: LazyPagingItems<Comment>,
+    onEvent: (ContentDetailEvent) -> Unit
 ) {
     when {
         Preferences.userId == user.id -> {
             IconButton(
-                onClick = { onEvent(ContentDetailEvent.User.ShowDialogs) },
-                content = { VectorIcon(R.drawable.vector_mail) }
+                onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.DialogAll)) },
+                content = {
+                    BadgedBox(
+                        content = { VectorIcon(R.drawable.vector_mail) },
+                        badge = {
+                            state.unreadMessages.total.let {
+                                if (it > 0) {
+                                    Badge(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                                        content = {
+                                            Text(
+                                                text = if (it >= 100) "!" else "$it",
+                                                autoSize = TextAutoSize.StepBased(
+                                                    minFontSize = 10.sp,
+                                                    maxFontSize = 11.sp,
+                                                    stepSize = (0.1).sp
+                                                )
+                                            )
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    )
+                }
             )
             IconButton(
-                onClick = { onEvent(ContentDetailEvent.User.ShowSettings) },
+                onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) },
                 content = { VectorIcon(R.drawable.vector_settings) }
             )
         }
@@ -267,12 +377,12 @@ private fun TopBarActions(
 
             if (Preferences.token != null && Preferences.userId != user.id) {
                 IconButton(
-                    onClick = { onEvent(ContentDetailEvent.User.ShowDialogToggleFriend) }
+                    onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.ToggleFriend)) }
                 ) {
                     Icon(
                         contentDescription = null,
                         painter = painterResource(
-                            if (user.inFriends) R.drawable.vector_remove_friend
+                            id = if (user.inFriends) R.drawable.vector_remove_friend
                             else R.drawable.vector_add_friend
                         )
                     )
@@ -280,7 +390,7 @@ private fun TopBarActions(
             }
 
             IconButton(
-                onClick = { onEvent(ContentDetailEvent.User.ShowDialogs) },
+                onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.DialogUser(user.id))) },
                 content = { VectorIcon(R.drawable.vector_mail) }
             )
         }
@@ -288,238 +398,347 @@ private fun TopBarActions(
 }
 
 @Composable
-private fun DialogUserDialogs(
-    hide: () -> Unit,
+private fun DialogMail(
+    dialogs: Response<List<Dialog>, Throwable>,
+    news: LazyPagingItems<Message>,
+    notifications: LazyPagingItems<Message>,
     visible: Boolean,
+    onHide: () -> Unit,
+    loadData: () -> Unit,
+    onPickTab: (MessageType) -> Unit,
+    onMarkRead: (Long, Int) -> Unit,
+    onDelete: (Long) -> Unit,
+    markAllRead: (List<Message>) -> Unit,
+    onShowDeleteAll: () -> Unit,
+    getDialog: (Long, String, String) -> Unit,
     onNavigate: (Screen) -> Unit,
-    dialogId: String? = null,
-    userId: Long? = null
-) = AnimatedVisibility(
-    visible = visible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    val model = viewModel<UserMessagesViewModel>()
-    val state by model.state.collectAsStateWithLifecycle()
-    val response by model.response.collectAsStateWithLifecycle()
-    val dialogMessages by model.messages.collectAsStateWithLifecycle()
-
-    LaunchedEffect(Unit) {
-        if (dialogId != null && userId != null) {
-            model.getDialog(userId, dialogId)
+    LaunchedEffect(visible) {
+        if (visible) {
+            loadData()
         }
     }
 
-    BackHandler(visible) {
-        if (state.dialogId == null || userId != null) hide()
-        else model.showDialogs()
-    }
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        maxLines = 1,
-                        text = state.dialogId ?: stringResource(R.string.text_dialogs),
-                        overflow = TextOverflow.Ellipsis
-                    )
-                },
-                navigationIcon = {
-                    NavigationIcon {
-                        if (state.dialogId == null || userId != null) hide()
-                        else model.showDialogs()
-                    }
-                }
-            )
-        }
-    ) { values ->
-        Crossfade(state.dialogId) {
-            when (it) {
-                null -> AllUserDialogs(
-                    values = values,
-                    response = response,
-                    reload = model::loadData,
-                    getDialog = model::getDialog,
-                    showDelete = model::showDialogDelete
-                )
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInHorizontally(initialOffsetX = { it }),
+        exit = slideOutHorizontally(targetOffsetX = { it }),
+    ) {
+        val scope = rememberCoroutineScope()
+        val pagerState = rememberPagerState(pageCount = MessageType.tabs::size)
 
-                else -> UserDialog(
-                    values = values,
-                    state = state,
-                    dialogMessages = dialogMessages,
-                    onNavigate = onNavigate,
-                    reload = model::getDialog,
-                    setText = model::setText,
-                    sendMessage = model::sendMessage
-                )
+        fun onScroll(page: Int) {
+            scope.launch {
+                pagerState.animateScrollToPage(page)
+                onPickTab(MessageType.tabs[page])
             }
         }
-    }
 
-    if (state.showDialogDelete) {
-        DialogRemoveUserDialog(
-            nickname = state.toDeleteId ?: BLANK,
-            hide = model::showDialogDelete,
-            remove = model::removeDialog
-        )
+        LaunchedEffect(pagerState) {
+            snapshotFlow(pagerState::currentPage).collectLatest { page ->
+                if (page != pagerState.settledPage) {
+                    onScroll(page)
+                }
+            }
+        }
+
+        BackHandler(visible, onHide)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(R.string.text_mail)) },
+                    navigationIcon = { NavigationIcon(onHide) },
+                    actions = {
+                        if (pagerState.currentPage > 0) {
+                            IconButton(onShowDeleteAll) { VectorIcon(R.drawable.vector_trash) }
+                            IconButton(
+                                content = { VectorIcon(R.drawable.vector_check) } ,
+                                onClick = {
+                                    markAllRead(
+                                        if (pagerState.currentPage == 1) news.itemSnapshotList.items
+                                        else notifications.itemSnapshotList.items
+                                    )
+                                }
+                            )
+                        }
+                    }
+                )
+            }
+        ) { values ->
+            Column(Modifier.padding(values)) {
+                PrimaryTabRow(pagerState.currentPage) {
+                    MessageType.tabs.forEachIndexed { index, tab ->
+                        Tab(
+                            selected = index == pagerState.currentPage,
+                            onClick = { onScroll(index) },
+                            text = {
+                                Text(
+                                    maxLines = 1,
+                                    text = stringResource(tab.title),
+                                    overflow = TextOverflow.Ellipsis
+                                )
+                            }
+                        )
+                    }
+                }
+
+                HorizontalPager(
+                    state = pagerState,
+                    modifier = Modifier.fillMaxSize(),
+                    verticalAlignment = Alignment.Top
+                ) { page ->
+                    when (page) {
+                        0 -> DialogList(
+                            dialogs = dialogs,
+                            getDialog = getDialog,
+                            loadData = loadData
+                        )
+
+                        1 -> Messages(
+                            list = news,
+                            onNavigate = onNavigate,
+                            onMarkRead = onMarkRead,
+                            onDelete = onDelete
+                        )
+
+                        2 -> Notifications(
+                            list = notifications,
+                            onNavigate = onNavigate,
+                            onMarkRead = onMarkRead,
+                            onDelete = onDelete
+                        )
+                    }
+                }
+            }
+        }
     }
 }
 
 @Composable
 private fun UserDialog(
-    dialogMessages: Response<List<Dialog>, Throwable>,
+    dialogMessages: LazyPagingItems<Dialog>,
+    newMessages: List<Dialog>,
     state: UserMessagesState,
-    values: PaddingValues,
-    reload: () -> Unit,
-    setText: (String) -> Unit,
-    sendMessage: () -> Unit,
+    visible: Boolean,
+    onBack: () -> Unit,
+    onShowDelete: () -> Unit,
+    sendMessage: (String) -> Unit,
     onNavigate: (Screen) -> Unit
-) = when (val messages = dialogMessages) {
-    Response.Loading -> LoadingScreen()
-    is Response.Error -> ErrorScreen(reload)
-    is Response.Success -> Column(Modifier.imePadding()) {
-        LazyColumn(
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Top,
-            reverseLayout = true,
-            contentPadding = values
-        ) {
-            items(messages.data) { message ->
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(12.dp, 10.dp)
-                ) {
+) = AnimatedVisibility(
+    visible = visible,
+    enter = slideInHorizontally(initialOffsetX = { it }) + fadeIn(),
+    exit = slideOutHorizontally(targetOffsetX = { it }) + fadeOut(),
+) {
+    val scope = rememberCoroutineScope()
+    val focusRequester = remember(::FocusRequester)
+    val listState = rememberLazyListState()
+    val textFieldState = rememberTextFieldState()
+
+    BackHandler(visible, onBack)
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                modifier = Modifier.height(IntrinsicSize.Min),
+                navigationIcon = { NavigationIcon(onBack) },
+                colors = TopAppBarDefaults.topAppBarColors().copy(
+                    containerColor = MaterialTheme.colorScheme.tertiaryContainer
+                ),
+                actions = {
+                    AnimatedVisibility(dialogMessages.itemSnapshotList.isNotEmpty()) {
+                        IconButton(onShowDelete) { VectorIcon(R.drawable.vector_trash) }
+                    }
+                },
+                title = {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { onNavigate(Screen.User(message.userId)) }
+                            .fillMaxSize()
+                            .clickable { onNavigate(Screen.User(state.userId)) }
+                            .padding(6.dp)
                     ) {
-                        AsyncImage(
-                            model = message.userAvatar,
+                        SubcomposeAsyncImage(
+                            model = state.userAvatar.getValue(),
                             contentDescription = null,
-                            contentScale = ContentScale.Crop,
-                            filterQuality = FilterQuality.High,
                             modifier = Modifier
-                                .size(56.dp)
+                                .size(36.dp)
                                 .clip(CircleShape)
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-                        )
-
-                        Spacer(Modifier.width(12.dp))
-
-                        Column(Modifier.weight(1f)) {
-                            Text(
-                                text = message.userNickname,
-                                style = MaterialTheme.typography.titleSmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                    fontSize = 16.sp,
-                                    fontWeight = FontWeight.SemiBold
+                                .border(
+                                    (0.5).dp,
+                                    MaterialTheme.colorScheme.onTertiaryContainer,
+                                    CircleShape
                                 )
-                            )
-                            Text(
-                                text = message.lastDate,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    fontSize = 13.sp
-                                )
-                            )
+                        ) {
+                            val state by painter.state.collectAsStateWithLifecycle()
+                            if (state is AsyncImagePainter.State.Success) {
+                                SubcomposeAsyncImageContent()
+                            } else {
+                                CircularProgressIndicator()
+                            }
                         }
+
+                        Spacer(Modifier.width(8.dp))
+
+                        Text(
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.titleMedium,
+                            text = state.userNickname.getValue().orEmpty().ifEmpty {
+                                stringResource(R.string.text_loading)
+                            }
+                        )
                     }
+                }
+            )
+        }
+    ) { values ->
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(values)
+                .imePadding()
+        ) {
+            when (dialogMessages.loadState.refresh) {
+                LoadState.Loading -> LoadingScreen(Modifier.weight(1f))
+                is LoadState.Error -> ErrorScreen(dialogMessages::retry)
+                is LoadState.NotLoading ->
+                    LazyColumn(
+                        modifier = Modifier.weight(1f),
+                        state = listState,
+                        verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.Top),
+                        reverseLayout = true,
+                        contentPadding = PaddingValues(8.dp)
+                    ) {
+                        items(newMessages, Dialog::id) { message ->
+                            MessageBubble(message, Modifier.animateItem())
+                        }
+                        items(dialogMessages.itemCount, dialogMessages.itemKey(Dialog::id)) { index ->
+                            dialogMessages[index]?.let { MessageBubble(it) }
+                        }
+                        if (dialogMessages.loadState.append == LoadState.Loading) {
+                            item {
+                                Row(Modifier.fillMaxWidth(), Arrangement.Center) {
+                                    CircularProgressIndicator(Modifier.padding(16.dp))
+                                }
+                            }
+                        }
+                        if (dialogMessages.loadState.hasError) item { ErrorScreen(dialogMessages::retry) }
+                    }
+            }
 
-                    Spacer(Modifier.height(8.dp))
+            if (dialogMessages.loadState.refresh !is LoadState.Error) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(8.dp)
+                ) {
+                    OutlinedTextField(
+                        state = textFieldState,
+                        lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 2),
+                        placeholder = { Text(stringResource(R.string.text_enter_message)) },
+                        keyboardOptions = KeyboardOptions(
+                            capitalization = KeyboardCapitalization.Sentences,
+                            imeAction = ImeAction.Default
+                        ),
+                        modifier = Modifier
+                            .weight(1f)
+                            .focusRequester(focusRequester)
+                    )
 
-                    HtmlComment(message.lastMessage)
+                    Spacer(Modifier.width(8.dp))
+
+                    IconButton(
+                        content = { VectorIcon(R.drawable.vector_send) },
+                        enabled = textFieldState.text.isNotBlank(),
+                        onClick = {
+                            sendMessage(textFieldState.text.toString());
+                            textFieldState.clearText()
+                            focusRequester.requestFocus()
+                            scope.launch { listState.animateScrollToItem(0) }
+                        }
+                    )
                 }
             }
         }
-
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 8.dp)
-        ) {
-            Spacer(Modifier.width(8.dp))
-
-            OutlinedTextField(
-                maxLines = 1,
-                value = state.text,
-                onValueChange = setText,
-                modifier = Modifier.weight(1f),
-                placeholder = { Text(stringResource(R.string.text_enter_message)) },
-            )
-
-            IconButton(
-                onClick = sendMessage,
-                enabled = state.text.isNotEmpty(),
-                content = { VectorIcon(R.drawable.vector_send) }
-            )
-        }
     }
-
-    else -> Unit
 }
 
 @Composable
-private fun AllUserDialogs(
-    response: Response<List<Dialog>, Throwable>,
-    reload: () -> Unit,
-    getDialog: (Long, String) -> Unit,
-    showDelete: (String) -> Unit,
-    values: PaddingValues
-) = when (val dialogs = response) {
-    Response.Loading -> LoadingScreen()
-    is Response.Error -> ErrorScreen(reload)
-    is Response.Success -> LazyColumn(contentPadding = values) {
-        items(dialogs.data) { dialog ->
-            ListItem(
-                headlineContent = { Text(dialog.userNickname) },
-                trailingContent = { Text(dialog.lastDate) },
-                modifier = Modifier
-                    .combinedClickable(
-                        onClick = { getDialog(dialog.userId, dialog.userNickname) },
-                        onLongClick = { showDelete(dialog.id) }
-                    ),
-                leadingContent = {
-                    AsyncImage(
-                        model = dialog.userAvatar,
-                        contentDescription = null,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                    )
-                },
-                supportingContent = {
-                    Text(
-                        minLines = 2,
-                        maxLines = 2,
-                        text = dialog.lastMessage.getLastMessage().asString(),
-                        overflow = TextOverflow.Ellipsis
-                    )
-                }
+fun MessageBubble(message: Dialog, modifier: Modifier = Modifier) {
+    val alignment = if (message.accountUser) Alignment.CenterEnd else Alignment.CenterStart
+    val backgroundColor = if (message.accountUser) MaterialTheme.colorScheme.primaryContainer
+    else MaterialTheme.colorScheme.surfaceVariant
+    val textColor = if (message.accountUser) MaterialTheme.colorScheme.onPrimaryContainer
+    else MaterialTheme.colorScheme.onSurfaceVariant
+
+    Box(
+        contentAlignment = alignment,
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(
+                start = if (message.accountUser) 48.dp else 0.dp,
+                end = if (message.accountUser) 0.dp else 48.dp
             )
+    ) {
+        Column(
+            modifier = Modifier
+                .clip(
+                    shape = RoundedCornerShape(
+                        topStart = 16.dp,
+                        topEnd = 16.dp,
+                        bottomStart = if (message.accountUser) 16.dp else 0.dp,
+                        bottomEnd = if (message.accountUser) 0.dp else 16.dp
+                    )
+                )
+                .background(backgroundColor)
+                .padding(12.dp)
+        ) {
+            HtmlComment(message.lastMessage)
+
+            Spacer(Modifier.height(4.dp))
+
+            Row(
+                modifier = Modifier.align(Alignment.End),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                Text(
+                    text = message.lastDate,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = textColor.copy(alpha = 0.7f)
+                    )
+                )
+
+                if (message.accountUser) {
+                    when {
+                        message.isSending -> {
+                            VectorIcon(
+                                resId = R.drawable.vector_mail,
+                                modifier = Modifier.size(14.dp),
+                                tint = textColor.copy(alpha = 0.7f)
+                            )
+                        }
+
+                        message.isError -> {
+                            VectorIcon(
+                                resId = R.drawable.vector_bad,
+                                modifier = Modifier.size(14.dp),
+                                tint = MaterialTheme.colorScheme.error
+                            )
+                        }
+                    }
+                }
+            }
         }
     }
-
-    else -> Unit
 }
 
 @Composable
 private fun DialogRemoveUserDialog(nickname: String, hide: () -> Unit, remove: () -> Unit) =
     AlertDialog(
         onDismissRequest = hide,
-        dismissButton = {
-            TextButton(hide) {
-                Text(stringResource(R.string.text_cancel))
-            }
-        },
-        confirmButton = {
-            TextButton(remove) {
-                Text(stringResource(R.string.text_confirm))
-            }
-        },
+        dismissButton = { TextButton(hide) { Text(stringResource(R.string.text_cancel)) } },
+        confirmButton = { TextButton(remove) { Text(stringResource(R.string.text_confirm)) } },
         text = {
             Text(
                 text = stringResource(R.string.text_sure_to_delete_dialog, nickname),
@@ -529,23 +748,40 @@ private fun DialogRemoveUserDialog(nickname: String, hide: () -> Unit, remove: (
     )
 
 @Composable
+private fun DialogRemoveAllNews(onConfirm: () -> Unit, onCancel: () -> Unit) =
+    AlertDialog(
+        onDismissRequest = onCancel,
+        dismissButton = { TextButton(onCancel) { Text(stringResource(R.string.text_cancel)) } },
+        confirmButton = { TextButton(onConfirm) { Text(stringResource(R.string.text_confirm)) } },
+        title = { Text(stringResource(R.string.text_pay_attention)) },
+        text = {
+            Text(
+                text = stringResource(R.string.text_sure_to_delete_all_notifications),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    )
+
+@Composable
 private fun DialogToggleFriend(inFriends: Boolean, onEvent: (ContentDetailEvent) -> Unit) =
     AlertDialog(
-        onDismissRequest = { onEvent(ContentDetailEvent.User.ShowDialogToggleFriend) },
+        onDismissRequest = { onEvent(ContentDetailEvent.User.ToggleDialog(null)) },
         dismissButton = {
             TextButton(
-                onClick = { onEvent(ContentDetailEvent.User.ShowDialogToggleFriend) }
-            ) { Text(stringResource(R.string.text_cancel)) }
+                onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(null)) },
+                content = { Text(stringResource(R.string.text_cancel)) }
+            )
         },
         confirmButton = {
             TextButton(
-                onClick = { onEvent(ContentDetailEvent.User.ToggleFriend) }
-            ) { Text(stringResource(R.string.text_confirm)) }
+                onClick = { onEvent(ContentDetailEvent.User.ToggleFriend) },
+                content = { Text(stringResource(R.string.text_confirm)) }
+            )
         },
         title = {
             Text(
                 text = stringResource(
-                    if (inFriends) R.string.text_remove_friend
+                    id = if (inFriends) R.string.text_remove_friend
                     else R.string.text_add_friend
                 )
             )
@@ -554,7 +790,7 @@ private fun DialogToggleFriend(inFriends: Boolean, onEvent: (ContentDetailEvent)
             Text(
                 style = MaterialTheme.typography.bodyLarge,
                 text = stringResource(
-                    if (inFriends) R.string.text_confirm_remove_friend
+                    id = if (inFriends) R.string.text_confirm_remove_friend
                     else R.string.text_confirm_add_friend
                 )
             )
