@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalCoroutinesApi::class)
+
 package org.application.shikiapp.models.viewModels
 
 import androidx.lifecycle.viewModelScope
@@ -31,7 +33,6 @@ abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailE
 
     private val _commentParams = MutableStateFlow<Pair<Long?, String>>(Pair(null, "Topic"))
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val comments = _commentParams.filterNotNull().flatMapLatest { (id, type) ->
         Pager(
             config = PagingConfig(

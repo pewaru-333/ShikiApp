@@ -43,7 +43,7 @@ import org.application.shikiapp.utils.enums.ClubMenu
 import org.application.shikiapp.utils.navigation.Screen
 
 class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, ClubEvent>() {
-    private val clubId = saved.toRoute<Screen.Club>().id
+    override val contentId = saved.toRoute<Screen.Club>().id
 
     private val _commentParams = MutableStateFlow<Pair<Long?, String>>(Pair(null, "Topic"))
 
@@ -57,7 +57,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging(UserBasic::id) { page, params ->
-                Network.clubs.getMembers(clubId, page, params.loadSize)
+                Network.clubs.getMembers(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -71,7 +71,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging(BasicInfo::id) { page, params ->
-                Network.clubs.getCharacters(clubId, page, params.loadSize)
+                Network.clubs.getCharacters(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -86,7 +86,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging(AnimeBasic::id) { page, params ->
-                Network.clubs.getAnime(clubId, page, params.loadSize)
+                Network.clubs.getAnime(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -101,7 +101,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging(MangaBasic::id) { page, params ->
-                Network.clubs.getManga(clubId, page, params.loadSize)
+                Network.clubs.getManga(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -116,7 +116,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging(MangaBasic::id) { page, params ->
-                Network.clubs.getRanobe(clubId, page, params.loadSize)
+                Network.clubs.getRanobe(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -131,7 +131,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging<ClubBasic>(ClubBasic::id) { page, params ->
-                Network.clubs.getClubClubs(clubId, page, params.loadSize)
+                Network.clubs.getClubClubs(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -146,7 +146,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
         ),
         pagingSourceFactory = {
             CommonPaging(ClubImages::id) { page, params ->
-                Network.clubs.getImages(clubId, page, params.loadSize)
+                Network.clubs.getImages(contentId, page, params.loadSize)
             }
         }
     ).flow
@@ -190,7 +190,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
             }
 
             try {
-                val club = async { Network.clubs.getClub(clubId) }
+                val club = async { Network.clubs.getClub(contentId) }
                 val clubLoaded = club.await()
 
                 _commentParams.update {
@@ -253,7 +253,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
     private fun joinClub() {
         viewModelScope.launch {
             try {
-                val response = Network.clubs.joinClub(clubId)
+                val response = Network.clubs.joinClub(contentId)
 
                 if (response.status == HttpStatusCode.OK) {
                     _joinChannel.send(ResourceText.StringResource(R.string.text_successfully_joined_club))
@@ -271,7 +271,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
     private fun leaveClub() {
         viewModelScope.launch {
             try {
-                val response = Network.clubs.leaveClub(clubId)
+                val response = Network.clubs.leaveClub(contentId)
 
                 if (response.status == HttpStatusCode.OK) {
                     _joinChannel.send(ResourceText.StringResource(R.string.text_successfully_leave_club))

@@ -3,7 +3,6 @@ package org.application.shikiapp.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.PersonState
@@ -16,7 +15,7 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, PersonState>() {
-    private val id = saved.toRoute<Screen.Person>().id
+    override val contentId = saved.toRoute<Screen.Person>().id
 
     override fun initState() = PersonState()
 
@@ -27,13 +26,11 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
             }
 
             try {
-                coroutineScope {
-                    val person = Network.content.getPerson(id)
-                    setCommentParams(person.topicId)
+                val person = Network.content.getPerson(contentId)
+                setCommentParams(person.topicId)
 
-                    emit(Response.Success(person.mapper(comments)))
-                }
-            } catch (e: Throwable) {
+                emit(Response.Success(person.mapper(comments)))
+            } catch (e: Exception) {
                 emit(Response.Error(e))
             }
         }
@@ -56,12 +53,9 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
                 val isFavoured = data.favoured.getValue() ?: return
                 val newData = data.copy(favoured = AsyncData.Loading)
 
-                viewModelScope.launch {
-                    emit(Response.Success(newData))
-                }
-
+                tryEmit(Response.Success(newData))
                 toggleFavourite(
-                    id = id,
+                    id = contentId,
                     type = LinkedType.PERSON,
                     favoured = isFavoured,
                     kind = event.kind

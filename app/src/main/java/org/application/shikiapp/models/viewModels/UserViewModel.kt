@@ -14,6 +14,7 @@ import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -95,13 +96,15 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         .retryWhen { _, attempt -> attempt <= 5 }
 
     protected val user: Deferred<org.application.shikiapp.models.data.User>
-        get() = asyncLoad { Network.user.getUser(userId) }
+        get() = viewModelScope.async { Network.user.getUser(userId) }
 
     protected val clubs: Deferred<List<ClubBasic>>
-        get() = asyncLoad { Network.user.getClubs(userId) }
+        get() = viewModelScope.async { Network.user.getClubs(userId) }
 
     protected val favourites: Deferred<Map<FavouriteItem, List<BasicContent>>>
-        get() = asyncLoad { Network.user.getFavourites(userId).toBasicContentMap() }
+        get() = viewModelScope.async { Network.user.getFavourites(userId).toBasicContentMap() }
+
+    override val contentId = Any()
 
     override fun initState() = UserState()
 

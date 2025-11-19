@@ -1,15 +1,14 @@
 package org.application.shikiapp.models.viewModels
 
 import androidx.lifecycle.SavedStateHandle
-import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.MangaState
 import org.application.shikiapp.models.ui.Manga
 import org.application.shikiapp.models.ui.mappers.MangaMapper
+import org.application.shikiapp.models.ui.mappers.MangaResponse
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.AsyncData
@@ -17,46 +16,34 @@ import org.application.shikiapp.network.response.Response
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
-class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, MangaState>() {
-    private val mangaId = saved.toRoute<Screen.Manga>().id
+class MangaViewModel(saved: SavedStateHandle) : CachedDetailViewModel<MangaResponse, Manga, MangaState>() {
+    override val contentId = saved.toRoute<Screen.Manga>().id
 
     override fun initState() = MangaState()
 
-    override fun loadData() {
-        viewModelScope.launch {
-            if (response.value !is Response.Success) {
-                emit(Response.Loading)
-            }
+    override fun getSourceFlow(id: Any) = GraphQL.getManga(id.toString())
 
-            try {
-                coroutineScope {
-                    val topic = async { GraphQL.getMangaTopic(mangaId) }
-                    val main = async { GraphQL.getMangaMain(mangaId) }
-                    val extra = async { GraphQL.getMangaExtra(mangaId) }
+    override suspend fun transformData(data: MangaResponse): Manga {
+        val (main, extra) = data
 
-                    val franchise = async { Network.manga.getFranchise(mangaId) }
-                    val similar = async { Network.manga.getSimilar(mangaId) }
-                    val favoured = async { Network.manga.getManga(mangaId).favoured }
+        val (franchise, similar, favoured) = coroutineScope {
+            val franchise = async { Network.manga.getFranchise(contentId) }
+            val similar = async { Network.manga.getSimilar(contentId) }
+            val favoured = async { Network.manga.getManga(contentId).favoured }
 
-                   setCommentParams(topic.await().topic?.id?.toLong())
-
-                    emit(
-                        Response.Success(
-                            MangaMapper.create(
-                                main = main.await(),
-                                extra = extra.await(),
-                                franchise = franchise.await(),
-                                similar = similar.await(),
-                                comments = comments,
-                                favoured = favoured.await()
-                            )
-                        )
-                    )
-                }
-            } catch (e: Throwable) {
-                emit(Response.Error(e))
-            }
+            Triple(franchise.await(), similar.await(), favoured.await())
         }
+
+        setCommentParams(main.topic?.id?.toLong())
+
+        return MangaMapper.create(
+            main = main,
+            extra = extra,
+            franchise = franchise,
+            similar = similar,
+            comments = comments,
+            favoured = favoured
+        )
     }
 
     override fun onEvent(event: ContentDetailEvent) {
@@ -79,10 +66,8 @@ class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, Ma
                         )
                     }
 
-                    viewModelScope.launch {
-                        emit(Response.Success(newData))
-                        loadData()
-                    }
+                    tryEmit(Response.Success(newData))
+                    loadData()
                 }
 
                 ContentDetailEvent.Media.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
@@ -114,12 +99,9 @@ class MangaViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Manga, Ma
                 val isFavoured = data.favoured.getValue() ?: return
                 val newData = data.copy(favoured = AsyncData.Loading)
 
-                viewModelScope.launch {
-                    emit(Response.Success(newData))
-                }
-
+                tryEmit(Response.Success(newData))
                 toggleFavourite(
-                    id = mangaId,
+                    id = contentId,
                     type = event.type?.linkedType ?: LinkedType.MANGA,
                     favoured = isFavoured
                 )

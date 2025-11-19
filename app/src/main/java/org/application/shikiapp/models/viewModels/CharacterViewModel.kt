@@ -18,7 +18,7 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Character, CharacterState>() {
-    private val id = saved.toRoute<Screen.Character>().id
+    override val contentId = saved.toRoute<Screen.Character>().id
 
     override fun initState() = CharacterState()
 
@@ -29,24 +29,26 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
             }
 
             try {
-                coroutineScope {
-                    val character = async { Network.content.getCharacter(id) }
-                    val image = async { GraphQL.getCharacter(id) }
-                    val topic = async { GraphQL.getCharacterTopic(id) }
+                val (main, extra) = coroutineScope {
+                    val character = async { Network.content.getCharacter(contentId) }
+                    val extra = async { GraphQL.getCharacter(contentId) }
 
-                   setCommentParams(topic.await().topic?.id?.toLong())
+                    Pair(character.await(), extra.await())
+                }
 
-                    emit(
-                        Response.Success(
-                            CharacterMapper.create(
-                                character = character.await(),
-                                image = image.await(),
-                                comments = comments
-                            )
+                setCommentParams(extra.topic?.id?.toLong())
+
+                emit(
+                    Response.Success(
+                        CharacterMapper.create(
+                            character = main,
+                            image = extra,
+                            comments = comments
                         )
                     )
-                }
-            } catch (e: Throwable) {
+                )
+
+            } catch (e: Exception) {
                 emit(Response.Error(e))
             }
         }
@@ -70,12 +72,10 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
                     val isFavoured = data.favoured.getValue() ?: return
                     val newData = data.copy(favoured = AsyncData.Loading)
 
-                    viewModelScope.launch {
-                        emit(Response.Success(newData))
-                    }
 
+                    tryEmit(Response.Success(newData))
                     toggleFavourite(
-                        id = id,
+                        id = contentId,
                         type = LinkedType.CHARACTER,
                         favoured = isFavoured
                     )

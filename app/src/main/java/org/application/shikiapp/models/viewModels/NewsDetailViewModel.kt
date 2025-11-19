@@ -15,7 +15,7 @@ import org.application.shikiapp.utils.navigation.Screen
 
 
 class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<NewsDetail, NewsDetailState>() {
-    private val newsId = saved.toRoute<Screen.NewsDetail>().id
+    override val contentId = saved.toRoute<Screen.NewsDetail>().id
 
     override fun initState() = NewsDetailState()
 
@@ -26,8 +26,8 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
             }
 
             try {
-                val news = async { Network.topics.getTopic(newsId) }
-                setCommentParams(newsId)
+                val news = async { Network.topics.getTopic(contentId) }
+                setCommentParams(contentId)
 
                 emit(Response.Success(news.await().mapper(comments)))
             } catch (e: Throwable) {
