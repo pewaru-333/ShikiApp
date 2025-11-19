@@ -15,6 +15,8 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.flow
 import org.application.shikiapp.network.cache.CacheEntry
 import org.application.shikiapp.network.cache.CacheManager
 
@@ -62,47 +64,33 @@ suspend inline fun <reified T> HttpClient.requestWithCache(
 }
 
 @OptIn(ApolloExperimental::class)
-suspend fun <QueryData : Query.Data, MappedData> ApolloClient.requestWithCache(
+fun <D : Query.Data, T> ApolloClient.cachedQueryFlow(
+    query: Query<D>,
     cacheKey: String,
-    queryBuilder: (etag: String?) -> Query<QueryData>,
-    dataSelector: (QueryData) -> MappedData
-): MappedData {
-    val cachedEntry = CacheManager.get<MappedData>(cacheKey)
-    val response = query(queryBuilder(cachedEntry?.etag))
+    mapData: (D) -> T?
+): Flow<T> = flow {
+    val cachedEntry = CacheManager.get<T>(cacheKey)
+
+    if (cachedEntry != null) {
+        emit(cachedEntry.data)
+    }
+
+    val response = query(query)
         .addHttpHeader(HttpHeaders.IfNoneMatch, cachedEntry?.etag.orEmpty())
         .execute()
 
-    val httpInfo = response.executionContext[HttpInfo.Key] ?: throw DefaultApolloException("No info for key $cacheKey")
+    val httpInfo = response.executionContext[HttpInfo] ?: throw DefaultApolloException()
 
-    when (httpInfo.statusCode) {
-        HttpStatusCode.NotModified.value -> if (cachedEntry != null) {
-            return cachedEntry.data
-        } else {
-            throw IllegalStateException("304 NotModified, but no cache for ($cacheKey)!")
-        }
+    if (response.data != null) {
+        val newEtag = httpInfo.headers.get(HttpHeaders.ETag)
 
-        HttpStatusCode.OK.value -> {
-            val data = dataSelector(response.dataOrThrow())
-            val newEtag = httpInfo.headers.get(HttpHeaders.ETag)
+        if (cachedEntry?.etag != newEtag) {
+            val newData = mapData(response.data!!)
 
-            CacheManager.put(cacheKey, CacheEntry(data, newEtag))
-
-            return data
-        }
-
-        else -> {
-            throw DefaultApolloException("GraphQL call for key $cacheKey error with ${httpInfo.statusCode}")
+            if (newData != null) {
+                CacheManager.put(cacheKey, CacheEntry(newData, newEtag))
+                emit(newData)
+            }
         }
     }
 }
-
-@OptIn(ApolloExperimental::class)
-suspend fun <QueryData : Query.Data, MappedData> ApolloClient.requestWithCache(
-    cacheKey: String,
-    query: Query<QueryData>,
-    dataSelector: (QueryData) -> MappedData
-): MappedData = requestWithCache(
-    cacheKey = cacheKey,
-    queryBuilder = { _ -> query },
-    dataSelector = dataSelector
-)
