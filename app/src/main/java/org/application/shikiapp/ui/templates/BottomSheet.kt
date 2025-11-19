@@ -55,9 +55,9 @@ fun BottomSheet(
             headlineContent = {
                 Text(
                     text = stringResource(
-                        when (val data = rate) {
+                        id = when (rate) {
                             AsyncData.Loading -> R.string.text_loading
-                            is AsyncData.Success -> if (data.data == null) R.string.text_add_rate
+                            is AsyncData.Success -> if (rate.data == null) R.string.text_add_rate
                             else R.string.text_change_rate
                         }
                     )
@@ -79,20 +79,20 @@ fun BottomSheet(
             headlineContent = {
                 Text(
                     text = stringResource(
-                        when (val data = favoured) {
+                        id = when (favoured) {
                             AsyncData.Loading -> R.string.text_loading
-                            is AsyncData.Success -> if (data.data) R.string.text_remove_fav
+                            is AsyncData.Success -> if (favoured.data) R.string.text_remove_fav
                             else R.string.text_add_fav
                         }
                     )
                 )
             },
             leadingContent = {
-                when (val data = favoured) {
+                when (favoured) {
                     AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
                     is AsyncData.Success -> VectorIcon(
                         resId = R.drawable.vector_favorite,
-                        tint = if (data.data) Color.Red else LocalContentColor.current
+                        tint = if (favoured.data) Color.Red else LocalContentColor.current
                     )
                 }
             }
@@ -158,20 +158,20 @@ fun BottomSheet(
             headlineContent = {
                 Text(
                     text = stringResource(
-                        when (val data = favoured) {
+                        id = when (favoured) {
                             AsyncData.Loading -> R.string.text_loading
-                            is AsyncData.Success -> if (data.data) R.string.text_remove_fav
+                            is AsyncData.Success -> if (favoured.data) R.string.text_remove_fav
                             else R.string.text_add_fav
                         }
                     )
                 )
             },
             leadingContent = {
-                when (val data = favoured) {
+                when (favoured) {
                     AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
                     is AsyncData.Success -> VectorIcon(
                         resId = R.drawable.vector_favorite,
-                        tint = if (data.data) Color.Red else LocalContentColor.current
+                        tint = if (favoured.data) Color.Red else LocalContentColor.current
                     )
                 }
             }

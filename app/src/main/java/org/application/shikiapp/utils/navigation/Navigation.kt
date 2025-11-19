@@ -171,27 +171,24 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
 
 @Composable
 private fun BottomNavigationBar(selected: (route: KClass<*>) -> Boolean, onClick: (Screen) -> Unit) =
-        NavigationBar {
-            Menu.entries.forEach { screen ->
-                NavigationBarItem(
-                    selected = selected(screen.route::class),
-                    alwaysShowLabel = false,
-                    icon = { Icon(painterResource(screen.icon), null) },
-                    onClick = { onClick(screen.route) },
-                    label = {
-                        Text(
-                            text = stringResource(screen.title),
-                            softWrap = false,
-//                            style = LocalTextStyle.current.copy(
-//                                color = LocalContentColor.current
-//                            ),
-                            autoSize = TextAutoSize.StepBased(
-                                minFontSize = 1.sp,
-                                maxFontSize = LocalTextStyle.current.fontSize,
-                                stepSize = (0.1).sp
-                            )
+    NavigationBar {
+        Menu.entries.forEach { screen ->
+            NavigationBarItem(
+                selected = selected(screen.route::class),
+                alwaysShowLabel = false,
+                icon = { Icon(painterResource(screen.icon), null) },
+                onClick = { onClick(screen.route) },
+                label = {
+                    Text(
+                        text = stringResource(screen.title),
+                        softWrap = false,
+                        autoSize = TextAutoSize.StepBased(
+                            minFontSize = 1.sp,
+                            maxFontSize = LocalTextStyle.current.fontSize,
+                            stepSize = (0.5).sp
                         )
-                    }
-                )
-            }
+                    )
+                }
+            )
         }
+    }

@@ -46,6 +46,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
@@ -71,7 +72,7 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
     val response by model.response.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
-    val tabs = listOf(stringResource(R.string.text_featured), stringResource(R.string.text_schedule))
+    val tabs = arrayOf(stringResource(R.string.text_featured), stringResource(R.string.text_schedule))
     val pagerState = rememberPagerState(pageCount = tabs::size)
 
     var showFullUpdates by rememberSaveable {
@@ -130,8 +131,8 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
         }
     }
 
-    if (response is Response.Success) {
-        val topics = (response as Response.Success<AnimeCalendar>).data.updates.collectAsLazyPagingItems()
+    (response as? Response.Success)?.let { success ->
+        val topics = success.data.updates.collectAsLazyPagingItems()
 
         AnimeUpdatesFull(
             updates = topics,
@@ -226,7 +227,7 @@ private fun Updates(updates: LazyPagingItems<Content>, onShow: () -> Unit, onNav
 
     if (updates.loadState.refresh is LoadState.Loading) LoadingScreen()
     else LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(updates.itemCount.coerceAtMost(12)) { index ->
+        items(updates.itemCount.coerceAtMost(12), updates.itemKey(Content::id)) { index ->
             updates[index]?.let { anime ->
                 CalendarOngoingCard(
                     title = anime.title,
@@ -262,7 +263,7 @@ private fun AnimeUpdatesFull(
     ) { values ->
         if (updates.loadState.refresh is LoadState.Loading) LoadingScreen()
         else LazyColumn(contentPadding = values) {
-            items(updates.itemCount) { index ->
+            items(updates.itemCount, updates.itemKey(Content::id)) { index ->
                 updates[index]?.let { anime ->
                     CatalogCardItem(
                         title = anime.title,
@@ -270,50 +271,11 @@ private fun AnimeUpdatesFull(
                         season = anime.season,
                         status = anime.status,
                         image = anime.poster,
-                        onClick = { onNavigate(Screen.Anime(anime.id)) },
-                        score = anime.score
+                        score = anime.score,
+                        onClick = { onNavigate(Screen.Anime(anime.id)) }
                     )
                 }
             }
         }
     }
 }
-
-//@Composable
-//private fun Schedule(data: Success, onNavigate: (Screen) -> Unit) =
-//    LazyColumn(
-//        contentPadding = PaddingValues(8.dp, 16.dp),
-//        verticalArrangement = Arrangement.spacedBy(16.dp)
-//    ) {
-//        items(data.calendar) { (date, list) ->
-//            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-//                ParagraphTitle(date)
-//                LazyRow(
-//                    modifier = Modifier.fillMaxWidth(),
-//                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-//                ) {
-//                    items(list) { (_, _, _, anime) ->
-//                        Column(
-//                            modifier = Modifier
-//                                .width(122.dp)
-//                                .clickable { onNavigate(Screen.Anime(anime.id.toString())) },
-//                        ) {
-//                            RoundedRelatedPoster(anime.image.original, ContentScale.FillBounds)
-//                            Text(
-//                                text = anime.russian?.ifEmpty(anime::name) ?: BLANK,
-//                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-//                                textAlign = TextAlign.Center,
-//                                maxLines = 3,
-//                                minLines = 3,
-//                                overflow = TextOverflow.Ellipsis,
-//                                style = MaterialTheme.typography.titleSmall,
-//                                modifier = Modifier
-//                                    .fillMaxWidth()
-//                                    .padding(4.dp)
-//                            )
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }

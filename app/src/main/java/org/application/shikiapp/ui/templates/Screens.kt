@@ -23,12 +23,16 @@ fun <T> AnimatedScreen(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable (T) -> Unit
-) = Crossfade(response, modifier) { targetState ->
-    when (val data = targetState) {
-        is Response.Error -> ErrorScreen(onRetry)
-        is Response.Loading -> LoadingScreen()
-        is Response.Success -> content(data.data)
-        else -> Unit
+) = if (response is Response.Success) {
+    content(response.data)
+} else {
+    Crossfade(response, modifier) { targetState ->
+        when (targetState) {
+            is Response.Error -> ErrorScreen(onRetry)
+            is Response.Loading -> LoadingScreen()
+            is Response.Success -> content(targetState.data)
+            else -> Unit
+        }
     }
 }
 

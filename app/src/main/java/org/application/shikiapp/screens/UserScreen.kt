@@ -238,6 +238,12 @@ fun UserView(
         }
     }
 
+    LaunchedEffect(state.showDialogs) {
+        if (!state.showDialogs) {
+            mailManager.getUnreadMessages()
+        }
+    }
+
     Comments(
         list = comments,
         listState = listState,
@@ -247,17 +253,11 @@ fun UserView(
     )
 
     DialogMail(
+        mailManager = mailManager,
         dialogs = dialogs,
         news = news,
         notifications = notifications,
-        loadData = mailManager::loadData,
         visible = state.showDialogs,
-        onShowDeleteAll = mailManager::showDialogDeleteAll,
-        onPickTab = mailManager::pickTab,
-        getDialog = mailManager::getDialog,
-        markAllRead = mailManager::markAllRead,
-        onMarkRead = mailManager::markRead,
-        onDelete = mailManager::deleteMessage,
         onNavigate = onNavigate,
         onHide = { onEvent(ContentDetailEvent.User.ToggleDialog(null)) }
     )
@@ -348,7 +348,7 @@ private fun TopBarActions(
                                         contentColor = MaterialTheme.colorScheme.onErrorContainer,
                                         content = {
                                             Text(
-                                                text = if (it >= 100) "!" else "$it",
+                                                text = if (it >= 10) "!" else "$it",
                                                 autoSize = TextAutoSize.StepBased(
                                                     minFontSize = 10.sp,
                                                     maxFontSize = 11.sp,
@@ -399,23 +399,17 @@ private fun TopBarActions(
 
 @Composable
 private fun DialogMail(
+    mailManager: UserViewModel.MailManager,
     dialogs: Response<List<Dialog>, Throwable>,
     news: LazyPagingItems<Message>,
     notifications: LazyPagingItems<Message>,
     visible: Boolean,
     onHide: () -> Unit,
-    loadData: () -> Unit,
-    onPickTab: (MessageType) -> Unit,
-    onMarkRead: (Long, Int) -> Unit,
-    onDelete: (Long) -> Unit,
-    markAllRead: (List<Message>) -> Unit,
-    onShowDeleteAll: () -> Unit,
-    getDialog: (Long, String, String) -> Unit,
     onNavigate: (Screen) -> Unit,
 ) {
     LaunchedEffect(visible) {
         if (visible) {
-            loadData()
+           mailManager.loadData()
         }
     }
 
@@ -430,7 +424,7 @@ private fun DialogMail(
         fun onScroll(page: Int) {
             scope.launch {
                 pagerState.animateScrollToPage(page)
-                onPickTab(MessageType.tabs[page])
+                mailManager.pickTab(MessageType.tabs[page])
             }
         }
 
@@ -450,11 +444,13 @@ private fun DialogMail(
                     navigationIcon = { NavigationIcon(onHide) },
                     actions = {
                         if (pagerState.currentPage > 0) {
-                            IconButton(onShowDeleteAll) { VectorIcon(R.drawable.vector_trash) }
                             IconButton(
-                                content = { VectorIcon(R.drawable.vector_check) } ,
+                                onClick = { mailManager.showDialogDeleteAll() },
+                                content = { VectorIcon(R.drawable.vector_trash) })
+                            IconButton(
+                                content = { VectorIcon(R.drawable.vector_check) },
                                 onClick = {
-                                    markAllRead(
+                                    mailManager.markAllRead(
                                         if (pagerState.currentPage == 1) news.itemSnapshotList.items
                                         else notifications.itemSnapshotList.items
                                     )
@@ -490,22 +486,22 @@ private fun DialogMail(
                     when (page) {
                         0 -> DialogList(
                             dialogs = dialogs,
-                            getDialog = getDialog,
-                            loadData = loadData
+                            getDialog = mailManager::getDialog,
+                            loadData = mailManager::loadData
                         )
 
                         1 -> Messages(
                             list = news,
                             onNavigate = onNavigate,
-                            onMarkRead = onMarkRead,
-                            onDelete = onDelete
+                            onMarkRead = mailManager::markRead,
+                            onDelete = mailManager::deleteMessage
                         )
 
                         2 -> Notifications(
                             list = notifications,
                             onNavigate = onNavigate,
-                            onMarkRead = onMarkRead,
-                            onDelete = onDelete
+                            onMarkRead = mailManager::markRead,
+                            onDelete = mailManager::deleteMessage
                         )
                     }
                 }
@@ -562,11 +558,7 @@ private fun UserDialog(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .border(
-                                    (0.5).dp,
-                                    MaterialTheme.colorScheme.onTertiaryContainer,
-                                    CircleShape
-                                )
+                                .border((0.5).dp, MaterialTheme.colorScheme.onTertiaryContainer, CircleShape)
                         ) {
                             val state by painter.state.collectAsStateWithLifecycle()
                             if (state is AsyncImagePainter.State.Success) {

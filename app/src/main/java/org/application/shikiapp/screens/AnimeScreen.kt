@@ -14,22 +14,22 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.lazy.grid.itemsIndexed
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.lazy.staggeredgrid.items
-import androidx.compose.foundation.lazy.staggeredgrid.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -47,7 +47,6 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -326,7 +325,7 @@ private fun AnimeView(
                     }
                 }
             }
-            anime.videos.let {
+            anime.video.let {
                 if (it.isNotEmpty()) {
                     item {
                         Video(
@@ -405,9 +404,9 @@ private fun AnimeView(
     )
 
     Video(
-        list = anime.videos,
+        video = anime.videoGrouped,
         visible = state.showVideo,
-        hide = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) }
+        onHide = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) }
     )
 
     when {
@@ -468,11 +467,7 @@ fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> U
     Box(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                MaterialTheme.shapes.medium
-            )
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
             .clickable(
                 enabled = onClick != null,
                 onClick = { onClick?.invoke() }
@@ -486,9 +481,8 @@ fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> U
                     .height(56.dp)
                     .padding(12.dp, 8.dp),
             ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
+                VectorIcon(
+                    resId = icon,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Column {
@@ -518,9 +512,8 @@ fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> U
                     .height(56.dp)
                     .padding(10.dp, 6.dp),
             ) {
-                Icon(
-                    painter = painterResource(icon),
-                    contentDescription = null,
+                VectorIcon(
+                    resId = icon,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
@@ -560,7 +553,7 @@ private fun Video(list: List<Video>, show: () -> Unit, uri: UriHandler = LocalUr
             IconButton(show) { VectorIcon(R.drawable.vector_arrow_forward) }
         }
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
-            items(list.take(3)) {
+            items(list, Video::url) {
                 AsyncImage(
                     model = it.imageUrl,
                     contentDescription = null,
@@ -593,19 +586,20 @@ private fun Screenshots(
             )
         }
     ) { values ->
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Adaptive(100.dp),
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalItemSpacing = 2.dp,
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(100.dp),
+            contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 8.dp),
+            verticalArrangement = spacedBy(2.dp),
             horizontalArrangement = spacedBy(2.dp)
         ) {
-            itemsIndexed(list) { index, item ->
+            itemsIndexed(items = list, key = { _, item -> item }) { index, item ->
                 AsyncImage(
                     model = item,
                     contentDescription = null,
-                    contentScale = ContentScale.FillBounds,
+                    contentScale = ContentScale.Crop,
                     modifier = Modifier
-                        .height(80.dp)
+                        .fillMaxWidth()
+                        .aspectRatio(16f / 9f)
                         .clickable { showScreenshot(index) }
                 )
             }
@@ -614,52 +608,51 @@ private fun Screenshots(
 }
 
 @Composable
-private fun Video(
-    list: List<Video>,
-    visible: Boolean,
-    hide: () -> Unit,
-    handler: UriHandler = LocalUriHandler.current,
-) = AnimatedVisibility(
-    visible = visible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    BackHandler(visible, hide)
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(text_video)) },
-                navigationIcon = { NavigationIcon(hide) }
-            )
-        }
-    ) { values ->
-        LazyVerticalStaggeredGrid(
-            columns = StaggeredGridCells.Fixed(2),
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
-            horizontalArrangement = SpaceBetween,
-            verticalItemSpacing = 12.dp
-        ) {
-            VideoKind.entries.forEach { entry ->
-                if (list.any { it.kind in entry.kinds })
-                    item(span = StaggeredGridItemSpan.FullLine) {
+private fun Video(video: Map<VideoKind, List<Video>>, visible: Boolean, onHide: () -> Unit) =
+    AnimatedVisibility(
+        visible = visible,
+        enter = slideInHorizontally(initialOffsetX = { it }),
+        exit = slideOutHorizontally(targetOffsetX = { it })
+    ) {
+        val handler = LocalUriHandler.current
+
+        BackHandler(visible, onHide)
+        Scaffold(
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(text_video)) },
+                    navigationIcon = { NavigationIcon(onHide) }
+                )
+            }
+        ) { values ->
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(120.dp),
+                contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
+                horizontalArrangement = spacedBy(8.dp),
+                verticalArrangement = spacedBy(12.dp)
+            ) {
+                video.filterValues { it.isNotEmpty() }.forEach { (entry, values) ->
+                    item(entry.name, { GridItemSpan(maxLineSpan) }) {
                         ParagraphTitle(stringResource(entry.title), Modifier.padding(bottom = 4.dp))
                     }
 
-                items(list.filter { it.kind in entry.kinds }.sortedBy(Video::name)) {
-                    Column(verticalArrangement = spacedBy(4.dp)) {
-                        AsyncImage(
-                            model = it.imageUrl,
-                            contentDescription = null,
-                            modifier = Modifier
-                                .size(172.dp, 130.dp)
-                                .clip(MaterialTheme.shapes.small)
-                                .clickable { handler.openUri(it.url) }
-                        )
-                        it.name?.let {
+                    items(values, Video::url) { video ->
+                        Column(verticalArrangement = spacedBy(4.dp)) {
+                            AsyncImage(
+                                model = video.imageUrl,
+                                contentDescription = null,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(172f / 130f)
+                                    .clip(MaterialTheme.shapes.small)
+                                    .clickable { handler.openUri(video.url) }
+                            )
                             Text(
-                                text = it,
-                                modifier = Modifier.size(172.dp, 40.dp),
+                                text = video.name ?: stringResource(R.string.text_unknown),
+                                modifier = Modifier.fillMaxWidth(),
                                 textAlign = TextAlign.Center,
+                                minLines = 2,
                                 maxLines = 2,
                                 overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.titleSmall
@@ -670,4 +663,3 @@ private fun Video(
             }
         }
     }
-}

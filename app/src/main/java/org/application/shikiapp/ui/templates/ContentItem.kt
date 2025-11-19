@@ -3,6 +3,8 @@ package org.application.shikiapp.ui.templates
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -23,6 +25,7 @@ import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -60,15 +63,16 @@ fun CatalogCardItem(
     onClick: () -> Unit
 ) = Row(
     modifier = modifier
+        .fillMaxWidth()
         .clickable(onClick = onClick)
         .padding(8.dp)
 ) {
     Box(
         modifier = Modifier
-            .width(120.dp)
+            .width(110.dp)
             .aspectRatio(2f / 3f)
             .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
+            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
     ) {
         AsyncImage(
             model = image,
@@ -80,13 +84,13 @@ fun CatalogCardItem(
         if (score != null) {
             Surface(
                 shape = MaterialTheme.shapes.small,
-                color = MaterialTheme.colorScheme.surface.copy(alpha = 0.8f),
+                color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.95f),
                 tonalElevation = 4.dp,
                 modifier = Modifier
                     .align(Alignment.TopEnd)
-                    .padding(8.dp)
+                    .padding(6.dp)
             ) {
-                Row(Modifier.padding(6.dp, 4.dp), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
+                Row(Modifier.padding(6.dp, 2.dp), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
                     VectorIcon(
                         resId = R.drawable.vector_star,
                         tint = Color(0xFFFFC319),
@@ -94,7 +98,7 @@ fun CatalogCardItem(
                     )
                     Text(
                         text = score,
-                        style = MaterialTheme.typography.bodySmall.copy(
+                        style = MaterialTheme.typography.labelMedium.copy(
                             color = MaterialTheme.colorScheme.onSurface,
                             fontWeight = FontWeight.Bold
                         )
@@ -104,40 +108,40 @@ fun CatalogCardItem(
         }
     }
 
-    Spacer(Modifier.width(12.dp))
+    Spacer(Modifier.width(16.dp))
 
     Column(Modifier.weight(1f), Arrangement.spacedBy(4.dp)) {
         Text(
             text = title,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
             maxLines = 3,
-            overflow = TextOverflow.Ellipsis
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.titleMedium.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                fontWeight = FontWeight.Bold
+            )
         )
 
         Text(
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.Medium
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.bodySmall.copy(
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             ),
             text = buildString {
                 append(stringResource(kind.title))
-
-                season.asString().let {
-                    if (it.isNotEmpty()) {
-                        append(" · $it")
-                    }
-                }
-
-                relationText?.let {
-                    append(" · $it")
-                }
+                season.asString().let { if (it.isNotEmpty()) append(" · $it") }
+                relationText?.let { append(" · $it") }
             }
         )
 
-        Surface(Modifier, MaterialTheme.shapes.small, status.backgroundColor) {
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = status.backgroundColor,
+            modifier = Modifier.padding(top = 6.dp)
+        ) {
             Text(
                 text = stringResource(status.getTitle(kind)),
-                modifier = Modifier.padding(8.dp, 4.dp),
+                modifier = Modifier.padding(10.dp, 4.dp),
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = status.textColor,
                     fontWeight = FontWeight.SemiBold,
@@ -311,10 +315,11 @@ fun UserGridItem(title: String, imageUrl: String?, onClick: () -> Unit) =
     }
 
 @Composable
-fun BasicContentItem(name: String, link: String?, modifier: Modifier = Modifier) =
+fun BasicContentItem(name: String, link: String?, modifier: Modifier = Modifier, roles: String? = null) =
     ListItem(
-        headlineContent = { Text(name) },
         modifier = modifier,
+        headlineContent = { Text(name) },
+        supportingContent = { roles?.let { Text(it) } },
         leadingContent = {
             AsyncImage(
                 model = link,
@@ -394,12 +399,16 @@ fun CalendarOngoingCard(title: String, score: String?, poster: String, onNavigat
     }
 
 @Composable
-fun RelatedCard(title: String, poster: String, relationText: String, onClick: () -> Unit) =
+fun RelatedCard(title: String, poster: String, relationText: String, interactionSource: MutableInteractionSource, onClick: () -> Unit) =
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
             .width(120.dp)
-            .clickable(onClick = onClick)
+            .clickable(
+                interactionSource = interactionSource,
+                indication = null,
+                onClick = onClick
+            )
     ) {
         Box(
             modifier = Modifier
@@ -410,7 +419,9 @@ fun RelatedCard(title: String, poster: String, relationText: String, onClick: ()
                 model = poster,
                 contentDescription = title,
                 contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
+                modifier = Modifier
+                    .fillMaxSize()
+                    .indication(interactionSource, ripple())
             )
 
             Box(
@@ -427,20 +438,8 @@ fun RelatedCard(title: String, poster: String, relationText: String, onClick: ()
             )
 
             Text(
+                text = relationText.uppercase().replace(" ", "\n"),
                 maxLines = relationText.split(" ").size.coerceAtMost(3),
-                text = buildString {
-                    relationText.uppercase().let { text ->
-                        text.split(" ").let { words ->
-                            if (words.size == 1) {
-                                append(words.first())
-                            } else {
-                                words.forEach { word ->
-                                    append("$word\n")
-                                }
-                            }
-                        }
-                    }
-                },
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = Color.White,
                     fontWeight = FontWeight.Bold,

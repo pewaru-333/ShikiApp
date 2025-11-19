@@ -14,6 +14,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.indication
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -51,6 +53,7 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -58,6 +61,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
@@ -104,13 +108,19 @@ import kotlin.math.roundToInt
 
 @Composable
 fun Description(description: AnnotatedString, withDivider: Boolean = true) {
-    val hasSpoiler = description.text.contains("спойлер", ignoreCase = true)
-    val mainText = if (hasSpoiler) description.substringBefore("спойлер") else description
-    val spoilerText = if (hasSpoiler) description.substringAfter("спойлер") else AnnotatedString(BLANK)
+    val hasSpoiler = remember(description) {
+        description.text.contains("спойлер", ignoreCase = true)
+    }
+    val mainText = remember(description, hasSpoiler) {
+        if (hasSpoiler) description.substringBefore("спойлер") else description
+    }
+    val spoilerText = remember(description, hasSpoiler) {
+        if (hasSpoiler) description.substringAfter("спойлер") else AnnotatedString(BLANK)
+    }
 
     var hasOverflow by remember { mutableStateOf(false) }
-    var isVisible by remember { mutableStateOf(false) }
-    var maxLines by remember { mutableIntStateOf(8) }
+    var isVisible by rememberSaveable { mutableStateOf(false) }
+    var maxLines by rememberSaveable { mutableIntStateOf(8) }
 
     val isTextExpanded = !hasOverflow || maxLines > 8
 
@@ -291,13 +301,19 @@ fun Profiles(
         IconButton(onShowFull) { VectorIcon(R.drawable.vector_arrow_forward) }
     }
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-        items(list) {
+        items(list, BasicContent::id) {
+            val interactionSource = remember(::MutableInteractionSource)
+
             Column(
                 verticalArrangement = Arrangement.spacedBy(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .width(72.dp)
-                    .clickable { onNavigate(it.id) }
+                    .clickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onClick = { onNavigate(it.id) }
+                    )
             ) {
                 AsyncImage(
                     model = it.poster,
@@ -308,7 +324,8 @@ fun Profiles(
                     modifier = Modifier
                         .size(72.dp)
                         .clip(CircleShape)
-                        .border((0.4).dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape),
+                        .border((0.4).dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
+                        .indication(interactionSource, ripple())
                 )
 
                 Text(
@@ -326,8 +343,8 @@ fun Profiles(
 }
 
 @Composable
-fun ProfilesFull(
-    list: List<BasicContent>,
+fun <T : BasicContent> ProfilesFull(
+    list: List<T>,
     visible: Boolean,
     title: String,
     state: LazyListState,
@@ -348,11 +365,12 @@ fun ProfilesFull(
         }
     ) { values ->
         LazyColumn(Modifier, state, values) {
-            items(list) {
+            items(list, BasicContent::id) {
                 BasicContentItem(
                     name = it.title,
                     link = it.poster,
-                    modifier = Modifier.clickable { onNavigate(it.id) }
+                    modifier = Modifier.clickable { onNavigate(it.id) },
+                    roles = if (it is Content) it.season.asString() else null
                 )
             }
         }
@@ -375,11 +393,12 @@ fun Related(list: List<Related>, showAllRelated: () -> Unit, onNavigate: (Screen
             horizontalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
-            items(list.take(6)) { related ->
+            items(list.take(6), Related::id) { related ->
                 RelatedCard(
                     title = related.title,
                     poster = related.poster,
                     relationText = related.relationText.ifEmpty { stringResource(related.kind.title) },
+                    interactionSource = remember(::MutableInteractionSource),
                     onClick = { onNavigate(related.linkedType.navigateTo(related.id)) }
                 )
             }
@@ -399,7 +418,7 @@ fun RelatedFull(
     enter = slideInHorizontally(initialOffsetX = { it }),
     exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    val tabs = listOf(
+    val tabs = arrayOf(
         stringResource(R.string.text_directly),
         stringResource(R.string.text_chronology),
         stringResource(R.string.text_franchise)
@@ -582,16 +601,14 @@ fun StatusInfo(@StringRes status: Int, airedOn: String, releasedOn: String) = Co
         modifier = Modifier.horizontalScroll(rememberScrollState()),
         style = MaterialTheme.typography.labelMedium,
         text = buildString {
-            airedOn.let {
-                if (it.isNotEmpty()) {
-                    append(stringResource(R.string.text_date_from, it))
-                }
+            if (airedOn.isNotEmpty()) {
+                append(stringResource(R.string.text_date_from, airedOn))
             }
 
-            releasedOn.let {
-                if (it.isNotEmpty()) {
-                    append(" ${stringResource(R.string.text_date_till, it)}")
-                }
+            if (releasedOn.isNotEmpty()) {
+                if (isNotEmpty()) append(' ')
+
+                append(stringResource(R.string.text_date_till, releasedOn))
             }
         }
     )
@@ -708,33 +725,39 @@ fun Statuses(
 fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate: (Screen) -> Unit) =
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         statistics.first?.let {
-            Statuses(
-                scores = it.scores,
-                sum = it.sum,
-                label = R.string.text_anime_list,
-                content = {
-                    TextButton(
-                        onClick = { onNavigate(Screen.UserRates(id.toString(), LinkedType.ANIME)) },
-                        content = { Text(stringResource(R.string.text_show_all_s)) }
-                    )
-                }
-            )
+            if (it.scores.isNotEmpty()) {
+                Statuses(
+                    scores = it.scores,
+                    sum = it.sum,
+                    label = R.string.text_anime_list,
+                    content = {
+                        TextButton(
+                            onClick = { onNavigate(Screen.UserRates(id.toString(), LinkedType.ANIME)) },
+                            content = { Text(stringResource(R.string.text_show_all_s)) }
+                        )
+                    }
+                )
+            }
+        }
+
+        if (statistics.first?.scores?.isNotEmpty() == true && statistics.second?.scores?.isNotEmpty() == true) {
+            HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
         }
 
         statistics.second?.let {
-            HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
-
-            Statuses(
-                scores = it.scores,
-                sum = it.sum,
-                label = R.string.text_manga_list,
-                content = {
-                    TextButton(
-                        onClick = { onNavigate(Screen.UserRates(id.toString(), LinkedType.MANGA)) },
-                        content = { Text(stringResource(R.string.text_show_all_s)) }
-                    )
-                }
-            )
+            if (it.scores.isNotEmpty()) {
+                Statuses(
+                    scores = it.scores,
+                    sum = it.sum,
+                    label = R.string.text_manga_list,
+                    content = {
+                        TextButton(
+                            onClick = { onNavigate(Screen.UserRates(id.toString(), LinkedType.MANGA)) },
+                            content = { Text(stringResource(R.string.text_show_all_s)) }
+                        )
+                    }
+                )
+            }
         }
     }
 
@@ -806,16 +829,15 @@ fun DialogScreenshot(
         Scaffold(
             topBar = {
                 TopAppBar(
+                    navigationIcon = { NavigationIcon(hide) },
                     title = {
                         Text(
                             text = stringResource(
-                                R.string.text_image_of,
-                                pagerState.currentPage + 1,
-                                list.size
+                                id = R.string.text_image_of,
+                                formatArgs = arrayOf(pagerState.currentPage + 1, list.size)
                             )
                         )
-                    },
-                    navigationIcon = { NavigationIcon(hide) }
+                    }
                 )
             }
         ) { values ->
@@ -882,10 +904,7 @@ fun DialogFavourites(
 
             HorizontalPager(pagerState) { tab ->
                 LazyColumn(Modifier.fillMaxSize(), listStates[tab]) {
-                    items(
-                        favourites.getOrDefault(FavouriteItem.entries[tab], emptyList()),
-                        BasicContent::id
-                    ) {
+                    items(favourites.getOrDefault(FavouriteItem.entries[tab], emptyList()), BasicContent::id) {
                         BasicContentItem(
                             name = it.title,
                             link = it.poster,

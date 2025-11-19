@@ -104,7 +104,7 @@ fun Poster(link: String) = AsyncImage(
 )
 
 @Composable
-fun rememberLoadingEffect(shimmerColor: Color = Color.Companion.LightGray): Brush {
+fun rememberLoadingEffect(shimmerColor: Color = Color.LightGray): Brush {
     val transition = rememberInfiniteTransition()
     val translateAnim = transition.animateFloat(
         initialValue = 0f,
