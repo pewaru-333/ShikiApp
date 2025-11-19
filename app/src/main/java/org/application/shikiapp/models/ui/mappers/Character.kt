@@ -2,7 +2,9 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import androidx.paging.map
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.CharacterListQuery
 import org.application.shikiapp.generated.CharacterQuery
 import org.application.shikiapp.generated.fragment.CharacterRole
@@ -10,6 +12,7 @@ import org.application.shikiapp.models.data.AnimeBasic
 import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.Character
 import org.application.shikiapp.models.data.MangaBasic
+import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
@@ -23,15 +26,15 @@ import org.application.shikiapp.utils.fromHtml
 import org.application.shikiapp.utils.getSeason
 
 object CharacterMapper {
-    fun create(
+    suspend fun create(
         character: Character,
         image: CharacterQuery.Data.Character,
-        comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>
-    ): org.application.shikiapp.models.ui.Character {
+        comments: Flow<PagingData<Comment>>
+    ) = withContext(Dispatchers.Default) {
         val relatedList = character.animes.map(AnimeBasic::toRelated) +
                 character.mangas.map(MangaBasic::toRelated)
 
-        return org.application.shikiapp.models.ui.Character(
+        org.application.shikiapp.models.ui.Character(
             altName = character.altName,
             anime = character.animes.map(AnimeBasic::toContent),
             comments = comments,
@@ -40,7 +43,7 @@ object CharacterMapper {
             id = character.id.toString(),
             japanese = character.japanese,
             manga = character.mangas.map(MangaBasic::toContent),
-            poster = image.poster?.originalUrl ?: BLANK,
+            poster = image.poster?.originalUrl.orEmpty(),
             relatedList = relatedList,
             relatedMap = relatedList.groupBy(Related::linkedType).toSortedMap(),
             russian = character.russian,

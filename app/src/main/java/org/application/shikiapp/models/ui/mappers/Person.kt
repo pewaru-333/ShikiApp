@@ -1,11 +1,14 @@
 package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.PeopleQuery
 import org.application.shikiapp.models.data.BasicInfo
 import org.application.shikiapp.models.data.Person
 import org.application.shikiapp.models.data.Roles
+import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.network.response.AsyncData
@@ -13,12 +16,12 @@ import org.application.shikiapp.utils.enums.LinkedKind
 import org.application.shikiapp.utils.getBirthday
 import org.application.shikiapp.utils.getDeathday
 
-fun Person.mapper(comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>): org.application.shikiapp.models.ui.Person {
-    val works = works.orEmpty().map {
-        it.anime?.toRelated(it.role.orEmpty()) ?: it.manga!!.toRelated(it.role.orEmpty())
+suspend fun Person.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dispatchers.Default) {
+    val works = works.orEmpty().mapNotNull {
+        it.anime?.toRelated(it.role.orEmpty()) ?: it.manga?.toRelated(it.role.orEmpty())
     }
 
-    return org.application.shikiapp.models.ui.Person(
+    org.application.shikiapp.models.ui.Person(
         birthday = getBirthday(birthday),
         characters = roles.orEmpty().flatMap(Roles::characters).map(BasicInfo::toBasicContent),
         comments = comments,
@@ -40,7 +43,7 @@ fun Person.mapper(comments: Flow<PagingData<org.application.shikiapp.models.ui.C
         relatedMap = works.groupBy(Related::linkedType).toSortedMap(),
         russian = russian,
         url = url,
-        website = website,
+        website = website
     )
 }
 

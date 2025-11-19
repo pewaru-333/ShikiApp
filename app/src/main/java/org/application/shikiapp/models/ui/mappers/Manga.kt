@@ -28,7 +28,6 @@ import org.application.shikiapp.utils.convertDate
 import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
 import org.application.shikiapp.utils.enums.LinkedType
-import org.application.shikiapp.utils.enums.RelationKind
 import org.application.shikiapp.utils.enums.Status
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
@@ -68,22 +67,7 @@ object MangaMapper {
         description = fromHtml(main.descriptionHtml),
         favoured = AsyncData.Success(favoured),
         franchise = main.franchise.orEmpty(),
-        franchiseList = franchise.let {
-            it.links.filter { it.sourceId == franchise.currentId }.map { link ->
-                it.nodes.associateBy { it.id } [link.targetId].let { node ->
-                    org.application.shikiapp.models.ui.Franchise(
-                        id = node?.id.toString(),
-                        title = node?.name.orEmpty(),
-                        poster = node?.imageUrl.orEmpty(),
-                        year = getSeason(node?.year, node?.kind),
-                        kind = Enum.safeValueOf<Kind>(node?.kind),
-                        relationType = Enum.safeValueOf<RelationKind>(link.relation),
-                        linkedType = if (node?.url?.contains("/animes") == true) LinkedType.ANIME
-                        else LinkedType.MANGA
-                    )
-                }
-            }
-        }.groupBy { it.relationType }.apply { entries.sortedBy { it.key.order } },
+        franchiseList = franchise.toMappedList(),
         genres = main.genres?.map(MangaMainQuery.Data.Manga.Genre::russian),
         id = main.id,
         isOngoing = Status.ONGOING.safeEquals(main.status?.rawValue),
@@ -96,10 +80,10 @@ object MangaMapper {
             .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS.keys }
             .map(MangaMainQuery.Data.Manga.ExternalLink::mapper),
         personAll = extra.personRoles.orEmpty()
-            .map(MangaExtraQuery.Data.Manga.PersonRole::toBasicContent),
+            .map(MangaExtraQuery.Data.Manga.PersonRole::toContent),
         personMain = extra.personRoles.orEmpty()
             .filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }
-            .map(MangaExtraQuery.Data.Manga.PersonRole::toBasicContent),
+            .map(MangaExtraQuery.Data.Manga.PersonRole::toContent),
         poster = main.poster?.originalUrl.orEmpty(),
         publisher = main.publishers.firstOrNull()?.let {
             Publisher(
@@ -124,12 +108,7 @@ object MangaMapper {
                 Statistics(
                     sum = statuses.sumOf { it.count },
                     scores = statuses.associate {
-                        StringResource(
-                            getWatchStatus(
-                                it.status.rawValue,
-                                LinkedType.MANGA
-                            )
-                        ) to it.count.toString()
+                        StringResource(getWatchStatus(it.status.rawValue, LinkedType.MANGA)) to it.count.toString()
                     }
                 )
             }
@@ -141,7 +120,7 @@ object MangaMapper {
                 UserRate(
                     id = it.id.toLong(),
                     contentId = main.id,
-                    title = main.russian.orEmpty().ifEmpty(main::name),
+                    title = main.russian ?: main.name,
                     poster = main.poster?.originalUrl.orEmpty(),
                     kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                     score = it.score,
@@ -164,6 +143,11 @@ object MangaMapper {
         volumes = main.volumes.toString()
     )
 }
+
+data class MangaResponse(
+    val main: MangaMainQuery.Data.Manga,
+    val extra: MangaExtraQuery.Data.Manga
+)
 
 fun MangaListQuery.Data.Manga.mapper() = Content(
     id = id,

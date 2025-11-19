@@ -2,12 +2,15 @@ package org.application.shikiapp.models.ui.mappers
 
 import androidx.paging.PagingData
 import androidx.paging.map
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.UsersQuery
 import org.application.shikiapp.models.data.ClubBasic
 import org.application.shikiapp.models.data.User
 import org.application.shikiapp.models.data.UserBasic
+import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.History
 import org.application.shikiapp.models.ui.Statistics
 import org.application.shikiapp.models.ui.list.BasicContent
@@ -17,54 +20,60 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.fromHtml
 import org.application.shikiapp.utils.getWatchStatus
 
-fun User.mapper(
+suspend fun User.mapper(
     clubs: List<ClubBasic>,
-    comments: Flow<PagingData<org.application.shikiapp.models.ui.Comment>>,
+    comments: Flow<PagingData<Comment>>,
     friends: Flow<PagingData<UserBasic>>,
     history: Flow<PagingData<History>>,
     favourites: Map<FavouriteItem, List<BasicContent>>
-) = org.application.shikiapp.models.ui.User(
-    about = fromHtml(aboutHtml),
-    avatar = image.x160,
-    clubs = clubs.map {
-        BasicContent(
-            id = it.id.toString(),
-            title = it.name,
-            poster = it.logo.original.orEmpty()
-        )
-    },
-    comments = comments,
-    commonInfo = fromHtml(commonInfo.joinToString(" / ")),
-    favourites = favourites,
-    friends = friends.map { list ->
-        list.map {
+) = withContext(Dispatchers.Default) {
+    org.application.shikiapp.models.ui.User(
+        about = fromHtml(aboutHtml),
+        avatar = image.x160,
+        clubs = clubs.map {
             BasicContent(
                 id = it.id.toString(),
-                title = it.nickname,
-                poster = it.image.x148
+                title = it.name,
+                poster = it.logo.original.orEmpty()
             )
-        }
-    },
-    history = history,
-    id = id,
-    inFriends = inFriends == true,
-    lastOnline = lastOnline.orEmpty(),
-    nickname = nickname,
-    stats = Pair(
-        first = Statistics(
-            sum = stats.statuses.anime.sumOf { it.size.toInt() },
-            scores = stats.statuses.anime.associate {
-                ResourceText.StringResource(getWatchStatus(it.name, LinkedType.ANIME)) to it.size.toString()
+        },
+        comments = comments,
+        commonInfo = fromHtml(commonInfo.joinToString(" / ")),
+        favourites = favourites,
+        friends = friends.map { list ->
+            list.map {
+                BasicContent(
+                    id = it.id.toString(),
+                    title = it.nickname,
+                    poster = it.image.x148
+                )
             }
-        ),
-        second = Statistics(
-            sum = stats.statuses.manga.sumOf { it.size.toInt() },
-            scores = stats.statuses.manga.associate {
-                ResourceText.StringResource(getWatchStatus(it.name, LinkedType.MANGA)) to it.size.toString()
-            }
+        },
+        history = history,
+        id = id,
+        inFriends = inFriends == true,
+        lastOnline = lastOnline.orEmpty(),
+        nickname = nickname,
+        stats = Pair(
+            first = Statistics(
+                sum = stats.statuses.anime.sumOf { it.size.toInt() },
+                scores = stats.statuses.anime.associate {
+                    ResourceText.StringResource(
+                        getWatchStatus(it.name, LinkedType.ANIME)
+                    ) to it.size.toString()
+                }
+            ),
+            second = Statistics(
+                sum = stats.statuses.manga.sumOf { it.size.toInt() },
+                scores = stats.statuses.manga.associate {
+                    ResourceText.StringResource(
+                        getWatchStatus(it.name, LinkedType.MANGA)
+                    ) to it.size.toString()
+                }
+            )
         )
     )
-)
+}
 
 fun UsersQuery.Data.User.toContent() = BasicContent(
     id = id,
