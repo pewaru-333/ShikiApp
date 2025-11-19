@@ -88,11 +88,15 @@ query AnimeMain($id: String!) {
             name
             imageUrl
         }
+        topic {
+            id
+        }
         userRate {
             ...UserRateFragment
         }
         url
         videos {
+            id # для сортировки в списке
             url
             name
             kind
@@ -127,14 +131,6 @@ query AnimeExtra($id: String!) {
         }
         statusesStats {
             ...Stats
-        }
-    }
-}
-
-query AnimeTopic($id: String!) {
-    animes(ids: $id) {
-        topic {
-            id
         }
     }
 }
@@ -205,6 +201,9 @@ query MangaMain($id: String!) {
         releasedOn {
             date
         }
+        topic {
+            id
+        }
         userRate {
             ...UserRateFragment
         }
@@ -242,14 +241,6 @@ query MangaExtra($id: String!) {
     }
 }
 
-query MangaTopic($id: String!) {
-    mangas(ids: $id) {
-        topic {
-            id
-        }
-    }
-}
-
 query MangaGenres {
     genres(entryType: Manga) {
         ...Genres
@@ -269,11 +260,6 @@ query Character($id: [ID!]) {
         poster {
             originalUrl
         }
-    }
-}
-
-query CharacterTopic($id: [ID!]) {
-    characters(ids: $id) {
         topic {
             id
         }

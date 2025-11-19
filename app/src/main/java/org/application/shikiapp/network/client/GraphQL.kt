@@ -1,30 +1,32 @@
 package org.application.shikiapp.network.client
 
 import com.apollographql.apollo.api.Query
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.AnimeAiringQuery
 import org.application.shikiapp.generated.AnimeExtraQuery
 import org.application.shikiapp.generated.AnimeGenresQuery
 import org.application.shikiapp.generated.AnimeListQuery
 import org.application.shikiapp.generated.AnimeMainQuery
 import org.application.shikiapp.generated.AnimeRandomQuery
-import org.application.shikiapp.generated.AnimeTopicQuery
 import org.application.shikiapp.generated.CharacterListQuery
 import org.application.shikiapp.generated.CharacterQuery
-import org.application.shikiapp.generated.CharacterTopicQuery
 import org.application.shikiapp.generated.MangaExtraQuery
 import org.application.shikiapp.generated.MangaGenresQuery
 import org.application.shikiapp.generated.MangaListQuery
 import org.application.shikiapp.generated.MangaMainQuery
-import org.application.shikiapp.generated.MangaTopicQuery
 import org.application.shikiapp.generated.PeopleQuery
 import org.application.shikiapp.generated.UsersQuery
 import org.application.shikiapp.generated.type.OrderEnum
+import org.application.shikiapp.models.ui.mappers.AnimeResponse
+import org.application.shikiapp.models.ui.mappers.MangaResponse
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.models.ui.mappers.toContent
 import org.application.shikiapp.utils.enums.Order
+import org.application.shikiapp.utils.extensions.cachedQueryFlow
 import org.application.shikiapp.utils.extensions.getRandomTrending
 import org.application.shikiapp.utils.extensions.mapToResult
-import org.application.shikiapp.utils.extensions.requestWithCache
 import org.application.shikiapp.utils.getOngoingSeason
 
 object GraphQL {
@@ -44,7 +46,8 @@ object GraphQL {
         studio: String?,
         search: String?
     ) = getList(
-        AnimeListQuery(
+        mapper = { it.animes.map(AnimeListQuery.Data.Anime::mapper) },
+        query = AnimeListQuery(
             page = page,
             limit = limit,
             order = OrderEnum.safeValueOf(order),
@@ -58,37 +61,34 @@ object GraphQL {
             studio = studio,
             search = search
         )
-    ) { it.animes.map(AnimeListQuery.Data.Anime::mapper) }
-
-
-    suspend fun getTrending() = Network.apollo.requestWithCache(
-        cacheKey = "animes_trending",
-        query = AnimeAiringQuery(getOngoingSeason()),
-        dataSelector = { it.animes.map(AnimeAiringQuery.Data.Anime::mapper).getRandomTrending() }
     )
 
-    suspend fun getRandom() = Network.apollo.requestWithCache(
-        cacheKey = "animes_random",
-        query = AnimeRandomQuery(),
-        dataSelector = { it.animes.map(AnimeRandomQuery.Data.Anime::mapper) }
-    )
+    suspend fun getTrending() = Network.apollo.query(AnimeAiringQuery(getOngoingSeason()))
+        .execute()
+        .dataAssertNoErrors
+        .animes
+        .map(AnimeAiringQuery.Data.Anime::mapper)
+        .getRandomTrending()
 
-    suspend fun getAnimeMain(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "anime_main:$id",
-        query = AnimeMainQuery(id),
-        dataSelector = { data -> data.animes.first() }
-    )
+    suspend fun getRandom() = Network.apollo.query(AnimeRandomQuery())
+        .execute()
+        .dataAssertNoErrors
+        .animes
+        .map(AnimeRandomQuery.Data.Anime::mapper)
 
-    suspend fun getAnimeExtra(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "anime_extra:$id",
-        query = AnimeExtraQuery(id),
-        dataSelector = { data -> data.animes.first() }
-    )
 
-    suspend fun getAnimeTopic(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "anime_topic:$id",
-        query = AnimeTopicQuery(id),
-        dataSelector = { data -> data.animes.first() }
+    fun getAnime(id: String) = combine(
+        transform = ::AnimeResponse,
+        flow = Network.apollo.cachedQueryFlow(
+            query = AnimeMainQuery(id),
+            cacheKey = "anime_main:$id",
+            mapData = { data -> data.animes.first() }
+        ),
+        flow2 = Network.apollo.cachedQueryFlow(
+            query = AnimeExtraQuery(id),
+            cacheKey = "anime_extra:$id",
+            mapData = { data -> data.animes.first() }
+        )
     )
 
     fun getAnimeGenres() = Network.apollo.query(AnimeGenresQuery()).toFlow()
@@ -108,7 +108,8 @@ object GraphQL {
         publisher: String?,
         search: String?
     ) = getList(
-        MangaListQuery(
+        mapper = { it.mangas.map(MangaListQuery.Data.Manga::mapper) },
+        query = MangaListQuery(
             page = page,
             limit = limit,
             order = OrderEnum.safeValueOf(order),
@@ -120,24 +121,20 @@ object GraphQL {
             publisher = publisher,
             search = search
         )
-    ) { it.mangas.map(MangaListQuery.Data.Manga::mapper) }
-
-    suspend fun getMangaMain(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "manga_main:$id",
-        query = MangaMainQuery(id),
-        dataSelector = { data -> data.mangas.first() }
     )
 
-    suspend fun getMangaExtra(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "manga_extra:$id",
-        query = MangaExtraQuery(id),
-        dataSelector = { data -> data.mangas.first() }
-    )
-
-    suspend fun getMangaTopic(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "manga_topic:$id",
-        query = MangaTopicQuery(id),
-        dataSelector = { data -> data.mangas.first() }
+    fun getManga(id: String) = combine(
+        transform = ::MangaResponse,
+        flow = Network.apollo.cachedQueryFlow(
+            query = MangaMainQuery(id),
+            cacheKey = "manga_main:$id",
+            mapData = { data -> data.mangas.first() }
+        ),
+        flow2 = Network.apollo.cachedQueryFlow(
+            query = MangaExtraQuery(id),
+            cacheKey = "manga_extra:$id",
+            mapData = { data -> data.mangas.first() }
+        )
     )
 
     fun getMangaGenres() = Network.apollo.query(MangaGenresQuery()).toFlow()
@@ -150,17 +147,11 @@ object GraphQL {
             it.characters.map(CharacterListQuery.Data.Character::mapper)
         }
 
-    suspend fun getCharacter(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "graphql_character:$id",
-        query = CharacterQuery(listOf(id)),
-        dataSelector = { data -> data.characters.first() }
-    )
-
-    suspend fun getCharacterTopic(id: String) = Network.apollo.requestWithCache(
-        cacheKey = "graphql_character_topic:$id",
-        query = CharacterTopicQuery(listOf(id)),
-        dataSelector = { data -> data.characters.first() }
-    )
+    suspend fun getCharacter(id: String) = Network.apollo.query(CharacterQuery(listOf(id)))
+        .execute()
+        .dataAssertNoErrors
+        .characters
+        .first()
 
     suspend fun getPeople(
         page: Int,
@@ -170,7 +161,8 @@ object GraphQL {
         isProducer: Boolean?,
         isMangaka: Boolean?
     ) = getList(
-        PeopleQuery(
+        mapper = { it.people.map(PeopleQuery.Data.Person::mapper) },
+        query = PeopleQuery(
             page = page,
             limit = limit,
             search = search,
@@ -178,23 +170,26 @@ object GraphQL {
             isProducer = isProducer,
             isMangaka = isMangaka
         )
-    ) { it.people.map(PeopleQuery.Data.Person::mapper) }
+    )
 
-    suspend fun getUsers(
-        page: Int,
-        limit: Int,
-        search: String?
-    ) = getList(
-        UsersQuery(
+    suspend fun getUsers(page: Int, limit: Int, search: String?) = getList(
+        mapper = { it.users.map(UsersQuery.Data.User::toContent) },
+        query = UsersQuery(
             page = page,
             limit = limit,
             search = search
         )
-    ) { it.users.map(UsersQuery.Data.User::toContent) }
+    )
 
     private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) =
         try {
-            Network.apollo.query(query).execute().dataOrThrow().let(mapper)
+            val response = Network.apollo.query(query)
+                .execute()
+                .dataAssertNoErrors
+
+            withContext(Dispatchers.Default) {
+                response.let(mapper)
+            }
         } catch (_: Exception) {
             emptyList()
         }
