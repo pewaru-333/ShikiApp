@@ -21,8 +21,10 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.emptyFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
@@ -60,13 +62,14 @@ import org.application.shikiapp.utils.enums.CatalogItem
 import org.application.shikiapp.utils.enums.PeopleFilterItem.MANGAKA
 import org.application.shikiapp.utils.enums.PeopleFilterItem.PRODUCER
 import org.application.shikiapp.utils.enums.PeopleFilterItem.SEYU
+import org.application.shikiapp.utils.extensions.commaJoin
 import org.application.shikiapp.utils.extensions.toggle
 import org.application.shikiapp.utils.navigation.Screen
 import org.application.shikiapp.utils.setScore
+import java.util.concurrent.ConcurrentHashMap
 
 class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
-    private val args: Screen.Catalog
-        get() = saved.toRoute<Screen.Catalog>()
+    private val args by lazy { saved.toRoute<Screen.Catalog>() }
 
     private val _state = MutableStateFlow(CatalogState())
     val state = _state.asStateFlow()
@@ -74,28 +77,40 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     private val _navEvent = Channel<Screen.Catalog>()
     val navEvent = _navEvent.receiveAsFlow().onStart { emit(args) }
 
-    private val filters = CatalogItem.entries.associateWith { MutableStateFlow(FiltersState()) }
-    private val pagers = mutableMapOf<CatalogItem, Flow<PagingData<BasicContent>>>()
+    private val _filters = MutableStateFlow(CatalogItem.entries.associateWith { FiltersState() })
+    private val _flowCache = ConcurrentHashMap<CatalogItem, Flow<PagingData<BasicContent>>>()
 
-    private val _currentFilters = MutableStateFlow(FiltersState())
-    val currentFilters = _currentFilters.stateIn(viewModelScope, SharingStarted.Lazily, FiltersState())
+    val currentFilters = combine(_state, _filters) { state, map ->
+        map[state.menu] ?: FiltersState()
+    }.stateIn(viewModelScope, SharingStarted.Lazily, FiltersState())
 
-    val list = combine(_state, _currentFilters) { state, currentFilters ->
-        pagers.getOrPut(state.menu) {
-            createPagingFlow(state.menu, currentFilters).cachedIn(viewModelScope)
-        }
-    }.flatMapLatest { it }
+    val list = _state
+        .map { it.menu }
+        .distinctUntilChanged()
+        .flatMapLatest(::getOrCreateFlow)
 
     private val genresAnime = GraphQL.getAnimeGenres()
     private val genresManga = GraphQL.getMangaGenres()
-    private val _genres = mapOf(
-        CatalogItem.ANIME to genresAnime,
-        CatalogItem.MANGA to genresManga,
-        CatalogItem.RANOBE to genresManga
-    )
-
-    val genres = _state.flatMapLatest { _genres.getOrDefault(it.menu, emptyFlow()) }
+    val genres = _state
+        .map { it.menu }
+        .distinctUntilChanged()
+        .flatMapLatest { menu ->
+            when (menu) {
+                CatalogItem.ANIME -> genresAnime
+                CatalogItem.MANGA, CatalogItem.RANOBE -> genresManga
+                else -> flowOf(emptyList())
+            }
+        }
         .stateIn(viewModelScope, SharingStarted.Lazily, emptyList())
+
+    private fun getOrCreateFlow(menu: CatalogItem) = _flowCache.getOrPut(menu) {
+        _filters
+            .map { it[menu] ?: FiltersState() }
+            .distinctUntilChanged()
+            .debounce(350L)
+            .flatMapLatest { filters -> createPagingFlow(menu, filters) }
+            .cachedIn(viewModelScope)
+    }
 
     fun showFilters(menu: CatalogItem? = null) = _state.update {
         it.copy(dialogFilter = menu?.dialogFilter)
@@ -106,9 +121,6 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     }
 
     fun pick(menu: CatalogItem) {
-        filters.getValue(_state.value.menu).update { _currentFilters.value }
-        _currentFilters.update { filters.getValue(menu).value }
-
         args.linkedType?.let {
             saved.keys().forEach { key ->
                 saved[key] = null
@@ -118,7 +130,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
         _state.update {
             it.copy(
                 menu = menu,
-                search = _currentFilters.value.title,
+                search = _filters.value.getValue(menu).title,
             )
         }
     }
@@ -140,7 +152,6 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             }
         }
     ).flow
-        .debounce(350L)
         .retryWhen { cause, attempt ->
             cause is ClientRequestException && attempt < 3
         }
@@ -150,13 +161,13 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
-            kind = query.kind.joinToString(","),
-            status = query.status.joinToString(","),
-            season = query.seasonSet.joinToString(","),
+            kind = query.kind.commaJoin(),
+            status = query.status.commaJoin(),
+            season = query.seasonSet.commaJoin(),
             score = setScore(query.status, query.score),
-            duration = query.duration.joinToString(","),
-            rating = query.rating.joinToString(","),
-            genre = query.genres.joinToString(","),
+            duration = query.duration.commaJoin(),
+            rating = query.rating.commaJoin(),
+            genre = query.genres.commaJoin(),
             studio = query.studio,
             search = query.title
         )
@@ -165,11 +176,11 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
-            kind = query.kind.joinToString(","),
-            status = query.status.joinToString(","),
-            season = query.seasonSet.joinToString(","),
+            kind = query.kind.commaJoin(),
+            status = query.status.commaJoin(),
+            season = query.seasonSet.commaJoin(),
             score = setScore(query.status, query.score),
-            genre = query.genres.joinToString(","),
+            genre = query.genres.commaJoin(),
             publisher = query.publisher,
             search = query.title
         )
@@ -178,12 +189,11 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             page = page,
             limit = params.loadSize,
             order = query.order.name.lowercase(),
-            kind = if (query.kind.isNotEmpty()) query.kind.joinToString(",")
-            else listOf(MangaKindEnum.light_novel, MangaKindEnum.novel).joinToString(","),
-            status = query.status.joinToString(","),
-            season = query.seasonSet.joinToString(","),
+            kind = query.kind.ifEmpty { listOf(MangaKindEnum.light_novel, MangaKindEnum.novel) }.commaJoin(),
+            status = query.status.commaJoin(),
+            season = query.seasonSet.commaJoin(),
             score = setScore(query.status, query.score),
-            genre = query.genres.joinToString(","),
+            genre = query.genres.commaJoin(),
             publisher = query.publisher,
             search = query.title
         )
@@ -217,84 +227,83 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     fun onEvent(event: FilterEvent) {
         when (event) {
             FilterEvent.ClearFilters -> {
-                _currentFilters.update { FiltersState() }
+                updateFilters { FiltersState() }
                 _state.update { it.copy(search = BLANK) }
             }
 
-            is SetOrder -> _currentFilters.update {
+            is SetOrder -> updateFilters {
                 it.copy(order = event.order)
             }
 
-            is SetStatus -> _currentFilters.update {
+            is SetStatus -> updateFilters {
                 it.copy(status = it.status.toggle(event.status))
             }
 
-            is SetKind -> _currentFilters.update {
+            is SetKind -> updateFilters {
                 it.copy(kind = it.kind.toggle(event.kind))
             }
 
             is SetSeason -> {
                 when (event) {
-                    is SetSeason.SetStartYear -> _currentFilters.update { it.copy(seasonYearStart = event.year) }
-                    is SetSeason.SetFinalYear -> _currentFilters.update { it.copy(seasonYearFinal = event.year) }
-                    is SetSeason.ToggleSeasonYear -> _currentFilters.update {
+                    is SetSeason.SetStartYear -> updateFilters { it.copy(seasonYearStart = event.year) }
+                    is SetSeason.SetFinalYear -> updateFilters { it.copy(seasonYearFinal = event.year) }
+                    is SetSeason.ToggleSeasonYear -> updateFilters {
                         it.copy(seasonYearSeason = it.seasonYearSeason.toggle(event.yearSeason))
                     }
                 }
+                val current = _filters.value[_state.value.menu] ?: FiltersState()
 
-                val yearStart = _currentFilters.value.seasonYearStart.toIntOrNull() ?: 1900
-                val yearEnd = _currentFilters.value.seasonYearFinal.toIntOrNull() ?: 2100
-                val selectedSeasons = _currentFilters.value.seasonYearSeason
+                val yearStart = current.seasonYearStart.toIntOrNull() ?: 1900
+                val yearEnd = current.seasonYearFinal.toIntOrNull() ?: 2100
+                val selectedSeasons = current.seasonYearSeason
 
                 val seasons = (yearStart..yearEnd).flatMapTo(HashSet()) { year ->
                     if (selectedSeasons.isEmpty()) listOf(year.toString())
                     else selectedSeasons.map { season -> "${season}_$year" }
                 }
 
-                _currentFilters.update { it.copy(seasonSet = seasons) }
+                updateFilters { it.copy(seasonSet = seasons) }
             }
 
-            is SetScore -> _currentFilters.update {
+            is SetScore -> updateFilters {
                 it.copy(score = event.score)
             }
 
-            is SetDuration -> _currentFilters.update {
+            is SetDuration -> updateFilters {
                 it.copy(duration = it.duration.toggle(event.duration))
             }
 
-            is SetRating -> _currentFilters.update {
+            is SetRating -> updateFilters {
                 it.copy(rating = it.rating.toggle(event.rating))
             }
 
-            is SetGenre -> _currentFilters.update {
+            is SetGenre -> updateFilters {
                 it.copy(genres = it.genres.toggle(event.genre))
             }
 
-            is SetStudio -> _currentFilters.update { it.copy(studio = event.studio) }
-            is SetPublisher -> _currentFilters.update { it.copy(publisher = event.publisher) }
+            is SetStudio -> updateFilters { it.copy(studio = event.studio) }
+            is SetPublisher -> updateFilters { it.copy(publisher = event.publisher) }
             is SetFranchise -> {}
             is SetCensored -> {}
             is SetMyList -> {}
-            is SetRole -> _currentFilters.update {
+            is SetRole -> updateFilters {
                 it.copy(roles = it.roles.toggle(event.item))
             }
 
             is SetTitle -> {
-                _state.update {
-                    it.copy(
-                        search = event.title
-                    )
-                }
+                _state.update { it.copy(search = event.title) }
 
-                _currentFilters.update {
-                    it.copy(
-                        title = event.title
-                    )
-                }
+                updateFilters { it.copy(title = event.title) }
             }
         }
+    }
 
+    fun updateFilters(block: (FiltersState) -> FiltersState) {
+        val currentMenu = _state.value.menu
 
-        _state.value.menu.let(pagers::remove)
+        _filters.update { map ->
+            val current = map[currentMenu] ?: FiltersState()
+            map + (currentMenu to block(current))
+        }
     }
 }
