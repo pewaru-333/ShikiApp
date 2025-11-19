@@ -57,8 +57,8 @@ fun convertDate(date: Any?, offset: Boolean = true) = when {
      }
  }
 
-fun convertScore(score: Any?) = when (val result = score) {
-    is String -> result.replace(".", ",")
+fun convertScore(score: Any?) = when (score) {
+    is String -> score.replace(".", ",")
     is Double -> NumberFormat.getNumberInstance(Locale.current.platformLocale).apply {
         minimumFractionDigits = 2
         maximumFractionDigits = 2
@@ -198,13 +198,13 @@ fun localizeNames(text: String) : String {
 }
 
 fun fromHtml(text: String?) = if (text == null) AnnotatedString(BLANK)
-else AnnotatedString.Companion.fromHtml(
+else AnnotatedString.fromHtml(
     htmlString = localizeNames(text),
     linkStyles = TextLinkStyles(
-        SpanStyle(
+        style = SpanStyle(
             color = Color(0xFF33BBFF),
-            textDecoration = TextDecoration.Companion.Underline,
-            platformStyle = PlatformSpanStyle.Companion.Default
+            textDecoration = TextDecoration.Underline,
+            platformStyle = PlatformSpanStyle.Default
         )
     )
 )
