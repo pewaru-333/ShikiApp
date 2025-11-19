@@ -15,18 +15,14 @@ class ContentPaging<T : Any>(
         val prevKey = if (currentPage == 1) null else currentPage - 1
         val nextKey = if (data.isEmpty()) null else currentPage + 1
 
-        LoadResult.Page(
-            data = data,
-            prevKey = prevKey,
-            nextKey = nextKey
-        )
+        LoadResult.Page(data, prevKey, nextKey)
     } catch (e: Exception) {
         LoadResult.Error(e)
     }
 
-    override fun getRefreshKey(state: PagingState<Int, T>) =
-        state.anchorPosition?.let { anchorPosition ->
-            state.closestPageToPosition(anchorPosition)?.prevKey?.plus(1)
-                ?: state.closestPageToPosition(anchorPosition)?.nextKey?.minus(1)
+    override fun getRefreshKey(state: PagingState<Int, T>) = state.anchorPosition?.let {
+        state.closestPageToPosition(it).let { anchorPage ->
+            anchorPage?.prevKey?.plus(1) ?: anchorPage?.nextKey?.minus(1)
         }
+    }
 }
