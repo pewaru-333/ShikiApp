@@ -1,3 +1,0 @@
-— The user's mail view has been changed. All 3 tabs are now available: "Dialogs", "News", "Notifications".
-— The dialog with the user view has been changed to a more modern one.
-— Added the ability to view, mark, and delete mail notifications.
