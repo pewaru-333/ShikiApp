@@ -7,6 +7,7 @@ import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.enums.RelationKind
+import org.application.shikiapp.utils.enums.VideoKind
 
 data class Anime(
     val airedOn: String,
@@ -30,8 +31,8 @@ data class Anime(
     val links: List<ExternalLink>,
     val nextEpisodeAt: String,
     val origin: Int,
-    val personAll: List<BasicContent>,
-    val personMain: List<BasicContent>,
+    val personAll: List<Content>,
+    val personMain: List<Content>,
     val poster: String,
     val rating: Int,
     val related: List<Related>,
@@ -45,5 +46,6 @@ data class Anime(
     val title: String,
     val userRate: AsyncData<UserRate?>,
     val url: String,
-    val videos: List<Video>
+    val video: List<Video>,
+    val videoGrouped: Map<VideoKind, List<Video>>
 )
