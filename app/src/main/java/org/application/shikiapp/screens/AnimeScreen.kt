@@ -399,7 +399,6 @@ private fun AnimeView(
         list = anime.screenshots,
         screenshot = state.screenshot,
         visible = state.showScreenshot,
-        setScreenshot = { onEvent(ContentDetailEvent.Media.SetImage(it)) },
         hide = { onEvent(ContentDetailEvent.Media.ShowImage()) }
     )
 
