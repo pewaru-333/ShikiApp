@@ -63,7 +63,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -83,7 +82,6 @@ import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import coil3.compose.AsyncImage
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
@@ -427,20 +425,6 @@ fun RelatedFull(
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = tabs::size)
 
-    fun onScroll(page: Int) {
-        scope.launch {
-            pagerState.animateScrollToPage(page)
-        }
-    }
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::currentPage).collectLatest { page ->
-            if (page != pagerState.settledPage) {
-                onScroll(page)
-            }
-        }
-    }
-
     BackHandler(visible, hide)
     Scaffold(
         topBar = {
@@ -454,8 +438,8 @@ fun RelatedFull(
             PrimaryTabRow(pagerState.currentPage) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = { onScroll(index) },
+                        selected = pagerState.targetPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                         text = { Text(title) }
                     )
                 }
@@ -809,14 +793,9 @@ fun DialogScreenshot(
     list: List<String>,
     screenshot: Int,
     visible: Boolean,
-    setScreenshot: (Int) -> Unit,
     hide: () -> Unit
 ) {
     val pagerState = rememberPagerState(pageCount = list::size)
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::currentPage).collectLatest(setScreenshot)
-    }
 
     LaunchedEffect(screenshot) {
         if (screenshot != pagerState.currentPage) {
@@ -868,20 +847,6 @@ fun DialogFavourites(
         { id: String -> FavouriteItem.entries[pagerState.currentPage].linkedType.navigateTo(id) }
     }
 
-    fun onScroll(page: Int) {
-        scope.launch {
-            pagerState.animateScrollToPage(page)
-        }
-    }
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::currentPage).collectLatest { page ->
-            if (page != pagerState.settledPage) {
-                onScroll(page)
-            }
-        }
-    }
-
     BackHandler(visible, hide)
     Scaffold(
         topBar = {
@@ -895,8 +860,8 @@ fun DialogFavourites(
             PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
                 FavouriteItem.entries.forEachIndexed { index, item ->
                     Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = { onScroll(index) },
+                        selected = pagerState.targetPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                         text = { Text(stringResource(item.title)) }
                     )
                 }

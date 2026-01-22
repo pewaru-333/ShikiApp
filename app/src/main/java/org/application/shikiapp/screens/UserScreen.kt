@@ -60,7 +60,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -428,14 +427,6 @@ private fun DialogMail(
             }
         }
 
-        LaunchedEffect(pagerState) {
-            snapshotFlow(pagerState::currentPage).collectLatest { page ->
-                if (page != pagerState.settledPage) {
-                    onScroll(page)
-                }
-            }
-        }
-
         BackHandler(visible, onHide)
         Scaffold(
             topBar = {
@@ -465,7 +456,7 @@ private fun DialogMail(
                 PrimaryTabRow(pagerState.currentPage) {
                     MessageType.tabs.forEachIndexed { index, tab ->
                         Tab(
-                            selected = index == pagerState.currentPage,
+                            selected = index == pagerState.targetPage,
                             onClick = { onScroll(index) },
                             text = {
                                 Text(

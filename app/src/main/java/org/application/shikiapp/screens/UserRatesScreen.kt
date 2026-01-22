@@ -114,22 +114,8 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 
     val type by model.type.collectAsStateWithLifecycle()
 
-    fun onScroll(page: Int) {
-        scope.launch {
-            pagerState.animateScrollToPage(page)
-        }
-    }
-
     LaunchedEffect(Unit) {
         barVisibility.toggle(!model.editable)
-    }
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::currentPage).collectLatest { page ->
-            if (page != pagerState.settledPage) {
-                onScroll(page)
-            }
-        }
     }
 
     LaunchedEffect(type) {
@@ -152,7 +138,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             }
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(model.rateUiEvent) {
         model.rateUiEvent.collectLatest { event ->
             when (event) {
                 UserRateUiEvent.Error -> context.showToast(R.string.text_error)
@@ -200,8 +186,8 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                 PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
                     WatchStatus.entries.forEach { status ->
                         Tab(
-                            selected = pagerState.currentPage == status.ordinal,
-                            onClick = { onScroll(status.ordinal) },
+                            selected = pagerState.targetPage == status.ordinal,
+                            onClick = { scope.launch { pagerState.animateScrollToPage(status.ordinal) } },
                             text = { Text(stringResource(type.getWatchStatusTitle(status))) }
                         )
                     }

@@ -34,7 +34,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
@@ -47,7 +46,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
 import org.application.shikiapp.models.ui.AnimeCalendar
@@ -79,22 +77,8 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
         mutableStateOf(false)
     }
 
-    fun onScroll(page: Int) {
-        scope.launch {
-            pagerState.animateScrollToPage(page)
-        }
-    }
-
     LaunchedEffect(showFullUpdates) {
         barVisibility.toggle(showFullUpdates)
-    }
-
-    LaunchedEffect(pagerState) {
-        snapshotFlow(pagerState::currentPage).collectLatest { page ->
-            if (page != pagerState.settledPage) {
-                onScroll(page)
-            }
-        }
     }
 
     Scaffold(
@@ -105,12 +89,12 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
             )
         }
     ) { values ->
-        Column {
-            PrimaryTabRow(pagerState.currentPage, Modifier.padding(values)) {
+        Column(Modifier.padding(values)) {
+            PrimaryTabRow(pagerState.currentPage) {
                 tabs.forEachIndexed { index, tab ->
                     Tab(
-                        selected = pagerState.currentPage == index,
-                        onClick = { onScroll(index) },
+                        selected = pagerState.targetPage == index,
+                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
                         text = { Text(tab) }
                     )
                 }
