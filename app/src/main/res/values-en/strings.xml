@@ -163,6 +163,8 @@
     <string name="order_created_at_asc">By date added ↑</string>
     <string name="order_created_at_desc">By date added ↓</string>
     <string name="order_updated_at">By date updated</string>
+    <string name="order_updated_at_asc">By date updated ↑</string>
+    <string name="order_updated_at_desc">By date updated ↓</string>
 
     <!-- Длительность эпизода -->
     <string name="duration_S">Under 10 min</string>
