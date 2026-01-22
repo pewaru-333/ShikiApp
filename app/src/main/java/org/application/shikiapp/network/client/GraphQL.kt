@@ -147,7 +147,7 @@ object GraphQL {
             it.characters.map(CharacterListQuery.Data.Character::mapper)
         }
 
-    suspend fun getCharacter(id: String) = Network.apollo.query(CharacterQuery(listOf(id)))
+    suspend fun getCharacter(id: String) = Network.apollo.query(CharacterQuery(id))
         .execute()
         .dataAssertNoErrors
         .characters
