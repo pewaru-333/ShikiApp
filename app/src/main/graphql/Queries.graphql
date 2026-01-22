@@ -255,8 +255,8 @@ query CharacterList($page: PositiveInt, $limit: PositiveInt, $search: String) {
     }
 }
 
-query Character($id: [ID!]) {
-    characters(ids: $id) {
+query Character($ids: String) {
+    characters(ids: $ids) {
         poster {
             originalUrl
         }

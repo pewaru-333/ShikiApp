@@ -2,85 +2,85 @@
 directive @oneOf on INPUT_OBJECT
 
 type Anime {
-  airedOn: IncompleteDate
-  characterRoles: [CharacterRole!]
-  chronology: [Anime!]
-  createdAt: ISO8601DateTime!
-  description: String
-  descriptionHtml: String
-  descriptionSource: String
+    airedOn: IncompleteDate
+    characterRoles: [CharacterRole!]
+    chronology: [Anime!]
+    createdAt: ISO8601DateTime!
+    description: String
+    descriptionHtml: String
+    descriptionSource: String
 
-  # Duration in minutes
-  duration: Int
-  english: String
-  episodes: Int!
-  episodesAired: Int!
-  externalLinks: [ExternalLink!]
-  fandubbers: [String!]!
-  fansubbers: [String!]!
+    # Duration in minutes
+    duration: Int
+    english: String
+    episodes: Int!
+    episodesAired: Int!
+    externalLinks: [ExternalLink!]
+    fandubbers: [String!]!
+    fansubbers: [String!]!
 
-  # Franchise name
-  franchise: String
-  genres: [Genre!]
-  id: ID!
-  isCensored: Boolean
-  japanese: String
-  kind: AnimeKindEnum
-  licenseNameRu: String
-  licensors: [String!]
-  malId: ID
-  name: String!
-  nextEpisodeAt: ISO8601DateTime
-  opengraphImageUrl: String
-  origin: AnimeOriginEnum
-  personRoles: [PersonRole!]
-  poster: Poster
-  rating: AnimeRatingEnum
-  related: [Related!]
-  releasedOn: IncompleteDate
-  russian: String
-  score: Float
-  scoresStats: [ScoreStat!]
-  screenshots: [Screenshot!]!
-  season: String
-  status: AnimeStatusEnum
-  statusesStats: [StatusStat!]
-  studios: [Studio!]!
-  synonyms: [String!]!
-  topic: Topic
-  updatedAt: ISO8601DateTime!
-  url: String!
-  userRate: UserRate
-  videos: [Video!]!
+    # Franchise name
+    franchise: String
+    genres: [Genre!]
+    id: ID!
+    isCensored: Boolean
+    japanese: String
+    kind: AnimeKindEnum
+    licenseNameRu: String
+    licensors: [String!]
+    malId: ID
+    name: String!
+    nextEpisodeAt: ISO8601DateTime
+    opengraphImageUrl: String
+    origin: AnimeOriginEnum
+    personRoles: [PersonRole!]
+    poster: Poster
+    rating: AnimeRatingEnum
+    related: [Related!]
+    releasedOn: IncompleteDate
+    russian: String
+    score: Float
+    scoresStats: [ScoreStat!]
+    screenshots: [Screenshot!]!
+    season: String
+    status: AnimeStatusEnum
+    statusesStats: [StatusStat!]
+    studios: [Studio!]!
+    synonyms: [String!]!
+    topic: Topic
+    updatedAt: ISO8601DateTime!
+    url: String!
+    userRate: UserRate
+    videos: [Video!]!
 }
 
 enum AnimeKindEnum {
-  # TV Series
-  tv
+    # TV Series
+    tv
 
-  # Movie
-  movie
+    # Movie
+    movie
 
-  # OVA
-  ova
+    # OVA
+    ova
 
-  # ONA
-  ona
+    # ONA
+    ona
 
-  # Special
-  special
+    # Special
+    special
 
-  # TV Special
-  tv_special
+    # TV Special
+    tv_special
 
-  # Music
-  music
+    # Music
+    music
 
-  # PV
-  pv
+    # PV
+    pv
 
-  # CM
-  cm
+    # CM
+    cm
 }
 
 # List of values separated by comma.
@@ -115,90 +115,90 @@ enum AnimeKindEnum {
 scalar AnimeKindString
 
 enum AnimeOriginEnum {
-  # Original
-  original
+    # Original
+    original
 
-  # Manga
-  manga
+    # Manga
+    manga
 
-  # Web manga
-  web_manga
+    # Web manga
+    web_manga
 
-  # 4-koma manga
-  four_koma_manga
+    # 4-koma manga
+    four_koma_manga
 
-  # Novel
-  novel
+    # Novel
+    novel
 
-  # Web novel
-  web_novel
+    # Web novel
+    web_novel
 
-  # Visual novel
-  visual_novel
+    # Visual novel
+    visual_novel
 
-  # Light novel
-  light_novel
+    # Light novel
+    light_novel
 
-  # Game
-  game
+    # Game
+    game
 
-  # Card game
-  card_game
+    # Card game
+    card_game
 
-  # Music
-  music
+    # Music
+    music
 
-  # Radio
-  radio
+    # Radio
+    radio
 
-  # Book
-  book
+    # Book
+    book
 
-  # Picture book
-  picture_book
+    # Picture book
+    picture_book
 
-  # Mixed media
-  mixed_media
+    # Mixed media
+    mixed_media
 
-  # Other
-  other
+    # Other
+    other
 
-  # Unknown
-  unknown
+    # Unknown
+    unknown
 }
 
 enum AnimeRatingEnum {
-  # None
-  none
+    # None
+    none
 
-  # G
-  g
+    # G
+    g
 
-  # PG
-  pg
+    # PG
+    pg
 
-  # PG-13
-  pg_13
+    # PG-13
+    pg_13
 
-  # R-17
-  r
+    # R-17
+    r
 
-  # R+
-  r_plus
+    # R+
+    r_plus
 
-  # Rx
-  rx
+    # Rx
+    rx
 }
 
 enum AnimeStatusEnum {
-  # Planned
-  anons
+    # Planned
+    anons
 
-  # Airing
-  ongoing
+    # Airing
+    ongoing
 
-  # Released
-  released
+    # Released
+    released
 }
 
 # List of values separated by comma.
@@ -213,128 +213,128 @@ enum AnimeStatusEnum {
 scalar AnimeStatusString
 
 type Character {
-  createdAt: ISO8601DateTime!
-  description: String
-  descriptionHtml: String
-  descriptionSource: String
-  id: ID!
-  isAnime: Boolean!
-  isManga: Boolean!
-  isRanobe: Boolean!
-  japanese: String
-  malId: ID
-  name: String!
-  poster: Poster
-  russian: String
-  synonyms: [String!]!
-  topic: Topic
-  updatedAt: ISO8601DateTime!
-  url: String!
+    createdAt: ISO8601DateTime!
+    description: String
+    descriptionHtml: String
+    descriptionSource: String
+    id: ID!
+    isAnime: Boolean!
+    isManga: Boolean!
+    isRanobe: Boolean!
+    japanese: String
+    malId: ID
+    name: String!
+    poster: Poster
+    russian: String
+    synonyms: [String!]!
+    topic: Topic
+    updatedAt: ISO8601DateTime!
+    url: String!
 }
 
 type CharacterRole {
-  character: Character!
-  id: ID!
-  rolesEn: [String!]!
-  rolesRu: [String!]!
+    character: Character!
+    id: ID!
+    rolesEn: [String!]!
+    rolesRu: [String!]!
 }
 
 type Contest {
-  description: String
-  descriptionHtml: String
-  descriptionSource: String
-  finishedOn: ISO8601Date
-  id: ID!
-  matchDuration: Int
-  matchesInterval: Int
-  matchesPerRound: Int
-  memberType: ContestMemberTypeEnum!
-  name: String!
-  rounds: [ContestRound!]!
-  startedOn: ISO8601Date
-  state: ContestStateEnum!
-  strategyType: ContestStrategyTypeEnum!
+    description: String
+    descriptionHtml: String
+    descriptionSource: String
+    finishedOn: ISO8601Date
+    id: ID!
+    matchDuration: Int
+    matchesInterval: Int
+    matchesPerRound: Int
+    memberType: ContestMemberTypeEnum!
+    name: String!
+    rounds: [ContestRound!]!
+    startedOn: ISO8601Date
+    state: ContestStateEnum!
+    strategyType: ContestStrategyTypeEnum!
 }
 
 type ContestMatch {
-  id: ID!
-  leftAnime: Anime
-  leftCharacter: Character
-  leftId: Int
-  leftVotes: Int
-  rightAnime: Anime
-  rightCharacter: Character
-  rightId: Int
-  rightVotes: Int
-  state: ContestMatchStateEnum!
-  winnerId: Int
+    id: ID!
+    leftAnime: Anime
+    leftCharacter: Character
+    leftId: Int
+    leftVotes: Int
+    rightAnime: Anime
+    rightCharacter: Character
+    rightId: Int
+    rightVotes: Int
+    state: ContestMatchStateEnum!
+    winnerId: Int
 }
 
 enum ContestMatchStateEnum {
-  # created
-  created
+    # created
+    created
 
-  # started
-  started
+    # started
+    started
 
-  # freezed
-  freezed
+    # freezed
+    freezed
 
-  # finished
-  finished
+    # finished
+    finished
 }
 
 enum ContestMemberTypeEnum {
-  # Anime
-  anime
+    # Anime
+    anime
 
-  # Characters
-  character
+    # Characters
+    character
 }
 
 type ContestRound {
-  id: ID!
-  isAdditional: Boolean!
-  matches: [ContestMatch!]!
-  name: String!
-  number: Int!
-  state: ContestRoundStateEnum!
+    id: ID!
+    isAdditional: Boolean!
+    matches: [ContestMatch!]!
+    name: String!
+    number: Int!
+    state: ContestRoundStateEnum!
 }
 
 enum ContestRoundStateEnum {
-  # created
-  created
+    # created
+    created
 
-  # started
-  started
+    # started
+    started
 
-  # finished
-  finished
+    # finished
+    finished
 }
 
 enum ContestStateEnum {
-  # created
-  created
+    # created
+    created
 
-  # proposing
-  proposing
+    # proposing
+    proposing
 
-  # started
-  started
+    # started
+    started
 
-  # finished
-  finished
+    # finished
+    finished
 }
 
 enum ContestStrategyTypeEnum {
-  # Double elimination
-  double_elimination
+    # Double elimination
+    double_elimination
 
-  # Olympic system
-  play_off
+    # Olympic system
+    play_off
 
-  # Swiss system
-  swiss
+    # Swiss system
+    swiss
 }
 
 # List of values separated by comma.
@@ -349,136 +349,142 @@ enum ContestStrategyTypeEnum {
 scalar DurationString
 
 type ExternalLink {
-  createdAt: ISO8601DateTime
-  id: ID
-  kind: ExternalLinkKindEnum!
-  updatedAt: ISO8601DateTime
-  url: String!
+    createdAt: ISO8601DateTime
+    id: ID
+    kind: ExternalLinkKindEnum!
+    updatedAt: ISO8601DateTime
+    url: String!
 }
 
 enum ExternalLinkKindEnum {
-  # Official Site
-  official_site
+    # Official Site
+    official_site
 
-  # Wikipedia
-  wikipedia
+    # Wikipedia
+    wikipedia
 
-  # Anime News Network
-  anime_news_network
+    # Anime News Network
+    anime_news_network
 
-  # MyAnimeList
-  myanimelist
+    # MyAnimeList
+    myanimelist
 
-  # AniDB
-  anime_db
+    # AniDB
+    anime_db
 
-  # World Art
-  world_art
+    # World Art
+    world_art
 
-  # KinoPoisk
-  kinopoisk
+    # KinoPoisk
+    kinopoisk
 
-  # Kage Project
-  kage_project
+    # Kage Project
+    kage_project
 
-  # Twitter/X
-  twitter
+    # Twitter/X
+    twitter
 
-  # Anime 365
-  smotret_anime
+    # Anime 365
+    smotret_anime
 
-  # Crunchyroll
-  crunchyroll
+    # Shikimori
+    shiki
 
-  # Amazon
-  amazon
+    # Amediateka
+    amediateka
 
-  # Hidive
-  hidive
+    # Crunchyroll
+    crunchyroll
 
-  # Hulu
-  hulu
+    # Amazon
+    amazon
 
-  # Ivi
-  ivi
+    # Hidive
+    hidive
 
-  # KinoPoisk HD
-  kinopoisk_hd
+    # Hulu
+    hulu
 
-  # Wink
-  wink
+    # Ivi
+    ivi
 
-  # Netflix
-  netflix
+    # KinoPoisk HD
+    kinopoisk_hd
 
-  # Okko
-  okko
+    # Wink
+    wink
 
-  # Youtube
-  youtube
+    # Netflix
+    netflix
 
-  # ReadManga
-  readmanga
+    # Okko
+    okko
 
-  # MangaLib
-  mangalib
+    # Youtube
+    youtube
 
-  # ReManga
-  remanga
+    # ReManga
+    remanga
 
-  # Baka-Updates
-  mangaupdates
+    # MangaLib
+    mangalib
 
-  # MangaDex
-  mangadex
+    # Baka-Updates
+    mangaupdates
 
-  # MangaFox
-  mangafox
+    # ReadManga
+    readmanga
 
-  # Mangachan
-  mangachan
+    # MangaDex
+    mangadex
 
-  # Mangahub
-  mangahub
+    # MangaFox
+    mangafox
 
-  # Novel.tl
-  novel_tl
+    # Mangachan
+    mangachan
 
-  # RuRanobe
-  ruranobe
+    # Mangahub
+    mangahub
 
-  # RanobeLib
-  ranobelib
+    # Novel.tl
+    novel_tl
 
-  # Novel Updates
-  novelupdates
+    # RuRanobe
+    ruranobe
+
+    # RanobeLib
+    ranobelib
+
+    # Novel Updates
+    novelupdates
 }
 
 type Genre {
-  entryType: GenreEntryTypeEnum!
-  id: ID!
-  kind: GenreKindEnum!
-  name: String!
-  russian: String!
+    entryType: GenreEntryTypeEnum!
+    id: ID!
+    kind: GenreKindEnum!
+    name: String!
+    russian: String!
 }
 
 enum GenreEntryTypeEnum {
-  # Anime
-  Anime
+    # Anime
+    Anime
 
-  # Manga
-  Manga
+    # Manga
+    Manga
 }
 
 enum GenreKindEnum {
-  # Demographic
-  demographic
+    # Demographic
+    demographic
 
-  # Genre
-  genre
+    # Genre
+    genre
 
-  # Theme
-  theme
+    # Theme
+    theme
 }
 
 # An ISO 8601-encoded date
@@ -488,75 +494,75 @@ scalar ISO8601Date
 scalar ISO8601DateTime
 
 type IncompleteDate {
-  date: ISO8601Date
-  day: Int
-  month: Int
-  year: Int
+    date: ISO8601Date
+    day: Int
+    month: Int
+    year: Int
 }
 
 type Manga {
-  airedOn: IncompleteDate
-  chapters: Int!
-  characterRoles: [CharacterRole!]
-  chronology: [Manga!]
-  createdAt: ISO8601DateTime!
-  description: String
-  descriptionHtml: String
-  descriptionSource: String
-  english: String
-  externalLinks: [ExternalLink!]
+    airedOn: IncompleteDate
+    chapters: Int!
+    characterRoles: [CharacterRole!]
+    chronology: [Manga!]
+    createdAt: ISO8601DateTime!
+    description: String
+    descriptionHtml: String
+    descriptionSource: String
+    english: String
+    externalLinks: [ExternalLink!]
 
-  # Franchise name
-  franchise: String
-  genres: [Genre!]
-  id: ID!
-  isCensored: Boolean
-  japanese: String
-  kind: MangaKindEnum
-  licenseNameRu: String
-  licensors: [String!]
-  malId: ID
-  name: String!
-  opengraphImageUrl: String
-  personRoles: [PersonRole!]
-  poster: Poster
-  publishers: [Publisher!]!
-  related: [Related!]
-  releasedOn: IncompleteDate
-  russian: String
-  score: Float
-  scoresStats: [ScoreStat!]
-  status: MangaStatusEnum
-  statusesStats: [StatusStat!]
-  synonyms: [String!]!
-  topic: Topic
-  updatedAt: ISO8601DateTime!
-  url: String!
-  userRate: UserRate
-  volumes: Int!
+    # Franchise name
+    franchise: String
+    genres: [Genre!]
+    id: ID!
+    isCensored: Boolean
+    japanese: String
+    kind: MangaKindEnum
+    licenseNameRu: String
+    licensors: [String!]
+    malId: ID
+    name: String!
+    opengraphImageUrl: String
+    personRoles: [PersonRole!]
+    poster: Poster
+    publishers: [Publisher!]!
+    related: [Related!]
+    releasedOn: IncompleteDate
+    russian: String
+    score: Float
+    scoresStats: [ScoreStat!]
+    status: MangaStatusEnum
+    statusesStats: [StatusStat!]
+    synonyms: [String!]!
+    topic: Topic
+    updatedAt: ISO8601DateTime!
+    url: String!
+    userRate: UserRate
+    volumes: Int!
 }
 
 enum MangaKindEnum {
-  # Manga
-  manga
+    # Manga
+    manga
 
-  # Manhwa
-  manhwa
+    # Manhwa
+    manhwa
 
-  # Manhua
-  manhua
+    # Manhua
+    manhua
 
-  # Light Novel
-  light_novel
+    # Light Novel
+    light_novel
 
-  # Novel
-  novel
+    # Novel
+    novel
 
-  # One Shot
-  one_shot
+    # One Shot
+    one_shot
 
-  # Doujin
-  doujin
+    # Doujin
+    doujin
 }
 
 # List of values separated by comma.
@@ -579,20 +585,20 @@ enum MangaKindEnum {
 scalar MangaKindString
 
 enum MangaStatusEnum {
-  # Planned
-  anons
+    # Planned
+    anons
 
-  # Publishing
-  ongoing
+    # Publishing
+    ongoing
 
-  # Published
-  released
+    # Published
+    released
 
-  # Paused
-  paused
+    # Paused
+    paused
 
-  # Discontinued
-  discontinued
+    # Discontinued
+    discontinued
 }
 
 # List of values separated by comma.
@@ -611,8 +617,8 @@ enum MangaStatusEnum {
 scalar MangaStatusString
 
 type Mutation {
-  # An example field added by the generator
-  testField: String!
+    # An example field added by the generator
+    testField: String!
 }
 
 # List of values separated by comma.
@@ -633,47 +639,53 @@ type Mutation {
 scalar MylistString
 
 enum OrderEnum {
-  # By ID
-  id
+    # By ID
+    id
 
-  # id_desc
-  id_desc
+    # id_desc
+    id_desc
 
-  # By rank
-  ranked
+    # By rank
+    ranked
 
-  # By type
-  kind
+    # By type
+    kind
 
-  # By popularity
-  popularity
+    # By popularity
+    popularity
 
-  # In alphabetical order
-  name
+    # In alphabetical order
+    name
 
-  # By release date
-  aired_on
+    # By release date
+    aired_on
 
-  # By number of episodes
-  episodes
+    # By number of episodes
+    episodes
 
-  # By status
-  status
+    # By status
+    status
 
-  # By random
-  random
+    # By random
+    random
 
-  # By random
-  ranked_random
+    # By random
+    ranked_random
 
-  # By Shikimori ranking
-  ranked_shiki
+    # By Shikimori ranking
+    ranked_shiki
 
-  # created_at
-  created_at
+    # created_at
+    created_at
 
-  # created_at_desc
-  created_at_desc
+    # created_at_desc
+    created_at_desc
+
+    # By field updated_at on entity
+    updated_at
+
+    # updated_at_desc
+    updated_at_desc
 }
 
 # List of values separated by comma.
@@ -716,175 +728,175 @@ enum OrderEnum {
 scalar OriginString
 
 type Person {
-  birthOn: IncompleteDate
-  createdAt: ISO8601DateTime!
-  deceasedOn: IncompleteDate
-  id: ID!
-  isMangaka: Boolean!
-  isProducer: Boolean!
-  isSeyu: Boolean!
-  japanese: String
-  malId: ID
-  name: String!
-  poster: Poster
-  russian: String
-  synonyms: [String!]!
-  topic: Topic
-  updatedAt: ISO8601DateTime!
-  url: String!
-  website: String
+    birthOn: IncompleteDate
+    createdAt: ISO8601DateTime!
+    deceasedOn: IncompleteDate
+    id: ID!
+    isMangaka: Boolean!
+    isProducer: Boolean!
+    isSeyu: Boolean!
+    japanese: String
+    malId: ID
+    name: String!
+    poster: Poster
+    russian: String
+    synonyms: [String!]!
+    topic: Topic
+    updatedAt: ISO8601DateTime!
+    url: String!
+    website: String
 }
 
 type PersonRole {
-  id: ID!
-  person: Person!
-  rolesEn: [String!]!
-  rolesRu: [String!]!
+    id: ID!
+    person: Person!
+    rolesEn: [String!]!
+    rolesRu: [String!]!
 }
 
 # A positive integer (>= 1)
 scalar PositiveInt
 
 type Poster {
-  id: ID!
-  main2xUrl: String!
-  mainAlt2xUrl: String!
-  mainAltUrl: String!
-  mainUrl: String!
-  mini2xUrl: String!
-  miniAlt2xUrl: String!
-  miniAltUrl: String!
-  miniUrl: String!
-  originalUrl: String!
-  preview2xUrl: String!
-  previewAlt2xUrl: String!
-  previewAltUrl: String!
-  previewUrl: String!
+    id: ID!
+    main2xUrl: String!
+    mainAlt2xUrl: String!
+    mainAltUrl: String!
+    mainUrl: String!
+    mini2xUrl: String!
+    miniAlt2xUrl: String!
+    miniAltUrl: String!
+    miniUrl: String!
+    originalUrl: String!
+    preview2xUrl: String!
+    previewAlt2xUrl: String!
+    previewAltUrl: String!
+    previewUrl: String!
 }
 
 type Publisher {
-  id: ID!
-  name: String!
+    id: ID!
+    name: String!
 }
 
 type Query {
-  animes(
-    page: PositiveInt = 1
+    animes(
+        page: PositiveInt = 1
 
-    # Maximum 50
-    limit: PositiveInt = 2
-    order: OrderEnum = ranked
-    kind: AnimeKindString
-    status: AnimeStatusString
-    season: SeasonString
+        # Maximum 50
+        limit: PositiveInt = 2
+        order: OrderEnum = ranked
+        kind: AnimeKindString
+        status: AnimeStatusString
+        season: SeasonString
 
-    # Minimal anime score
-    score: Int
-    duration: DurationString
-    rating: RatingString
-    origin: OriginString
+        # Minimal anime score
+        score: Int
+        duration: DurationString
+        rating: RatingString
+        origin: OriginString
 
-    # List of comma separated genre ids
-    genre: String
+        # List of comma separated genre ids
+        genre: String
 
-    # List of comma separated studio ids
-    studio: String
+        # List of comma separated studio ids
+        studio: String
 
-    # List of comma separated franchises
-    franchise: String
+        # List of comma separated franchises
+        franchise: String
 
-    # Set to `false` to allow hentai, yaoi and yuri
-    censored: Boolean
-    mylist: MylistString
+        # Set to `false` to allow hentai, yaoi and yuri
+        censored: Boolean
+        mylist: MylistString
 
-    # List of comma separated ids
-    ids: String
+        # List of comma separated ids
+        ids: String
 
-    # List of comma separated ids
-    excludeIds: String
-    search: String
-  ): [Anime!]!
-  characters(
-    page: PositiveInt = 1
+        # List of comma separated ids
+        excludeIds: String
+        search: String
+    ): [Anime!]!
+    characters(
+        page: PositiveInt = 1
 
-    # Maximum 50
-    limit: PositiveInt = 2
-    ids: [ID!]
-    search: String
-  ): [Character!]!
-  contests(
-    page: PositiveInt = 1
+        # Maximum 50
+        limit: PositiveInt = 2
+        ids: String
+        search: String
+    ): [Character!]!
+    contests(
+        page: PositiveInt = 1
 
-    # Maximum 10
-    limit: PositiveInt = 2
-    ids: [ID!]
-  ): [Contest!]!
-  currentUser: User
-  genres(entryType: GenreEntryTypeEnum!): [Genre!]!
-  mangas(
-    page: PositiveInt = 1
+        # Maximum 10
+        limit: PositiveInt = 2
+        ids: [ID!]
+    ): [Contest!]!
+    currentUser: User
+    genres(entryType: GenreEntryTypeEnum!): [Genre!]!
+    mangas(
+        page: PositiveInt = 1
 
-    # Maximum 50
-    limit: PositiveInt = 2
-    order: OrderEnum = ranked
-    kind: MangaKindString
-    status: MangaStatusString
-    season: SeasonString
+        # Maximum 50
+        limit: PositiveInt = 2
+        order: OrderEnum = ranked
+        kind: MangaKindString
+        status: MangaStatusString
+        season: SeasonString
 
-    # Minimal manga score
-    score: Int
+        # Minimal manga score
+        score: Int
 
-    # List of comma separated genre ids
-    genre: String
+        # List of comma separated genre ids
+        genre: String
 
-    # List of comma separated publisher ids
-    publisher: String
+        # List of comma separated publisher ids
+        publisher: String
 
-    # List of comma separated franchises
-    franchise: String
+        # List of comma separated franchises
+        franchise: String
 
-    # Set to `false` to allow hentai, yaoi and yuri
-    censored: Boolean
-    mylist: MylistString
+        # Set to `false` to allow hentai, yaoi and yuri
+        censored: Boolean
+        mylist: MylistString
 
-    # List of comma separated ids
-    ids: String
+        # List of comma separated ids
+        ids: String
 
-    # List of comma separated ids
-    excludeIds: String
-    search: String
-  ): [Manga!]!
-  people(
-    page: PositiveInt = 1
+        # List of comma separated ids
+        excludeIds: String
+        search: String
+    ): [Manga!]!
+    people(
+        page: PositiveInt = 1
 
-    # Maximum 50
-    limit: PositiveInt = 2
-    ids: [ID!]
-    search: String
-    isSeyu: Boolean
-    isProducer: Boolean
-    isMangaka: Boolean
-  ): [Person!]!
-  userRates(
-    page: PositiveInt = 1
+        # Maximum 50
+        limit: PositiveInt = 2
+        ids: [ID!]
+        search: String
+        isSeyu: Boolean
+        isProducer: Boolean
+        isMangaka: Boolean
+    ): [Person!]!
+    userRates(
+        page: PositiveInt = 1
 
-    # Maximum 50
-    limit: PositiveInt = 2
+        # Maximum 50
+        limit: PositiveInt = 2
 
-    # ID of current user is used by default
-    userId: ID
-    targetType: UserRateTargetTypeEnum
-    status: UserRateStatusEnum
-    order: UserRateOrderInputType
-  ): [UserRate!]!
-  users(
-    page: PositiveInt = 1
+        # ID of current user is used by default
+        userId: ID
+        targetType: UserRateTargetTypeEnum
+        status: UserRateStatusEnum
+        order: UserRateOrderInputType
+    ): [UserRate!]!
+    users(
+        page: PositiveInt = 1
 
-    # Maximum 50
-    limit: PositiveInt = 2
-    ids: [ID!]
-    search: String
-  ): [User!]!
+        # Maximum 50
+        limit: PositiveInt = 2
+        ids: [ID!]
+        search: String
+    ): [User!]!
 }
 
 # List of values separated by comma.
@@ -907,69 +919,69 @@ type Query {
 scalar RatingString
 
 type Related {
-  anime: Anime
-  id: ID!
-  manga: Manga
-  relationEn: String!
+    anime: Anime
+    id: ID!
+    manga: Manga
+    relationEn: String!
     @deprecated(
-      reason: "use relation_kind/relation_text instead. This field will be deleted after 2025-01-01"
+        reason: "use relation_kind/relation_text instead. This field will be deleted after 2025-01-01"
     )
-  relationKind: RelationKindEnum!
-  relationRu: String!
+    relationKind: RelationKindEnum!
+    relationRu: String!
     @deprecated(
-      reason: "use relation_kind/relation_text instead. This field will be deleted after 2025-01-01"
+        reason: "use relation_kind/relation_text instead. This field will be deleted after 2025-01-01"
     )
-  relationText: String!
+    relationText: String!
 }
 
 enum RelationKindEnum {
-  # Adaptation
-  adaptation
+    # Adaptation
+    adaptation
 
-  # Alternative Setting
-  alternative_setting
+    # Alternative Setting
+    alternative_setting
 
-  # Alternative Version
-  alternative_version
+    # Alternative Version
+    alternative_version
 
-  # Character
-  character
+    # Character
+    character
 
-  # Full Story
-  full_story
+    # Full Story
+    full_story
 
-  # Other
-  other
+    # Other
+    other
 
-  # Parent Story
-  parent_story
+    # Parent Story
+    parent_story
 
-  # Prequel
-  prequel
+    # Prequel
+    prequel
 
-  # Sequel
-  sequel
+    # Sequel
+    sequel
 
-  # Side Story
-  side_story
+    # Side Story
+    side_story
 
-  # Spin-off
-  spin_off
+    # Spin-off
+    spin_off
 
-  # Summary
-  summary
+    # Summary
+    summary
 }
 
 type ScoreStat {
-  count: Int!
-  score: Int!
+    count: Int!
+    score: Int!
 }
 
 type Screenshot {
-  id: ID!
-  originalUrl: String!
-  x166Url: String!
-  x332Url: String!
+    id: ID!
+    originalUrl: String!
+    x166Url: String!
+    x332Url: String!
 }
 
 # List of values separated by comma.
@@ -989,135 +1001,135 @@ type Screenshot {
 scalar SeasonString
 
 enum SortOrderEnum {
-  # Sort in ascending order
-  asc
+    # Sort in ascending order
+    asc
 
-  # Sort in descending order
-  desc
+    # Sort in descending order
+    desc
 }
 
 type StatusStat {
-  count: Int!
-  status: UserRateStatusEnum!
+    count: Int!
+    status: UserRateStatusEnum!
 }
 
 type Studio {
-  id: ID!
-  imageUrl: String
-  name: String!
+    id: ID!
+    imageUrl: String
+    name: String!
 }
 
 type Topic {
-  body: String!
-  commentsCount: Int!
-  createdAt: ISO8601DateTime!
-  htmlBody: String!
-  id: ID
-  tags: [String!]!
-  title: String!
-  type: String!
-  updatedAt: ISO8601DateTime!
-  url: String!
+    body: String!
+    commentsCount: Int!
+    createdAt: ISO8601DateTime!
+    htmlBody: String!
+    id: ID
+    tags: [String!]!
+    title: String!
+    type: String!
+    updatedAt: ISO8601DateTime!
+    url: String!
 }
 
 type User {
-  avatarUrl: String!
-  id: ID!
-  lastOnlineAt: ISO8601DateTime!
-  nickname: String!
-  url: String!
+    avatarUrl: String!
+    id: ID!
+    lastOnlineAt: ISO8601DateTime!
+    nickname: String!
+    url: String!
 }
 
 type UserRate {
-  anime: Anime
-  chapters: Int!
-  createdAt: ISO8601DateTime!
-  episodes: Int!
-  id: ID!
-  manga: Manga
-  rewatches: Int!
-  score: Int!
-  status: UserRateStatusEnum!
-  text: String
-  updatedAt: ISO8601DateTime!
-  volumes: Int!
+    anime: Anime
+    chapters: Int!
+    createdAt: ISO8601DateTime!
+    episodes: Int!
+    id: ID!
+    manga: Manga
+    rewatches: Int!
+    score: Int!
+    status: UserRateStatusEnum!
+    text: String
+    updatedAt: ISO8601DateTime!
+    volumes: Int!
 }
 
 enum UserRateOrderFieldEnum {
-  # By id
-  id
+    # By id
+    id
 
-  # By updated_at
-  updated_at
+    # By updated_at
+    updated_at
 }
 
 input UserRateOrderInputType {
-  field: UserRateOrderFieldEnum!
-  order: SortOrderEnum!
+    field: UserRateOrderFieldEnum!
+    order: SortOrderEnum!
 }
 
 enum UserRateStatusEnum {
-  # Planned to Watch
-  planned
+    # Planned to Watch
+    planned
 
-  # Watching
-  watching
+    # Watching
+    watching
 
-  # Rewatching
-  rewatching
+    # Rewatching
+    rewatching
 
-  # Completed
-  completed
+    # Completed
+    completed
 
-  # On Hold
-  on_hold
+    # On Hold
+    on_hold
 
-  # Dropped
-  dropped
+    # Dropped
+    dropped
 }
 
 enum UserRateTargetTypeEnum {
-  # Anime
-  Anime
+    # Anime
+    Anime
 
-  # Manga
-  Manga
+    # Manga
+    Manga
 }
 
 type Video {
-  id: ID!
-  imageUrl: String!
-  kind: VideoKindEnum!
-  name: String
-  playerUrl: String!
-  url: String!
+    id: ID!
+    imageUrl: String!
+    kind: VideoKindEnum!
+    name: String
+    playerUrl: String!
+    url: String!
 }
 
 enum VideoKindEnum {
-  # PV
-  pv
+    # PV
+    pv
 
-  # Character trailer
-  character_trailer
+    # Character trailer
+    character_trailer
 
-  # CM
-  cm
+    # CM
+    cm
 
-  # OP
-  op
+    # OP
+    op
 
-  # ED
-  ed
+    # ED
+    ed
 
-  # Music
-  op_ed_clip
+    # Music
+    op_ed_clip
 
-  # Clip
-  clip
+    # Clip
+    clip
 
-  # Other
-  other
+    # Other
+    other
 
-  # Episode preview
-  episode_preview
+    # Episode preview
+    episode_preview
 }
