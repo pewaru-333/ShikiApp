@@ -90,7 +90,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         OrderRates.EPISODES -> value.sortedBy(UserRate::episodesSorting)
                         OrderRates.KIND -> value.sortedBy(UserRate::kind)
                         OrderRates.CREATED_AT -> value.sortedBy(UserRate::createdAt)
-                        OrderRates.UPDATE_AT -> value.sortedBy(UserRate::updatedAt)
+                        OrderRates.UPDATED_AT -> value.sortedBy(UserRate::updatedAt)
                     }
                 } else {
                     when (state.order) {
@@ -99,7 +99,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         OrderRates.EPISODES -> value.sortedByDescending(UserRate::episodesSorting)
                         OrderRates.KIND -> value.sortedByDescending(UserRate::kind)
                         OrderRates.CREATED_AT -> value.sortedByDescending(UserRate::createdAt)
-                        OrderRates.UPDATE_AT -> value.sortedByDescending(UserRate::updatedAt)
+                        OrderRates.UPDATED_AT -> value.sortedByDescending(UserRate::updatedAt)
                     }
                 }
             }
