@@ -54,6 +54,8 @@ val EXTERNAL_LINK_KINDS = mapOf(
     "kage_project" to "Kage Project",
     "twitter" to "Twitter/X",
     "smotret_anime" to "Anime 365",
+    "shiki" to "Шикимори",
+    "amediateka" to "Амедиатека",
     "crunchyroll" to "Crunchyroll",
     "amazon" to "Amazon",
     "hidive" to "Hidive",
