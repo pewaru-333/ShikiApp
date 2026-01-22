@@ -172,7 +172,6 @@ fun NewsDetailView(
         list = news.images,
         screenshot = state.image,
         visible = state.showImage,
-        setScreenshot = { onEvent(ContentDetailEvent.Media.SetImage(it)) },
         hide = { onEvent(ContentDetailEvent.Media.ShowImage()) }
     )
 }
