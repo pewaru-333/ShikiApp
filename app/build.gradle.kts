@@ -2,7 +2,6 @@ plugins {
     alias(libs.plugins.android)
     alias(libs.plugins.apollo)
     alias(libs.plugins.compose)
-    alias(libs.plugins.kotlin)
     alias(libs.plugins.kotlin.serialization)
 }
 
@@ -24,8 +23,8 @@ android {
         applicationId = "org.application.shikiapp"
         minSdk = 26
         targetSdk = 36
-        versionCode = 31
-        versionName = "alpha-0.4.6"
+        versionCode = 32
+        versionName = "alpha-0.4.7"
     }
 
     dependenciesInfo {
@@ -46,16 +45,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
+        sourceCompatibility = JavaVersion.VERSION_21
+        targetCompatibility = JavaVersion.VERSION_21
     }
-    kotlin {
-        compilerOptions {
-            jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17
-        }
-    }
-    buildFeatures {
-        compose = true
+}
+
+kotlin {
+    compilerOptions {
+        jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
     }
 }
 

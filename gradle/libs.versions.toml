@@ -1,16 +1,16 @@
 [versions]
-apolloApi = "4.3.3"
+apolloApi = "4.4.0"
 coilCompose = "3.3.0"
-composeBom = "2025.11.00"
-composeLifecycle = "2.9.4"
+composeBom = "2026.01.00"
+composeLifecycle = "2.10.0"
 composeNavigation = "2.9.6"
 composePaging = "3.3.6"
-composePreferences = "2.1.0"
-gradle = "8.13.1"
-jsoup = "1.21.2"
-kotlin = "2.2.21"
-kotlinxSerializationJson = "1.9.0"
-ktor = "3.3.2"
+composePreferences = "2.1.1"
+gradle = "9.0.0"
+jsoup = "1.22.1"
+kotlin = "2.3.0"
+kotlinxSerializationJson = "1.10.0"
+ktor = "3.3.3"
 zoomableImageCoil3 = "0.18.0"
 
 [libraries]
@@ -51,5 +51,4 @@ ktor = [
 android = { id = "com.android.application", version.ref = "gradle" }
 apollo = { id = "com.apollographql.apollo", version.ref = "apolloApi" }
 compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
-kotlin = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }

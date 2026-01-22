@@ -1,2 +1,0 @@
-— The design of some interface elements has been changed.
-— Many improvements and optimizations of the application.
