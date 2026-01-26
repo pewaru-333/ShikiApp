@@ -16,6 +16,7 @@ import org.application.shikiapp.models.data.Topic
 import org.application.shikiapp.models.ui.AnimeCalendar
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.models.ui.mappers.toAnimeContent
+import org.application.shikiapp.models.ui.mappers.toSchedule
 import org.application.shikiapp.network.client.GraphQL
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.paging.CommonPaging
@@ -38,23 +39,25 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, Unit, Unit>() {
             }
 
             try {
-                val (trending, random) = coroutineScope {
+                val (trending, random, schedule) = coroutineScope {
                     val trending = async { GraphQL.getTrending() }
                     val random = async { GraphQL.getRandom() }
+                    val schedule = async { Network.content.getCalendar().toSchedule() }
 
-                    Pair(trending, random)
+                    Triple(trending, random, schedule)
                 }
 
                 emit(
-                    Response.Success(
-                        AnimeCalendar(
+                    state = Response.Success(
+                        data = AnimeCalendar(
                             trending = trending.await(),
                             random = random.await(),
+                            schedule = schedule.await(),
                             updates = topicsUpdates
                         )
                     )
                 )
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 emit(Response.Error(e))
             }
         }
