@@ -1,3 +1,0 @@
-— Added two types of sorting (by update time) in the catalog.
-— Added the display of new sources on the anime and manga page.
-— Fixed a bug that made it impossible to open the character's page.

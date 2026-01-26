@@ -10,7 +10,7 @@ gradle = "9.0.0"
 jsoup = "1.22.1"
 kotlin = "2.3.0"
 kotlinxSerializationJson = "1.10.0"
-ktor = "3.3.3"
+ktor = "3.4.0"
 zoomableImageCoil3 = "0.18.0"
 
 [libraries]
