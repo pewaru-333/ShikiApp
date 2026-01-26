@@ -7,7 +7,6 @@ import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -37,8 +36,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -155,13 +154,7 @@ private fun CalendarView(
                 }
             }
 
-            1 -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text(
-                    text = "На данный момент календарь выхода серий отключён на стороне сервера",
-                    modifier = Modifier.padding(horizontal = 16.dp),
-                    textAlign = TextAlign.Center
-                )
-            }
+            1 -> Schedule(calendar.schedule, onNavigate)
         }
     }
 }
@@ -223,6 +216,39 @@ private fun Updates(updates: LazyPagingItems<Content>, onShow: () -> Unit, onNav
         }
     }
 }
+
+@Composable
+private fun Schedule(schedule: List<AnimeCalendar.Schedule>, onNavigate: (Screen) -> Unit) =
+    LazyColumn(
+        modifier = Modifier.fillMaxSize(),
+        contentPadding = PaddingValues(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        schedule.fastForEach { item ->
+            item {
+                Column {
+                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                        ParagraphTitle(item.date)
+                        IconButton(
+                            onClick = { },
+                            content = { }
+                        )
+                    }
+
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(item.animes, Content::id) { anime ->
+                            CalendarOngoingCard(
+                                title = anime.title,
+                                score = anime.score,
+                                poster = anime.poster,
+                                onNavigate = { onNavigate(Screen.Anime(anime.id)) }
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 @Composable
 private fun AnimeUpdatesFull(
