@@ -27,7 +27,7 @@ sealed interface ResourceText {
     fun asString(): String = when (this) {
         is StaticString -> value
 
-        is MultiString -> value.map { (it as? ResourceText)?.asString() ?: it }.joinToString(" ")
+        is MultiString -> value.map { (it as? ResourceText)?.asString() ?: it }.joinToString(BLANK)
 
         is StringResource -> stringResource(
             resourceId,
@@ -42,7 +42,7 @@ sealed interface ResourceText {
 
         is MultiString -> value.map {
             (it as? ResourceText)?.asString(context) ?: it
-        }.joinToString(" ")
+        }.joinToString(BLANK)
 
         is StringResource -> context.getString(
             resourceId,
