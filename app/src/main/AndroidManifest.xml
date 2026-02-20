@@ -50,6 +50,7 @@
 
                 <data android:scheme="https" />
                 <data android:host="shikimori.one" />
+                <data android:host="shiki.one" />
                 <data android:pathPrefix="/animes" />
                 <data android:pathPrefix="/mangas" />
                 <data android:pathPrefix="/ranobe" />
