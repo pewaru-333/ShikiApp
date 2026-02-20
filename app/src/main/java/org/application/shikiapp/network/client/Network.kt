@@ -28,7 +28,6 @@ import org.application.shikiapp.network.calls.User
 import org.application.shikiapp.network.calls.UserRates
 import org.application.shikiapp.utils.API_URL
 import org.application.shikiapp.utils.GRAPH_URL
-import org.application.shikiapp.utils.extensions.refreshToken
 
 
 object Network {
@@ -51,9 +50,13 @@ object Network {
                     }
 
                     refreshTokens {
-                        val newToken = refreshToken()
+                        oldTokens?.refreshToken?.let { refreshToken ->
+                            val newToken = profile.refreshToken(refreshToken) {
+                                markAsRefreshTokenRequest()
+                            }
 
-                        newToken?.let { BearerTokens(it.accessToken, it.refreshToken) }
+                            newToken?.let { BearerTokens(it.accessToken, it.refreshToken) }
+                        }
                     }
                 }
             }
