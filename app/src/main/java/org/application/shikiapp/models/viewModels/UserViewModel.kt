@@ -136,7 +136,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                         )
                     )
                 )
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 emit(Response.Error(e))
             }
         }
@@ -178,7 +178,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             try {
                 if (state.value.isFriend) Network.user.removeFriend(userId)
                 else Network.user.addFriend(userId)
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
 
             } finally {
                 loadData()
@@ -189,7 +189,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
     inner class MailManager {
         private val _updatingNotificationMap = MutableStateFlow<Map<Long, NotificationUpdateType>>(emptyMap())
 
-        private val _dialogs = MutableStateFlow<Response<List<Dialog>, Throwable>>(Response.Loading)
+        private val _dialogs = MutableStateFlow<Response<List<Dialog>, Exception>>(Response.Loading)
         val dialogs = _dialogs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Response.Loading)
 
         private val _state = MutableStateFlow(UserMessagesState())
@@ -274,7 +274,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                         .map(org.application.shikiapp.models.data.Dialog::toDialog)
 
                     _dialogs.emit(Response.Success(dialogs))
-                } catch (e: Throwable) {
+                } catch (e: Exception) {
                     _dialogs.emit(Response.Error(e))
                 }
             }
