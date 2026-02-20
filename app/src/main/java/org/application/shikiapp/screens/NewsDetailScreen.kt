@@ -33,6 +33,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import org.application.shikiapp.R
@@ -76,7 +77,12 @@ fun NewsDetailView(
             TopAppBar(
                 title = { Text(stringResource(R.string.text_news_one)) },
                 navigationIcon = { NavigationIcon(back) },
-                actions = { IconComment(comments) { onEvent(ContentDetailEvent.ShowComments) } }
+                actions = {
+                    IconComment(
+                        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount },
+                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
+                    )
+                }
             )
         }
     ) { values ->
