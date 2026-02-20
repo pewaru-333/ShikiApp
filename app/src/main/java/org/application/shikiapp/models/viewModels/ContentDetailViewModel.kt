@@ -60,7 +60,7 @@ abstract class ContentDetailViewModel<D, S> : BaseViewModel<D, S, ContentDetailE
             try {
                 if (favoured) Network.profile.deleteFavourite(type.toValue(), id)
                 else Network.profile.addFavourite(type.toValue(), id, kind)
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
 
             } finally {
                 loadData()
