@@ -21,10 +21,11 @@ import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
 import java.time.LocalDate
+import java.time.MonthDay
 import java.time.OffsetDateTime
 import java.time.format.DateTimeFormatter
-import java.time.format.DateTimeParseException
 import java.time.format.FormatStyle
+import java.time.temporal.ChronoUnit
 
 
 fun getNextEpisode(date: Any?) = if (date !is String) BLANK
@@ -84,26 +85,71 @@ fun getLinks(text: String): List<String> {
     return links
 }
 
-fun getBirthday(birthday: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
-    try {
-        LocalDate.parse(
-            "${birthday?.day}.${birthday?.month}.${birthday?.year}"
-                .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
-        ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-    } catch (_: DateTimeParseException) {
-        null
-    }
-}
+fun getPersonDates(birthday: Date?, deathday: Date? = null): Pair<ResourceText?, ResourceText?> {
+    if (birthday == null) return Pair(null, null)
 
-fun getDeathday(deceasedOn: Date?) = DATE_FORMATS.firstNotNullOfOrNull {
-    try {
-        LocalDate.parse(
-            "${deceasedOn?.day}.${deceasedOn?.month}.${deceasedOn?.year}"
-                .replace("null", BLANK), DateTimeFormatter.ofPattern(it)
-        ).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG))
-    } catch (_: DateTimeParseException) {
-        null
+    val isDead = deathday != null && (deathday.day != null || deathday.month != null || deathday.year != null)
+    val actualDeathday = if (isDead) deathday else null
+
+    val age = run {
+        val bYear = birthday.year ?: return@run null
+        val dYear = actualDeathday?.year ?: LocalDate.now().year
+
+        if (birthday.day != null && birthday.month != null) {
+            val bDate = LocalDate.of(bYear, birthday.month, birthday.day)
+            val dDate = if (actualDeathday?.day != null && actualDeathday.month != null) {
+                LocalDate.of(dYear, actualDeathday.month, actualDeathday.day)
+            } else {
+                if (actualDeathday == null) LocalDate.now() else null
+            }
+
+            dDate?.let { ChronoUnit.YEARS.between(bDate, it).toInt() } ?: (dYear - bYear)
+        } else {
+            dYear - bYear
+        }
     }
+
+    fun formatDateInfo(date: Date?, showAge: Boolean): ResourceText? {
+        if (date == null || (date.day == null && date.month == null && date.year == null)) return null
+
+        val (day, month, year) = date
+        val baseString = when {
+            day != null && month != null && year != null -> {
+                val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
+                val formatted = LocalDate.of(year, month, day).format(formatter)
+
+                ResourceText.StaticString(formatted)
+            }
+
+            day != null && month != null -> {
+                val locale = Locale.current.platformLocale
+                val pattern = DateTimeFormatter.ofPattern("d MMMM", locale)
+                val formatted = MonthDay.of(month, day).format(pattern)
+
+                ResourceText.StaticString(formatted)
+            }
+
+            year != null -> ResourceText.StringResource(R.string.text_year_in, year)
+
+            else -> return null
+        }
+
+        return if (!showAge || age == null) baseString else ResourceText.MultiString(
+            value = buildList {
+                add(baseString)
+                add(" ")
+                add(ResourceText.PluralStringResource(R.plurals.plural_years_old, age, age))
+                if (day == null || month == null) {
+                    add("?")
+                }
+            }
+        )
+    }
+
+    val birthString = formatDateInfo(date = birthday, showAge = !isDead)
+    val deathString = formatDateInfo(date = actualDeathday, showAge = isDead)
+
+    return Pair(birthString, deathString)
 }
 
 fun getNewsPoster(text: String?): String? {
@@ -152,8 +198,9 @@ fun getSeason(text: Any?, kind: String?) = when (text) {
                 val year = text.substringAfter("_")
 
                 ResourceText.MultiString(
-                    listOf(
+                    value = listOf(
                         ResourceText.StringResource(Enum.safeValueOf<Season>(season).title),
+                        " ",
                         year
                     )
                 )
@@ -164,8 +211,9 @@ fun getSeason(text: Any?, kind: String?) = when (text) {
                 val season = Season.entries.first { date.month in it.months }
 
                 ResourceText.MultiString(
-                    listOf(
+                    value = listOf(
                         ResourceText.StringResource(season.title),
+                        " ",
                         date.year
                     )
                 )
