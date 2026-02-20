@@ -29,6 +29,8 @@ sealed interface CommentContent {
     data class ImageContent(val previewUrl: String, val fullUrl: String?, val width: Float, val height: Float) : CommentContent
     data class SpoilerContent(val title: String, val items: List<CommentContent>) : CommentContent
     data class QuoteContent(val author: String, val items: List<CommentContent>) : CommentContent
+    data class VideoContent(val previewUrl: String, val videoUrl: String, val source: String) : CommentContent
+    data class BanContent(val moderatorName: String, val moderatorAvatar: String, val reason: AnnotatedString) : CommentContent
     data object LineBreakContent : CommentContent
 }
 
@@ -102,12 +104,38 @@ object HtmlParser {
 
                         contentList.add(
                             ImageContent(
-                                previewUrl = imgTag?.attr("abs:src") ?: BLANK,
+                                previewUrl = imgTag?.attr("abs:src").orEmpty(),
                                 fullUrl = fullUrl,
                                 width = imgTag?.attr("data-width")?.toFloatOrNull() ?: 10f,
                                 height = imgTag?.attr("data-height")?.toFloatOrNull() ?: 10f
                             )
                         )
+                    }
+
+                    node.hasClass("b-video") -> {
+                        val link = node.selectFirst("a.video-link")
+                        val img = node.selectFirst("img")
+
+                        val videoUrl = link?.attr("href") ?: link?.attr("data-href").orEmpty()
+                        val previewUrl = img?.attr("abs:src").orEmpty()
+                        val source = node.selectFirst(".marker")?.text().orEmpty()
+
+                        contentList.add(CommentContent.VideoContent(previewUrl, videoUrl, source))
+                    }
+
+                    node.hasClass("ban") -> {
+                        val modElement = node.selectFirst(".b-user16 a")
+                        val modName = modElement?.attr("title") ?: "Модератор"
+                        val modAvatar = modElement?.selectFirst("img")?.attr("abs:src").orEmpty()
+
+                        val resolutionNode = node.selectFirst(".resolution")
+                        val (reasonText, _) = if (resolutionNode != null) {
+                            stringFromNodes(resolutionNode.childNodes())
+                        } else {
+                            AnnotatedString(node.text()) to emptyMap()
+                        }
+
+                        contentList.add(CommentContent.BanContent(modName, modAvatar, reasonText))
                     }
 
                     node.tagName() == "br" -> contentList.add(LineBreakContent)
@@ -174,7 +202,9 @@ object HtmlParser {
     private fun isBlockElement(node: Node) = node is Element &&
             (node.hasClass("b-quote") ||
                     node.hasClass("b-spoiler_block") ||
-                    node.hasClass("b-image")
+                    node.hasClass("b-image") ||
+                    node.hasClass("b-video") ||
+                    node.hasClass("ban")
                     || node.tagName() == "br")
 
     private fun isBlockContainer(node: Node): Boolean {
