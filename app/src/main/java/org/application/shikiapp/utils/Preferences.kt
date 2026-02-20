@@ -8,6 +8,7 @@ import androidx.core.content.edit
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.models.data.Token
 import org.application.shikiapp.utils.enums.ListView
+import org.application.shikiapp.utils.enums.Menu
 import org.application.shikiapp.utils.enums.Theme
 import org.application.shikiapp.utils.extensions.getActivity
 import org.application.shikiapp.utils.extensions.getEnum
@@ -21,6 +22,12 @@ class Preferences(context: Context) {
     private val auth = context.getSharedPreferences("auth_${context.packageName}", MODE_PRIVATE)
     val app = context.getSharedPreferences("preferences_${context.packageName}", MODE_PRIVATE)
 
+    val startPage: Menu
+        get() = app.getEnum(PREF_START_PAGE, Menu.NEWS)
+
+    val startPageFlow: Flow<Menu>
+        get() = app.getEnumFlow(PREF_START_PAGE, Menu.NEWS)
+
     val listView: ListView
         get() = app.getEnum(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
 
@@ -29,9 +36,6 @@ class Preferences(context: Context) {
 
     val cache: Int
         get() = app.getInt(PREF_APP_CACHE, 16)
-
-    val cacheFlow: Flow<Int>
-        get() = app.getFlow(PREF_APP_CACHE, 16)
 
     val theme: Flow<Theme>
         get() = app.getEnumFlow(PREF_APP_THEME, Theme.SYSTEM)
@@ -70,20 +74,16 @@ class Preferences(context: Context) {
         putLong(USER_ID, userId)
     }
 
+    fun setStartPage(page: Menu) = app.edit {
+        putEnum(PREF_START_PAGE, page)
+    }
+
     fun setListView(view: ListView) = app.edit {
         putEnum(PREF_CATALOG_LIST_VIEW, view)
     }
 
     fun setTheme(theme: Theme) = app.edit {
         putEnum(PREF_APP_THEME, theme)
-    }
-
-    fun setDynamicColors(flag: Boolean) = app.edit {
-        putBoolean(PREF_DYNAMIC_COLORS, flag)
-    }
-
-    fun setCache(cache: Int) = app.edit {
-        putInt(PREF_APP_CACHE, cache)
     }
 
     fun getLanguage(context: Context) = app.getString(PREF_APP_LANGUAGE, context.getSelectedLanguage()) ?: Locale.ENGLISH.language
