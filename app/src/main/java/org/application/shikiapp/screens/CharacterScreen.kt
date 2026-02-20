@@ -1,17 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.layout.Arrangement.spacedBy
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -20,11 +16,10 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
-import org.application.shikiapp.R.string.text_character
-import org.application.shikiapp.R.string.text_seyu
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.CharacterState
 import org.application.shikiapp.models.ui.Character
@@ -33,16 +28,14 @@ import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
-import org.application.shikiapp.ui.templates.Description
-import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.Names
-import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.Poster
-import org.application.shikiapp.ui.templates.Profiles
 import org.application.shikiapp.ui.templates.ProfilesFull
-import org.application.shikiapp.ui.templates.Related
 import org.application.shikiapp.ui.templates.RelatedFull
-import org.application.shikiapp.ui.templates.VectorIcon
+import org.application.shikiapp.ui.templates.ScaffoldContent
+import org.application.shikiapp.ui.templates.description
+import org.application.shikiapp.ui.templates.profiles
+import org.application.shikiapp.ui.templates.related
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -71,76 +64,44 @@ private fun CharacterView(
     state: CharacterState,
     onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
-    back: () -> Unit
+    onBack: () -> Unit
 ) {
-    val listState = rememberLazyListState()
+    val commentsState = rememberLazyListState()
     val comments = character.comments.collectAsLazyPagingItems()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(text_character)) },
-                navigationIcon = { NavigationIcon(back) },
-                actions = {
-                    IconComment(
-                        comments = comments,
-                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
-                    )
-                    IconButton(
-                        onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                        content = { VectorIcon(R.drawable.vector_more) }
-                    )
-                }
-            )
-        }
-    ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = spacedBy(16.dp)
-        ) {
-            item {
-                Row(horizontalArrangement = spacedBy(16.dp)) {
-                    Poster(character.poster)
-                    Names(character.russian, character.japanese, character.altName)
-                }
-            }
-
-            character.description.let {
-                if (it.isNotEmpty()) {
-                    item { Description(it) }
-                }
-            }
-
-            character.relatedList.let {
-                if (it.isNotEmpty()) {
-                    item {
-                        Related(
-                            list = it,
-                            showAllRelated = { onEvent(ContentDetailEvent.Media.ShowRelated) },
-                            onNavigate = onNavigate
-                        )
-                    }
-                }
-            }
-
-            character.seyu.let {
-                if (it.isNotEmpty()) {
-                    item {
-                        Profiles(
-                            list = it,
-                            title = stringResource(text_seyu),
-                            onShowFull = { onEvent(ContentDetailEvent.Character.ShowSeyu) },
-                            onNavigate = { onNavigate(Screen.Person(it.toLong())) }
-                        )
-                    }
-                }
+    ScaffoldContent(
+        title = { Text(stringResource(R.string.text_character)) },
+        userRate = null,
+        isFavoured = character.favoured,
+        onBack = onBack,
+        onEvent = onEvent,
+        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount },
+        onToggleFavourite = { onEvent(ContentDetailEvent.Character.ToggleFavourite) }
+    ) {
+        item {
+            Row(horizontalArrangement = spacedBy(16.dp)) {
+                Poster(character.poster)
+                Names(character.russian, character.japanese, character.altName)
             }
         }
+
+        description(character.description)
+        related(
+            related = character.relatedList,
+            onShow = { onEvent(ContentDetailEvent.Media.ShowRelated) },
+            onNavigate = onNavigate
+        )
+        profiles(
+            profiles = character.seyu,
+            title = R.string.text_seyu,
+            onShow = { onEvent(ContentDetailEvent.Character.ShowSeyu) },
+            onNavigate = { onNavigate(Screen.Person(it.toLong())) }
+        )
     }
 
     Comments(
         list = comments,
-        listState = listState,
+        listState = commentsState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -156,16 +117,13 @@ private fun CharacterView(
     ProfilesFull(
         list = character.seyu,
         visible = state.showSeyu,
-        title = stringResource(text_seyu),
+        title = stringResource(R.string.text_seyu),
         state = rememberLazyListState(),
         onHide = { onEvent(ContentDetailEvent.Character.ShowSeyu) },
         onNavigate = { onNavigate(Screen.Person(it.toLong())) }
     )
 
     if (state.showSheet) {
-        BottomSheet(
-            favoured = character.favoured,
-            onEvent = onEvent
-        )
+        BottomSheet(onEvent = onEvent)
     }
 }

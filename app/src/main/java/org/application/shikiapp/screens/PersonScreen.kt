@@ -1,25 +1,21 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.screens
 
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -33,6 +29,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
@@ -45,15 +42,13 @@ import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
-import org.application.shikiapp.ui.templates.IconComment
 import org.application.shikiapp.ui.templates.Names
-import org.application.shikiapp.ui.templates.NavigationIcon
 import org.application.shikiapp.ui.templates.ParagraphTitle
-import org.application.shikiapp.ui.templates.Profiles
 import org.application.shikiapp.ui.templates.ProfilesFull
-import org.application.shikiapp.ui.templates.Related
 import org.application.shikiapp.ui.templates.RelatedFull
-import org.application.shikiapp.ui.templates.VectorIcon
+import org.application.shikiapp.ui.templates.ScaffoldContent
+import org.application.shikiapp.ui.templates.profiles
+import org.application.shikiapp.ui.templates.related
 import org.application.shikiapp.utils.extensions.openLinkInBrowser
 import org.application.shikiapp.utils.navigation.Screen
 
@@ -82,71 +77,45 @@ private fun PersonView(
     state: PersonState,
     onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
-    back: () -> Unit
+    onBack: () -> Unit
 ) {
-    val listState = rememberLazyListState()
+    val commentsState = rememberLazyListState()
     val comments = person.comments.collectAsLazyPagingItems()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(person.jobTitle) },
-                navigationIcon = { NavigationIcon(back) },
-                actions = {
-                    IconComment(
-                        comments = comments,
-                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
-                    )
-                    IconButton(
-                        onClick = { onEvent(ContentDetailEvent.ShowSheet) },
-                        content = { VectorIcon(R.drawable.vector_more) }
-                    )
-                }
-            )
+    ScaffoldContent(
+        title = { Text(person.jobTitle) },
+        userRate = null,
+        isFavoured = person.favoured,
+        onBack = onBack,
+        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount },
+        onEvent = onEvent,
+        onToggleFavourite = { onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind)) }
+    ) {
+        item {
+            PersonHeader(person)
         }
-    ) { values ->
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                PersonHeader(person)
-            }
 
-            item {
-                Roles(person.grouppedRoles)
-            }
-
-            person.relatedList.let {
-                if (it.isNotEmpty()) {
-                    item {
-                        Related(
-                            list = it.take(6),
-                            showAllRelated = { onEvent(ContentDetailEvent.Person.ShowWorks) },
-                            onNavigate = onNavigate
-                        )
-                    }
-                }
-            }
-
-            person.characters.let {
-                if (it.isNotEmpty()) {
-                    item {
-                        Profiles(
-                            list = it.take(6),
-                            title = stringResource(R.string.text_characters),
-                            onShowFull = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
-                            onNavigate = { onNavigate(Screen.Character(it)) }
-                        )
-                    }
-                }
-            }
+        item {
+            Roles(person.grouppedRoles)
         }
+
+        related(
+            related = person.relatedList,
+            onNavigate = onNavigate,
+            onShow = { onEvent(ContentDetailEvent.Person.ShowWorks) }
+        )
+
+        profiles(
+            profiles = person.characters,
+            title = R.string.text_characters,
+            onShow = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+            onNavigate = { onNavigate(Screen.Character(it)) }
+        )
     }
 
     Comments(
         list = comments,
-        listState = listState,
+        listState = commentsState,
         visible = state.showComments,
         hide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -171,8 +140,6 @@ private fun PersonView(
     if (state.showSheet) {
         BottomSheet(
             website = person.website,
-            kind = person.personKind,
-            favoured = person.favoured,
             onEvent = onEvent
         )
     }
@@ -201,10 +168,10 @@ private fun PersonHeader(person: Person) =
 
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                 person.birthday?.let {
-                    LabelInfoItem(stringResource(R.string.text_birthday), it)
+                    LabelInfoItem(stringResource(R.string.text_birthday), it.asString())
                 }
                 person.deathday?.let {
-                    LabelInfoItem(stringResource(R.string.text_deathday), it)
+                    LabelInfoItem(stringResource(R.string.text_deathday), it.asString())
                 }
             }
         }
