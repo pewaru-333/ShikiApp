@@ -20,6 +20,7 @@ data class UserState(
 }
 
 sealed interface UserDialogState {
+    data object Logout : UserDialogState
     data object Settings : UserDialogState
     data object Comments : UserDialogState
     data object ToggleFriend : UserDialogState
