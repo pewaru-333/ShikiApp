@@ -217,7 +217,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
                         )
                     )
                 )
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 emit(Response.Error(e))
             }
         }
@@ -260,7 +260,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
                 } else {
                     _joinChannel.send(ResourceText.StringResource(R.string.text_unsuccessfully_joined_club))
                 }
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 _joinChannel.send(ResourceText.StaticString(e.stackTraceToString()))
             } finally {
                 loadData()
@@ -278,7 +278,7 @@ class ClubViewModel(saved: SavedStateHandle) : BaseViewModel<Club, ClubState, Cl
                 } else {
                     _joinChannel.send(ResourceText.StringResource(R.string.text_unsuccessfully_leave_club))
                 }
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 _joinChannel.send(ResourceText.StaticString(e.stackTraceToString()))
             } finally {
                 loadData()
