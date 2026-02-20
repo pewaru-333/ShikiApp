@@ -51,7 +51,7 @@ fun Context.openLinkInBrowser(url: String) {
     if (resolveInfo != null) {
         try {
             startActivity(Intent(Intent.ACTION_VIEW, url.toFullUri()).setPackage(resolveInfo.activityInfo.packageName))
-        } catch (_: Throwable) {
+        } catch (_: Exception) {
             showToast(R.string.text_error_open_link)
         }
     } else {
@@ -60,7 +60,7 @@ fun Context.openLinkInBrowser(url: String) {
 }
 
 fun Context.getLanguageList() = mutableListOf<String>().apply {
-    resources.getXml(resources.getIdentifier("_generated_res_locale_config", "xml", packageName)).use { xml ->
+    resources.getXml(R.xml._generated_res_locale_config).use { xml ->
         while (xml.eventType != XmlResourceParser.END_DOCUMENT) {
             if (xml.eventType == XmlPullParser.START_TAG && xml.name == "locale") {
                 add(xml.getAttributeValue(0))
