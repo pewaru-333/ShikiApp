@@ -1,6 +1,5 @@
 package org.application.shikiapp.network.paging
 
-import androidx.compose.ui.util.fastForEach
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
 
@@ -22,7 +21,7 @@ class CommonPaging<T : Any>(
 
         val newData = mutableListOf<T>()
 
-        response.fastForEach { item ->
+        response.forEach { item ->
             if (contentList.add(getId(item))) {
                 newData.add(item)
             }
@@ -32,7 +31,7 @@ class CommonPaging<T : Any>(
         val nextKey = if (response.isEmpty()) null else page + 1
 
         LoadResult.Page(newData, prevKey, nextKey)
-    } catch (e: Throwable) {
+    } catch (e: Exception) {
         LoadResult.Error(e)
     }
 }
