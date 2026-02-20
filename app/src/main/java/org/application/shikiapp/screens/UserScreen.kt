@@ -44,7 +44,6 @@ import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
@@ -66,7 +65,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
@@ -127,13 +125,13 @@ import org.application.shikiapp.utils.navigation.NavigationBarVisibility
 import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
-fun UserScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
+fun UserScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     val model = viewModel<UserViewModel>()
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
     AnimatedScreen(response, model::loadData) { user ->
-        UserView(user, state, model.mailManager, model::onEvent, onNavigate, back)
+        UserView(user, state, model.mailManager, model::onEvent, onNavigate, onBack)
     }
 }
 
@@ -144,7 +142,7 @@ fun UserView(
     mailManager: UserViewModel.MailManager,
     onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
-    back: () -> Unit,
+    onBack: () -> Unit,
     visibility: NavigationBarVisibility? = null
 ) {
     val context = LocalContext.current
@@ -173,11 +171,9 @@ fun UserView(
                 title = {},
                 navigationIcon = {
                     if (Preferences.userId == user.id) {
-                        IconButton(back) {
-                            VectorIcon(R.drawable.vector_exit_app)
-                        }
+                        IconButton(onBack) { VectorIcon(R.drawable.vector_exit_app) }
                     } else {
-                        NavigationIcon(back)
+                        NavigationIcon(onBack)
                     }
                 },
                 actions = {
@@ -370,22 +366,20 @@ private fun TopBarActions(
 
         else -> {
             IconComment(
-                comments = comments,
+                onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount },
                 onEvent = { onEvent(ContentDetailEvent.ShowComments) }
             )
 
             if (Preferences.token != null && Preferences.userId != user.id) {
                 IconButton(
-                    onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.ToggleFriend)) }
-                ) {
-                    Icon(
-                        contentDescription = null,
-                        painter = painterResource(
-                            id = if (user.inFriends) R.drawable.vector_remove_friend
+                    onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.ToggleFriend)) },
+                    content = {
+                        VectorIcon(
+                            resId = if (user.inFriends) R.drawable.vector_remove_friend
                             else R.drawable.vector_add_friend
                         )
-                    )
-                }
+                    }
+                )
             }
 
             IconButton(
@@ -399,7 +393,7 @@ private fun TopBarActions(
 @Composable
 private fun DialogMail(
     mailManager: UserViewModel.MailManager,
-    dialogs: Response<List<Dialog>, Throwable>,
+    dialogs: Response<List<Dialog>, Exception>,
     news: LazyPagingItems<Message>,
     notifications: LazyPagingItems<Message>,
     visible: Boolean,
@@ -634,7 +628,7 @@ private fun UserDialog(
                         content = { VectorIcon(R.drawable.vector_send) },
                         enabled = textFieldState.text.isNotBlank(),
                         onClick = {
-                            sendMessage(textFieldState.text.toString());
+                            sendMessage(textFieldState.text.toString())
                             textFieldState.clearText()
                             focusRequester.requestFocus()
                             scope.launch { listState.animateScrollToItem(0) }
@@ -720,7 +714,7 @@ fun MessageBubble(message: Dialog, modifier: Modifier = Modifier) {
 private fun DialogRemoveUserDialog(nickname: String, hide: () -> Unit, remove: () -> Unit) =
     AlertDialog(
         onDismissRequest = hide,
-        dismissButton = { TextButton(hide) { Text(stringResource(R.string.text_cancel)) } },
+        dismissButton = { TextButton(hide) { Text(stringResource(R.string.text_dismiss)) } },
         confirmButton = { TextButton(remove) { Text(stringResource(R.string.text_confirm)) } },
         text = {
             Text(
@@ -734,7 +728,7 @@ private fun DialogRemoveUserDialog(nickname: String, hide: () -> Unit, remove: (
 private fun DialogRemoveAllNews(onConfirm: () -> Unit, onCancel: () -> Unit) =
     AlertDialog(
         onDismissRequest = onCancel,
-        dismissButton = { TextButton(onCancel) { Text(stringResource(R.string.text_cancel)) } },
+        dismissButton = { TextButton(onCancel) { Text(stringResource(R.string.text_dismiss)) } },
         confirmButton = { TextButton(onConfirm) { Text(stringResource(R.string.text_confirm)) } },
         title = { Text(stringResource(R.string.text_pay_attention)) },
         text = {
@@ -752,7 +746,7 @@ private fun DialogToggleFriend(inFriends: Boolean, onEvent: (ContentDetailEvent)
         dismissButton = {
             TextButton(
                 onClick = { onEvent(ContentDetailEvent.User.ToggleDialog(null)) },
-                content = { Text(stringResource(R.string.text_cancel)) }
+                content = { Text(stringResource(R.string.text_dismiss)) }
             )
         },
         confirmButton = {
