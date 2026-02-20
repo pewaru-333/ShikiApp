@@ -36,7 +36,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import org.application.shikiapp.R
-import org.application.shikiapp.R.string.text_cancel
+import org.application.shikiapp.R.string.text_dismiss
 import org.application.shikiapp.events.RateEvent
 import org.application.shikiapp.models.states.NewRateState
 import org.application.shikiapp.utils.enums.LinkedType
@@ -56,7 +56,7 @@ fun DialogEditRate(
     onDismiss: () -> Unit = {}
 ) = AlertDialog(
     onDismissRequest = onDismiss,
-    dismissButton = { TextButton(onDismiss) { Text(stringResource(text_cancel)) } },
+    dismissButton = { TextButton(onDismiss) { Text(stringResource(text_dismiss)) } },
     confirmButton = {
         TextButton(
             content = { Text(stringResource(R.string.text_save)) },
