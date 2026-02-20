@@ -160,7 +160,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     if (e.response.status.value == 403) RatesResponse.NoAccess
                     else RatesResponse.Error
                 )
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 _response.emit(RatesResponse.Error)
             }
         }
@@ -226,7 +226,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         )
                     )
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
 
             } finally {
                 reload()
@@ -283,7 +283,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 } else {
                     _rateUiEvent.send(UserRateUiEvent.Error)
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 _rateUiEvent.send(UserRateUiEvent.Error)
             }
         }
@@ -307,7 +307,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         )
                     )
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
 
             } finally {
                 reload()
@@ -335,7 +335,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 } else {
                     _rateUiEvent.send(UserRateUiEvent.Error)
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 _rateUiEvent.send(UserRateUiEvent.Error)
             }
         }
@@ -346,7 +346,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             try {
                 Network.rates.delete(rateId.toLong())
                 _newRate.emit(NewRateState())
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
 
             } finally {
                 reload()
