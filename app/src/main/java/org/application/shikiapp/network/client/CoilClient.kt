@@ -17,6 +17,8 @@ import io.ktor.http.HttpMethod
 import io.ktor.http.takeFrom
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.copyTo
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 import okio.Buffer
 import okio.BufferedSink
 import okio.FileSystem
@@ -88,8 +90,10 @@ internal suspend fun ByteReadChannel.writeTo(sink: BufferedSink) {
 
 internal suspend fun ByteReadChannel.writeTo(fileSystem: FileSystem, path: Path) {
     if (fileSystem === FileSystem.SYSTEM) {
-        RandomAccessFile(path.toFile(), "rw").use {
-            copyTo(it.channel)
+        withContext(Dispatchers.IO) {
+            RandomAccessFile(path.toFile(), "rw").use {
+                copyTo(it.channel)
+            }
         }
     } else {
         fileSystem.write(path) {
