@@ -2,10 +2,10 @@ package org.application.shikiapp.utils.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Stable
+import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.staticCompositionLocalOf
 
 @Stable
 interface NavigationBarVisibility {
@@ -33,7 +33,9 @@ private class InitialNavigationBarVisibility : NavigationBarVisibility {
     }
 }
 
-val LocalBarVisibility = staticCompositionLocalOf<NavigationBarVisibility>(::InitialNavigationBarVisibility)
+val LocalBarVisibility = compositionLocalOf<NavigationBarVisibility> {
+    InitialNavigationBarVisibility()
+}
 
 @Composable
 fun rememberNavigationBarVisibility(): NavigationBarVisibility {
