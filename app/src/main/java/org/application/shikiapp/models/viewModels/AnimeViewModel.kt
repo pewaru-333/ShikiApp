@@ -17,7 +17,8 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeResponse, Anime, AnimeState>() {
-    override val contentId = saved.toRoute<Screen.Anime>().id
+    override val contentId = saved.toRoute<Screen.Anime>()
+        .id.filter(Char::isDigit)
 
     override fun initState() = AnimeState()
 
@@ -59,12 +60,7 @@ class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeRespo
 
                     val newData = data.copy(userRate = AsyncData.Loading)
 
-                    updateState {
-                        it.copy(
-                            showRate = !it.showRate,
-                            showSheet = !it.showSheet
-                        )
-                    }
+                    updateState { it.copy(showRate = !it.showRate) }
 
                     tryEmit(Response.Success(newData))
                     loadData()
@@ -80,17 +76,12 @@ class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeRespo
 
                 ContentDetailEvent.Media.ShowLinks -> updateState {
                     it.copy(
-                        showSheet = !it.showSheet,
-                        showLinks = !it.showLinks
-                    )
-                }
-
-                ContentDetailEvent.Media.ShowRate -> updateState {
-                    it.copy(
-                        showRate = !it.showRate,
+                        showLinks = !it.showLinks,
                         showSheet = !it.showSheet
                     )
                 }
+
+                ContentDetailEvent.Media.ShowRate -> updateState { it.copy(showRate = !it.showRate) }
 
                 is ContentDetailEvent.Media.ShowImage -> updateState {
                     it.copy(

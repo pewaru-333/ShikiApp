@@ -18,7 +18,8 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Character, CharacterState>() {
-    override val contentId = saved.toRoute<Screen.Character>().id
+    override val contentId = saved.toRoute<Screen.Character>()
+        .id.filter(Char::isDigit)
 
     override fun initState() = CharacterState()
 

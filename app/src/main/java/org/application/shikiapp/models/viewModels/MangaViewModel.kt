@@ -17,7 +17,8 @@ import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.navigation.Screen
 
 class MangaViewModel(saved: SavedStateHandle) : CachedDetailViewModel<MangaResponse, Manga, MangaState>() {
-    override val contentId = saved.toRoute<Screen.Manga>().id
+    override val contentId = saved.toRoute<Screen.Manga>()
+        .id.filter(Char::isDigit)
 
     override fun initState() = MangaState()
 
@@ -59,12 +60,7 @@ class MangaViewModel(saved: SavedStateHandle) : CachedDetailViewModel<MangaRespo
 
                     val newData = data.copy(userRate = AsyncData.Loading)
 
-                    updateState {
-                        it.copy(
-                            showRate = !it.showRate,
-                            showSheet = !it.showSheet
-                        )
-                    }
+                    updateState { it.copy(showRate = !it.showRate) }
 
                     tryEmit(Response.Success(newData))
                     loadData()
@@ -83,12 +79,7 @@ class MangaViewModel(saved: SavedStateHandle) : CachedDetailViewModel<MangaRespo
                     )
                 }
 
-                ContentDetailEvent.Media.ShowRate -> updateState {
-                    it.copy(
-                        showRate = !it.showRate,
-                        showSheet = !it.showSheet
-                    )
-                }
+                ContentDetailEvent.Media.ShowRate -> updateState { it.copy(showRate = !it.showRate) }
 
                 else -> Unit
             }
