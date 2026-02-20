@@ -30,7 +30,7 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
                 setCommentParams(contentId)
 
                 emit(Response.Success(news.await().mapper(comments)))
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 emit(Response.Error(e))
             }
         }
