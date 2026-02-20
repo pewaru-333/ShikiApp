@@ -15,6 +15,7 @@ import coil3.memory.MemoryCache
 import coil3.network.NetworkFetcher
 import coil3.request.CachePolicy
 import coil3.request.crossfade
+import me.zhanghai.compose.preference.isDefaultPreferenceFlowLongSupportEnabled
 import org.application.shikiapp.di.AppModule
 import org.application.shikiapp.di.AppModuleInitializer
 import org.application.shikiapp.di.Preferences
@@ -32,6 +33,7 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
         super.onCreate()
 
         app = AppModuleInitializer(applicationContext)
+        isDefaultPreferenceFlowLongSupportEnabled = true
     }
 
     @OptIn(ExperimentalCoilApi::class)
