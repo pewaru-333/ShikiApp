@@ -1,8 +1,10 @@
 package org.application.shikiapp.models.ui
 
 import androidx.annotation.StringRes
+import androidx.compose.runtime.Immutable
 import java.time.OffsetDateTime
 
+@Immutable
 data class UserRate(
     val chapters: Int,
     val contentId: String,
