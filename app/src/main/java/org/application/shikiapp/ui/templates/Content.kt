@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.ui.templates
 
@@ -17,6 +17,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.indication
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
@@ -32,15 +33,18 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
@@ -49,6 +53,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SuggestionChip
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,6 +61,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -64,6 +70,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
+import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
@@ -85,15 +92,26 @@ import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
+import org.application.shikiapp.R.string.text_episodes
+import org.application.shikiapp.R.string.text_kind
+import org.application.shikiapp.R.string.text_publisher
+import org.application.shikiapp.R.string.text_rate_chapters
+import org.application.shikiapp.R.string.text_volumes
+import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.ui.Franchise
 import org.application.shikiapp.models.ui.History
 import org.application.shikiapp.models.ui.Label
+import org.application.shikiapp.models.ui.Publisher
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.Score
 import org.application.shikiapp.models.ui.Statistics
+import org.application.shikiapp.models.ui.Studio
 import org.application.shikiapp.models.ui.User
+import org.application.shikiapp.models.ui.UserRate
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
+import org.application.shikiapp.network.response.AsyncData
+import org.application.shikiapp.screens.LabelInfoItem
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.enums.LinkedType
@@ -101,8 +119,65 @@ import org.application.shikiapp.utils.enums.RelationKind
 import org.application.shikiapp.utils.enums.UserMenu
 import org.application.shikiapp.utils.extensions.substringAfter
 import org.application.shikiapp.utils.extensions.substringBefore
+import org.application.shikiapp.utils.extensions.toContent
 import org.application.shikiapp.utils.navigation.Screen
 import kotlin.math.roundToInt
+
+@Composable
+fun ScaffoldContent(
+    title: @Composable (() -> Unit),
+    userRate: AsyncData<UserRate?>?,
+    isFavoured: AsyncData<Boolean>,
+    onBack: () -> Unit,
+    onToggleFavourite: () -> Unit,
+    onLoadState: () -> Pair<Boolean, Int>,
+    onEvent: (ContentDetailEvent) -> Unit,
+    content: LazyListScope.() -> Unit
+) {
+    val listState = rememberLazyListState()
+    val isVisible by remember {
+        derivedStateOf {
+            listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset < 10
+        }
+    }
+
+    Scaffold(
+        topBar = {
+            TopAppBar(
+                title = title,
+                navigationIcon = { NavigationIcon(onBack) },
+                actions = {
+                    IconComment(
+                        onLoadState = onLoadState,
+                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
+                    )
+
+                    IconButton(
+                        onClick = { onEvent(ContentDetailEvent.ShowSheet) },
+                        content = { VectorIcon(R.drawable.vector_more) }
+                    )
+                }
+            )
+        },
+        floatingActionButton = {
+            FloatingActionButtonContent(
+                userRate = userRate,
+                isFavoured = isFavoured,
+                isVisible = isVisible,
+                onToggleFavourite = onToggleFavourite,
+                onEvent = onEvent
+            )
+        }
+    ) { values ->
+        LazyColumn(
+            modifier = Modifier.fillMaxSize(),
+            state = listState,
+            contentPadding = values.toContent(),
+            verticalArrangement = spacedBy(16.dp),
+            content = content
+        )
+    }
+}
 
 @Composable
 fun Description(description: AnnotatedString, withDivider: Boolean = true) {
@@ -123,7 +198,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
     val isTextExpanded = !hasOverflow || maxLines > 8
 
     Column(Modifier.animateContentSize()) {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, CenterVertically) {
             ParagraphTitle(stringResource(R.string.text_description), Modifier.padding(bottom = 4.dp))
 
             if (hasOverflow || maxLines > 8) {
@@ -159,7 +234,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                     .clickable { isVisible = !isVisible }
                     .padding(12.dp, 8.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(verticalAlignment = CenterVertically) {
                     VectorIcon(
                         modifier = Modifier.size(20.dp),
                         resId = if (isVisible) R.drawable.vector_keyboard_arrow_down
@@ -195,7 +270,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
 
 @Composable
 fun Names(russian: String?, english: String?, japanese: String?) =
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = spacedBy(4.dp)) {
         when {
             !russian.isNullOrEmpty() -> {
                 Text(
@@ -294,16 +369,16 @@ fun Profiles(
     onShowFull: () -> Unit,
     onNavigate: (String) -> Unit
 ) = Column {
-    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, CenterVertically) {
         ParagraphTitle(title)
         IconButton(onShowFull) { VectorIcon(R.drawable.vector_arrow_forward) }
     }
-    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+    LazyRow(horizontalArrangement = spacedBy(8.dp)) {
         items(list, BasicContent::id) {
             val interactionSource = remember(::MutableInteractionSource)
 
             Column(
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                verticalArrangement = spacedBy(4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .width(72.dp)
@@ -377,18 +452,18 @@ fun <T : BasicContent> ProfilesFull(
 
 @Composable
 fun Related(list: List<Related>, showAllRelated: () -> Unit, onNavigate: (Screen) -> Unit) =
-    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+    Column(verticalArrangement = spacedBy(4.dp)) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
+            verticalAlignment = CenterVertically
         ) {
             ParagraphTitle(stringResource(R.string.text_related))
             TextButton(showAllRelated) { Text(stringResource(R.string.text_show_all_u)) }
         }
 
         LazyRow(
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = spacedBy(12.dp),
             contentPadding = PaddingValues(horizontal = 4.dp)
         ) {
             items(list.take(6), Related::id) { related ->
@@ -556,7 +631,7 @@ fun ScoreInfo(score: String) = Column {
         text = stringResource(R.string.text_score),
         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light)
     )
-    Row(horizontalArrangement = Arrangement.spacedBy(4.dp), verticalAlignment = Alignment.CenterVertically) {
+    Row(horizontalArrangement = spacedBy(4.dp), verticalAlignment = CenterVertically) {
         VectorIcon(R.drawable.vector_star, Modifier.size(16.dp), Color(0xFFFFC319))
         Text(
             text = score,
@@ -618,11 +693,11 @@ fun Statuses(
         }
     }
 
-    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, CenterVertically) {
         ParagraphTitle(stringResource(label), Modifier.padding(bottom = 4.dp))
         content?.invoke()
     }
-    Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(verticalArrangement = spacedBy(8.dp)) {
         scores.entries.filter { it.value.toInt() > 0 }.forEach { (key, value) ->
             Layout(
                 modifier = Modifier.fillMaxWidth(),
@@ -678,7 +753,7 @@ fun Statuses(
                 layout(constraints.maxWidth, rowHeight) {
                     barPlaceable.placeRelative(
                         x = 0,
-                        y = Alignment.CenterVertically.align(
+                        y = CenterVertically.align(
                             barPlaceable.height,
                             rowHeight
                         )
@@ -686,7 +761,7 @@ fun Statuses(
 
                     countTextPlaceable.placeRelative(
                         x = finalBarWidth - countTextPlaceable.width - 4.dp.roundToPx(),
-                        y = Alignment.CenterVertically.align(
+                        y = CenterVertically.align(
                             countTextPlaceable.height,
                             rowHeight
                         )
@@ -694,7 +769,7 @@ fun Statuses(
 
                     statusTextPlaceable.placeRelative(
                         x = constraints.maxWidth - statusTextPlaceable.width,
-                        y = Alignment.CenterVertically.align(
+                        y = CenterVertically.align(
                             statusTextPlaceable.height,
                             rowHeight
                         )
@@ -707,7 +782,7 @@ fun Statuses(
 
 @Composable
 fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate: (Screen) -> Unit) =
-    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+    Column(verticalArrangement = spacedBy(16.dp)) {
         statistics.first?.let {
             if (it.scores.isNotEmpty()) {
                 Statuses(
@@ -763,7 +838,7 @@ fun Statistics(statistics: Pair<Statistics?, Statistics?>, visible: Boolean, hid
         ) { values ->
             LazyColumn(
                 contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-                verticalArrangement = Arrangement.spacedBy(16.dp)
+                verticalArrangement = spacedBy(16.dp)
             ) {
                 statistics.first?.let {
                     item {
@@ -784,6 +859,72 @@ fun Statistics(statistics: Pair<Statistics?, Statistics?>, visible: Boolean, hid
                         )
                     }
                 }
+            }
+        }
+    }
+
+@Composable
+private fun DetailBox(icon: Int, label: String, value: String? = null, onClick: (() -> Unit)? = null) =
+    Box(
+        modifier = Modifier
+            .clip(MaterialTheme.shapes.medium)
+            .border(
+                1.dp,
+                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
+                MaterialTheme.shapes.medium
+            )
+            .clickable(
+                enabled = onClick != null,
+                onClick = { onClick?.invoke() }
+            )
+    ) {
+        if (value != null) {
+            Row(
+                horizontalArrangement = spacedBy(8.dp),
+                verticalAlignment = CenterVertically,
+                modifier = Modifier
+                    .height(56.dp)
+                    .padding(12.dp, 8.dp),
+            ) {
+                VectorIcon(
+                    resId = icon,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Column {
+                    Text(
+                        text = label,
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                    Text(
+                        text = value,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+                if (onClick != null) {
+                    VectorIcon(
+                        resId = R.drawable.vector_keyboard_arrow_right,
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+        } else {
+            Column(
+                verticalArrangement = spacedBy(2.dp, CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .height(56.dp)
+                    .padding(10.dp, 6.dp),
+            ) {
+                VectorIcon(
+                    resId = icon,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Text(
+                    text = label,
+                    style = MaterialTheme.typography.labelSmall
+                )
             }
         }
     }
@@ -920,7 +1061,11 @@ fun DialogHistory(
                             modifier = Modifier
                                 .size(80.dp, 121.dp)
                                 .clip(MaterialTheme.shapes.small)
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
+                                .border(
+                                    1.dp,
+                                    MaterialTheme.colorScheme.outlineVariant,
+                                    MaterialTheme.shapes.small
+                                )
                         )
 
                         Spacer(Modifier.width(16.dp))
@@ -1046,9 +1191,9 @@ fun UserBriefItem(user: User) = ListItem(
 
 @Composable
 fun UserMenuItems(setMenu: (UserMenu) -> Unit) =
-    Column(Modifier.wrapContentHeight(), Arrangement.spacedBy(8.dp), Alignment.CenterHorizontally) {
+    Column(Modifier.wrapContentHeight(), spacedBy(8.dp), Alignment.CenterHorizontally) {
         UserMenu.entries.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth(), spacedBy(48.dp), CenterVertically) {
                 row.forEach { entry ->
                     FilterChip(
                         selected = true,
@@ -1063,3 +1208,206 @@ fun UserMenuItems(setMenu: (UserMenu) -> Unit) =
             }
         }
     }
+
+fun LazyListScope.title(title: String) = item {
+    Text(
+        text = title,
+        style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
+    )
+}
+
+fun LazyListScope.info(
+    poster: String,
+    @StringRes kind: Int,
+    score: String,
+    @StringRes status: Int,
+    airedOn: String,
+    releasedOn: String,
+    episodes: String? = null,
+    volumes: String? = null,
+    chapters: String? = null,
+    isOngoingManga: Boolean? = null,
+    publisher: Publisher? = null,
+    @StringRes origin: Int? = null,
+    @StringRes rating: Int? = null
+) = item {
+    Row(horizontalArrangement = spacedBy(8.dp)) {
+        Poster(poster)
+        Column(Modifier.height(300.dp), Arrangement.SpaceBetween) {
+            LabelInfoItem(stringResource(text_kind), stringResource(kind))
+
+            episodes?.let { LabelInfoItem(stringResource(text_episodes), it) }
+
+            StatusInfo(status, airedOn, releasedOn)
+
+            publisher?.let { LabelInfoItem(stringResource(text_publisher), it.title) }
+
+            if (isOngoingManga == false) {
+                volumes?.let { LabelInfoItem(stringResource(text_volumes), it) }
+                chapters?.let { LabelInfoItem(stringResource(text_rate_chapters), it) }
+            }
+
+            origin?.let { LabelInfoItem(stringResource(R.string.text_source), stringResource(it)) }
+
+            ScoreInfo(score)
+
+            rating?.let { LabelInfoItem(stringResource(R.string.text_rating), stringResource(it)) }
+        }
+    }
+}
+
+fun LazyListScope.genres(genres: List<String>?) = genres?.let { list ->
+    item {
+        LazyRow(horizontalArrangement = spacedBy(4.dp)) {
+            items(list) {
+                SuggestionChip(
+                    onClick = {},
+                    label = { Text(it) }
+                )
+            }
+        }
+    }
+}
+
+fun LazyListScope.summary(
+    similar: List<Content>,
+    studio: Studio? = null,
+    publisher: Publisher? = null,
+    linkedType: LinkedType? = null,
+    duration: String? = null,
+    nextEpisodeAt: String? = null,
+    onEvent: (ContentDetailEvent) -> Unit,
+    onNavigate: (Screen) -> Unit
+) = item {
+    LazyRow(
+        horizontalArrangement = spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp)
+    ) {
+        studio?.let { studio ->
+            item {
+                DetailBox(
+                    icon = R.drawable.vector_anime,
+                    label = stringResource(R.string.text_studio),
+                    value = studio.title,
+                    onClick = { onNavigate(Screen.Catalog(studio = studio.id)) }
+                )
+            }
+        }
+
+        publisher?.let { publisher ->
+            item {
+                DetailBox(
+                    icon = R.drawable.vector_anime,
+                    label = stringResource(text_publisher),
+                    value = publisher.title,
+                    onClick = {
+                        onNavigate(
+                            Screen.Catalog(
+                                publisher = publisher.id,
+                                linkedType = linkedType
+                            )
+                        )
+                    }
+                )
+            }
+        }
+
+        duration?.let { duration ->
+            item {
+                DetailBox(
+                    icon = R.drawable.vector_timer,
+                    label = stringResource(R.string.text_episode),
+                    value = duration
+                )
+            }
+        }
+
+        nextEpisodeAt?.let { text ->
+            if (text.isNotEmpty()) {
+                item {
+                    DetailBox(
+                        icon = R.drawable.vector_calendar,
+                        label = stringResource(R.string.text_episode_next),
+                        value = text
+                    )
+                }
+            }
+        }
+
+        if (similar.isNotEmpty()) {
+            item {
+                DetailBox(
+                    icon = R.drawable.vector_similar,
+                    label = stringResource(R.string.text_similar),
+                    onClick = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
+                )
+            }
+        }
+
+        item {
+            DetailBox(
+                icon = R.drawable.vector_statistics,
+                label = stringResource(R.string.text_statistics),
+                onClick = { onEvent(ContentDetailEvent.Media.ShowStats) }
+            )
+        }
+
+        if (duration != null) {
+            item {
+                DetailBox(
+                    icon = R.drawable.vector_subtitles,
+                    label = stringResource(R.string.text_subtitles),
+                    onClick = { onEvent(ContentDetailEvent.Media.ShowFansubbers) }
+                )
+            }
+
+            item {
+                DetailBox(
+                    icon = R.drawable.vector_voice_actors,
+                    label = stringResource(R.string.text_voices),
+                    onClick = { onEvent(ContentDetailEvent.Media.ShowFandubbers) }
+                )
+            }
+        }
+    }
+}
+
+fun LazyListScope.description(text: AnnotatedString) = text.let { description ->
+    if (description.isNotEmpty()) {
+        item { Description(description) }
+    }
+}
+
+fun LazyListScope.related(
+    related: List<Related>,
+    onShow: () -> Unit,
+    onNavigate: (Screen) -> Unit
+) = related.let { list ->
+    if (list.isNotEmpty()) {
+        item {
+            Related(
+                list = list,
+                showAllRelated = onShow,
+                onNavigate = onNavigate
+            )
+        }
+    }
+}
+
+fun LazyListScope.profiles(
+    profiles: List<BasicContent>,
+    @StringRes title: Int,
+    onShow: () -> Unit,
+    onNavigate: (String) -> Unit
+) = profiles.let { list ->
+    if (list.isNotEmpty()) {
+        item {
+            Profiles(
+                list = list,
+                title = stringResource(title),
+                onShowFull = onShow,
+                onNavigate = { onNavigate(it) }
+            )
+        }
+    }
+}
