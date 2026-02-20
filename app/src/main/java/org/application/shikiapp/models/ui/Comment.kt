@@ -8,5 +8,6 @@ data class Comment(
     val userAvatar: String,
     val userNickname: String,
     val createdAt: String,
-    val commentContent: List<CommentContent>?
+    val commentContent: List<CommentContent>?,
+    val isOfftopic: Boolean
 )

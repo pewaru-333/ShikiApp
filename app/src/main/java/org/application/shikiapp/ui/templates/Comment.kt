@@ -23,10 +23,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -90,6 +92,22 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
                         fontSize = 13.sp
                     )
                 )
+            }
+
+            if (comment.isOfftopic) {
+                Surface(
+                    color = MaterialTheme.colorScheme.tertiaryContainer,
+                    shape = RoundedCornerShape(4.dp)
+                ) {
+                    Text(
+                        text = stringResource(R.string.text_offtopic),
+                        modifier = Modifier.padding(4.dp, 2.dp),
+                        style = MaterialTheme.typography.labelSmall.copy(
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                            fontSize = 10.sp
+                        )
+                    )
+                }
             }
         }
 
