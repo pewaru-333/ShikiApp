@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -20,6 +21,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -66,9 +68,17 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
         is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
         is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
         is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
-        is LoginResponse.Logged -> UserView(data.user, state, model.mailManager, model::onEvent, onNavigate, model::signOut, barVisibility)
+        is LoginResponse.Logged -> UserView(data.user, state, model.mailManager, model::onEvent, onNavigate, model::onShowSignOut, barVisibility)
 
         else -> Unit
+    }
+
+    LaunchedEffect(state.dialogState, state.menu, state.showDialogs) {
+        if (state.dialogState != null && state.dialogState != UserDialogState.Logout || state.menu != null || state.showDialogs) {
+            barVisibility.hide()
+        } else {
+            barVisibility.show()
+        }
     }
 
     SettingsScreen(
@@ -76,12 +86,11 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
         onBack = { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
     )
 
-    LaunchedEffect(state.dialogState, state.menu, state.showDialogs) {
-        if (state.dialogState != null || state.menu != null || state.showDialogs) {
-            barVisibility.hide()
-        } else {
-            barVisibility.show()
-        }
+    if (state.dialogState is UserDialogState.Logout) {
+        DialogLogout(
+            onConfirm = model::signOut,
+            onDismiss = { model.onEvent(ContentDetailEvent.User.ToggleDialog(null)) }
+        )
     }
 }
 
@@ -219,3 +228,17 @@ private fun ErrorScreen(reload: () -> Unit, openSettings: () -> Unit) = Scaffold
         }
     )
 }
+
+@Composable
+private fun DialogLogout(onDismiss: () -> Unit, onConfirm: () -> Unit) =
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.text_dismiss)) } },
+        confirmButton = { TextButton(onConfirm) { Text(stringResource(R.string.text_confirm)) } },
+        text = {
+            Text(
+                text = stringResource(R.string.text_sure_to_logout),
+                style = MaterialTheme.typography.bodyLarge
+            )
+        }
+    )
