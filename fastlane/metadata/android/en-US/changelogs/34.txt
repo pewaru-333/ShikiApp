@@ -1,0 +1,4 @@
+— The domain has been changed to access the application (website) without restrictions.
+— Added additional elements to display in the comment block (ban, video, offtopic).
+— Changed the design of the content page to make it easier to add to favorites and change ratings.
+— Many minor changes and improvements.

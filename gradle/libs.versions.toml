@@ -1,34 +1,38 @@
 [versions]
-apolloApi = "4.4.0"
-coilCompose = "3.3.0"
-composeBom = "2026.01.00"
-composeLifecycle = "2.10.0"
-composeNavigation = "2.9.6"
-composePaging = "3.3.6"
-composePreferences = "2.1.1"
-gradle = "9.0.0"
+apollo-api = "4.4.1"
+coil-compose = "3.3.0"
+compose-bom = "2026.02.00"
+compose-lifecycle = "2.10.0"
+compose-navigation = "2.9.7"
+compose-paging = "3.4.1"
+compose-preferences = "2.1.1"
+gradle = "9.0.1"
 jsoup = "1.22.1"
-kotlin = "2.3.0"
-kotlinxSerializationJson = "1.10.0"
+kotlin = "2.3.10"
+kotlinx-serialization-json = "1.10.0"
 ktor = "3.4.0"
-zoomableImageCoil3 = "0.18.0"
+material3 = "1.5.0-alpha14"
+zoomable-image-coil3 = "0.18.0"
 
 [libraries]
-androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "composeBom" }
-androidx-lifecycle-runtime = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "composeLifecycle" }
-androidx-material3 = { group = "androidx.compose.material3", name = "material3" }
-androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "composeNavigation" }
-androidx-paging = { group = "androidx.paging", name = "paging-compose", version.ref = "composePaging" }
+androidx-compose-bom = { group = "androidx.compose", name = "compose-bom", version.ref = "compose-bom" }
+androidx-material3 = { group = "androidx.compose.material3", name = "material3", version.ref = "material3" }
 
-apollo-api = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apolloApi" }
+androidx-lifecycle-runtime-compose = { group = "androidx.lifecycle", name = "lifecycle-runtime-compose", version.ref = "compose-lifecycle" }
+androidx-lifecycle-viewmodel-compose = { group = "androidx.lifecycle", name = "lifecycle-viewmodel-compose", version.ref = "compose-lifecycle" }
 
-coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coilCompose" }
-coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coilCompose" }
-coil-network = { group = "io.coil-kt.coil3", name = "coil-network-core", version.ref = "coilCompose" }
-coil-zoomable = { group = "me.saket.telephoto", name = "zoomable-image-coil3", version.ref = "zoomableImageCoil3" }
+androidx-navigation = { group = "androidx.navigation", name = "navigation-compose", version.ref = "compose-navigation" }
+androidx-paging = { group = "androidx.paging", name = "paging-compose", version.ref = "compose-paging" }
+
+apollo-api = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apollo-api" }
+
+coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil-compose" }
+coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil-compose" }
+coil-network = { group = "io.coil-kt.coil3", name = "coil-network-core", version.ref = "coil-compose" }
+coil-zoomable = { group = "me.saket.telephoto", name = "zoomable-image-coil3", version.ref = "zoomable-image-coil3" }
 
 jsoup = { group = "org.jsoup", name = "jsoup", version.ref = "jsoup" }
-kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinxSerializationJson" }
+kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "kotlinx-serialization-json" }
 
 ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
@@ -36,7 +40,7 @@ ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-conte
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
-material-preferences = { group = "me.zhanghai.compose.preference", name = "preference", version.ref = "composePreferences" }
+material-preferences = { group = "me.zhanghai.compose.preference", name = "preference", version.ref = "compose-preferences" }
 
 [bundles]
 ktor = [
@@ -49,6 +53,6 @@ ktor = [
 
 [plugins]
 android = { id = "com.android.application", version.ref = "gradle" }
-apollo = { id = "com.apollographql.apollo", version.ref = "apolloApi" }
+apollo = { id = "com.apollographql.apollo", version.ref = "apollo-api" }
 compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 kotlin-serialization = { id = "org.jetbrains.kotlin.plugin.serialization", version.ref = "kotlin" }
