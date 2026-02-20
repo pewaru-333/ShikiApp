@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.screens
 
@@ -12,12 +12,15 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -43,15 +46,16 @@ import androidx.compose.foundation.text.input.maxLength
 import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.then
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.AppBarWithSearch
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DismissibleDrawerSheet
 import androidx.compose.material3.DrawerValue
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
@@ -59,6 +63,7 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Label
+import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -66,13 +71,13 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
-import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDrawerState
+import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -93,7 +98,6 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import androidx.core.text.isDigitsOnly
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -130,7 +134,6 @@ import org.application.shikiapp.ui.templates.CatalogGridItem
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
 import org.application.shikiapp.ui.templates.NavigationIcon
-import org.application.shikiapp.ui.templates.ParagraphTitle
 import org.application.shikiapp.ui.templates.UserGridItem
 import org.application.shikiapp.ui.templates.VectorIcon
 import org.application.shikiapp.utils.BLANK
@@ -250,17 +253,9 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     ) {
         Scaffold(
             topBar = {
-                CenterAlignedTopAppBar(
-                    title = {
-                        SearchField(
-                            text = state.search,
-                            onValueChange = { model.onEvent(SetTitle(it)) },
-                            onClear = { model.onEvent(SetTitle(BLANK)) }
-                        )
-                    },
-                    modifier = Modifier.drawBehind {
-                        drawLine(Color.LightGray, Offset(0f, size.height), Offset(size.width, size.height), 4f)
-                    },
+                SearchAppBar(
+                    search = state.search,
+                    onSearch = { model.onEvent(SetTitle(it)) },
                     navigationIcon = {
                         IconButton(::toggleDrawer) { VectorIcon(R.drawable.vector_menu) }
                     },
@@ -316,44 +311,50 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
 }
 
 @Composable
-private fun SearchField(text: String, onValueChange: (String) -> Unit, onClear: () -> Unit) {
-    val textFieldState = rememberTextFieldState(text)
+private fun SearchAppBar(
+    search: String,
+    onSearch: (String) -> Unit,
+    onClear: () -> Unit = { onSearch(BLANK) },
+    navigationIcon: @Composable (() -> Unit),
+    actions: @Composable (RowScope.() -> Unit)
+) {
+    val searchState = rememberSearchBarState()
+    val textFieldState = rememberTextFieldState(search)
 
     LaunchedEffect(textFieldState) {
         snapshotFlow { textFieldState.text.toString() }
             .pairwise()
             .collectLatest { (old, new) ->
                 if (old != new) {
-                    onValueChange(new)
+                    onSearch(new)
                 }
             }
     }
 
-    LaunchedEffect(text) {
-        if (text.isEmpty()) {
+    LaunchedEffect(search) {
+        if (search.isEmpty()) {
             textFieldState.clearText()
         }
     }
 
-    TextField(
-        state = textFieldState,
-        modifier = Modifier.fillMaxWidth(),
-        placeholder = { Text(stringResource(R.string.text_search)) },
-        lineLimits = TextFieldLineLimits.SingleLine,
-        trailingIcon = {
-            if (textFieldState.text.isEmpty()) {
-                VectorIcon(R.drawable.vector_search)
-            } else {
-                IconButton(onClear) { VectorIcon(R.drawable.vector_close) }
-            }
-        },
-        colors = TextFieldDefaults.colors(
-            focusedContainerColor = MaterialTheme.colorScheme.surface,
-            unfocusedContainerColor = MaterialTheme.colorScheme.surface,
-            focusedIndicatorColor = Color.Transparent,
-            unfocusedIndicatorColor = Color.Transparent,
-            disabledIndicatorColor = Color.Transparent,
-        )
+    AppBarWithSearch(
+        state = searchState,
+        navigationIcon = navigationIcon,
+        actions = actions,
+        inputField = {
+            SearchBarDefaults.InputField(
+                textFieldState = textFieldState,
+                searchBarState = searchState,
+                onSearch = onSearch,
+                leadingIcon = { VectorIcon(R.drawable.vector_search) },
+                placeholder = { Text(stringResource(R.string.text_search)) },
+                trailingIcon = {
+                    if (search.isNotEmpty()) {
+                        IconButton(onClear) { VectorIcon(R.drawable.vector_close) }
+                    }
+                }
+            )
+        }
     )
 }
 
@@ -466,29 +467,17 @@ private fun DialogFilters(
             topBar = {
                 TopAppBar(
                     navigationIcon = { NavigationIcon(onHide) },
-                    title = {
-                        Column {
-                            Text(
-                                text = stringResource(R.string.text_filters),
-                                style = MaterialTheme.typography.headlineSmall.copy(
-                                    fontSize = 22.sp,
-                                    lineHeight = 28.sp
-                                )
-                            )
-                            Text(
-                                text = stringResource(R.string.text_applied_immediately),
-                                style = MaterialTheme.typography.labelSmall.copy(
-                                    fontSize = 12.sp
-                                )
-                            )
-                        }
-                    },
+                    title = { Text(stringResource(R.string.text_filters)) },
+                    subtitle = { Text(stringResource(R.string.text_applied_immediately)) },
                     actions = {
                         IconButton(
                             onClick = { onFilterEvent(FilterEvent.ClearFilters) },
                             content = { VectorIcon(R.drawable.vector_refresh) }
                         )
-                    }
+                    },
+                    modifier = Modifier.drawBehind {
+                        drawLine(Color.LightGray, Offset(0f, size.height), Offset(size.width, size.height), 4f)
+                    },
                 )
             }
         ) { values ->
@@ -619,38 +608,52 @@ private fun DialogFiltersP(
 private fun Sorting(order: Order, onClick: (Order) -> Unit) {
     var flag by remember { mutableStateOf(false) }
 
-    ParagraphTitle(stringResource(R.string.text_sorting))
-    ExposedDropdownMenuBox(
-        expanded = flag,
-        onExpandedChange = { flag = it },
-        modifier = Modifier.padding(top = 8.dp)
-    ) {
-        OutlinedTextField(
-            value = stringResource(order.title),
-            onValueChange = {},
-            readOnly = true,
-            singleLine = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
-            modifier = Modifier
-                .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                .fillMaxWidth()
+
+    Column {
+        ListItem(
+            onClick = {},
+            content = { Text(stringResource(R.string.text_sorting)) }
         )
-        ExposedDropdownMenu(
-            expanded = flag,
-            onDismissRequest = { flag = false }
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp)
         ) {
-            Order.entries.forEach { entry ->
-                DropdownMenuItem(
-                    onClick = { onClick(entry); flag = false },
-                    contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    text = {
-                        Text(
-                            text = stringResource(entry.title),
-                            style = MaterialTheme.typography.bodyLarge
+            ExposedDropdownMenuBox(
+                expanded = flag,
+                onExpandedChange = { flag = it },
+                modifier = Modifier.padding(top = 8.dp)
+            ) {
+                OutlinedTextField(
+                    value = stringResource(order.title),
+                    onValueChange = {},
+                    readOnly = true,
+                    singleLine = true,
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
+                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    modifier = Modifier
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                        .fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = flag,
+                    onDismissRequest = { flag = false }
+                ) {
+                    Order.entries.forEach { entry ->
+                        DropdownMenuItem(
+                            onClick = { onClick(entry); flag = false },
+                            contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
+                            text = {
+                                Text(
+                                    text = stringResource(entry.title),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
                         )
                     }
-                )
+                }
             }
         }
     }
@@ -747,8 +750,14 @@ private fun Season(
         OutlinedTextField(
             state = textFieldState,
             modifier = modifier,
-            label = { Text(stringResource(label)) },
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            lineLimits = TextFieldLineLimits.SingleLine,
+            label = {
+                Text(
+                    text = stringResource(label),
+                    maxLines = 1
+                )
+            },
             inputTransformation = InputTransformation.maxLength(4).then {
                 if (!asCharSequence().isDigitsOnly()) {
                     revertAllChanges()
@@ -895,19 +904,37 @@ private fun AnimatedColumn(
     isExpanded: Boolean,
     onExpandedChange: () -> Unit,
     content: @Composable () -> Unit
-) = Column {
-    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-        ParagraphTitle(stringResource(label))
-        IconButton(onExpandedChange) {
-            VectorIcon(
-                resId = if (isExpanded) R.drawable.vector_keyboard_arrow_up
-                else R.drawable.vector_keyboard_arrow_down
-            )
+) = Column(verticalArrangement = Arrangement.Center) {
+    HorizontalDivider()
+
+    ListItem(
+        onClick = { onExpandedChange() },
+        content = { Text(stringResource(label)) },
+        trailingContent = {
+            IconButton(onExpandedChange) {
+                VectorIcon(
+                    resId = if (isExpanded) R.drawable.vector_keyboard_arrow_up
+                    else R.drawable.vector_keyboard_arrow_down
+                )
+            }
         }
-    }
-    AnimatedContent(isExpanded) { isExpanded ->
+    )
+
+    AnimatedContent(
+        targetState = isExpanded,
+        transitionSpec = {
+            (fadeIn() + expandVertically(expandFrom = Alignment.Top))
+                .togetherWith(fadeOut() + shrinkVertically(shrinkTowards = Alignment.Top))
+        }
+    ) { isExpanded ->
         if (isExpanded) {
-            content()
+            Box(
+                content = { content() },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+                    .padding(bottom = 16.dp)
+            )
         }
     }
 }
