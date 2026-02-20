@@ -65,7 +65,7 @@ import org.application.shikiapp.utils.navigation.Screen
 
 @Composable
 fun DialogList(
-    dialogs: Response<List<Dialog>, Throwable>,
+    dialogs: Response<List<Dialog>, Exception>,
     getDialog: (Long, String, String) -> Unit,
     loadData: () -> Unit
 ) = AnimatedScreen(dialogs, loadData) { dialogs ->
