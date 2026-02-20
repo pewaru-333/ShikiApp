@@ -9,6 +9,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.models.data.Token
+import org.application.shikiapp.models.states.UserDialogState
 import org.application.shikiapp.models.ui.mappers.mapper
 import org.application.shikiapp.network.client.Network
 import org.application.shikiapp.network.response.LoginResponse
@@ -50,7 +51,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                 )
 
                 mailManager.getUnreadMessages()
-            } catch (e: Throwable) {
+            } catch (e: Exception) {
                 when (e) {
                     is UnknownHostException -> emit(LoginResponse.NetworkError)
                     else -> emit(LoginResponse.NotLogged)
@@ -83,7 +84,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                                 )
                             )
                         )
-                    } catch (_: Throwable) {
+                    } catch (_: Exception) {
                         Preferences.saveToken(Token.empty)
                         Preferences.setUserId(0L)
 
@@ -98,6 +99,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
 
     fun signOut() {
         viewModelScope.launch {
+            updateState { it.copy(dialogState = null) }
             emit(LoginResponse.Logging)
 
             try {
@@ -111,9 +113,11 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                 } else {
                     emit(LoginResponse.NetworkError)
                 }
-            } catch (_: Throwable) {
+            } catch (_: Exception) {
                 emit(LoginResponse.NetworkError)
             }
         }
     }
+
+    fun onShowSignOut() = updateState { it.copy(dialogState = UserDialogState.Logout) }
 }
