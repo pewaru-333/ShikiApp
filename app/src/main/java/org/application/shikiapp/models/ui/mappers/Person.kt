@@ -13,19 +13,20 @@ import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.utils.enums.LinkedKind
-import org.application.shikiapp.utils.getBirthday
-import org.application.shikiapp.utils.getDeathday
+import org.application.shikiapp.utils.getPersonDates
 
 suspend fun Person.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dispatchers.Default) {
     val works = works.orEmpty().mapNotNull {
         it.anime?.toRelated(it.role.orEmpty()) ?: it.manga?.toRelated(it.role.orEmpty())
     }
 
+    val (birthday, deathday) = getPersonDates(birthday, deceasedOn)
+
     org.application.shikiapp.models.ui.Person(
-        birthday = getBirthday(birthday),
+        birthday = birthday,
         characters = roles.orEmpty().flatMap(Roles::characters).map(BasicInfo::toBasicContent),
         comments = comments,
-        deathday = getDeathday(deceasedOn),
+        deathday = deathday,
         english = name,
         grouppedRoles = grouppedRoles,
         id = id,
