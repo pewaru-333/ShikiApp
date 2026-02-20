@@ -12,7 +12,7 @@ open class Message {
     //val body: String? = null
 
     @SerialName("html_body")
-    val htmlBody: String = BLANK
+    val htmlBody: String? = null
 
     @SerialName("created_at")
     val createdAt: String = BLANK

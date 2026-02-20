@@ -12,11 +12,11 @@ class Comment {
     @SerialName("user_id")
     val userId: Long = 0L
 
-    @SerialName("commentable_id")
-    val commentableId: Long = 0L
-
-    @SerialName("commentable_type")
-    val commentableType: String = BLANK
+//    @SerialName("commentable_id")
+//    val commentableId: Long = 0L
+//
+//    @SerialName("commentable_type")
+//    val commentableType: String = BLANK
 
     @SerialName("body")
     val body: String = BLANK
@@ -33,11 +33,11 @@ class Comment {
     @SerialName("is_offtopic")
     val isOfftopic: Boolean = false
 
-    @SerialName("is_summary")
-    val isSummary: Boolean = false
-
-    @SerialName("can_be_edited")
-    val canBeEdited: Boolean = false
+//    @SerialName("is_summary")
+//    val isSummary: Boolean = false
+//
+//    @SerialName("can_be_edited")
+//    val canBeEdited: Boolean = false
 
     @SerialName("user")
     val user: UserBasic = UserBasic()

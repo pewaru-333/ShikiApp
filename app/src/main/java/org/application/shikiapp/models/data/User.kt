@@ -9,11 +9,11 @@ class User : UserBrief() {
     @SerialName("last_online")
     val lastOnline: String? = null
 
-    @SerialName("location")
-    val location: String? = null
-
-    @SerialName("banned")
-    val banned: Boolean = false
+//    @SerialName("location")
+//    val location: String? = null
+//
+//    @SerialName("banned")
+//    val banned: Boolean = false
 
     @SerialName("about")
     val about: String = BLANK
@@ -30,8 +30,8 @@ class User : UserBrief() {
     @SerialName("in_friends")
     val inFriends: Boolean? = null
 
-    @SerialName("is_ignored")
-    val isIgnored: Boolean = false
+//    @SerialName("is_ignored")
+//    val isIgnored: Boolean = false
 
     @SerialName("stats")
     val stats: Stats = Stats()
@@ -54,8 +54,8 @@ open class UserBasic {
     @SerialName("image")
     val image: UserImage = UserImage()
 
-    @SerialName("last_online_at")
-    val lastOnlineAt: String? = null
+//    @SerialName("last_online_at")
+//    val lastOnlineAt: String? = null
 
     @SerialName("url")
     val url: String? = null
@@ -66,20 +66,20 @@ open class UserBrief : UserBasic() {
     @SerialName("name")
     val name: String? = null
 
-    @SerialName("sex")
-    val sex: String? = null
-
-    @SerialName("website")
-    val website: String? = null
-
-    @SerialName("birth_on")
-    val birthOn: String? = null
-
-    @SerialName("full_years")
-    val fullYears: Int? = null
-
-    @SerialName("locale")
-    val locale: String? = null
+//    @SerialName("sex")
+//    val sex: String? = null
+//
+//    @SerialName("website")
+//    val website: String? = null
+//
+//    @SerialName("birth_on")
+//    val birthOn: String? = null
+//
+//    @SerialName("full_years")
+//    val fullYears: Int? = null
+//
+//    @SerialName("locale")
+//    val locale: String? = null
 }
 
 @Serializable

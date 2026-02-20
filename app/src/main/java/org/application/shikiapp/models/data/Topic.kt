@@ -15,8 +15,8 @@ class Topic {
     @SerialName("event")
     val event: String? = null
 
-    @SerialName("episode")
-    val episode: Int? = null
+//    @SerialName("episode")
+//    val episode: Int? = null
 
     @SerialName("created_at")
     val createdAt: String = BLANK
