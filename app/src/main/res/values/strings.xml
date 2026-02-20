@@ -225,15 +225,11 @@
     <string name="text_profile_closed">Профиль закрыт</string>
 
     <!-- Действия -->
-    <string name="text_add_fav">Добавить в избранное</string>
-    <string name="text_add_rate">Добавить в список</string>
-    <string name="text_confirm">Подтвердить</string>
-    <string name="text_cancel">Отменить</string>
     <string name="text_change">Изменить</string>
-    <string name="text_change_rate">Изменить оценку</string>
     <string name="text_close">Закрыть</string>
+    <string name="text_confirm">Подтвердить</string>
+    <string name="text_dismiss">Отменить</string>
     <string name="text_rate">Оценить</string>
-    <string name="text_remove_fav">Удалить из избранного</string>
     <string name="text_save">Сохранить</string>
     <string name="text_show_all_s">Показать весь</string>
 
@@ -246,6 +242,8 @@
     <!-- Настройки -->
     <string name="preference_category_app_view">Вид приложения</string>
     <string name="preference_category_system">Системные</string>
+
+    <string name="preference_start_page">Начальная страница</string>
 
     <string name="preference_list_view">Вид списков</string>
     <string name="preference_list_view_column">Столбец</string>
@@ -272,12 +270,14 @@
     <string name="text_loading">Загрузка</string>
     <string name="text_login">Вход</string>
     <string name="text_no_messages">Нет сообщений</string>
+    <string name="text_offtopic">ОФФТОП</string>
     <string name="text_open_in_browser">Открыть в браузере</string>
     <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
     <string name="text_to_settings">В настройки</string>
     <string name="text_try_again">Повторить</string>
     <string name="text_unknown">Неизвестно</string>
+    <string name="text_year_in">в %d году</string>
 
     <string name="text_image">изображение</string>
     <string name="text_quote">цитата</string>
@@ -296,6 +296,8 @@
     <string name="text_sure_to_delete_dialog">Вы действительно хотите удалить всю переписку с пользователем %1$s?</string>
     <string name="text_sure_to_delete_all_notifications">Вы действительно хотите очистить текущий список уведомлений?</string>
 
+    <string name="text_sure_to_logout">Вы действительно хотите выйти из профиля?</string>
+
     <string name="text_successfully_joined_club">Вы вступили в клуб!</string>
     <string name="text_unsuccessfully_joined_club">Ошибка вступления в клуб!</string>
 
@@ -313,4 +315,13 @@
 
     <string name="text_error_open_link">Не удалось открыть ссылку</string>
     <string name="text_no_browser">На устройстве не найден подходящий браузер</string>
+
+    <plurals name="plural_years_old">
+        <item quantity="zero">(%s лет)</item>
+        <item quantity="one">(%s год)</item>
+        <item quantity="two">(%s года)</item>
+        <item quantity="few">(%s года)</item>
+        <item quantity="many">(%s лет)</item>
+        <item quantity="other">(%s лет)</item>
+    </plurals>
 </resources>

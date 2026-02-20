@@ -225,15 +225,11 @@
     <string name="text_notifications">Notifications</string>
 
     <!-- Действия -->
-    <string name="text_add_fav">Add to favorites</string>
-    <string name="text_add_rate">Add to list</string>
-    <string name="text_confirm">Confirm</string>
-    <string name="text_cancel">Cancel</string>
     <string name="text_change">Change</string>
-    <string name="text_change_rate">Change rating</string>
     <string name="text_close">Close</string>
+    <string name="text_confirm">Confirm</string>
+    <string name="text_dismiss">Cancel</string>
     <string name="text_rate">Rate</string>
-    <string name="text_remove_fav">Remove from favorites</string>
     <string name="text_save">Save</string>
     <string name="text_show_all_s">Show all</string>
 
@@ -246,6 +242,8 @@
     <!-- Настройки -->
     <string name="preference_category_app_view">Appearance</string>
     <string name="preference_category_system">System</string>
+
+    <string name="preference_start_page">Start page</string>
 
     <string name="preference_list_view">List view</string>
     <string name="preference_list_view_column">List</string>
@@ -272,12 +270,14 @@
     <string name="text_loading">Loading</string>
     <string name="text_login">Login</string>
     <string name="text_no_messages">No messages</string>
+    <string name="text_offtopic">OFFTOPIC</string>
     <string name="text_open_in_browser">Open in browser</string>
     <string name="text_settings">Settings</string>
     <string name="text_to_profile">Go to profile</string>
     <string name="text_to_settings">Go to settings</string>
     <string name="text_try_again">Try again</string>
     <string name="text_unknown">Unknown</string>
+    <string name="text_year_in">in %d</string>
 
     <string name="text_image">image</string>
     <string name="text_quote">quote</string>
@@ -295,6 +295,8 @@
 
     <string name="text_sure_to_delete_dialog">Are you sure you want to delete the entire conversation with %1$s?</string>
     <string name="text_sure_to_delete_all_notifications">Are you sure you want to clear the current list of notifications?</string>
+
+    <string name="text_sure_to_logout">Are you sure you want to log out?</string>
 
     <string name="text_successfully_joined_club">Successfully joined the club!</string>
     <string name="text_unsuccessfully_joined_club">Failed to join the club!</string>
@@ -314,4 +316,9 @@
 
     <string name="text_error_open_link">Failed to open link</string>
     <string name="text_no_browser">No suitable browser found on the device</string>
+
+    <plurals name="plural_years_old">
+        <item quantity="one">(%s year)</item>
+        <item quantity="other">(%s years)</item>
+    </plurals>
 </resources>
