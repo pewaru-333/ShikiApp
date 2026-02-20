@@ -11,9 +11,9 @@ import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalTextStyle
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ShortNavigationBar
+import androidx.compose.material3.ShortNavigationBarItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -28,6 +28,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navDeepLink
+import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.screens.AnimeScreen
 import org.application.shikiapp.screens.CalendarScreen
 import org.application.shikiapp.screens.CatalogScreen
@@ -41,6 +42,7 @@ import org.application.shikiapp.screens.ProfileScreen
 import org.application.shikiapp.screens.UserRates
 import org.application.shikiapp.screens.UserScreen
 import org.application.shikiapp.utils.BASE_PATH
+import org.application.shikiapp.utils.BASE_URL
 import org.application.shikiapp.utils.REDIRECT_URI
 import org.application.shikiapp.utils.enums.Menu
 import org.application.shikiapp.utils.extensions.isCurrentRoute
@@ -89,7 +91,7 @@ fun Navigation(navigator: NavHostController) {
 
 @Composable
 private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
-    NavHost(navigator, News, modifier.consumeWindowInsets(WindowInsets.systemBars)) {
+    NavHost(navigator, Preferences.startPage.route, modifier.consumeWindowInsets(WindowInsets.systemBars)) {
         // Bottom menu items //
         composable<Catalog> {
             CatalogScreen(navigator::navigate)
@@ -115,7 +117,7 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
             deepLinks = listOf(
                 navDeepLink<Anime>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
-                    uriPattern = "https://shikimori.one/animes/{id}-.*"
+                    uriPattern = "$BASE_URL/animes/{id}-.*"
                 }
             )
         ) {
@@ -125,11 +127,11 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
             deepLinks = listOf(
                 navDeepLink<Manga>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
-                    uriPattern = "https://shikimori.one/mangas/{id}-.*"
+                    uriPattern = "$BASE_URL/mangas/{id}-.*"
                 },
                 navDeepLink<Manga>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
-                    uriPattern = "https://shikimori.one/ranobe/{id}-.*"
+                    uriPattern = "$BASE_URL/ranobe/{id}-.*"
                 }
             )
         ) {
@@ -137,9 +139,9 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
         }
         composable<Screen.Character>(
             deepLinks = listOf(
-                navDeepLink<Character>(BASE_PATH) {
+                navDeepLink<Screen.Character>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
-                    uriPattern = "https://shikimori.one/characters/{id}-.*"
+                    uriPattern = "$BASE_URL/characters/{id}-.*"
                 }
             )
         ) {
@@ -149,7 +151,7 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
             deepLinks = listOf(
                 navDeepLink<Person>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
-                    uriPattern = "https://shikimori.one/people/{id}-.*"
+                    uriPattern = "$BASE_URL/people/{id}-.*"
                 }
             )
         ) {
@@ -171,24 +173,25 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
 
 @Composable
 private fun BottomNavigationBar(selected: (route: KClass<*>) -> Boolean, onClick: (Screen) -> Unit) =
-    NavigationBar {
+    ShortNavigationBar {
         Menu.entries.forEach { screen ->
-            NavigationBarItem(
+            ShortNavigationBarItem(
                 selected = selected(screen.route::class),
-                alwaysShowLabel = false,
                 icon = { Icon(painterResource(screen.icon), null) },
                 onClick = { onClick(screen.route) },
-                label = {
-                    Text(
-                        text = stringResource(screen.title),
-                        softWrap = false,
-                        autoSize = TextAutoSize.StepBased(
-                            minFontSize = 1.sp,
-                            maxFontSize = LocalTextStyle.current.fontSize,
-                            stepSize = (0.5).sp
+                label = if (selected(screen.route::class)) {
+                    {
+                        Text(
+                            text = stringResource(screen.title),
+                            softWrap = false,
+                            autoSize = TextAutoSize.StepBased(
+                                minFontSize = 1.sp,
+                                maxFontSize = LocalTextStyle.current.fontSize,
+                                stepSize = (0.5).sp
+                            )
                         )
-                    )
-                }
+                    }
+                } else null
             )
         }
     }
