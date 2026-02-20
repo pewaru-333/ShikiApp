@@ -3,7 +3,7 @@ package org.application.shikiapp.utils
 // =========================================== Strings ============================================
 
 
-const val BASE_URL = "https://shikimori.one"
+const val BASE_URL = "https://shiki.one"
 const val API_URL = "$BASE_URL/api/"
 const val GRAPH_URL = "$BASE_URL/api/graphql"
 const val AUTH_URL = "$BASE_URL/oauth/authorize"
@@ -23,6 +23,7 @@ const val PREF_APP_LANGUAGE = "app_language"
 const val PREF_APP_THEME = "app_theme"
 const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
 const val PREF_DYNAMIC_COLORS = "dynamic_colors"
+const val PREF_START_PAGE = "start_page"
 
 const val ACCESS_TOKEN = "access_token"
 const val REFRESH_TOKEN = "refresh_token"
@@ -36,7 +37,6 @@ const val BLANK = ""
 
 // =========================================== Lists ==============================================
 val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
-val DATE_FORMATS = listOf("d.M.yyyy", "d.M", "yyyy")
 
 val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
 
