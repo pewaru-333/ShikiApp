@@ -4,13 +4,14 @@ import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.network.response.AsyncData
+import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.enums.LinkedType
 
 data class Person(
-    val birthday: String?,
+    val birthday: ResourceText?,
     val characters: List<BasicContent>,
     val comments: Flow<PagingData<Comment>>,
-    val deathday: String?,
+    val deathday: ResourceText?,
     val english: String?,
     val favoured: AsyncData<Boolean>,
     val grouppedRoles: List<List<String>>,
