@@ -9,7 +9,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import org.application.shikiapp.network.response.Response
 
-abstract class BaseViewModel<D, S, E>() : ViewModel() {
+abstract class BaseViewModel<D, S, E> : ViewModel() {
     protected val _response = MutableStateFlow<Response<D, Throwable>>(Response.Loading)
     open val response = _response
         .onStart { loadData() }
