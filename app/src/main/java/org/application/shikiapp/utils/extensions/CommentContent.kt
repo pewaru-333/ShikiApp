@@ -14,3 +14,13 @@ fun List<CommentContent>.getLastMessage() =
 
         else -> ResourceText.StaticString(BLANK)
     }
+
+fun List<CommentContent>.flattenImages() = asSequence()
+    .flatMap(CommentContent::deepFlatten)
+    .filterIsInstance<CommentContent.ImageContent>()
+    .toList()
+
+private fun CommentContent.deepFlatten(): Sequence<CommentContent> = sequence {
+    yield(this@deepFlatten)
+    items.forEach { yieldAll(it.deepFlatten()) }
+}
