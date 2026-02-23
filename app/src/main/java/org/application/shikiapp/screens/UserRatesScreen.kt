@@ -65,7 +65,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
@@ -81,6 +80,7 @@ import org.application.shikiapp.network.response.RatesResponse.Loading
 import org.application.shikiapp.network.response.RatesResponse.NoAccess
 import org.application.shikiapp.network.response.RatesResponse.Success
 import org.application.shikiapp.network.response.RatesResponse.Unlogged
+import org.application.shikiapp.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.ui.templates.DialogEditRate
 import org.application.shikiapp.ui.templates.ErrorScreen
 import org.application.shikiapp.ui.templates.LoadingScreen
@@ -344,9 +344,8 @@ private fun UserRateCard(
             )
             .padding(12.dp)
     ) {
-        AsyncImage(
+        AnimatedAsyncImage(
             model = rate.poster,
-            contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier
                 .width(100.dp)
