@@ -12,17 +12,19 @@ import org.application.shikiapp.utils.fromHtml
 import org.application.shikiapp.utils.getLinks
 
 suspend fun News.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dispatchers.Default) {
+    val (images, videos, poster) = getLinks(htmlFooter)
+
     NewsDetail(
         comments = comments,
         commentsCount = commentsCount,
         date = convertDate(createdAt),
-        images = getLinks(htmlFooter).filter { it.contains("original") },
+        images = images,
         newsBody = fromHtml(htmlBody),
-        poster = getLinks(htmlFooter).find { it.contains(".jpg") },
+        poster = poster,
         title = topicTitle,
         userId = user.id,
         userImage = user.image.x160,
         userNickname = user.nickname,
-        videos = getLinks(htmlFooter).filter { it.contains("youtu") },
+        videos = videos
     )
 }
