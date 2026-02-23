@@ -28,6 +28,7 @@ import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
+import org.application.shikiapp.ui.templates.DialogPoster
 import org.application.shikiapp.ui.templates.Names
 import org.application.shikiapp.ui.templates.Poster
 import org.application.shikiapp.ui.templates.ProfilesFull
@@ -80,7 +81,10 @@ private fun CharacterView(
     ) {
         item {
             Row(horizontalArrangement = spacedBy(16.dp)) {
-                Poster(character.poster)
+                Poster(
+                    link = character.poster,
+                    onOpenFullscreen = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+                )
                 Names(character.russian, character.japanese, character.altName)
             }
         }
@@ -123,7 +127,13 @@ private fun CharacterView(
         onNavigate = { onNavigate(Screen.Person(it.toLong())) }
     )
 
+    DialogPoster(
+        link = character.poster,
+        isVisible = state.showPoster,
+        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+    )
+
     if (state.showSheet) {
-        BottomSheet(onEvent = onEvent)
+        BottomSheet(url = character.url, onEvent = onEvent)
     }
 }

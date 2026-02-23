@@ -5,6 +5,7 @@ data class MangaState(
     val showCharacters: Boolean = false,
     val showComments: Boolean = false,
     val showLinks: Boolean = false,
+    val showPoster: Boolean = false,
     val showRate: Boolean = false,
     val showRelated: Boolean = false,
     val showSheet: Boolean = false,

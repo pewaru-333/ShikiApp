@@ -8,6 +8,7 @@ data class AnimeState(
     val showFandubbers: Boolean = false,
     val showFansubbers: Boolean = false,
     val showLinks: Boolean = false,
+    val showPoster: Boolean = false,
     val showRate: Boolean = false,
     val showRelated: Boolean = false,
     val showScreenshot: Boolean = false,

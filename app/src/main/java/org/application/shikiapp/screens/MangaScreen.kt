@@ -28,6 +28,7 @@ import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.DialogEditRate
+import org.application.shikiapp.ui.templates.DialogPoster
 import org.application.shikiapp.ui.templates.LinksSheet
 import org.application.shikiapp.ui.templates.ProfilesFull
 import org.application.shikiapp.ui.templates.RelatedFull
@@ -113,7 +114,8 @@ private fun MangaView(
             volumes = manga.volumes,
             chapters = manga.chapters,
             isOngoingManga = manga.isOngoing,
-            publisher = manga.publisher
+            publisher = manga.publisher,
+            onOpenFullscreenPoster = { onEvent(ContentDetailEvent.Media.ShowPoster) }
         )
 
         genres(manga.genres)
@@ -194,6 +196,12 @@ private fun MangaView(
         hide = { onEvent(ContentDetailEvent.Media.ShowStats) }
     )
 
+    DialogPoster(
+        link = manga.poster,
+        isVisible = state.showPoster,
+        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+    )
+
     when {
         state.showRate -> DialogEditRate(
             state = newRate,
@@ -223,6 +231,7 @@ private fun MangaView(
         )
 
         state.showSheet -> BottomSheet(
+            url = manga.url,
             canShowLinks = manga.links.isNotEmpty(),
             onEvent = onEvent
         )

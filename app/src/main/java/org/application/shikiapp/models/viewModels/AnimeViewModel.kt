@@ -66,6 +66,7 @@ class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeRespo
                     loadData()
                 }
 
+                ContentDetailEvent.Media.ShowPoster -> updateState { it.copy(showPoster = !it.showPoster) }
                 ContentDetailEvent.Media.ShowAuthors -> updateState { it.copy(showAuthors = !it.showAuthors) }
                 ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
                 ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
@@ -89,8 +90,6 @@ class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeRespo
                         screenshot = event.index
                     )
                 }
-
-                is ContentDetailEvent.Media.SetImage -> updateState { it.copy(screenshot = event.index) }
             }
 
             is ContentDetailEvent.Media.Anime -> when (event) {

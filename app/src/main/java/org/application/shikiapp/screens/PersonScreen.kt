@@ -2,7 +2,6 @@
 
 package org.application.shikiapp.screens
 
-import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -21,7 +20,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -31,7 +29,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
@@ -42,8 +39,10 @@ import org.application.shikiapp.network.response.Response.Success
 import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
+import org.application.shikiapp.ui.templates.DialogPoster
 import org.application.shikiapp.ui.templates.Names
 import org.application.shikiapp.ui.templates.ParagraphTitle
+import org.application.shikiapp.ui.templates.Poster
 import org.application.shikiapp.ui.templates.ProfilesFull
 import org.application.shikiapp.ui.templates.RelatedFull
 import org.application.shikiapp.ui.templates.ScaffoldContent
@@ -92,7 +91,10 @@ private fun PersonView(
         onToggleFavourite = { onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind)) }
     ) {
         item {
-            PersonHeader(person)
+            PersonHeader(
+                person = person,
+                onOpenPoster = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+            )
         }
 
         item {
@@ -137,8 +139,15 @@ private fun PersonView(
         onNavigate = onNavigate
     )
 
+    DialogPoster(
+        link = person.image,
+        isVisible = state.showPoster,
+        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+    )
+
     if (state.showSheet) {
         BottomSheet(
+            url = person.url,
             website = person.website,
             onEvent = onEvent
         )
@@ -146,17 +155,15 @@ private fun PersonView(
 }
 
 @Composable
-private fun PersonHeader(person: Person) =
+private fun PersonHeader(person: Person, onOpenPoster: () -> Unit) =
     Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp), Alignment.CenterVertically) {
-        AsyncImage(
-            model = person.image,
-            contentDescription = null,
+        Poster(
+            link = person.image,
             contentScale = ContentScale.Crop,
+            onOpenFullscreen = onOpenPoster,
             modifier = Modifier
                 .width(130.dp)
                 .aspectRatio(2f / 3f)
-                .clip(MaterialTheme.shapes.medium)
-                .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium),
         )
 
         Column(Modifier.weight(1f), Arrangement.spacedBy(12.dp)) {

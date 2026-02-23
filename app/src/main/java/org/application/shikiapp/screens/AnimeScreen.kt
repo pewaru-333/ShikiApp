@@ -35,7 +35,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -50,7 +49,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.R
 import org.application.shikiapp.R.string.text_screenshots
@@ -63,10 +61,12 @@ import org.application.shikiapp.models.ui.Video
 import org.application.shikiapp.models.viewModels.AnimeViewModel
 import org.application.shikiapp.models.viewModels.UserRateViewModel
 import org.application.shikiapp.network.response.Response.Success
+import org.application.shikiapp.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BottomSheet
 import org.application.shikiapp.ui.templates.Comments
 import org.application.shikiapp.ui.templates.DialogEditRate
+import org.application.shikiapp.ui.templates.DialogPoster
 import org.application.shikiapp.ui.templates.DialogScreenshot
 import org.application.shikiapp.ui.templates.LinksSheet
 import org.application.shikiapp.ui.templates.NavigationIcon
@@ -151,7 +151,8 @@ private fun AnimeView(
             releasedOn = anime.releasedOn,
             episodes = anime.episodes,
             origin = anime.origin,
-            rating = anime.rating
+            rating = anime.rating,
+            onOpenFullscreenPoster = { onEvent(ContentDetailEvent.Media.ShowPoster) }
         )
 
         genres(anime.genres)
@@ -267,6 +268,12 @@ private fun AnimeView(
         hide = { onEvent(ContentDetailEvent.Media.ShowImage()) }
     )
 
+    DialogPoster(
+        link = anime.poster,
+        isVisible = state.showPoster,
+        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+    )
+
     Video(
         video = anime.videoGrouped,
         visible = state.showVideo,
@@ -302,6 +309,7 @@ private fun AnimeView(
         )
 
         state.showSheet -> BottomSheet(
+            url = anime.url,
             canShowLinks = anime.links.isNotEmpty(),
             onEvent = onEvent
         )
@@ -332,9 +340,8 @@ private fun Screenshots(list: List<String>, onShow: (Int) -> Unit, onHide: () ->
         }
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
             itemsIndexed(list.take(6)) { index, item ->
-                AsyncImage(
+                AnimatedAsyncImage(
                     model = item,
-                    contentDescription = null,
                     modifier = Modifier
                         .size(172.dp, 97.dp)
                         .clip(MaterialTheme.shapes.small)
@@ -355,9 +362,8 @@ private fun Video(list: List<Video>, onShow: () -> Unit) {
         }
         LazyRow(horizontalArrangement = spacedBy(12.dp)) {
             items(list, Video::url) {
-                AsyncImage(
+                AnimatedAsyncImage(
                     model = it.imageUrl,
-                    contentDescription = null,
                     modifier = Modifier
                         .size(172.dp, 130.dp)
                         .clip(MaterialTheme.shapes.small)
@@ -395,9 +401,8 @@ private fun Screenshots(
             horizontalArrangement = spacedBy(2.dp)
         ) {
             itemsIndexed(items = list, key = { _, item -> item }) { index, item ->
-                AsyncImage(
+                AnimatedAsyncImage(
                     model = item,
-                    contentDescription = null,
                     contentScale = ContentScale.Crop,
                     modifier = Modifier
                         .fillMaxWidth()
@@ -440,9 +445,8 @@ private fun Video(video: Map<VideoKind, List<Video>>, visible: Boolean, onHide: 
 
                     items(values, Video::url) { video ->
                         Column(verticalArrangement = spacedBy(4.dp)) {
-                            AsyncImage(
+                            AnimatedAsyncImage(
                                 model = video.imageUrl,
-                                contentDescription = null,
                                 contentScale = ContentScale.Crop,
                                 modifier = Modifier
                                     .fillMaxWidth()

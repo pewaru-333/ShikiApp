@@ -43,6 +43,7 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
             ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
             ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
 
+            ContentDetailEvent.Media.ShowPoster -> updateState { it.copy(showPoster = !it.showPoster) }
             ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
 
             ContentDetailEvent.Person.ShowWorks -> updateState { it.copy(showWorks = !it.showWorks) }

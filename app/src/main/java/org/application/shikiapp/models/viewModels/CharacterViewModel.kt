@@ -62,6 +62,7 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
             ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
             ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
 
+            ContentDetailEvent.Media.ShowPoster -> updateState { it.copy(showPoster = !it.showPoster) }
             ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
 
             is ContentDetailEvent.Character -> when (event) {
