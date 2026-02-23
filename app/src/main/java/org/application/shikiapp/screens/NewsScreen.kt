@@ -122,8 +122,9 @@ private fun NewsCard(news: News, onNavigate: (Screen) -> Unit) =
 
                 Text(
                     text = "${news.date} · ${news.author}",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
             }
         }
