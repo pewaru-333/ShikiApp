@@ -2,6 +2,7 @@
 
 package org.application.shikiapp.ui.templates
 
+import android.content.ClipData
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -20,12 +21,16 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.platform.ClipEntry
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import kotlinx.coroutines.launch
 import org.application.shikiapp.R
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.ui.ExternalLink
@@ -58,12 +63,16 @@ fun SheetColumn(list: List<String>, label: String, onHide: () -> Unit) =
 
 @Composable
 fun BottomSheet(
+    url: String,
     website: String = BLANK,
     canShowLinks: Boolean = false,
     onEvent: (ContentDetailEvent) -> Unit
 ) = ModalBottomSheet(
     onDismissRequest = { onEvent(ContentDetailEvent.ShowSheet) }
 ) {
+    val scope = rememberCoroutineScope()
+    val clipboard = LocalClipboard.current
+
     if (website.isNotEmpty()) {
         val handler = LocalUriHandler.current
 
@@ -73,6 +82,15 @@ fun BottomSheet(
             leadingContent = { VectorIcon(R.drawable.vector_website) }
         )
     }
+
+    val label = stringResource(R.string.text_link)
+    ListItem(
+        headlineContent = { Text(stringResource(R.string.text_copy_link)) },
+        leadingContent = { VectorIcon(R.drawable.vector_copy) },
+        modifier = Modifier.clickable {
+            scope.launch { clipboard.setClipEntry(ClipEntry(ClipData.newPlainText(label, url))) }
+        }
+    )
 
     if (canShowLinks) {
         ListItem(
