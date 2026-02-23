@@ -50,7 +50,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
@@ -64,7 +63,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.flow.collectLatest
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
@@ -79,6 +77,7 @@ import org.application.shikiapp.models.states.showMembers
 import org.application.shikiapp.models.ui.Club
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.viewModels.ClubViewModel
+import org.application.shikiapp.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.ui.templates.AnimatedScreen
 import org.application.shikiapp.ui.templates.BasicContentItem
 import org.application.shikiapp.ui.templates.CatalogGridItem
@@ -160,9 +159,8 @@ private fun ClubView(
                         )
                     },
                     leadingContent = {
-                        AsyncImage(
+                        AnimatedAsyncImage(
                             model = club.image,
-                            contentDescription = null,
                             modifier = Modifier
                                 .size(80.dp)
                                 .border(1.dp, Color.Gray)
@@ -245,9 +243,7 @@ private fun ClubMenuItems(onEvent: (ClubEvent) -> Unit) =
                         selected = true,
                         label = { Text(stringResource(it.title)) },
                         onClick = { onEvent(ClubEvent.PickItem(it)) },
-                        trailingIcon = {
-                            VectorIcon(R.drawable.vector_keyboard_arrow_right)
-                        },
+                        trailingIcon = { VectorIcon(R.drawable.vector_keyboard_arrow_right) },
                         modifier = Modifier
                             .height(48.dp)
                             .weight(1f)
@@ -294,9 +290,8 @@ private fun Members(
                                 onNavigate(Screen.User(it.id))
                             }
                         ) {
-                            AsyncImage(
+                            AnimatedAsyncImage(
                                 model = it.avatar,
-                                contentDescription = null,
                                 modifier = Modifier
                                     .size(64.dp)
                                     .padding(4.dp)
@@ -427,17 +422,13 @@ private fun Images(
             ) {
                 items(images.itemCount, images.itemKey(ClubImages::id)) { index ->
                     images[index]?.let {
-                        AsyncImage(
+                        AnimatedAsyncImage(
                             model = it.mainUrl,
-                            contentDescription = null,
                             contentScale = ContentScale.Crop,
-                            filterQuality = FilterQuality.High,
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .wrapContentHeight()
-                                .clickable {
-                                    onEvent(ClubEvent.ShowFullImage(it.originalUrl))
-                                }
+                                .clickable { onEvent(ClubEvent.ShowFullImage(it.originalUrl)) }
                         )
                     }
                 }
