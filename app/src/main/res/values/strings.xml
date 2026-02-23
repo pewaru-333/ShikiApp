@@ -9,6 +9,7 @@
     <string name="text_favourite">Избранное</string>
     <string name="text_image_of">Изображение %1$d из %2$d</string>
     <string name="text_in_lists">В списках</string>
+    <string name="text_poster">Постер</string>
     <string name="text_publisher">Издательство</string>
     <string name="text_related">Связанное</string>
     <string name="text_screenshots">Кадры</string>
@@ -228,6 +229,7 @@
     <string name="text_change">Изменить</string>
     <string name="text_close">Закрыть</string>
     <string name="text_confirm">Подтвердить</string>
+    <string name="text_copy_link">Скопировать ссылку</string>
     <string name="text_dismiss">Отменить</string>
     <string name="text_rate">Оценить</string>
     <string name="text_save">Сохранить</string>
@@ -267,11 +269,13 @@
     <string name="text_empty">Пусто</string>
     <string name="text_error">Ошибка!</string>
     <string name="text_error_loading">Ошибка загрузки!</string>
+    <string name="text_link">Ссылка</string>
     <string name="text_loading">Загрузка</string>
     <string name="text_login">Вход</string>
     <string name="text_no_messages">Нет сообщений</string>
     <string name="text_offtopic">ОФФТОП</string>
     <string name="text_open_in_browser">Открыть в браузере</string>
+    <string name="text_saved">Сохранено!</string>
     <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
     <string name="text_to_settings">В настройки</string>
