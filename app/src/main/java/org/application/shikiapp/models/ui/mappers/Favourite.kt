@@ -19,7 +19,7 @@ fun Favourites.toBasicContentMap() = mapOf(
             BasicContent(
                 id = it.id.toString(),
                 title = it.russian ?: it.name,
-                poster = it.image
+                poster = it.image.replace("x64", "x96")
             )
         }
     }
