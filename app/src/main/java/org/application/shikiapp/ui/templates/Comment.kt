@@ -35,7 +35,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -44,7 +43,6 @@ import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
-import coil3.compose.AsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.utils.HtmlComment
@@ -63,11 +61,9 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
                 .fillMaxWidth()
                 .clickable { onNavigate(Screen.User(comment.userId)) }
         ) {
-            AsyncImage(
+            AnimatedAsyncImage(
                 model = comment.userAvatar,
-                contentDescription = null,
                 contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.High,
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
