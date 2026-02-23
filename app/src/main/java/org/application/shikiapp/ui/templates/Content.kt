@@ -2,6 +2,7 @@
 
 package org.application.shikiapp.ui.templates
 
+import android.Manifest
 import androidx.activity.compose.BackHandler
 import androidx.annotation.StringRes
 import androidx.compose.animation.AnimatedVisibility
@@ -43,6 +44,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
@@ -74,7 +76,6 @@ import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.platform.LocalContext
@@ -88,7 +89,6 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
-import coil3.compose.AsyncImage
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import org.application.shikiapp.R
@@ -113,14 +113,17 @@ import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.network.response.AsyncData
 import org.application.shikiapp.screens.LabelInfoItem
 import org.application.shikiapp.utils.BLANK
+import org.application.shikiapp.utils.data.DataManager
 import org.application.shikiapp.utils.enums.FavouriteItem
 import org.application.shikiapp.utils.enums.LinkedType
 import org.application.shikiapp.utils.enums.RelationKind
 import org.application.shikiapp.utils.enums.UserMenu
+import org.application.shikiapp.utils.extensions.showToast
 import org.application.shikiapp.utils.extensions.substringAfter
 import org.application.shikiapp.utils.extensions.substringBefore
 import org.application.shikiapp.utils.extensions.toContent
 import org.application.shikiapp.utils.navigation.Screen
+import org.application.shikiapp.utils.permissions.rememberPermissionState
 import kotlin.math.roundToInt
 
 @Composable
@@ -388,12 +391,9 @@ fun Profiles(
                         onClick = { onNavigate(it.id) }
                     )
             ) {
-                AsyncImage(
+                AnimatedAsyncImage(
                     model = it.poster,
-                    contentDescription = null,
-                    alignment = Alignment.Center,
                     contentScale = ContentScale.Crop,
-                    filterQuality = FilterQuality.High,
                     modifier = Modifier
                         .size(72.dp)
                         .clip(CircleShape)
@@ -936,7 +936,36 @@ fun DialogScreenshot(
     visible: Boolean,
     hide: () -> Unit
 ) {
+    val context = LocalContext.current.applicationContext
+    val scope = rememberCoroutineScope()
+
     val pagerState = rememberPagerState(pageCount = list::size)
+    val dataManager = remember { DataManager(context) }
+    val permissionState = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+
+    var isDownloading by remember { mutableStateOf(false) }
+
+    fun download() {
+        if (permissionState.isGranted) {
+            if (isDownloading) return
+
+            scope.launch {
+                isDownloading = true
+
+                val currentImage = list[pagerState.currentPage]
+                val isDownloaded = dataManager.downloadImage(currentImage)
+
+                context.showToast(
+                    text = if (isDownloaded) R.string.text_saved
+                    else R.string.text_error_loading
+                )
+
+                isDownloading = false
+            }
+        } else {
+            permissionState.launchRequest()
+        }
+    }
 
     LaunchedEffect(screenshot) {
         if (screenshot != pagerState.currentPage) {
@@ -957,6 +986,15 @@ fun DialogScreenshot(
                                 formatArgs = arrayOf(pagerState.currentPage + 1, list.size)
                             )
                         )
+                    },
+                    actions = {
+                        IconButton(onClick = ::download, enabled = !isDownloading) {
+                            if (isDownloading) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                            } else {
+                                VectorIcon(R.drawable.vector_download)
+                            }
+                        }
                     }
                 )
             }
@@ -1054,18 +1092,13 @@ fun DialogHistory(
                             }
                             .padding(12.dp)
                     ) {
-                        AsyncImage(
+                        AnimatedAsyncImage(
                             model = node.image,
-                            contentDescription = null,
                             contentScale = ContentScale.Crop,
                             modifier = Modifier
                                 .size(80.dp, 121.dp)
                                 .clip(MaterialTheme.shapes.small)
-                                .border(
-                                    1.dp,
-                                    MaterialTheme.colorScheme.outlineVariant,
-                                    MaterialTheme.shapes.small
-                                )
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
                         )
 
                         Spacer(Modifier.width(16.dp))
@@ -1172,9 +1205,8 @@ fun UserBriefItem(user: User) = ListItem(
     modifier = Modifier.offset((-16).dp, (-8).dp),
     overlineContent = { Text(user.nickname, style = MaterialTheme.typography.titleLarge) },
     leadingContent = {
-        AsyncImage(
+        AnimatedAsyncImage(
             model = user.avatar,
-            contentDescription = null,
             modifier = Modifier
                 .size(88.dp)
                 .clip(MaterialTheme.shapes.small)
@@ -1229,10 +1261,11 @@ fun LazyListScope.info(
     isOngoingManga: Boolean? = null,
     publisher: Publisher? = null,
     @StringRes origin: Int? = null,
-    @StringRes rating: Int? = null
+    @StringRes rating: Int? = null,
+    onOpenFullscreenPoster: () -> Unit
 ) = item {
     Row(horizontalArrangement = spacedBy(8.dp)) {
-        Poster(poster)
+        Poster(link = poster, onOpenFullscreen = onOpenFullscreenPoster)
         Column(Modifier.height(300.dp), Arrangement.SpaceBetween) {
             LabelInfoItem(stringResource(text_kind), stringResource(kind))
 
