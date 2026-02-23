@@ -32,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -40,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.utils.ResourceText
 import org.application.shikiapp.utils.enums.Kind
@@ -74,9 +72,8 @@ fun CatalogCardItem(
             .clip(MaterialTheme.shapes.medium)
             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
     ) {
-        AsyncImage(
+        AnimatedAsyncImage(
             model = image,
-            contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -163,9 +160,8 @@ fun CatalogCardItem(
         .padding(8.dp)
         .clickable(onClick = onClick)
 ) {
-    AsyncImage(
+    AnimatedAsyncImage(
         model = image,
-        contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .width(120.dp)
@@ -207,9 +203,8 @@ fun CatalogGridItem(
             .fillMaxWidth()
             .aspectRatio(2f / 3f)
     ) {
-        AsyncImage(
+        AnimatedAsyncImage(
             model = image,
-            contentDescription = null,
             contentScale = ContentScale.Crop,
             modifier = Modifier.fillMaxSize()
         )
@@ -297,9 +292,8 @@ fun UserGridItem(title: String, imageUrl: String?, onClick: () -> Unit) =
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier.clickable(onClick = onClick)
     ) {
-        AsyncImage(
+        AnimatedAsyncImage(
             model = imageUrl,
-            contentDescription = null,
             modifier = Modifier
                 .size(64.dp)
                 .padding(4.dp)
@@ -321,12 +315,9 @@ fun BasicContentItem(name: String, link: String?, modifier: Modifier = Modifier,
         headlineContent = { Text(name) },
         supportingContent = { roles?.let { Text(it) } },
         leadingContent = {
-            AsyncImage(
+            AnimatedAsyncImage(
                 model = link,
-                contentDescription = null,
-                alignment = Alignment.Center,
                 contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.High,
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
@@ -350,9 +341,8 @@ fun CalendarOngoingCard(title: String, score: String?, poster: String, onNavigat
                 .clip(MaterialTheme.shapes.medium)
                 .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
         ) {
-            AsyncImage(
+            AnimatedAsyncImage(
                 model = poster,
-                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier.fillMaxSize()
             )
@@ -415,9 +405,8 @@ fun RelatedCard(title: String, poster: String, relationText: String, interaction
                 .height(170.dp)
                 .clip(MaterialTheme.shapes.medium)
         ) {
-            AsyncImage(
+            AnimatedAsyncImage(
                 model = poster,
-                contentDescription = title,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
@@ -485,9 +474,8 @@ fun FranchiseCard(
         .clickable { onNavigate(type.navigateTo(id)) }
         .padding(8.dp)
 ) {
-    AsyncImage(
+    AnimatedAsyncImage(
         model = poster,
-        contentDescription = null,
         contentScale = ContentScale.Crop,
         modifier = Modifier
             .size(80.dp, 120.dp)
