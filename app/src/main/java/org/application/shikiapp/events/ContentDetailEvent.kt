@@ -10,6 +10,7 @@ sealed interface ContentDetailEvent {
     data object ShowSheet : ContentDetailEvent
 
     sealed interface Media : ContentDetailEvent {
+        data object ShowPoster : Media
         data object ShowAuthors : Media
         data object ShowCharacters : Media
         data object ShowRelated : Media
@@ -22,7 +23,6 @@ sealed interface ContentDetailEvent {
         data object ChangeRate : Media
 
         data class ShowImage(val index: Int = 0) : Media
-        data class SetImage(val index: Int) : Media
 
         sealed interface Anime : ContentDetailEvent {
             data object ShowScreenshots : Anime
