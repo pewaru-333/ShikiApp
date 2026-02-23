@@ -25,6 +25,7 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -62,6 +63,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalContext
@@ -83,6 +85,9 @@ import coil3.compose.SubcomposeAsyncImageContent
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.R
+import org.application.shikiapp.R.drawable.vector_bad
+import org.application.shikiapp.R.drawable.vector_check
+import org.application.shikiapp.R.drawable.vector_mail
 import org.application.shikiapp.di.Preferences
 import org.application.shikiapp.events.ContentDetailEvent
 import org.application.shikiapp.models.states.UserDialogState
@@ -543,7 +548,11 @@ private fun UserDialog(
                             modifier = Modifier
                                 .size(36.dp)
                                 .clip(CircleShape)
-                                .border((0.5).dp, MaterialTheme.colorScheme.onTertiaryContainer, CircleShape)
+                                .border(
+                                    (0.5).dp,
+                                    MaterialTheme.colorScheme.onTertiaryContainer,
+                                    CircleShape
+                                )
                         ) {
                             val state by painter.state.collectAsStateWithLifecycle()
                             if (state is AsyncImagePainter.State.Success) {
@@ -642,68 +651,58 @@ private fun UserDialog(
 
 @Composable
 fun MessageBubble(message: Dialog, modifier: Modifier = Modifier) {
-    val alignment = if (message.accountUser) Alignment.CenterEnd else Alignment.CenterStart
-    val backgroundColor = if (message.accountUser) MaterialTheme.colorScheme.primaryContainer
-    else MaterialTheme.colorScheme.surfaceVariant
-    val textColor = if (message.accountUser) MaterialTheme.colorScheme.onPrimaryContainer
-    else MaterialTheme.colorScheme.onSurfaceVariant
+    val backgroundColor = if (message.accountUser) MaterialTheme.colorScheme.secondaryContainer
+    else MaterialTheme.colorScheme.surfaceContainerLow
+
+    fun bubbleShape(isSelf: Boolean) = RoundedCornerShape(
+        topStart = 16.dp,
+        topEnd = 16.dp,
+        bottomStart = if (isSelf) 16.dp else 4.dp,
+        bottomEnd = if (isSelf) 4.dp else 16.dp
+    )
 
     Box(
-        contentAlignment = alignment,
+        contentAlignment = if (message.accountUser) Alignment.CenterEnd else Alignment.CenterStart,
         modifier = modifier
             .fillMaxWidth()
-            .padding(
-                start = if (message.accountUser) 48.dp else 0.dp,
-                end = if (message.accountUser) 0.dp else 48.dp
-            )
+            .padding(8.dp, 2.dp)
     ) {
         Column(
             modifier = Modifier
-                .clip(
-                    shape = RoundedCornerShape(
-                        topStart = 16.dp,
-                        topEnd = 16.dp,
-                        bottomStart = if (message.accountUser) 16.dp else 0.dp,
-                        bottomEnd = if (message.accountUser) 0.dp else 16.dp
-                    )
-                )
-                .background(backgroundColor)
-                .padding(12.dp)
+                .widthIn(max = 340.dp)
+                .shadow(0.5.dp, bubbleShape(message.accountUser))
+                .background(backgroundColor, bubbleShape(message.accountUser))
+                .padding(12.dp, 8.dp)
         ) {
             HtmlComment(message.lastMessage)
 
-            Spacer(Modifier.height(4.dp))
-
             Row(
-                modifier = Modifier.align(Alignment.End),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
+                horizontalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier
+                    .align(Alignment.End)
+                    .padding(top = 2.dp)
             ) {
                 Text(
                     text = message.lastDate,
-                    style = MaterialTheme.typography.bodySmall.copy(
-                        color = textColor.copy(alpha = 0.7f)
+                    style = MaterialTheme.typography.labelSmall.copy(
+                        fontSize = 10.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
                     )
                 )
 
                 if (message.accountUser) {
-                    when {
-                        message.isSending -> {
-                            VectorIcon(
-                                resId = R.drawable.vector_mail,
-                                modifier = Modifier.size(14.dp),
-                                tint = textColor.copy(alpha = 0.7f)
-                            )
-                        }
-
-                        message.isError -> {
-                            VectorIcon(
-                                resId = R.drawable.vector_bad,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.error
-                            )
-                        }
+                    val (icon, color) = when {
+                        message.isError -> vector_bad to MaterialTheme.colorScheme.error
+                        message.isSending -> vector_mail to MaterialTheme.colorScheme.primary
+                        else -> vector_check to MaterialTheme.colorScheme.primary
                     }
+
+                    VectorIcon(
+                        resId = icon,
+                        modifier = Modifier.size(12.dp),
+                        tint = color.copy(alpha = 0.8f)
+                    )
                 }
             }
         }
