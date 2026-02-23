@@ -3,7 +3,8 @@ package org.application.shikiapp.utils
 // =========================================== Strings ============================================
 
 
-const val BASE_URL = "https://shiki.one"
+const val BASE_URL = "https://shikimori.io"
+const val URL_MIRROR = "https://shiki.one"
 const val API_URL = "$BASE_URL/api/"
 const val GRAPH_URL = "$BASE_URL/api/graphql"
 const val AUTH_URL = "$BASE_URL/oauth/authorize"
