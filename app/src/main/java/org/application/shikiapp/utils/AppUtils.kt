@@ -2,7 +2,6 @@ package org.application.shikiapp.utils
 
 import android.icu.text.NumberFormat
 import android.text.format.DateUtils
-import android.util.Patterns
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformSpanStyle
@@ -11,6 +10,10 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.intl.Locale
 import androidx.compose.ui.text.style.TextDecoration
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.R
 import org.application.shikiapp.models.data.Date
 import org.application.shikiapp.utils.enums.Kind
@@ -20,6 +23,7 @@ import org.application.shikiapp.utils.enums.Status
 import org.application.shikiapp.utils.enums.WatchStatus
 import org.application.shikiapp.utils.extensions.safeEquals
 import org.application.shikiapp.utils.extensions.safeValueOf
+import org.jsoup.Jsoup
 import java.time.LocalDate
 import java.time.MonthDay
 import java.time.OffsetDateTime
@@ -68,21 +72,49 @@ fun convertScore(score: Any?) = when (score) {
     else -> BLANK
 }
 
-fun getLinks(text: String): List<String> {
-    val links = mutableListOf<String>()
-    val matcher = Patterns.WEB_URL.matcher(text)
+suspend fun getLinks(text: String?) = withContext(Dispatchers.Default) {
+    if (text.isNullOrBlank()) return@withContext Triple(emptyList(), emptyList(), null)
 
-    while (matcher.find()) {
-        val url = matcher.group()
-
-        if (url.contains("https://") || url.contains(".jpg")) {
-            links.add(
-                if (!url.startsWith("https://") && url.contains(".jpg")) "https://$url" else url
-            )
-        }
+    fun String.toHttps() = when {
+        isEmpty() -> BLANK
+        startsWith("//") -> "https:$this"
+        startsWith("http://") -> replace("http://", "https://")
+        else -> if (startsWith("http")) this else "https://$this"
     }
 
-    return links
+    val body = Jsoup.parseBodyFragment(text)
+
+    val (videos, images) = coroutineScope {
+        val videos = async {
+            body.select(".b-video").mapNotNull { element ->
+                val videoUrl = element.select("a").attr("href").toHttps()
+                val previewUrl = element.select("img").attr("src").toHttps()
+                if (videoUrl.isNotEmpty()) CommentContent.VideoContent(previewUrl, videoUrl, "YouTube") else null
+            }
+        }
+
+        val images = async {
+            body.select("a[href*=/original/], img[src*=/original/]")
+                .map { it.attr("href").ifEmpty { it.attr("src") }.toHttps() }
+                .distinct()
+        }
+
+        Pair(videos.await(), images.await())
+    }
+
+    val poster: CommentContent? = when {
+        videos.isNotEmpty() -> videos.first()
+        images.isNotEmpty() -> CommentContent.ImageContent(
+            previewUrl = images.first(),
+            fullUrl = images.first(),
+            width = 0f,
+            height = 0f
+        )
+
+        else -> null
+    }
+
+    return@withContext Triple(images, videos, poster)
 }
 
 fun getPersonDates(birthday: Date?, deathday: Date? = null): Pair<ResourceText?, ResourceText?> {
@@ -150,13 +182,6 @@ fun getPersonDates(birthday: Date?, deathday: Date? = null): Pair<ResourceText?,
     val deathString = formatDateInfo(date = actualDeathday, showAge = isDead)
 
     return Pair(birthString, deathString)
-}
-
-fun getNewsPoster(text: String?): String? {
-    val embed = getLinks(text.orEmpty()).find { it.contains("img.youtube.com") }
-    val poster = getLinks(text.orEmpty()).find { it.contains(".jpg") }
-
-    return embed ?: poster
 }
 
 fun getWatchStatus(status: String?, type: LinkedType) = if (status == null) R.string.text_unknown
