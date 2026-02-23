@@ -6,6 +6,7 @@ import com.apollographql.apollo.ApolloClient
 import io.ktor.client.HttpClient
 import io.ktor.client.engine.android.Android
 import io.ktor.client.plugins.HttpRequestRetry
+import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
@@ -39,6 +40,12 @@ object Network {
 
             install(UserAgent) {
                 agent = "ShikiApp"
+            }
+
+            install(HttpTimeout) {
+                requestTimeoutMillis = 30_000
+                connectTimeoutMillis = 30_000
+                socketTimeoutMillis = 15_000
             }
 
             install(Auth) {
