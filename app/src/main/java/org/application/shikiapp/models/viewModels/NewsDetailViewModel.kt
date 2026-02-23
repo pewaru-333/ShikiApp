@@ -47,12 +47,6 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
                 )
             }
 
-            is ContentDetailEvent.Media.SetImage -> updateState {
-                it.copy(
-                    image = event.index
-                )
-            }
-
             else -> Unit
         }
     }
