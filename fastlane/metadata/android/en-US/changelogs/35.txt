@@ -1,0 +1,3 @@
+— The main domain has been changed to allow access to the application without restrictions.
+— Added the ability to download images on content pages, as well as in the news card and comment lists.
+— The appearance of several components has been improved.
