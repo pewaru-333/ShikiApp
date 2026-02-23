@@ -38,7 +38,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.FilterQuality
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -48,7 +47,6 @@ import androidx.compose.ui.unit.sp
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
-import coil3.compose.AsyncImage
 import org.application.shikiapp.R
 import org.application.shikiapp.models.ui.list.Dialog
 import org.application.shikiapp.models.ui.list.Message
@@ -82,9 +80,8 @@ fun DialogList(
                         .fillMaxWidth()
                         .padding(16.dp, 12.dp)
                 ) {
-                    AsyncImage(
+                    AnimatedAsyncImage(
                         model = dialog.userAvatar,
-                        contentDescription = null,
                         modifier = Modifier
                             .size(56.dp)
                             .clip(CircleShape)
@@ -181,9 +178,8 @@ fun MessageCardItem(
                 .aspectRatio(2f / 3f)
                 .clip(MaterialTheme.shapes.medium)
         ) {
-            AsyncImage(
+            AnimatedAsyncImage(
                 model = image,
-                contentDescription = null,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
                     .fillMaxSize()
@@ -385,11 +381,9 @@ fun Notification(
                 .fillMaxWidth()
                 .clickable { onNavigate(Screen.User(notification.from.id)) }
         ) {
-            AsyncImage(
+            AnimatedAsyncImage(
                 model = notification.from.avatar,
-                contentDescription = null,
                 contentScale = ContentScale.Crop,
-                filterQuality = FilterQuality.High,
                 modifier = Modifier
                     .size(56.dp)
                     .clip(CircleShape)
