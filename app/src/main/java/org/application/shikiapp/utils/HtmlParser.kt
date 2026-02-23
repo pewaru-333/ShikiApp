@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.sp
-import coil3.compose.AsyncImage
+import org.application.shikiapp.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.utils.CommentContent.ImageContent
 import org.application.shikiapp.utils.CommentContent.LineBreakContent
 import org.application.shikiapp.utils.CommentContent.QuoteContent
@@ -25,10 +25,12 @@ import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 
 sealed interface CommentContent {
+    val items: List<CommentContent> get() = emptyList()
+
     data class TextContent(val text: AnnotatedString, val inlineContent: Map<String, InlineTextContent> = emptyMap()) : CommentContent
     data class ImageContent(val previewUrl: String, val fullUrl: String?, val width: Float, val height: Float) : CommentContent
-    data class SpoilerContent(val title: String, val items: List<CommentContent>) : CommentContent
-    data class QuoteContent(val author: String, val items: List<CommentContent>) : CommentContent
+    data class SpoilerContent(val title: String, override val items: List<CommentContent>) : CommentContent
+    data class QuoteContent(val author: String, override val items: List<CommentContent>) : CommentContent
     data class VideoContent(val previewUrl: String, val videoUrl: String, val source: String) : CommentContent
     data class BanContent(val moderatorName: String, val moderatorAvatar: String, val reason: AnnotatedString) : CommentContent
     data object LineBreakContent : CommentContent
@@ -76,7 +78,7 @@ object HtmlParser {
                 makeInlineGroup()
 
                 when {
-                    (node as Element).hasClass("b-quote") -> {
+                    (node as Element).hasClass("b-quote") || node.hasClass("b-quote-v2") || node.tagName() == "blockquote" -> {
                         val author = node.selectFirst(".quoteable")?.text() ?: "Пользователь"
                         val quoteHtml = node.selectFirst(".quote-content")?.html() ?: BLANK
 
@@ -116,9 +118,15 @@ object HtmlParser {
                         val link = node.selectFirst("a.video-link")
                         val img = node.selectFirst("img")
 
-                        val videoUrl = link?.attr("href") ?: link?.attr("data-href").orEmpty()
-                        val previewUrl = img?.attr("abs:src").orEmpty()
                         val source = node.selectFirst(".marker")?.text().orEmpty()
+                        val videoUrl = link?.attr("href") ?: link?.attr("data-href").orEmpty()
+                        val previewUrl = img?.attr("src").orEmpty().let { url ->
+                            when {
+                                url.startsWith("//") -> "https:$url"
+                                url.startsWith("http://") -> url.replace("http://", "https://")
+                                else -> url
+                            }
+                        }
 
                         contentList.add(CommentContent.VideoContent(previewUrl, videoUrl, source))
                     }
@@ -166,10 +174,7 @@ object HtmlParser {
                                 val id = "smiley_${smileyCounter++}"
                                 appendInlineContent(id, "[emoji]")
                                 inlineContentMap[id] = InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.TextCenter)) {
-                                    AsyncImage(
-                                        model = node.attr("abs:src"),
-                                        contentDescription = null
-                                    )
+                                    AnimatedAsyncImage(node.attr("abs:src"))
                                 }
                             }
                             else -> {
@@ -201,6 +206,8 @@ object HtmlParser {
 
     private fun isBlockElement(node: Node) = node is Element &&
             (node.hasClass("b-quote") ||
+                    node.hasClass("b-quote-v2") ||
+                    node.tagName() == "blockquote" ||
                     node.hasClass("b-spoiler_block") ||
                     node.hasClass("b-image") ||
                     node.hasClass("b-video") ||
@@ -216,7 +223,7 @@ object HtmlParser {
         }
     }
 
-    fun getStyleForElement(element: Element) = when (element.tagName()) {
+    private fun getStyleForElement(element: Element) = when (element.tagName()) {
         "s" -> SpanStyle(textDecoration = TextDecoration.LineThrough)
         "strong", "b" -> SpanStyle(fontWeight = FontWeight.Bold)
         "em", "i" -> SpanStyle(fontStyle = FontStyle.Italic)
