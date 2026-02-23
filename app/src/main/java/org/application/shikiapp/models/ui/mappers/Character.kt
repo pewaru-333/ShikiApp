@@ -17,6 +17,7 @@ import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.models.ui.list.Content
 import org.application.shikiapp.network.response.AsyncData
+import org.application.shikiapp.utils.BASE_URL
 import org.application.shikiapp.utils.BLANK
 import org.application.shikiapp.utils.convertScore
 import org.application.shikiapp.utils.enums.Kind
@@ -48,7 +49,7 @@ object CharacterMapper {
             relatedMap = relatedList.groupBy(Related::linkedType).toSortedMap(),
             russian = character.russian,
             seyu = character.seyu.map(BasicInfo::toBasicContent),
-            url = character.url
+            url = "$BASE_URL${character.url}"
         )
     }
 }

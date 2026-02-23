@@ -12,6 +12,7 @@ import org.application.shikiapp.models.ui.Comment
 import org.application.shikiapp.models.ui.Related
 import org.application.shikiapp.models.ui.list.BasicContent
 import org.application.shikiapp.network.response.AsyncData
+import org.application.shikiapp.utils.BASE_URL
 import org.application.shikiapp.utils.enums.LinkedKind
 import org.application.shikiapp.utils.getPersonDates
 
@@ -43,7 +44,7 @@ suspend fun Person.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dis
         relatedList = works,
         relatedMap = works.groupBy(Related::linkedType).toSortedMap(),
         russian = russian,
-        url = url,
+        url = "$BASE_URL$url",
         website = website
     )
 }
