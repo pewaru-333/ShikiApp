@@ -6,7 +6,6 @@ import coil3.ImageLoader
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
 import coil3.annotation.ExperimentalCoilApi
-import coil3.asImage
 import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.gif.AnimatedImageDecoder
@@ -47,8 +46,6 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
                 add(GifDecoder.Factory())
             }
         }
-        .error(getDrawable(R.drawable.vector_bad)?.asImage())
-        .fallback(getDrawable(R.drawable.vector_bad)?.asImage())
         .crossfade(200)
         .memoryCachePolicy(CachePolicy.ENABLED)
         .memoryCache {
