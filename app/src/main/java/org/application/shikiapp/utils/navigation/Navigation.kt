@@ -44,6 +44,7 @@ import org.application.shikiapp.screens.UserScreen
 import org.application.shikiapp.utils.BASE_PATH
 import org.application.shikiapp.utils.BASE_URL
 import org.application.shikiapp.utils.REDIRECT_URI
+import org.application.shikiapp.utils.URL_MIRROR
 import org.application.shikiapp.utils.enums.Menu
 import org.application.shikiapp.utils.extensions.isCurrentRoute
 import org.application.shikiapp.utils.extensions.toBottomBarItem
@@ -118,6 +119,10 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
                 navDeepLink<Anime>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
                     uriPattern = "$BASE_URL/animes/{id}-.*"
+                },
+                navDeepLink<Anime>(BASE_PATH) {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "$URL_MIRROR/animes/{id}-.*"
                 }
             )
         ) {
@@ -132,6 +137,14 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
                 navDeepLink<Manga>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
                     uriPattern = "$BASE_URL/ranobe/{id}-.*"
+                },
+                navDeepLink<Manga>(BASE_PATH) {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "$URL_MIRROR/mangas/{id}-.*"
+                },
+                navDeepLink<Manga>(BASE_PATH) {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "$URL_MIRROR/ranobe/{id}-.*"
                 }
             )
         ) {
@@ -142,6 +155,10 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
                 navDeepLink<Screen.Character>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
                     uriPattern = "$BASE_URL/characters/{id}-.*"
+                },
+                navDeepLink<Screen.Character>(BASE_PATH) {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "$URL_MIRROR/characters/{id}-.*"
                 }
             )
         ) {
@@ -152,6 +169,10 @@ private fun AppNavHost(navigator: NavHostController, modifier: Modifier) =
                 navDeepLink<Person>(BASE_PATH) {
                     action = Intent.ACTION_VIEW
                     uriPattern = "$BASE_URL/people/{id}-.*"
+                },
+                navDeepLink<Person>(BASE_PATH) {
+                    action = Intent.ACTION_VIEW
+                    uriPattern = "$URL_MIRROR/people/{id}-.*"
                 }
             )
         ) {
