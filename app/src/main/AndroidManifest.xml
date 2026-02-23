@@ -3,6 +3,9 @@
     xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission
+        android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <queries>
         <intent>
@@ -50,6 +53,7 @@
 
                 <data android:scheme="https" />
                 <data android:host="shikimori.one" />
+                <data android:host="shikimori.io" />
                 <data android:host="shiki.one" />
                 <data android:pathPrefix="/animes" />
                 <data android:pathPrefix="/mangas" />
