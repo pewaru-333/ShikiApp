@@ -155,25 +155,22 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - name: 'Install AppImage packing dependencies'
-        run: sudo apt-get update && sudo apt-get install -y libfuse2
-
       - uses: gradle/actions/setup-gradle@v5
       - run: chmod +x gradlew
 
-      - name: 'Build Linux AppImage'
-        env:
-          APPIMAGE_EXTRACT_AND_RUN: "1"
-        run: ./gradlew :composeApp:packageReleaseDistributionForCurrentOS
+      - name: 'Build Linux files'
+        run: ./gradlew :composeApp:createReleaseDistributable
 
-      - name: 'Debug: Show Generated Files'
-        run: find composeApp/build/compose/binaries -type f
+      - name: 'Package Portable Linux Build'
+        run: |
+          cd composeApp/build/compose/binaries/main-release/app
+          tar -czvf ShikiApp-linux-portable.tar.gz ShikiApp/
 
-      - name: 'Upload Linux AppImage as artifact'
-        uses: actions/upload-artifact@v7
+      - name: 'Upload Linux Portable as artifact'
+        uses: actions/upload-artifact@v4
         with:
-          name: linux-appimage
-          path: composeApp/build/**/*.AppImage
+          name: linux-portable
+          path: composeApp/build/compose/binaries/main-release/app/ShikiApp-linux-portable.tar.gz
 
   create-release:
     runs-on: ubuntu-latest
@@ -202,10 +199,10 @@ jobs:
         with:
           name: windows-zip
 
-      - name: 'Download Linux AppImage'
+      - name: 'Download Linux Tar'
         uses: actions/download-artifact@v4
         with:
-          name: linux-appimage
+          name: linux-portable
 
       - name: 'Push Tag'
         run: |
@@ -223,4 +220,4 @@ jobs:
             ShikiApp.apk
             DarkShiki.apk
             *-portable.zip
-            *.AppImage
+            *-portable.tar.gz
