@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="app/src/main/ic_launcher-playstore.png" width=256px height=256px/>
+<img src="androidApp/src/main/ic_launcher-playstore.png" width=256px height=256px/>
 
 # ShikiApp
 
