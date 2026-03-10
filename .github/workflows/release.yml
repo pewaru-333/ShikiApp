@@ -162,7 +162,12 @@ jobs:
       - run: chmod +x gradlew
 
       - name: 'Build Linux AppImage'
-        run: ./gradlew :composeApp:packageReleaseAppImage
+        env:
+          APPIMAGE_EXTRACT_AND_RUN: "1"
+        run: ./gradlew :composeApp:packageReleaseDistributionForCurrentOS
+
+      - name: 'Debug: Show Generated Files'
+        run: find composeApp/build/compose/binaries -type f
 
       - name: 'Upload Linux AppImage as artifact'
         uses: actions/upload-artifact@v7
