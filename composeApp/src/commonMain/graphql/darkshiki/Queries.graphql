@@ -1,0 +1,197 @@
+# ============================================= Anime =============================================
+
+query AnimeExtra($id: String!) {
+    animes(ids: $id) {
+        characterRoles {
+            ...CharacterRole
+        }
+        chronology {
+            ...AnimeContent
+            airedOn {
+                date
+            }
+            rating
+            releasedOn {
+                date
+            }
+        }
+        personRoles {
+            ...PersonRole
+        }
+        related {
+            ...RelatedFragment
+        }
+        scoresStats {
+            ...Scores
+        }
+        statusesStats {
+            ...Stats
+        }
+    }
+}
+
+# ============================================= Manga =============================================
+
+query MangaExtra($id: String!) {
+    mangas(ids: $id) {
+        characterRoles {
+            ...CharacterRole
+        }
+        chronology {
+            ...MangaContent
+            airedOn {
+                date
+            }
+            releasedOn {
+                date
+            }
+        }
+        personRoles {
+            ...PersonRole
+        }
+        related {
+            ...RelatedFragment
+        }
+        scoresStats {
+            ...Scores
+        }
+        statusesStats {
+            ...Stats
+        }
+    }
+}
+
+# =========================================== Character ===========================================
+
+query Character($ids: [ID!]) {
+    characters(ids: $ids) {
+        poster {
+            originalUrl
+        }
+        topic {
+            id
+        }
+    }
+}
+
+# ============================================ People =============================================
+
+# ============================================= Users ==============================================
+
+# =========================================== Fragments ============================================
+
+fragment AnimeBasic on Anime {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment AnimeContent on Anime {
+    ...AnimeBasic
+    kind
+    season
+    status
+    score
+}
+
+fragment MangaBasic on Manga {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment MangaContent on Manga {
+    ...MangaBasic
+    kind
+    status
+    score
+}
+
+fragment CharacterBasic on Character {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment CharacterRole on CharacterRole {
+    rolesRu
+    character {
+        ...CharacterBasic
+    }
+}
+
+fragment PersonBasic on Person {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment PersonRole on PersonRole {
+    rolesRu
+    person {
+        ...PersonBasic
+    }
+}
+
+fragment RelatedFragment on MediaRelation {
+    anime {
+        ...AnimeContent
+        airedOn {
+            date
+        }
+    }
+    manga {
+        ...MangaContent
+        airedOn {
+            date
+        }
+    }
+    relationText
+}
+
+fragment Genres on Genre {
+    id
+    russian
+}
+
+fragment Scores on ScoreStat {
+    score
+    count
+}
+
+fragment Stats on StatusStat {
+    status
+    count
+}
+
+fragment Link on ExternalLink {
+    kind
+    url
+}
+
+fragment UserRateFragment on UserRate {
+    id
+    status
+    chapters
+    episodes
+    volumes
+    score
+    rewatches
+    text
+}

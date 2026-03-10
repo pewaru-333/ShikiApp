@@ -1,0 +1,2 @@
+— Adaptive element design is now supported on some screens depending on the screen size.
+— The image viewing dialog box has been changed.

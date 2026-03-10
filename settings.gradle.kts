@@ -1,3 +1,5 @@
+enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
+
 pluginManagement {
     repositories {
         google {
@@ -20,5 +22,5 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ShikiApp"
-include(":app")
- 
+include(":androidApp")
+include(":composeApp")
