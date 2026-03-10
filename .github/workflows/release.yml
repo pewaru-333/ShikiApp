@@ -155,21 +155,20 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
+      - name: 'Install AppImage packing dependencies'
+        run: sudo apt-get update && sudo apt-get install -y libfuse2
+
       - uses: gradle/actions/setup-gradle@v5
       - run: chmod +x gradlew
 
       - name: 'Build Linux AppImage'
         run: ./gradlew :composeApp:packageReleaseAppImage
 
-      - name: Check build directory
-        run: ls -R composeApp/build/compose/binaries/main-release/app
-
       - name: 'Upload Linux AppImage as artifact'
         uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
-          if-no-files-found: error
-          path: composeApp/build/compose/binaries/main-release/app/*.AppImage
+          path: composeApp/build/compose/binaries/main-release/app/*/ShikiApp*.AppImage
 
   create-release:
     runs-on: ubuntu-latest
