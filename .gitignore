@@ -1,15 +1,61 @@
-*.iml
-.gradle
-/local.properties
-.idea/
-misc.xml
-deploymentTargetDropDown.xml
-.DS_Store
+# --- Gradle & Kotlin ---
+.gradle/
+build/
 /build
-/app/release
+.kotlin/
+.history/
+.lh/
+*.sh
+bin/
+
+# --- IDE ---
+*.iml
+.idea/
+
+# --- ANDROID ---
+local.properties
+*.jks
+*.apk
+*.ap_
+*.dex
+output.json
+captures/
 /captures
 .externalNativeBuild
 .cxx
-local.properties
-*.apk
-output.json
+signing.properties
+
+# --- iOS (Xcode & CocoaPods) ---
+iosApp/Pods/
+iosApp/Podfile.lock
+iosApp/Flare.xcworkspace/*
+iosApp/Flare.xcodeproj/*
+!iosApp/Flare.xcodeproj/project.pbxproj
+shared/shared.podspec
+DerivedData/
+*.moved-aside
+*.xcuserstate
+
+# --- DESKTOP (Compose for Desktop / JVM) ---
+/composeApp/build/compose/binaries/
+/composeApp/build/compose/tmp/
+
+*.exe
+*.msi
+*.dmg
+*.pkg
+*.deb
+*.rpm
+
+*.jar
+*.jlink
+
+# --- СЕРТИФИКАТЫ ---
+.env
+*.p12
+*.crt
+*.pem
+
+# --- СИСТЕМНЫЕ ФАЙЛЫ ---
+.DS_Store
+Thumbs.db
