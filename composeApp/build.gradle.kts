@@ -145,6 +145,13 @@ compose {
                 windows {
                     iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.ico"))
                 }
+
+                linux {
+                    shortcut = true
+                    appCategory = "Multimedia"
+                    menuGroup = "Multimedia"
+                    iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.png"))
+                }
             }
         }
     }
