@@ -137,7 +137,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v5
 
       - name: 'Build Windows Portable Zip'
-        run: ./gradlew :common:packageZipDistributable
+        run: ./gradlew :composeApp:packageZipDistributable
 
       - name: 'Upload Windows Zip as artifact'
         uses: actions/upload-artifact@v7
@@ -159,7 +159,7 @@ jobs:
       - run: chmod +x gradlew
 
       - name: 'Build Linux AppImage'
-        run: ./gradlew :common:packageReleaseAppImage
+        run: ./gradlew :composeApp:packageReleaseAppImage
 
       - name: 'Upload Linux AppImage as artifact'
         uses: actions/upload-artifact@v7
