@@ -161,13 +161,14 @@ jobs:
       - name: 'Build Linux AppImage'
         run: ./gradlew :composeApp:packageReleaseAppImage
 
-      - name: List files
-        run: find . -name "*.AppImage"
+      - name: Check build directory
+        run: ls -R composeApp/build/compose/binaries/main-release/app
 
       - name: 'Upload Linux AppImage as artifact'
         uses: actions/upload-artifact@v7
         with:
           name: linux-appimage
+          if-no-files-found: error
           path: composeApp/build/compose/binaries/main-release/app/*.AppImage
 
   create-release:
