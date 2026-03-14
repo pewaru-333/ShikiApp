@@ -1,6 +1,7 @@
 package org.application.shikiapp.shared.models.ui
 
 import androidx.compose.runtime.Immutable
+import org.application.shikiapp.shared.utils.enums.Kind
 import org.jetbrains.compose.resources.StringResource
 import java.time.OffsetDateTime
 
@@ -14,7 +15,8 @@ data class UserRate(
     val fullChapters: String,
     val fullEpisodes: String,
     val id: Long,
-    val kind: StringResource,
+    val kindEnum: Kind,
+    val kindString: StringResource,
     val poster: String,
     val rewatches: Int,
     val score: Int,
