@@ -9,14 +9,14 @@ class User : UserBrief() {
     @SerialName("last_online")
     val lastOnline: String? = null
 
-//    @SerialName("location")
+    //    @SerialName("location")
 //    val location: String? = null
-//
-//    @SerialName("banned")
-//    val banned: Boolean = false
 
-    @SerialName("about")
-    val about: String = BLANK
+    @SerialName("banned")
+    val banned: Boolean = false
+
+//    @SerialName("about")
+//    val about: String = BLANK
 
     @SerialName("about_html")
     val aboutHtml: String = BLANK
@@ -66,8 +66,8 @@ open class UserBrief : UserBasic() {
     @SerialName("name")
     val name: String? = null
 
-//    @SerialName("sex")
-//    val sex: String? = null
+    @SerialName("sex")
+    val sex: String? = null
 //
 //    @SerialName("website")
 //    val website: String? = null
