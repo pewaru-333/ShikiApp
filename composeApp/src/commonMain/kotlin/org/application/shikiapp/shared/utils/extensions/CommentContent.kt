@@ -1,8 +1,8 @@
 package org.application.shikiapp.shared.utils.extensions
 
 import org.application.shikiapp.shared.utils.BLANK
-import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.ResourceText
+import org.application.shikiapp.shared.utils.ui.CommentContent
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_image
 import shikiapp.composeapp.generated.resources.text_quote
