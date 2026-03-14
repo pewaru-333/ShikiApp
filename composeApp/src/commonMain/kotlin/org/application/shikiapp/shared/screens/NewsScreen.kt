@@ -23,7 +23,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
@@ -41,7 +40,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import androidx.window.core.layout.WindowSizeClass
 import org.application.shikiapp.shared.models.ui.list.News
 import org.application.shikiapp.shared.models.viewModels.NewsViewModel
 import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
@@ -49,6 +47,7 @@ import org.application.shikiapp.shared.ui.templates.ErrorScreen
 import org.application.shikiapp.shared.ui.templates.LoadingScreen
 import org.application.shikiapp.shared.ui.templates.rememberLoadingEffect
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 
 @Composable
 fun NewsScreen(onNavigate: (Screen) -> Unit) {
@@ -59,8 +58,7 @@ fun NewsScreen(onNavigate: (Screen) -> Unit) {
         derivedStateOf { list.loadState.refresh is LoadState.Loading }
     }
 
-    val windowSize = currentWindowAdaptiveInfo().windowSizeClass
-    val isCompact = !windowSize.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    val isCompact = rememberWindowSize().isCompact
 
     PullToRefreshBox(isRefreshing, list::refresh, Modifier.fillMaxSize()) {
         when {
