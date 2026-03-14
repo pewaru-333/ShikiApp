@@ -62,6 +62,8 @@
                 <data android:pathPrefix="/ranobe" />
                 <data android:pathPrefix="/characters" />
                 <data android:pathPrefix="/people" />
+                <data android:pathPrefix="/animes/studio" />
+                <data android:pathPrefix="/mangas/publisher" />
             </intent-filter>
         </activity>
 
