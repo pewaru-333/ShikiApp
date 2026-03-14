@@ -25,7 +25,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -56,15 +55,19 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
@@ -106,23 +109,26 @@ import org.application.shikiapp.shared.ui.templates.DialogClubs
 import org.application.shikiapp.shared.ui.templates.DialogFavourites
 import org.application.shikiapp.shared.ui.templates.DialogFriends
 import org.application.shikiapp.shared.ui.templates.DialogHistory
+import org.application.shikiapp.shared.ui.templates.DialogImages
 import org.application.shikiapp.shared.ui.templates.DialogList
 import org.application.shikiapp.shared.ui.templates.ErrorScreen
+import org.application.shikiapp.shared.ui.templates.HtmlContent
 import org.application.shikiapp.shared.ui.templates.IconComment
 import org.application.shikiapp.shared.ui.templates.LoadingScreen
 import org.application.shikiapp.shared.ui.templates.Messages
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.Notifications
 import org.application.shikiapp.shared.ui.templates.Statistics
-import org.application.shikiapp.shared.ui.templates.UserBriefItem
 import org.application.shikiapp.shared.ui.templates.UserMenuItems
+import org.application.shikiapp.shared.ui.templates.UserProfileHeader
 import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.ui.templates.HtmlComment
+import org.application.shikiapp.shared.ui.templates.htmlContent
 import org.application.shikiapp.shared.utils.enums.FavouriteItem
 import org.application.shikiapp.shared.utils.enums.MessageType
 import org.application.shikiapp.shared.utils.navigation.NavigationBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberToastState
+import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -172,7 +178,6 @@ fun UserView(
 ) {
     val toast = rememberToastState()
 
-    val listState = rememberLazyListState()
     val friends = user.friends.collectAsLazyPagingItems()
     val history = user.history.collectAsLazyPagingItems()
     val comments = user.comments.collectAsLazyPagingItems()
@@ -186,6 +191,14 @@ fun UserView(
 
     val listStates = FavouriteItem.entries.map { rememberLazyListState() }
 
+    val commentsState = rememberLazyListState()
+    val listState = rememberLazyListState()
+    val isHeaderScrolled by remember {
+        derivedStateOf { listState.firstVisibleItemIndex > 0 }
+    }
+
+    var galleryInfo by remember { mutableStateOf<Pair<List<CommentContent.ImageContent>, Int>?>(null) }
+
     LaunchedEffect(mailManager.dialogDeleteError) {
         mailManager.dialogDeleteError.collectLatest(toast::onShow)
     }
@@ -193,7 +206,15 @@ fun UserView(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = {},
+                title = {
+                    AnimatedVisibility(isHeaderScrolled, Modifier, fadeIn(), fadeOut()) {
+                        Text(
+                            text = user.nickname,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
+                        )
+                    }
+                },
                 navigationIcon = {
                     if (Preferences.userId == user.id) {
                         IconButton(onBack) { VectorIcon(Res.drawable.vector_exit_app) }
@@ -208,18 +229,24 @@ fun UserView(
         }
     ) { values ->
         LazyColumn(
-            contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
+            state = listState,
+            verticalArrangement = Arrangement.spacedBy(16.dp),
+            contentPadding = PaddingValues(
+                start = 16.dp,
+                top = values.calculateTopPadding() + 8.dp,
+                end = 16.dp,
+                bottom = 32.dp
+            )
         ) {
             item {
-                UserBriefItem(user)
+                UserProfileHeader(user)
             }
 
             item {
                 UserMenuItems { onEvent(ContentDetailEvent.User.PickMenu(it)) }
             }
 
-            if (Preferences.userId != user.id) {
+            if (user.showStats) {
                 item {
                     Statistics(
                         id = user.id,
@@ -229,25 +256,34 @@ fun UserView(
                 }
             }
 
-            user.about.let {
-                if (it.isNotEmpty()) {
-                    item {
-                        HorizontalDivider()
-                    }
+            if (user.about.isNotEmpty()) {
+                item {
+                    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                        HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
 
-                    item {
-                        Column(Modifier.wrapContentHeight(), Arrangement.spacedBy(6.dp)) {
-                            Text(
-                                text = stringResource(Res.string.text_about_me),
-                                style = MaterialTheme.typography.titleLarge
+                        Text(
+                            text = stringResource(Res.string.text_about_me),
+                            style = MaterialTheme.typography.titleMedium.copy(
+                                fontWeight = FontWeight.Bold
                             )
-
-                            Text(it)
-                        }
+                        )
                     }
                 }
+
+                htmlContent(user.about) { images, index -> galleryInfo = images to index }
             }
         }
+    }
+
+    galleryInfo?.let { (imageContents, initialIndex) ->
+        val imageUrls = imageContents.map { it.fullUrl ?: it.previewUrl }
+
+        DialogImages(
+            images = imageUrls,
+            initialIndex = initialIndex,
+            isVisible = true,
+            onClose = { galleryInfo = null }
+        )
     }
 
     LaunchedEffect(state.dialogState, state.menu) {
@@ -266,7 +302,7 @@ fun UserView(
 
     Comments(
         list = comments,
-        listState = listState,
+        listState = commentsState,
         isVisible = state.dialogState is UserDialogState.Comments,
         onHide = { onEvent(ContentDetailEvent.ShowComments) },
         onNavigate = onNavigate
@@ -699,7 +735,7 @@ fun MessageBubble(message: Dialog, modifier: Modifier = Modifier) {
                 .background(backgroundColor, bubbleShape(message.accountUser))
                 .padding(12.dp, 8.dp)
         ) {
-            HtmlComment(message.lastMessage)
+            HtmlContent(message.lastMessage)
 
             Row(
                 verticalAlignment = Alignment.CenterVertically,
