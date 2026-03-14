@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -52,7 +51,6 @@ import androidx.compose.foundation.text.input.rememberTextFieldState
 import androidx.compose.foundation.text.input.then
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.AppBarWithSearch
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
 import androidx.compose.material3.ButtonDefaults
@@ -78,14 +76,11 @@ import androidx.compose.material3.NavigationDrawerItemDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SearchBarDefaults
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.rememberDrawerState
-import androidx.compose.material3.rememberSearchBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -114,7 +109,6 @@ import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
 import androidx.paging.compose.itemKey
-import androidx.window.core.layout.WindowSizeClass
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.flow.drop
 import kotlinx.coroutines.flow.first
@@ -142,14 +136,12 @@ import org.application.shikiapp.shared.ui.templates.CatalogGridItem
 import org.application.shikiapp.shared.ui.templates.ErrorScreen
 import org.application.shikiapp.shared.ui.templates.LoadingScreen
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
+import org.application.shikiapp.shared.ui.templates.SearchAppBar
 import org.application.shikiapp.shared.ui.templates.UserGridItem
 import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.CatalogItem
 import org.application.shikiapp.shared.utils.enums.CatalogItem.CLUBS
-import org.application.shikiapp.shared.utils.enums.CatalogItem.MANGA
 import org.application.shikiapp.shared.utils.enums.CatalogItem.PEOPLE
-import org.application.shikiapp.shared.utils.enums.CatalogItem.RANOBE
 import org.application.shikiapp.shared.utils.enums.CatalogItem.USERS
 import org.application.shikiapp.shared.utils.enums.Duration
 import org.application.shikiapp.shared.utils.enums.Kind
@@ -164,6 +156,7 @@ import org.application.shikiapp.shared.utils.extensions.isDigitsOnly
 import org.application.shikiapp.shared.utils.extensions.pairwise
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
@@ -180,19 +173,16 @@ import shikiapp.composeapp.generated.resources.text_genres
 import shikiapp.composeapp.generated.resources.text_kind
 import shikiapp.composeapp.generated.resources.text_rating
 import shikiapp.composeapp.generated.resources.text_score
-import shikiapp.composeapp.generated.resources.text_search
 import shikiapp.composeapp.generated.resources.text_season
 import shikiapp.composeapp.generated.resources.text_sorting
 import shikiapp.composeapp.generated.resources.text_start_year
 import shikiapp.composeapp.generated.resources.text_status
 import shikiapp.composeapp.generated.resources.text_unknown
-import shikiapp.composeapp.generated.resources.vector_close
 import shikiapp.composeapp.generated.resources.vector_filter
 import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_down
 import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_up
 import shikiapp.composeapp.generated.resources.vector_menu
 import shikiapp.composeapp.generated.resources.vector_refresh
-import shikiapp.composeapp.generated.resources.vector_search
 import shikiapp.composeapp.generated.resources.vector_star
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -210,9 +200,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     val listStates = CatalogItem.entries.associateWith { rememberLazyListState() }
     val gridStates = CatalogItem.entries.associateWith { rememberLazyGridState() }
 
-    val adaptiveInfo = currentWindowAdaptiveInfo()
-    val windowSizeClass = adaptiveInfo.windowSizeClass
-    val isCompact = !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    val isCompact = rememberWindowSize().isCompact
 
     fun toggleDrawer() {
         scope.launch {
@@ -221,20 +209,6 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     }
 
     LaunchedEffect(state.dialogFilter) { barVisibility.toggle(state.isFiltersVisible) }
-
-    LaunchedEffect(model.navEvent) {
-        model.navEvent.collectLatest { args ->
-            when {
-                args.studio != null -> model.onEvent(FilterEvent.SetStudio(args.studio))
-                args.publisher != null -> {
-                    model.pick(if (args.linkedType == LinkedType.MANGA) MANGA else RANOBE)
-                    model.onEvent(FilterEvent.SetPublisher(args.publisher))
-                }
-
-                args.showOngoing == true -> model.onEvent(SetStatus("ongoing"))
-            }
-        }
-    }
 
     LaunchedEffect(filters) {
         snapshotFlow { filters }
@@ -389,54 +363,6 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     }
 }
 
-@Composable
-private fun SearchAppBar(
-    search: String,
-    onSearch: (String) -> Unit,
-    onClear: () -> Unit = { onSearch(BLANK) },
-    navigationIcon: @Composable (() -> Unit),
-    actions: @Composable (RowScope.() -> Unit)
-) {
-    val searchState = rememberSearchBarState()
-    val textFieldState = rememberTextFieldState(search)
-
-    LaunchedEffect(textFieldState) {
-        snapshotFlow { textFieldState.text.toString() }
-            .pairwise()
-            .collectLatest { (old, new) ->
-                if (old != new) {
-                    onSearch(new)
-                }
-            }
-    }
-
-    LaunchedEffect(search) {
-        if (search.isEmpty()) {
-            textFieldState.clearText()
-        }
-    }
-
-    AppBarWithSearch(
-        state = searchState,
-        navigationIcon = navigationIcon,
-        actions = actions,
-        inputField = {
-            SearchBarDefaults.InputField(
-                textFieldState = textFieldState,
-                searchBarState = searchState,
-                onSearch = onSearch,
-                leadingIcon = { VectorIcon(Res.drawable.vector_search) },
-                placeholder = { Text(stringResource(Res.string.text_search)) },
-                trailingIcon = {
-                    if (search.isNotEmpty()) {
-                        IconButton(onClear) { VectorIcon(Res.drawable.vector_close) }
-                    }
-                }
-            )
-        }
-    )
-}
-
 // ============================================= Lists =============================================
 
 @Composable
@@ -446,7 +372,7 @@ fun CatalogList(
     listState: LazyListState,
     gridState: LazyGridState,
     paddingValues: PaddingValues,
-    isCompactWindow: Boolean,
+    isCompactWindow: Boolean = rememberWindowSize().isCompact,
     onNavigate: (Screen) -> Unit
 ) {
     BoxWithConstraints(Modifier.fillMaxSize()) {
@@ -545,8 +471,7 @@ private fun DialogFilters(
     onHide: () -> Unit
 ) {
     val density = LocalDensity.current
-    val windowSize = currentWindowAdaptiveInfo().windowSizeClass
-    val isCompact = !windowSize.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
+    val isCompact = rememberWindowSize().isCompact
 
     val filtersListContent = @Composable { innerPadding: PaddingValues ->
         LazyColumn(
