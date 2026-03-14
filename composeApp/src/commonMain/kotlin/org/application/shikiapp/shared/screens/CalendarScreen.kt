@@ -5,21 +5,16 @@ package org.application.shikiapp.shared.screens
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
@@ -30,17 +25,13 @@ import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.rememberCoroutineScope
@@ -59,7 +50,6 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.window.core.layout.WindowSizeClass
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.models.ui.AnimeCalendar
 import org.application.shikiapp.shared.models.ui.list.BasicContent
@@ -75,6 +65,7 @@ import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.enums.CatalogItem
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_airing
@@ -86,17 +77,9 @@ import shikiapp.composeapp.generated.resources.text_updates_anime
 import shikiapp.composeapp.generated.resources.vector_arrow_forward
 import shikiapp.composeapp.generated.resources.vector_refresh
 
-val LocalCompactScreen = compositionLocalOf { true }
-val LocalCardWidth = compositionLocalOf { 120.dp }
-
 @Composable
 fun CalendarScreen(onNavigate: (Screen) -> Unit) {
     val barVisibility = LocalBarVisibility.current
-
-    val adaptiveInfo = currentWindowAdaptiveInfo()
-    val windowSizeClass = adaptiveInfo.windowSizeClass
-    val isCompact =
-        !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
 
     val model = viewModel { CalendarViewModel() }
     val response by model.response.collectAsStateWithLifecycle()
@@ -137,19 +120,12 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
                 is Response.Error -> ErrorScreen(model::loadData)
                 is Response.Loading -> LoadingScreen()
                 is Response.Success -> {
-                    val cardWidth = if (isCompact) 120.dp else 160.dp
-
-                    CompositionLocalProvider(
-                        LocalCompactScreen provides isCompact,
-                        LocalCardWidth provides cardWidth
-                    ) {
-                        CalendarView(
-                            calendar = data.data,
-                            pagerState = pagerState,
-                            onShow = { showFullUpdates = true },
-                            onNavigate = onNavigate
-                        )
-                    }
+                    CalendarView(
+                        calendar = data.data,
+                        pagerState = pagerState,
+                        onShow = { showFullUpdates = true },
+                        onNavigate = onNavigate
+                    )
                 }
 
                 else -> Unit
@@ -160,14 +136,12 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
     (response as? Response.Success)?.let { success ->
         val topics = success.data.updates.collectAsLazyPagingItems()
 
-        CompositionLocalProvider(LocalCompactScreen provides isCompact) {
-            AnimeUpdatesFull(
-                list = topics,
-                isVisible = showFullUpdates,
-                onNavigate = onNavigate,
-                onHide = { showFullUpdates = false }
-            )
-        }
+        AnimeUpdatesFull(
+            list = topics,
+            isVisible = showFullUpdates,
+            onNavigate = onNavigate,
+            onHide = { showFullUpdates = false }
+        )
     }
 }
 
@@ -184,7 +158,7 @@ private fun CalendarView(
         when (tab) {
             0 -> {
                 LazyColumn(
-                    contentPadding = PaddingValues(horizontal = 8.dp),
+                    contentPadding = PaddingValues(horizontal = 10.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp)
                 ) {
                     item {
@@ -253,7 +227,7 @@ fun AnimeSection(
     showScore: Boolean = true,
     onIconClick: (() -> Unit)? = null
 ) = Column {
-    val isCompact = LocalCompactScreen.current
+    val isCompact = rememberWindowSize().isCompact
 
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle(label)
@@ -269,10 +243,7 @@ fun AnimeSection(
         LoadingScreen()
     } else {
         if (isCompact) {
-            LazyRow(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                contentPadding = PaddingValues(horizontal = 8.dp)
-            ) {
+            LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 items(itemCount) { index ->
                     getItem(index)?.let { anime ->
                         CalendarOngoingCard(
@@ -330,16 +301,13 @@ private fun AnimeUpdatesFull(
             )
         }
     ) { values ->
-        Box(Modifier.padding(values)) {
-            CatalogList(
-                menu = CatalogItem.ANIME,
-                list = list as LazyPagingItems<BasicContent>,
-                listState = rememberLazyListState(),
-                gridState = rememberLazyGridState(),
-                paddingValues = PaddingValues(top = values.calculateTopPadding()),
-                isCompactWindow = LocalCompactScreen.current,
-                onNavigate = onNavigate
-            )
-        }
+        CatalogList(
+            menu = CatalogItem.ANIME,
+            list = list as LazyPagingItems<BasicContent>,
+            listState = rememberLazyListState(),
+            gridState = rememberLazyGridState(),
+            paddingValues = PaddingValues(top = values.calculateTopPadding()),
+            onNavigate = onNavigate
+        )
     }
 }
