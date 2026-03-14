@@ -20,7 +20,6 @@ import coil3.memory.MemoryCache
 import coil3.network.NetworkFetcher
 import coil3.request.CachePolicy
 import coil3.request.crossfade
-import coil3.util.DebugLogger
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.Json
 import okio.Path
