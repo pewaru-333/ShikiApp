@@ -46,6 +46,7 @@ import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.RatesResponse
+import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.OrderDirection
 import org.application.shikiapp.shared.utils.enums.OrderRates
@@ -60,9 +61,7 @@ import kotlin.reflect.typeOf
 class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     private val args = runCatching {
         saved.toRoute<Screen.UserRates>(
-            typeMap = mapOf(
-                typeOf<LinkedType?>() to serializableNavType(serializer = LinkedType.serializer().nullable)
-            )
+            typeMap = mapOf(typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable))
         )
     }.getOrNull()
 
@@ -83,35 +82,36 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     private val _newRate = MutableStateFlow(NewRateState())
     val newRate = _newRate.asStateFlow()
 
+    private val _search = MutableStateFlow(BLANK)
+    val search = _search.asStateFlow()
+
     private val _rateUiEvent = Channel<UserRateUiEvent>()
     val rateUiEvent = _rateUiEvent.receiveAsFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val rates = combine(_response, _orderState) { response, state ->
-        if (response !is RatesResponse.Success) emptyMap()
-        else response.rates
+    val rates = combine(_response, _orderState, _search) { response, state, search ->
+        if (response !is RatesResponse.Success) return@combine emptyMap()
+
+        val noSearch = search.isBlank()
+
+        val typeComparator = when (state.order) {
+            OrderRates.TITLE -> compareBy(UserRate::title)
+            OrderRates.SCORE -> compareBy(UserRate::score)
+            OrderRates.EPISODES -> compareBy(UserRate::episodesSorting)
+            OrderRates.KIND -> compareBy { it.kindEnum.ordinal }
+            OrderRates.CREATED_AT -> compareBy(UserRate::createdAt)
+            OrderRates.UPDATED_AT -> compareBy(UserRate::updatedAt)
+        }
+
+        val orderComparator = when (state.direction) {
+            OrderDirection.ASCENDING -> typeComparator.thenBy(UserRate::title)
+            OrderDirection.DESCENDING -> typeComparator.thenBy(UserRate::title).reversed()
+        }
+
+        response.rates
+            .filter { noSearch || it.title.contains(search, ignoreCase = true) }
             .groupBy { Enum.safeValueOf<WatchStatus>(it.status) }
-            .mapValues { (key, value) ->
-                if (state.direction == OrderDirection.ASCENDING) {
-                    when (state.order) {
-                        OrderRates.TITLE -> value.sortedBy(UserRate::title)
-                        OrderRates.SCORE -> value.sortedBy(UserRate::score)
-                        OrderRates.EPISODES -> value.sortedBy(UserRate::episodesSorting)
-                        OrderRates.KIND -> value.sortedBy { it.kind.key }
-                        OrderRates.CREATED_AT -> value.sortedBy(UserRate::createdAt)
-                        OrderRates.UPDATED_AT -> value.sortedBy(UserRate::updatedAt)
-                    }
-                } else {
-                    when (state.order) {
-                        OrderRates.TITLE -> value.sortedByDescending(UserRate::title)
-                        OrderRates.SCORE -> value.sortedByDescending(UserRate::score)
-                        OrderRates.EPISODES -> value.sortedByDescending(UserRate::episodesSorting)
-                        OrderRates.KIND -> value.sortedByDescending { it.kind.key }
-                        OrderRates.CREATED_AT -> value.sortedByDescending(UserRate::createdAt)
-                        OrderRates.UPDATED_AT -> value.sortedByDescending(UserRate::updatedAt)
-                    }
-                }
-            }
+            .mapValues { (_, value) -> value.sortedWith(orderComparator) }
     }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
@@ -120,15 +120,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         private set
 
     fun loadRates(type: LinkedType = _type.value) {
-        println("editable: $editable")
-        if (userId == null) {
-            println("userId null")
-            return
-        }
+        if (userId == null) return
 
         viewModelScope.launch {
             if (Preferences.token == null && editable) {
-                println("token null")
                 _response.emit(RatesResponse.Unlogged)
                 return@launch
             }
@@ -137,39 +132,44 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 _response.emit(RatesResponse.Loading)
             }
 
-            val allRates = mutableListOf<UserRate>()
-            val threads = 5
-            var currentPage = 0
-            var moreDataAvailable = true
-
             try {
-                while (moreDataAvailable) {
-                    val rates = coroutineScope {
-                        (1..threads).map { thread ->
-                            async {
-                                if (type == LinkedType.ANIME) {
-                                    Network.rates.getAnimeRates(userId, currentPage + thread, 250)
-                                } else {
-                                    Network.rates.getMangaRates(userId, currentPage + thread, 250)
-                                }
-                            }
+                val allRates = mutableListOf<UserRate>()
+                val limit = 250
+
+                suspend fun fetchPage(page: Int) = if (type == LinkedType.ANIME) {
+                    Network.rates.getAnimeRates(userId, page, limit)
+                } else {
+                    Network.rates.getMangaRates(userId, page, limit)
+                }
+
+                val firstPage = fetchPage(1) ?: emptyList()
+                allRates.addAll(firstPage.map(BaseRate::mapper))
+
+                if (firstPage.size == limit) {
+                    val pools = 5
+                    var currentPage = 2
+                    var moreDataAvailable = true
+
+                    while (moreDataAvailable) {
+                        val jobs = coroutineScope {
+                            (0 until pools).map { pool -> async { fetchPage(currentPage + pool) } }
                         }
-                    }
 
-                    val ratesNotNull = rates.awaitAll().filterNotNull()
-                    allRates.addAll(ratesNotNull.flatten().map(BaseRate::mapper))
+                        val result = jobs.awaitAll().filterNotNull()
+                        allRates.addAll(result.flatMap { it.map(BaseRate::mapper) })
 
-                    if (ratesNotNull.size < threads || ratesNotNull.any { it.size < 250 }) {
-                        moreDataAvailable = false
-                    } else {
-                        currentPage += threads
+                        if (result.size < pools || result.any { it.size < limit }) {
+                            moreDataAvailable = false
+                        } else {
+                            currentPage += pools
+                        }
                     }
                 }
 
                 _response.emit(RatesResponse.Success(allRates.distinctBy(UserRate::id)))
             } catch (e: ClientRequestException) {
                 _response.emit(
-                    if (e.response.status.value == 403) RatesResponse.NoAccess
+                    value = if (e.response.status.value == 403) RatesResponse.NoAccess
                     else RatesResponse.Error
                 )
             } catch (_: Exception) {
@@ -196,8 +196,13 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         showEditDialog = !showEditDialog
     }
 
+    fun setSearch(text: String) {
+        _search.value = text
+    }
+
     fun setLinkedType(type: LinkedType) {
         _type.update { type }
+        _search.value = BLANK
 
         viewModelScope.launch {
             _response.emit(RatesResponse.Loading)
