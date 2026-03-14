@@ -1,14 +1,18 @@
 package org.application.shikiapp.shared.models.ui
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.utils.enums.FavouriteItem
+import org.application.shikiapp.shared.utils.ui.CommentContent
 
+@Stable
 data class User(
-    val about: AnnotatedString,
+    val about: List<CommentContent>,
     val avatar: String,
+    val banned: Boolean,
     val clubs: List<BasicContent>,
     val comments: Flow<PagingData<Comment>>,
     val commonInfo: AnnotatedString,
@@ -19,5 +23,7 @@ data class User(
     val inFriends: Boolean,
     val lastOnline: String,
     val nickname: String,
-    val stats: Pair<Statistics?, Statistics?>
+    val sex: String?,
+    val showStats: Boolean,
+    val stats: Pair<Statistics, Statistics>
 )
