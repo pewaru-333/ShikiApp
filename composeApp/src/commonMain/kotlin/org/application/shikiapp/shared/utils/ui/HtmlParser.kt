@@ -1,12 +1,16 @@
 package org.application.shikiapp.shared.utils.ui
 
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.foundation.text.appendInlineContent
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.Placeholder
 import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
@@ -170,12 +174,12 @@ object HtmlParser {
                             node.hasClass("smiley") -> {
                                 val id = "smiley_${smileyCounter++}"
                                 appendInlineContent(id, "[emoji]")
-                                inlineContentMap[id] = InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.TextCenter)) {
-                                    AnimatedAsyncImage(node.attr("abs:src"))
+                                inlineContentMap[id] = InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.Center)) {
+                                    AnimatedAsyncImage(node.attr("abs:src"), Modifier.fillMaxSize())
                                 }
                             }
                             else -> {
-                                val style = getStyleForElement(node)
+                                val style = getStyleForTag(node.tagName())
                                 val startIndex = length
                                 val (childText, childInlineContent) = stringFromNodes(node.childNodes())
 
@@ -184,11 +188,18 @@ object HtmlParser {
                                 addStyle(style, startIndex, length)
 
                                 if (node.tagName() == "a" && node.hasAttr("href")) {
-                                    addStringAnnotation(
+                                    addLink(
                                         start = startIndex,
                                         end = length,
-                                        tag = "URL",
-                                        annotation = node.attr("abs:href")
+                                        url = LinkAnnotation.Url(
+                                            url = node.attr("abs:href"),
+                                            styles = TextLinkStyles(
+                                                style = SpanStyle(
+                                                    color = Color(0xFF33BBFF),
+                                                    textDecoration = TextDecoration.Underline
+                                                )
+                                            )
+                                        )
                                     )
                                 }
                             }
@@ -220,7 +231,7 @@ object HtmlParser {
         }
     }
 
-    private fun getStyleForElement(element: Element) = when (element.tagName()) {
+    internal fun getStyleForTag(tagName: String) = when (tagName.lowercase()) {
         "s" -> SpanStyle(textDecoration = TextDecoration.LineThrough)
         "strong", "b" -> SpanStyle(fontWeight = FontWeight.Bold)
         "em", "i" -> SpanStyle(fontStyle = FontStyle.Italic)
