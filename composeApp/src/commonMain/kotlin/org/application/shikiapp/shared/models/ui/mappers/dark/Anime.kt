@@ -1,30 +1,20 @@
 package org.application.shikiapp.shared.models.ui.mappers.dark
 
 import androidx.paging.PagingData
-import androidx.paging.map
-import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.darkshiki.AnimeExtraQuery
-import org.application.shikiapp.generated.darkshiki.fragment.Link
 import org.application.shikiapp.generated.darkshiki.fragment.PersonRole
 import org.application.shikiapp.generated.darkshiki.fragment.RelatedFragment
-import org.application.shikiapp.generated.shikiapp.AnimeAiringQuery
-import org.application.shikiapp.generated.shikiapp.AnimeListQuery
 import org.application.shikiapp.generated.shikiapp.AnimeMainQuery
-import org.application.shikiapp.generated.shikiapp.AnimeRandomQuery
 import org.application.shikiapp.shared.models.data.AnimeBasic
-import org.application.shikiapp.shared.models.data.BasicInfo
 import org.application.shikiapp.shared.models.data.Franchise
-import org.application.shikiapp.shared.models.data.Topic
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.Comment
-import org.application.shikiapp.shared.models.ui.ExternalLink
 import org.application.shikiapp.shared.models.ui.Related
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.Studio
 import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.models.ui.Video
-import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.models.ui.mappers.toContent
@@ -156,7 +146,8 @@ object AnimeMapper {
                         contentId = main.id,
                         title = main.russian ?: main.name,
                         poster = main.poster?.originalUrl.orEmpty(),
-                        kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
+                        kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
+                        kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                         score = it.score,
                         scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                         status = it.status.rawValue,
