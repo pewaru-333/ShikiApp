@@ -23,6 +23,8 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.layout.wrapContentHeight
+import androidx.compose.foundation.lazy.LazyListScope
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -54,7 +56,7 @@ import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
 import shikiapp.composeapp.generated.resources.vector_refresh
 
 @Composable
-fun HtmlComment(commentContent: List<CommentContent>?) {
+fun HtmlContent(commentContent: List<CommentContent>?) {
     var galleryInfo by remember { mutableStateOf<Pair<List<CommentContent.ImageContent>, Int>?>(null) }
 
     BoxWithConstraints {
@@ -303,5 +305,27 @@ private fun RenderContent(
         }
 
         is CommentContent.LineBreakContent -> Spacer(Modifier.height(12.dp))
+    }
+}
+
+fun LazyListScope.htmlContent(
+    contentList: List<CommentContent>,
+    onImageClick: (List<CommentContent.ImageContent>, Int) -> Unit
+) {
+    if (contentList.isEmpty()) return
+
+    val images = contentList.flattenImages()
+
+    items(contentList) { item ->
+        BoxWithConstraints(Modifier.fillMaxWidth()) {
+            RenderContent(
+                content = item,
+                containerMaxWidth = maxWidth,
+                onImageClick = { clickedImage ->
+                    val index = images.indexOf(clickedImage)
+                    onImageClick(images, index)
+                }
+            )
+        }
     }
 }

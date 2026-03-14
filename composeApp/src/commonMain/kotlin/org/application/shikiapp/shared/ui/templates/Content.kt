@@ -23,11 +23,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
@@ -39,17 +37,18 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.AssistChip
+import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -80,6 +79,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
@@ -737,7 +737,6 @@ fun Statuses(
     val minBarWidth = 40.dp.value.roundToInt()
     val gap = 8.dp.value.roundToInt()
 
-   // val context = LocalContext.current
     val textMeasurer = rememberTextMeasurer()
 
     var maxStatusTextWidth by remember { mutableFloatStateOf(0f) }
@@ -752,14 +751,13 @@ fun Statuses(
         maxStatusTextWidth = maxW ?: 0f
     }
 
-//    val maxStatusTextWidth = remember(scores) {
-//        scores.keys.maxOf {
-//            textMeasurer.measure(AnnotatedString(it.asString(context)), textStyle).size.width
-//        }
-//    }
-
-    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, CenterVertically) {
-        ParagraphTitle(stringResource(label), Modifier.padding(bottom = 4.dp))
+    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+        Text(
+            text = stringResource(label),
+            style = MaterialTheme.typography.titleMedium.copy(
+                fontWeight = FontWeight.Bold
+            )
+        )
         content?.invoke()
     }
     Column(verticalArrangement = spacedBy(8.dp)) {
@@ -846,9 +844,9 @@ fun Statuses(
 }
 
 @Composable
-fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate: (Screen) -> Unit) =
-    Column(verticalArrangement = spacedBy(16.dp)) {
-        statistics.first?.let {
+fun Statistics(id: Long, statistics: Pair<Statistics, Statistics>, onNavigate: (Screen) -> Unit) =
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        statistics.first.let {
             if (it.scores.isNotEmpty()) {
                 Statuses(
                     scores = it.scores,
@@ -864,11 +862,11 @@ fun Statistics(id: Long, statistics: Pair<Statistics?, Statistics?>, onNavigate:
             }
         }
 
-        if (statistics.first?.scores?.isNotEmpty() == true && statistics.second?.scores?.isNotEmpty() == true) {
+        if (statistics.first.scores.isNotEmpty() && statistics.second.scores.isNotEmpty()) {
             HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
         }
 
-        statistics.second?.let {
+        statistics.second.let {
             if (it.scores.isNotEmpty()) {
                 Statuses(
                     scores = it.scores,
@@ -1206,41 +1204,98 @@ fun DialogClubs(
 }
 
 @Composable
-fun UserBriefItem(user: User) = ListItem(
-    headlineContent = { Text(user.lastOnline, style = MaterialTheme.typography.bodyMedium) },
-    modifier = Modifier.offset((-16).dp, (-8).dp),
-    overlineContent = { Text(user.nickname, style = MaterialTheme.typography.titleLarge) },
-    leadingContent = {
+fun UserProfileHeader(user: User) =
+    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(20.dp), Alignment.CenterVertically) {
         AnimatedAsyncImage(
             model = user.avatar,
             modifier = Modifier
-                .size(88.dp)
-                .clip(MaterialTheme.shapes.small)
-                .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.small)
+                .size(96.dp)
+                .clip(CircleShape)
+                .border(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    shape = CircleShape,
+                    width = (0.5).dp
+                )
         )
-    },
-    supportingContent = {
-        Text(
-            text = user.commonInfo,
-            style = MaterialTheme.typography.bodySmall
-        )
+
+        Column(Modifier.weight(1f)) {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Text(
+                    text = user.nickname,
+                    modifier = Modifier.weight(1f, false),
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.headlineSmall.copy(
+                        fontWeight = FontWeight.Bold
+                    )
+                )
+
+                if (user.banned) {
+                    Surface(
+                        shape = MaterialTheme.shapes.small,
+                        color = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    ) {
+                        Text(
+                            text = if (user.sex == "female") "Забанена" else "Забанен",
+                            modifier = Modifier.padding(6.dp, 2.dp),
+                            style = MaterialTheme.typography.labelMedium.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
+                }
+            }
+
+            Spacer(Modifier.height(2.dp))
+
+            Text(
+                text = user.lastOnline,
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            )
+
+            Spacer(Modifier.height(4.dp))
+
+            Text(
+                text = user.commonInfo,
+                style = MaterialTheme.typography.bodySmall.copy(
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    lineHeight = 16.sp
+                )
+            )
+        }
     }
-)
 
 @Composable
-fun UserMenuItems(setMenu: (UserMenu) -> Unit) =
-    Column(Modifier.wrapContentHeight(), spacedBy(8.dp), Alignment.CenterHorizontally) {
+fun UserMenuItems(onPick: (UserMenu) -> Unit) =
+    Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
         UserMenu.entries.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth(), spacedBy(48.dp), CenterVertically) {
+            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
                 row.forEach { entry ->
-                    FilterChip(
-                        selected = true,
-                        label = { Text(stringResource(entry.title)) },
+                    AssistChip(
+                        border = null,
+                        onClick = { onPick(entry) },
                         trailingIcon = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
-                        onClick = { setMenu(entry) },
+                        label = {
+                            Text(
+                                text = stringResource(entry.title),
+                                overflow = TextOverflow.Ellipsis,
+                                maxLines = 1
+                            )
+                        },
                         modifier = Modifier
-                            .height(48.dp)
                             .weight(1f)
+                            .height(56.dp),
+                        colors = AssistChipDefaults.assistChipColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                            labelColor = MaterialTheme.colorScheme.onSurface,
+                            trailingIconContentColor = MaterialTheme.colorScheme.onSurface
+                        )
                     )
                 }
             }

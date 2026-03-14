@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -40,7 +39,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.application.shikiapp.shared.screens.LocalCardWidth
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
@@ -48,6 +46,7 @@ import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.backgroundColor
 import org.application.shikiapp.shared.utils.enums.textColor
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.vector_star
@@ -288,7 +287,8 @@ fun BasicContentItem(name: String, link: String?, modifier: Modifier = Modifier,
 
 @Composable
 fun CalendarOngoingCard(title: String, score: String?, poster: String, onNavigate: () -> Unit) {
-    val cardWidth = LocalCardWidth.current
+    val isCompact = rememberWindowSize().isCompact
+    val cardWidth = if (isCompact) 120.dp else 160.dp
 
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
