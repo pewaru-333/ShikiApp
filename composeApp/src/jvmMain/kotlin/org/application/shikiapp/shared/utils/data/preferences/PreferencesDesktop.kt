@@ -3,7 +3,6 @@ package org.application.shikiapp.shared.utils.data.preferences
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import jdk.internal.vm.vector.VectorSupport.test
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
@@ -14,7 +13,6 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.MapPreferences
-import okhttp3.internal.toLongOrDefault
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.di.AppModuleInitializer
 import java.io.File
