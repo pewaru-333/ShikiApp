@@ -29,7 +29,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -43,7 +42,6 @@ import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.window.core.layout.WindowSizeClass
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.NewsDetailState
 import org.application.shikiapp.shared.models.ui.NewsDetail
@@ -52,11 +50,12 @@ import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.shared.ui.templates.AnimatedScreen
 import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.DialogImages
+import org.application.shikiapp.shared.ui.templates.HtmlContent
 import org.application.shikiapp.shared.ui.templates.IconComment
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
-import org.application.shikiapp.shared.utils.ui.CommentContent
-import org.application.shikiapp.shared.ui.templates.HtmlComment
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.CommentContent
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -84,8 +83,7 @@ fun NewsDetailView(
     val commentsListState = rememberLazyListState()
     val comments = news.comments.collectAsLazyPagingItems()
 
-    val windowSize = currentWindowAdaptiveInfo().windowSizeClass
-    val isExpanded = windowSize.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_EXPANDED_LOWER_BOUND)
+    val isExpanded = !rememberWindowSize().isCompact
 
     val isPosterImage = remember(news.poster) { news.poster is CommentContent.ImageContent }
 
@@ -103,7 +101,9 @@ fun NewsDetailView(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
+                    .fillMaxWidth()
                     .clip(MaterialTheme.shapes.small)
+                    .padding(vertical = 4.dp)
                     .clickable { onNavigate(Screen.User(news.userId)) }
                     .padding(top = 4.dp, end = 16.dp, bottom = 4.dp)
             ) {
@@ -143,7 +143,7 @@ fun NewsDetailView(
     val poster = @Composable {
         when (val poster = news.poster) {
             is CommentContent.VideoContent -> Box(Modifier.padding(bottom = 16.dp)) {
-                HtmlComment(listOf(poster))
+                HtmlContent(listOf(poster))
             }
 
             else -> {
@@ -167,7 +167,7 @@ fun NewsDetailView(
                 Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                     news.videos.forEach { video ->
                         Box(
-                            content = { HtmlComment(listOf(video)) },
+                            content = { HtmlContent(listOf(video)) },
                             modifier = Modifier
                                 .fillMaxWidth()
                                 .aspectRatio(16f / 9f)
@@ -198,7 +198,7 @@ fun NewsDetailView(
                 ) {
                     items(news.videos) {
                         Box(
-                            content = { HtmlComment(listOf(it)) },
+                            content = { HtmlContent(listOf(it)) },
                             modifier = Modifier
                                 .size(200.dp, 120.dp)
                                 .clip(MaterialTheme.shapes.medium)
