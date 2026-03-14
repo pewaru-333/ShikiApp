@@ -89,6 +89,7 @@ kotlin {
 
         androidMain {
             dependencies {
+                implementation(libs.androidx.activity.compose)
                 implementation(libs.ktor.client.android)
             }
         }
@@ -127,7 +128,7 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.0"
+                packageVersion = "0.6.1"
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 

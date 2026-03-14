@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 36
-        versionCode = 36
-        versionName = "alpha-0.6.0"
+        versionCode = 37
+        versionName = "alpha-0.6.1"
 
         buildFeatures {
             buildConfig = true
@@ -94,7 +94,6 @@ dependencies {
 
     // Android
     implementation(project.dependencies.platform(libs.androidx.compose.bom))
-    implementation(libs.androidx.activity.ktx)
     implementation(libs.androidx.activity.compose)
     implementation(libs.androidx.core.ktx)
 

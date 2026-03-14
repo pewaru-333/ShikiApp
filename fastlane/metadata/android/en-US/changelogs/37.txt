@@ -1,0 +1,4 @@
+— Added a title search in anime and manga user's ratings lists.
+— Added a redirect to the catalog and sorting by studio/publisher name when clicking on the link in the news text.
+— The user's screen design has been changed. Pictures and videos are displayed correctly in the "About me" section. If the user has empty anime/manga lists, they are no longer displayed.
+— Fixed a bug that sometimes hid the navigation bar.
