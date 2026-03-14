@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.shikiapp.UsersQuery
+import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.ClubBasic
 import org.application.shikiapp.shared.models.data.User
 import org.application.shikiapp.shared.models.data.UserBasic
@@ -19,6 +20,7 @@ import org.application.shikiapp.shared.utils.enums.FavouriteItem
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.fromHtml
 import org.application.shikiapp.shared.utils.ui.Formatter
+import org.application.shikiapp.shared.utils.ui.HtmlParser
 
 suspend fun User.mapper(
     clubs: List<ClubBasic>,
@@ -27,9 +29,13 @@ suspend fun User.mapper(
     history: Flow<PagingData<History>>,
     favourites: Map<FavouriteItem, List<BasicContent>>
 ) = withContext(Dispatchers.Default) {
+    val animeStatsSum = stats.statuses.anime.sumOf { it.size.toInt() }
+    val mangaStatsSum = stats.statuses.manga.sumOf { it.size.toInt() }
+
     org.application.shikiapp.shared.models.ui.User(
-        about = fromHtml(aboutHtml),
+        about = HtmlParser.parseComment(aboutHtml),
         avatar = image.x160,
+        banned = banned,
         clubs = clubs.map {
             BasicContent(
                 id = it.id.toString(),
@@ -54,9 +60,11 @@ suspend fun User.mapper(
         inFriends = inFriends == true,
         lastOnline = lastOnline.orEmpty(),
         nickname = nickname,
+        sex = sex,
+        showStats = Preferences.userId != id && (animeStatsSum + mangaStatsSum > 0),
         stats = Pair(
             first = Statistics(
-                sum = stats.statuses.anime.sumOf { it.size.toInt() },
+                sum = animeStatsSum,
                 scores = stats.statuses.anime.associate {
                     ResourceText.StringResource(
                         Formatter.getWatchStatus(it.name, LinkedType.ANIME)
@@ -64,7 +72,7 @@ suspend fun User.mapper(
                 }
             ),
             second = Statistics(
-                sum = stats.statuses.manga.sumOf { it.size.toInt() },
+                sum = mangaStatsSum,
                 scores = stats.statuses.manga.associate {
                     ResourceText.StringResource(
                         Formatter.getWatchStatus(it.name, LinkedType.MANGA)
