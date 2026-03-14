@@ -76,8 +76,11 @@ jobs:
       - name: 'Grant execution permission to Gradle Wrapper'
         run: chmod +x gradlew
 
-      - name: 'Build all release flavors (.apk)'
-        run: ./gradlew :androidApp:assembleRelease
+      - name: 'Build ShikiApp Flavor'
+        run: ./gradlew :androidApp:assembleShikiAppRelease
+
+      - name: 'Build DarkShiki Flavor'
+        run: ./gradlew :androidApp:assembleDarkShikiRelease
 
       # ================= ShikiApp =================
       - name: 'Sign ShikiApp'
