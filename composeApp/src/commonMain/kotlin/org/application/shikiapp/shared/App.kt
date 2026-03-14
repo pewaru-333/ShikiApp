@@ -17,6 +17,7 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.ui.theme.Theme
 import org.application.shikiapp.shared.utils.AppLocale
+import org.application.shikiapp.shared.utils.extensions.toFullUri
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Navigation
@@ -43,14 +44,13 @@ fun App(navigator: NavHostController = rememberNavController()) {
     }
 
     CompositionLocalProvider(
-        AppLocale provides locale,
-        LocalBarVisibility provides barVisibility,
-        LocalUriHandler provides deepLinkHandler
-    ) {
-        Theme {
-            Navigation(navigator)
-        }
-    }
+        content = { Theme { Navigation(navigator) } },
+        values = arrayOf(
+            AppLocale provides locale,
+            LocalBarVisibility provides barVisibility,
+            LocalUriHandler provides deepLinkHandler
+        )
+    )
 }
 
 @Composable
@@ -60,25 +60,21 @@ private fun rememberDeepLinkHandler(onNavigate: (NavDeepLinkRequest) -> Unit): U
     return remember {
         object : UriHandler {
             override fun openUri(uri: String) {
-                if (uri.contains("oauth/authorize")) {
-                    linkHandler.onOpenLink(uri)
+                val link = uri.toFullUri().toString()
+
+                if (link.contains("oauth/authorize")) {
+                    linkHandler.onOpenLink(link)
                     return
                 }
 
-                if (uri.contains("shikimori.") || uri.contains("shiki.one")) {
-                    try {
-                        val request = NavDeepLinkRequest.Builder
-                            .fromUri(NavUri(uri))
-                            .build()
+                try {
+                    val request = NavDeepLinkRequest.Builder
+                        .fromUri(NavUri(link))
+                        .build()
 
-                        onNavigate(request)
-                    } catch (_: Exception) {
-                        if (!uri.startsWith("app://")) {
-                            linkHandler.onOpenLink(uri)
-                        }
-                    }
-                } else {
-                    linkHandler.onOpenLink(uri)
+                    onNavigate(request)
+                } catch (_: Exception) {
+                    linkHandler.onOpenLink(link)
                 }
             }
         }
