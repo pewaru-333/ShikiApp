@@ -53,11 +53,11 @@ import org.application.shikiapp.shared.network.paging.CommonPaging
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
 import org.application.shikiapp.shared.utils.BLANK
-import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.enums.FavouriteItem
 import org.application.shikiapp.shared.utils.enums.MessageType
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.Formatter
+import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.jetbrains.compose.resources.StringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_successfully_deleted_dialog
