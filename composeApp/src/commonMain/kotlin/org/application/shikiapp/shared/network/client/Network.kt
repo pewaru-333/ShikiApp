@@ -17,7 +17,6 @@ import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
-import org.application.shikiapp.shared.AppConfig
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.calls.Anime
