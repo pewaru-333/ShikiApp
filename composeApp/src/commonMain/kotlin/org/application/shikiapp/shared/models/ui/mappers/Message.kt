@@ -5,8 +5,8 @@ import org.application.shikiapp.shared.models.data.FullMessage
 import org.application.shikiapp.shared.models.ui.list.Dialog
 import org.application.shikiapp.shared.models.ui.list.Message
 import org.application.shikiapp.shared.network.response.AsyncData
-import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.Formatter
+import org.application.shikiapp.shared.utils.ui.HtmlParser
 
 fun org.application.shikiapp.shared.models.data.Dialog.toDialog() = Dialog(
     id = message.id,

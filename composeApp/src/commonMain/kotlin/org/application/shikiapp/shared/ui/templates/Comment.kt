@@ -113,7 +113,7 @@ fun Comment(comment: Comment, onNavigate: (Screen) -> Unit) =
 
         Spacer(Modifier.height(4.dp))
 
-        HtmlComment(comment.commentContent)
+        HtmlContent(comment.commentContent)
     }
 
 @Composable

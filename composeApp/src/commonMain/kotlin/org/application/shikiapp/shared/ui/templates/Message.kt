@@ -37,7 +37,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -62,7 +61,6 @@ import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_no_messages
 import shikiapp.composeapp.generated.resources.vector_bookmark
 import shikiapp.composeapp.generated.resources.vector_check
-import shikiapp.composeapp.generated.resources.vector_star
 import shikiapp.composeapp.generated.resources.vector_trash
 
 @Composable
@@ -425,7 +423,7 @@ fun Notification(
 
         Spacer(Modifier.height(8.dp))
 
-        HtmlComment(notification.body)
+        HtmlContent(notification.body)
     }
 }
 

@@ -1,20 +1,17 @@
 package org.application.shikiapp.shared.models.ui.mappers.dark
 
 import androidx.paging.PagingData
-import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.darkshiki.MangaExtraQuery
+import org.application.shikiapp.generated.shikiapp.MangaMainQuery
 import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum.light_novel
 import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum.novel
-import org.application.shikiapp.generated.shikiapp.MangaListQuery
-import org.application.shikiapp.generated.shikiapp.MangaMainQuery
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.data.MangaBasic
 import org.application.shikiapp.shared.models.ui.Manga
 import org.application.shikiapp.shared.models.ui.Publisher
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.UserRate
-import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.response.AsyncData
@@ -127,7 +124,8 @@ object MangaMapper {
                     contentId = main.id,
                     title = main.russian ?: main.name,
                     poster = main.poster?.originalUrl.orEmpty(),
-                    kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
+                    kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
+                    kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                     score = it.score,
                     scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                     status = it.status.rawValue,

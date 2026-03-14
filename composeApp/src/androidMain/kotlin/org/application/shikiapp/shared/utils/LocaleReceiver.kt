@@ -1,11 +1,11 @@
 package org.application.shikiapp.shared.utils
 
+import AppLanguages
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
 import android.os.Build
 import android.os.LocaleList
-import org.application.shikiapp.shared.di.AppModuleInitializer
 import org.application.shikiapp.shared.di.Preferences
 import java.util.Locale
 

@@ -3,11 +3,11 @@ package org.application.shikiapp
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.LocalActivityResultRegistryOwner
 import androidx.activity.compose.setContent
 import androidx.compose.runtime.CompositionLocalProvider
 import org.application.shikiapp.shared.App
-import org.application.shikiapp.shared.utils.LocalActivity
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 
 class MainActivity : ComponentActivity() {

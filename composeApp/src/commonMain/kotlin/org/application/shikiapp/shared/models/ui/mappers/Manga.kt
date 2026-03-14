@@ -120,7 +120,8 @@ object MangaMapper {
                     contentId = main.id,
                     title = main.russian ?: main.name,
                     poster = main.poster?.originalUrl.orEmpty(),
-                    kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
+                    kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
+                    kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                     score = it.score,
                     scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                     status = it.status.rawValue,
@@ -141,11 +142,6 @@ object MangaMapper {
         volumes = main.volumes.toString()
     )
 }
-
-data class MangaResponse(
-    val main: MangaMainQuery.Data.Manga,
-    val extra: MangaExtraQuery.Data.Manga
-)
 
 fun MangaListQuery.Data.Manga.mapper() = Content(
     id = id,

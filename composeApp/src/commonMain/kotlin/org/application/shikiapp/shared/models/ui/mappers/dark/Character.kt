@@ -1,10 +1,8 @@
 package org.application.shikiapp.shared.models.ui.mappers.dark
 
 import org.application.shikiapp.generated.darkshiki.fragment.CharacterRole
-import org.application.shikiapp.shared.models.ui.Related
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
-import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.extensions.safeValueOf

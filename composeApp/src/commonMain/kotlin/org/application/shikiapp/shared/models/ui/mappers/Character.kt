@@ -6,7 +6,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.shikiapp.CharacterListQuery
-import org.application.shikiapp.generated.shikiapp.CharacterQuery
 import org.application.shikiapp.generated.shikiapp.fragment.CharacterRole
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.BasicInfo

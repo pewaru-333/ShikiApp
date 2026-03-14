@@ -4,13 +4,13 @@ import androidx.paging.PagingData
 import com.apollographql.apollo.ApolloClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import org.application.shikiapp.generated.shikiapp.AnimeMainQuery
 import org.application.shikiapp.generated.shikiapp.AnimeExtraQuery
+import org.application.shikiapp.generated.shikiapp.AnimeMainQuery
 import org.application.shikiapp.shared.models.data.AnimeBasic
-import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.AnimeT
+import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.mappers.AnimeMapper
 import org.application.shikiapp.shared.network.calls.repository.AnimeRepository
 import org.application.shikiapp.shared.utils.extensions.cachedQueryFlow
