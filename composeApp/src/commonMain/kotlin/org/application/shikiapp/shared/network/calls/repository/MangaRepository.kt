@@ -8,7 +8,6 @@ import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.Manga
 import org.application.shikiapp.shared.models.ui.MangaT
 
-// 2. The repository contract
 interface MangaRepository {
     fun getMangaRawData(id: String): Flow<MangaT>
 
