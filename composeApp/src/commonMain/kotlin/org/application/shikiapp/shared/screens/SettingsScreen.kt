@@ -12,7 +12,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -21,7 +20,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import androidx.window.core.layout.WindowSizeClass
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
 import me.zhanghai.compose.preference.preferenceCategory
@@ -39,6 +37,7 @@ import org.application.shikiapp.shared.utils.enums.Menu
 import org.application.shikiapp.shared.utils.enums.Theme
 import org.application.shikiapp.shared.utils.extensions.getDisplayRegionName
 import org.application.shikiapp.shared.utils.isDynamicColorAvailable
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.preference_cache_size
@@ -60,26 +59,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     val cache by Preferences.cacheFlow.collectAsStateWithLifecycle(CACHE_LIST.first())
     val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
 
-    val adaptiveInfo = currentWindowAdaptiveInfo()
-    val windowSizeClass = adaptiveInfo.windowSizeClass
-    val isCompact =
-        !windowSizeClass.isWidthAtLeastBreakpoint(WindowSizeClass.WIDTH_DP_MEDIUM_LOWER_BOUND)
-
-    val pagesString = Menu.entries.associateWith {
-        AnnotatedString(stringResource(it.title))
-    }
-
-    val viewsString = ListView.entries.associateWith {
-        AnnotatedString(stringResource(it.title))
-    }
-
-    val themesString = Theme.entries.associateWith {
-        AnnotatedString(stringResource(it.title))
-    }
-
-    val cachesString = CACHE_LIST.associateWith {
-        AnnotatedString(stringResource(Res.string.preference_cache_size_mb, it))
-    }
+    val isCompact = rememberWindowSize().isCompact
 
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
@@ -88,8 +68,8 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     )
     AnimatedVisibility(
         visible = isVisible,
-        enter = slideInHorizontally(initialOffsetX = { it }),
-        exit = slideOutHorizontally(targetOffsetX = { it })
+        enter = slideInHorizontally { it },
+        exit = slideOutHorizontally { it }
     ) {
         Scaffold(
             topBar = {
@@ -113,7 +93,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                             values = Menu.entries,
                             title = { Text(stringResource(Res.string.preference_start_page)) },
                             summary = { Text(stringResource(startPage.title)) },
-                            valueToText = { pagesString.getValue(it) }
+                            valueToText = { AnnotatedString(stringResource(it.title)) }
                         )
                     }
 
@@ -125,7 +105,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                                 values = ListView.entries,
                                 title = { Text(stringResource(Res.string.preference_list_view)) },
                                 summary = { Text(stringResource(listView.title)) },
-                                valueToText = { viewsString.getValue(it) }
+                                valueToText = { AnnotatedString(stringResource(it.title)) }
                             )
                         }
                     }
@@ -142,7 +122,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                             values = Theme.entries,
                             title = { Text(stringResource(Res.string.preference_theme)) },
                             summary = { Text(stringResource(theme.title)) },
-                            valueToText = { themesString.getValue(it) }
+                            valueToText = { AnnotatedString(stringResource(it.title)) }
                         )
                     }
 
@@ -158,7 +138,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
 
                         ListPreference(
                             value = locale,
-                            onValueChange = { Preferences.setLanguage(it) },
+                            onValueChange = Preferences::setLanguage,
                             values = AppLanguages.list,
                             title = { Text(stringResource(Res.string.preference_language)) },
                             summary = { Text(Locale.forLanguageTag(locale).getDisplayRegionName()) },
@@ -173,7 +153,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                             onValueChange = Preferences::setCache,
                             title = { Text(stringResource(Res.string.preference_cache_size)) },
                             summary = { Text(stringResource(Res.string.preference_cache_size_mb, cache)) },
-                            valueToText = { cachesString.getValue(it) }
+                            valueToText = { AnnotatedString(stringResource(Res.string.preference_cache_size_mb, it)) }
                         )
                     }
                 }
