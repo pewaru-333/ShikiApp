@@ -13,8 +13,6 @@ import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontStyle
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
 import com.fleeksoft.ksoup.Ksoup
@@ -25,6 +23,7 @@ import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
 import org.application.shikiapp.shared.utils.permissions.PermissionState
+import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
@@ -46,7 +45,10 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
                         LinkAnnotation.Url(
                             url = url,
                             styles = TextLinkStyles(
-                                style = SpanStyle(color = Color(0xFF33BBFF), textDecoration = TextDecoration.Underline)
+                                style = SpanStyle(
+                                    color = Color(0xFF33BBFF),
+                                    textDecoration = TextDecoration.Underline
+                                )
                             )
                         )
                     )
@@ -63,27 +65,13 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
                     node.childNodes().forEach { parseNode(it, builder) }
                     builder.append("\n")
                 }
-                else -> {
-                    val style = getStyleForTag(node.tagName())
-                    if (style != null) {
-                        builder.withStyle(style) {
-                            node.childNodes().forEach { parseNode(it, builder) }
-                        }
-                    } else {
-                        node.childNodes().forEach { parseNode(it, builder) }
-                    }
+
+                else -> builder.withStyle(HtmlParser.getStyleForTag(node.tagName())) {
+                    node.childNodes().forEach { parseNode(it, builder) }
                 }
             }
         }
     }
-}
-
-private fun getStyleForTag(tagName: String): SpanStyle? = when (tagName.lowercase()) {
-    "b", "strong" -> SpanStyle(fontWeight = FontWeight.Bold)
-    "i", "em" -> SpanStyle(fontStyle = FontStyle.Italic)
-    "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
-    "s", "strike" -> SpanStyle(textDecoration = TextDecoration.LineThrough)
-    else -> null
 }
 
 actual fun getDefaultLocale(context: PlatformContext): String = Locale.getDefault().toLanguageTag()

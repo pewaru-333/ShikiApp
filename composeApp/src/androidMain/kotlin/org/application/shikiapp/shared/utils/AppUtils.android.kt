@@ -4,7 +4,9 @@ import android.Manifest
 import android.app.LocaleManager
 import android.os.Build
 import android.os.LocaleList
+import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.result.contract.ActivityResultContracts
@@ -30,7 +32,6 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextDecoration
 import kotlinx.coroutines.launch
-import org.application.shikiapp.shared.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
@@ -153,7 +154,7 @@ actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean) =
 
 @Composable
 actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
-    val activity = LocalActivity.current
+    val activity = LocalActivity.current as? ComponentActivity ?: return
 
     DisposableEffect(darkTheme, isAmoled) {
         activity.enableEdgeToEdge(
