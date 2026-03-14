@@ -3,10 +3,8 @@ package org.application.shikiapp.shared.di
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
 import org.application.shikiapp.shared.AppConfig
-import org.application.shikiapp.shared.di.AppContext.app
 import org.application.shikiapp.shared.utils.data.preferences.Preferences
 import org.application.shikiapp.shared.utils.data.preferences.PreferencesAndroid
-import kotlin.getValue
 
 
 actual typealias PlatformContext = Context
