@@ -10,7 +10,6 @@ import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.CharacterState
 import org.application.shikiapp.shared.models.ui.Character
 import org.application.shikiapp.shared.models.ui.mappers.CharacterMapper
-import org.application.shikiapp.shared.network.client.GraphQL
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
