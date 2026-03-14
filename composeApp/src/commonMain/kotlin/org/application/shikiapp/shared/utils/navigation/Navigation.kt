@@ -41,8 +41,8 @@ import org.application.shikiapp.shared.utils.REDIRECT_URI
 import org.application.shikiapp.shared.utils.URL_MIRROR
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Menu
-import org.application.shikiapp.shared.utils.extensions.isCurrentRoute
-import org.application.shikiapp.shared.utils.extensions.toBottomBarItem
+import org.application.shikiapp.shared.utils.extensions.isTopLevelRouteSelected
+import org.application.shikiapp.shared.utils.extensions.onNavigationItemClick
 import org.application.shikiapp.shared.utils.navigation.Screen.Anime
 import org.application.shikiapp.shared.utils.navigation.Screen.Calendar
 import org.application.shikiapp.shared.utils.navigation.Screen.Club
@@ -63,9 +63,9 @@ fun Navigation(navigator: NavHostController) {
     val barVisibility = LocalBarVisibility.current
     val adaptiveInfo = currentWindowAdaptiveInfo()
 
-    val routes = remember { Menu.entries.map { it.route::class } }
+    val routes = remember { Menu.entries.map(Menu::route) }
     val isTopLevel = remember(backStack) {
-        routes.any { backStack.isCurrentRoute(it) }
+        routes.any { backStack.isTopLevelRouteSelected(it) }
     }
 
     val suiteType = if (isTopLevel && barVisibility.isVisible) {
@@ -75,7 +75,7 @@ fun Navigation(navigator: NavHostController) {
     }
 
     fun getLabel(screen: Menu): (@Composable () -> Unit)? {
-        val isSelected = backStack.isCurrentRoute(screen.route::class)
+        val isSelected = backStack.isTopLevelRouteSelected(screen.route)
 
         if (suiteType == NavigationSuiteType.ShortNavigationBarCompact && !isSelected) {
             return null
@@ -108,8 +108,8 @@ fun Navigation(navigator: NavHostController) {
         navigationItems = {
             Menu.entries.forEach { screen ->
                 NavigationSuiteItem(
-                    selected = backStack.isCurrentRoute(screen.route::class),
-                    onClick = { navigator.toBottomBarItem(screen.route) },
+                    selected = backStack.isTopLevelRouteSelected(screen.route),
+                    onClick = { navigator.onNavigationItemClick(screen.route) },
                     icon = { VectorIcon(screen.icon) },
                     label = getLabel(screen)
                 )
@@ -124,8 +124,41 @@ private fun AppNavHost(navigator: NavHostController) =
         // Bottom menu items //
         composable<Screen.Catalog>(
             typeMap = mapOf(
-                typeOf<Boolean?>() to serializableNavType(Boolean.serializer().nullable),
                 typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
+            ),
+            deepLinks = listOf(
+                navDeepLink<Screen.Catalog>(
+                    basePath = BASE_PATH,
+                    typeMap = mapOf(
+                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
+                    )
+                ) {
+                    uriPattern = "$BASE_URL/animes/studio/{studio}-.*"
+                },
+                navDeepLink<Screen.Catalog>(
+                    basePath = BASE_PATH,
+                    typeMap = mapOf(
+                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
+                    )
+                ) {
+                    uriPattern = "$URL_MIRROR/animes/studio/{studio}-.*"
+                },
+                navDeepLink<Screen.Catalog>(
+                    basePath = BASE_PATH,
+                    typeMap = mapOf(
+                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
+                    )
+                ) {
+                    uriPattern = "$BASE_URL/mangas/publisher/{publisher}-.*"
+                },
+                navDeepLink<Screen.Catalog>(
+                    basePath = BASE_PATH,
+                    typeMap = mapOf(
+                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
+                    )
+                ) {
+                    uriPattern = "$URL_MIRROR/mangas/publisher/{publisher}-.*"
+                }
             )
         ) {
             CatalogScreen(navigator::navigate)
