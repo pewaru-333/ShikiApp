@@ -14,11 +14,9 @@ import androidx.paging.cachedIn
 import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
-import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -26,12 +24,10 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
 import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum
 import org.application.shikiapp.shared.events.FilterEvent
 import org.application.shikiapp.shared.events.FilterEvent.SetCensored
@@ -61,6 +57,8 @@ import org.application.shikiapp.shared.network.paging.CommonPaging
 import org.application.shikiapp.shared.network.paging.ContentPaging
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.CatalogItem
+import org.application.shikiapp.shared.utils.enums.CatalogItem.MANGA
+import org.application.shikiapp.shared.utils.enums.CatalogItem.RANOBE
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.PeopleFilterItem.MANGAKA
 import org.application.shikiapp.shared.utils.enums.PeopleFilterItem.PRODUCER
@@ -74,20 +72,31 @@ import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.typeOf
 
 class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
-    private val args by lazy {
-        saved.toRoute<Screen.Catalog>(
-            typeMap = mapOf(
-                typeOf<Boolean?>() to serializableNavType(serializer = Boolean.serializer().nullable),
-                typeOf<LinkedType?>() to serializableNavType(serializer = LinkedType.serializer().nullable)
-            )
+    private val args = saved.toRoute<Screen.Catalog>(
+        typeMap = mapOf(
+            typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
         )
-    }
+    )
 
     private val _state = MutableStateFlow(CatalogState())
-    val state = _state.asStateFlow()
+    val state = _state
+        .onStart {
+            if (args != Screen.Catalog()) {
+                args.studio?.let { studio ->
+                    onEvent(SetStudio(studio))
+                }
 
-    private val _navEvent = Channel<Screen.Catalog>()
-    val navEvent = _navEvent.receiveAsFlow().onStart { emit(args) }
+                args.publisher?.let { publisher ->
+                    pick(if (args.linkedType == LinkedType.MANGA) MANGA else RANOBE)
+                    onEvent(SetPublisher(publisher))
+                }
+
+                if (args.showOngoing == true) {
+                    onEvent(SetStatus("ongoing"))
+                }
+            }
+        }
+        .stateIn(viewModelScope, SharingStarted.Lazily, CatalogState())
 
     private val _filters = MutableStateFlow(CatalogItem.entries.associateWith { FiltersState() })
     private val _flowCache = ConcurrentHashMap<CatalogItem, Flow<PagingData<BasicContent>>>()
