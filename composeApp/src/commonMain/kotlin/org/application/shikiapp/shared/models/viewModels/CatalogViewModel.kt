@@ -30,21 +30,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.serialization.builtins.nullable
 import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum
 import org.application.shikiapp.shared.events.FilterEvent
-import org.application.shikiapp.shared.events.FilterEvent.SetCensored
-import org.application.shikiapp.shared.events.FilterEvent.SetDuration
-import org.application.shikiapp.shared.events.FilterEvent.SetFranchise
-import org.application.shikiapp.shared.events.FilterEvent.SetGenre
-import org.application.shikiapp.shared.events.FilterEvent.SetKind
-import org.application.shikiapp.shared.events.FilterEvent.SetMyList
-import org.application.shikiapp.shared.events.FilterEvent.SetOrder
-import org.application.shikiapp.shared.events.FilterEvent.SetPublisher
-import org.application.shikiapp.shared.events.FilterEvent.SetRating
-import org.application.shikiapp.shared.events.FilterEvent.SetRole
-import org.application.shikiapp.shared.events.FilterEvent.SetScore
-import org.application.shikiapp.shared.events.FilterEvent.SetSeason
-import org.application.shikiapp.shared.events.FilterEvent.SetStatus
-import org.application.shikiapp.shared.events.FilterEvent.SetStudio
-import org.application.shikiapp.shared.events.FilterEvent.SetTitle
 import org.application.shikiapp.shared.models.data.Club
 import org.application.shikiapp.shared.models.states.CatalogState
 import org.application.shikiapp.shared.models.states.ExpandedFilters
@@ -57,12 +42,8 @@ import org.application.shikiapp.shared.network.paging.CommonPaging
 import org.application.shikiapp.shared.network.paging.ContentPaging
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.CatalogItem
-import org.application.shikiapp.shared.utils.enums.CatalogItem.MANGA
-import org.application.shikiapp.shared.utils.enums.CatalogItem.RANOBE
 import org.application.shikiapp.shared.utils.enums.LinkedType
-import org.application.shikiapp.shared.utils.enums.PeopleFilterItem.MANGAKA
-import org.application.shikiapp.shared.utils.enums.PeopleFilterItem.PRODUCER
-import org.application.shikiapp.shared.utils.enums.PeopleFilterItem.SEYU
+import org.application.shikiapp.shared.utils.enums.PeopleFilterItem
 import org.application.shikiapp.shared.utils.extensions.commaJoin
 import org.application.shikiapp.shared.utils.extensions.toggle
 import org.application.shikiapp.shared.utils.navigation.Screen
@@ -83,16 +64,16 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
         .onStart {
             if (args != Screen.Catalog()) {
                 args.studio?.let { studio ->
-                    onEvent(SetStudio(studio))
+                    onEvent(FilterEvent.SetStudio(studio))
                 }
 
                 args.publisher?.let { publisher ->
-                    pick(if (args.linkedType == LinkedType.MANGA) MANGA else RANOBE)
-                    onEvent(SetPublisher(publisher))
+                    pick(if (args.linkedType == LinkedType.MANGA) CatalogItem.MANGA else CatalogItem.RANOBE)
+                    onEvent(FilterEvent.SetPublisher(publisher))
                 }
 
                 if (args.showOngoing == true) {
-                    onEvent(SetStatus("ongoing"))
+                    onEvent(FilterEvent.SetStatus("ongoing"))
                 }
             }
         }
@@ -227,9 +208,9 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             page = page,
             limit = params.loadSize,
             search = query.title,
-            isSeyu = query.roles.contains(SEYU).takeIf { it },
-            isProducer = query.roles.contains(PRODUCER).takeIf { it },
-            isMangaka = query.roles.contains(MANGAKA).takeIf { it }
+            isSeyu = query.roles.contains(PeopleFilterItem.SEYU).takeIf { it },
+            isProducer = query.roles.contains(PeopleFilterItem.PRODUCER).takeIf { it },
+            isMangaka = query.roles.contains(PeopleFilterItem.MANGAKA).takeIf { it }
         )
 
         CatalogItem.USERS -> GraphQL.getUsers(
@@ -252,23 +233,23 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                 _state.update { it.copy(search = BLANK) }
             }
 
-            is SetOrder -> updateFilters {
+            is FilterEvent.SetOrder -> updateFilters {
                 it.copy(order = event.order)
             }
 
-            is SetStatus -> updateFilters {
+            is FilterEvent.SetStatus -> updateFilters {
                 it.copy(status = it.status.toggle(event.status))
             }
 
-            is SetKind -> updateFilters {
+            is FilterEvent.SetKind -> updateFilters {
                 it.copy(kind = it.kind.toggle(event.kind))
             }
 
-            is SetSeason -> {
+            is FilterEvent.SetSeason -> {
                 when (event) {
-                    is SetSeason.SetStartYear -> updateFilters { it.copy(seasonYearStart = event.year) }
-                    is SetSeason.SetFinalYear -> updateFilters { it.copy(seasonYearFinal = event.year) }
-                    is SetSeason.ToggleSeasonYear -> updateFilters {
+                    is FilterEvent.SetSeason.SetStartYear -> updateFilters { it.copy(seasonYearStart = event.year) }
+                    is FilterEvent.SetSeason.SetFinalYear -> updateFilters { it.copy(seasonYearFinal = event.year) }
+                    is FilterEvent.SetSeason.ToggleSeasonYear -> updateFilters {
                         it.copy(seasonYearSeason = it.seasonYearSeason.toggle(event.yearSeason))
                     }
                 }
@@ -286,32 +267,32 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                 updateFilters { it.copy(seasonSet = seasons) }
             }
 
-            is SetScore -> updateFilters {
+            is FilterEvent.SetScore -> updateFilters {
                 it.copy(score = event.score)
             }
 
-            is SetDuration -> updateFilters {
+            is FilterEvent.SetDuration -> updateFilters {
                 it.copy(duration = it.duration.toggle(event.duration))
             }
 
-            is SetRating -> updateFilters {
+            is FilterEvent.SetRating -> updateFilters {
                 it.copy(rating = it.rating.toggle(event.rating))
             }
 
-            is SetGenre -> updateFilters {
+            is FilterEvent.SetGenre -> updateFilters {
                 it.copy(genres = it.genres.toggle(event.genre))
             }
 
-            is SetStudio -> updateFilters { it.copy(studio = event.studio) }
-            is SetPublisher -> updateFilters { it.copy(publisher = event.publisher) }
-            is SetFranchise -> {}
-            is SetCensored -> {}
-            is SetMyList -> {}
-            is SetRole -> updateFilters {
+            is FilterEvent.SetStudio -> updateFilters { it.copy(studio = event.studio) }
+            is FilterEvent.SetPublisher -> updateFilters { it.copy(publisher = event.publisher) }
+            is FilterEvent.SetFranchise -> {}
+            is FilterEvent.SetCensored -> {}
+            is FilterEvent.SetMyList -> {}
+            is FilterEvent.SetRole -> updateFilters {
                 it.copy(roles = it.roles.toggle(event.item))
             }
 
-            is SetTitle -> {
+            is FilterEvent.SetTitle -> {
                 _state.update { it.copy(search = event.title) }
 
                 updateFilters { it.copy(title = event.title) }
