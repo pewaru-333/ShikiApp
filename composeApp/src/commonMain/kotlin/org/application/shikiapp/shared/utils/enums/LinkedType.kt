@@ -6,9 +6,7 @@ import org.jetbrains.compose.resources.StringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.blank
 import shikiapp.composeapp.generated.resources.text_anime
-import shikiapp.composeapp.generated.resources.text_anime_list
 import shikiapp.composeapp.generated.resources.text_manga
-import shikiapp.composeapp.generated.resources.text_manga_list
 import shikiapp.composeapp.generated.resources.text_ranobe
 
 @Serializable
@@ -37,10 +35,4 @@ enum class LinkedType(val title: StringResource) {
 
     abstract fun getWatchStatusTitle(status: WatchStatus): StringResource
     abstract fun navigateTo(contentId: String): Screen
-
-    fun getListTitle() = when (this) {
-        ANIME -> Res.string.text_anime_list
-        MANGA -> Res.string.text_manga_list
-        else -> Res.string.blank
-    }
 }
