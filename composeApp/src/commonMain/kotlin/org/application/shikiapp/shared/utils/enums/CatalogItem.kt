@@ -1,6 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.application.shikiapp.shared.models.states.DialogFilters
+import org.application.shikiapp.shared.models.ui.list.ContentViewType
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
@@ -25,47 +26,55 @@ enum class CatalogItem(val title: StringResource, val icon: DrawableResource) {
         override val showFilter = true
         override val linkedType = LinkedType.ANIME
         override val dialogFilter = DialogFilters.Anime
+        override val viewType = ContentViewType.ADAPTIVE_ITEM
         override fun navigateTo(contentId: String) = Screen.Anime(contentId)
     },
     MANGA(Res.string.text_manga, Res.drawable.vector_manga) {
         override val showFilter = true
         override val linkedType = LinkedType.MANGA
         override val dialogFilter = DialogFilters.Manga
+        override val viewType = ContentViewType.ADAPTIVE_ITEM
         override fun navigateTo(contentId: String) = Screen.Manga(contentId)
     },
     RANOBE(Res.string.text_ranobe, Res.drawable.vector_ranobe) {
         override val showFilter = true
         override val linkedType = LinkedType.RANOBE
         override val dialogFilter = DialogFilters.Ranobe
+        override val viewType = ContentViewType.ADAPTIVE_ITEM
         override fun navigateTo(contentId: String) = Screen.Manga(contentId)
     },
     CHARACTERS(Res.string.text_characters, Res.drawable.vector_character) {
         override val showFilter = false
         override val linkedType = null
         override val dialogFilter = null
+        override val viewType = ContentViewType.ADAPTIVE_ITEM
         override fun navigateTo(contentId: String) = Screen.Character(contentId)
     },
     PEOPLE(Res.string.text_people, Res.drawable.vector_person) {
         override val showFilter = true
         override val linkedType = null
         override val dialogFilter = DialogFilters.People
+        override val viewType = ContentViewType.ADAPTIVE_ITEM
         override fun navigateTo(contentId: String) = Screen.Person(contentId.toLong())
     },
     USERS(Res.string.text_users, Res.drawable.vector_users) {
         override val showFilter = false
         override val linkedType = null
         override val dialogFilter = null
+        override val viewType = ContentViewType.GRID_ITEM_SMALL
         override fun navigateTo(contentId: String) = Screen.User(contentId.toLong())
     },
     CLUBS(Res.string.text_clubs, Res.drawable.vector_clubs) {
         override val showFilter = false
         override val linkedType = null
         override val dialogFilter = null
+        override val viewType = ContentViewType.GRID_ITEM_SMALL
         override fun navigateTo(contentId: String) = Screen.Club(contentId.toLong())
     };
 
     abstract val showFilter: Boolean
     abstract val linkedType: LinkedType?
     abstract val dialogFilter: DialogFilters?
+    abstract val viewType: ContentViewType
     abstract fun navigateTo(contentId: String): Screen
 }
