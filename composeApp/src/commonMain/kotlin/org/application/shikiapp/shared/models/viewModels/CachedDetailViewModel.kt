@@ -15,9 +15,10 @@ import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.transform
 import kotlinx.coroutines.flow.update
+import org.application.shikiapp.shared.models.states.BaseState
 import org.application.shikiapp.shared.network.response.Response
 
-abstract class CachedDetailViewModel<T, D, S> : ContentDetailViewModel<D, S>() {
+abstract class CachedDetailViewModel<T, D, S : BaseState<S>> : ContentDetailViewModel<D, S>() {
     private val _trigger = MutableStateFlow(false)
 
     override val response = combine(_response, _trigger) { response, trigger ->
