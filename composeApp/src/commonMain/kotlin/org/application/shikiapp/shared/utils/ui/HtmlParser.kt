@@ -12,9 +12,12 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Document
@@ -30,11 +33,12 @@ sealed interface CommentContent {
 
     data class TextContent(val text: AnnotatedString, val inlineContent: Map<String, InlineTextContent> = emptyMap()) : CommentContent
     data class ImageContent(val previewUrl: String, val fullUrl: String?, val width: Float?, val height: Float?) : CommentContent
+    data class ListContent(val isOrdered: Boolean, override val items: List<ListItemContent>) : CommentContent
+    data class ListItemContent(val prefix: String, override val items: List<CommentContent>) : CommentContent
     data class SpoilerContent(val title: String, override val items: List<CommentContent>) : CommentContent
     data class QuoteContent(val author: String, override val items: List<CommentContent>) : CommentContent
     data class VideoContent(val previewUrl: String, val videoUrl: String, val source: String) : CommentContent
     data class BanContent(val moderatorName: String, val moderatorAvatar: String, val reason: AnnotatedString) : CommentContent
-    data object LineBreakContent : CommentContent
 }
 
 object HtmlParser {
@@ -147,7 +151,14 @@ object HtmlParser {
                         contentList.add(CommentContent.BanContent(modName, modAvatar, reasonText))
                     }
 
-                    node.tagName() == "br" -> contentList.add(CommentContent.LineBreakContent)
+                    node.tagName() == "ul" || node.tagName() == "ol" -> {
+                        val isOrdered = node.tagName() == "ol"
+                        val listItems = node.children().filter { it.tagName() == "li" }.mapIndexed { index, li ->
+                            val prefix = if (isOrdered) "${index + 1}. " else "• "
+                            CommentContent.ListItemContent(prefix, parseNodes(li.childNodes()))
+                        }
+                        contentList.add(CommentContent.ListContent(isOrdered, listItems))
+                    }
                 }
             } else if (isBlockContainer(node)) {
                 makeInlineGroup()
@@ -179,28 +190,32 @@ object HtmlParser {
                                 }
                             }
                             else -> {
-                                val style = getStyleForTag(node.tagName())
-                                val startIndex = length
-                                val (childText, childInlineContent) = stringFromNodes(node.childNodes())
+                                if (node.tagName() == "br") {
+                                    append("\n")
+                                } else {
+                                    val style = getStyleForTag(node.tagName())
+                                    val startIndex = length
+                                    val (childText, childInlineContent) = stringFromNodes(node.childNodes())
 
-                                append(childText)
-                                inlineContentMap.putAll(childInlineContent)
-                                addStyle(style, startIndex, length)
+                                    append(childText)
+                                    inlineContentMap.putAll(childInlineContent)
+                                    addStyle(style, startIndex, length)
 
-                                if (node.tagName() == "a" && node.hasAttr("href")) {
-                                    addLink(
-                                        start = startIndex,
-                                        end = length,
-                                        url = LinkAnnotation.Url(
-                                            url = node.attr("abs:href"),
-                                            styles = TextLinkStyles(
-                                                style = SpanStyle(
-                                                    color = Color(0xFF33BBFF),
-                                                    textDecoration = TextDecoration.Underline
+                                    if (node.tagName() == "a" && node.hasAttr("href")) {
+                                        addLink(
+                                            start = startIndex,
+                                            end = length,
+                                            url = LinkAnnotation.Url(
+                                                url = node.attr("abs:href"),
+                                                styles = TextLinkStyles(
+                                                    style = SpanStyle(
+                                                        color = Color(0xFF33BBFF),
+                                                        textDecoration = TextDecoration.Underline
+                                                    )
                                                 )
                                             )
                                         )
-                                    )
+                                    }
                                 }
                             }
                         }
@@ -219,24 +234,50 @@ object HtmlParser {
                     node.hasClass("b-spoiler_block") ||
                     node.hasClass("b-image") ||
                     node.hasClass("b-video") ||
-                    node.hasClass("ban")
-                    || node.tagName() == "br")
+                    node.hasClass("ban") ||
+                    node.tagName() == "ul" ||
+                    node.tagName() == "ol")
 
     private fun isBlockContainer(node: Node): Boolean {
         if (node !is Element) return false
 
         return when (node.tagName()) {
-            "div", "p", "center" -> true
+            "div", "p", "center", "h1", "h2", "h3", "h4", "h5", "h6", "pre" -> true
             else -> false
         }
     }
 
-    internal fun getStyleForTag(tagName: String) = when (tagName.lowercase()) {
-        "s" -> SpanStyle(textDecoration = TextDecoration.LineThrough)
-        "strong", "b" -> SpanStyle(fontWeight = FontWeight.Bold)
-        "em", "i" -> SpanStyle(fontStyle = FontStyle.Italic)
-        "u" -> SpanStyle(textDecoration = TextDecoration.Underline)
-        "a" -> SpanStyle(color = Color(0xFF33BBFF), textDecoration = TextDecoration.Underline)
+    internal fun getStyleForTag(tagName: String): SpanStyle = when (tagName.lowercase()) {
+        "s", "del", "strike" -> styleStrike
+        "strong", "b" -> styleBold
+        "em", "i" -> styleItalic
+        "u" -> styleUnderline
+        "a" -> styleLink
+        "code" -> styleCode
+        "sup" -> styleSup
+        "sub" -> styleSub
+        "h1" -> styleH1
+        "h2" -> styleH2
+        "h3" -> styleH3
+        "h4" -> styleH4
+        "h5" -> styleH5
+        "h6" -> styleH6
         else -> SpanStyle()
     }
+
+    private val styleStrike = SpanStyle(textDecoration = TextDecoration.LineThrough)
+    private val styleBold = SpanStyle(fontWeight = FontWeight.Bold)
+    private val styleItalic = SpanStyle(fontStyle = FontStyle.Italic)
+    private val styleUnderline = SpanStyle(textDecoration = TextDecoration.Underline)
+    private val styleLink = SpanStyle(color = Color(0xFF33BBFF), textDecoration = TextDecoration.Underline)
+    private val styleCode = SpanStyle(fontFamily = FontFamily.Monospace, background = Color(0x20888888))
+    private val styleSup = SpanStyle(baselineShift = BaselineShift.Superscript, fontSize = 0.8.em)
+    private val styleSub = SpanStyle(baselineShift = BaselineShift.Subscript, fontSize = 0.8.em)
+
+    private val styleH1 = SpanStyle(fontSize = 1.5.em, fontWeight = FontWeight.Bold)
+    private val styleH2 = SpanStyle(fontSize = 1.4.em, fontWeight = FontWeight.Bold)
+    private val styleH3 = SpanStyle(fontSize = 1.3.em, fontWeight = FontWeight.Bold)
+    private val styleH4 = SpanStyle(fontSize = 1.2.em, fontWeight = FontWeight.Bold)
+    private val styleH5 = SpanStyle(fontSize = 1.1.em, fontWeight = FontWeight.Bold)
+    private val styleH6 = SpanStyle(fontSize = 1.0.em, fontWeight = FontWeight.Bold)
 }

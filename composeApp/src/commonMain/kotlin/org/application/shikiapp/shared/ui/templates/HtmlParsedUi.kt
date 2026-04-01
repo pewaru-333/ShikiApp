@@ -59,8 +59,12 @@ import shikiapp.composeapp.generated.resources.vector_refresh
 fun HtmlContent(commentContent: List<CommentContent>?) {
     var galleryInfo by remember { mutableStateOf<Pair<List<CommentContent.ImageContent>, Int>?>(null) }
 
+    val allImages = remember(commentContent) {
+        commentContent?.flattenImages() ?: emptyList()
+    }
+
     BoxWithConstraints {
-        val containerMaxWidth = this.maxWidth
+        val containerMaxWidth = maxWidth
 
         Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
             commentContent?.forEach { item ->
@@ -68,9 +72,10 @@ fun HtmlContent(commentContent: List<CommentContent>?) {
                     content = item,
                     containerMaxWidth = containerMaxWidth,
                     onImageClick = {
-                        val images = commentContent.flattenImages()
-                        val index = images.indexOf(it)
-                        galleryInfo = images to index
+                        val index = allImages.indexOf(it)
+                        if (index != -1) {
+                            galleryInfo = allImages to index
+                        }
                     }
                 )
             }
@@ -108,6 +113,38 @@ private fun RenderContent(
                     .padding(vertical = 4.dp)
                     .clickableUrl(content.text) { layoutResult }
             )
+        }
+
+        is CommentContent.ListContent -> {
+            Column(
+                modifier = Modifier.padding(vertical = 4.dp),
+                verticalArrangement = Arrangement.spacedBy(4.dp)
+            ) {
+                content.items.forEach { item ->
+                    RenderContent(item, containerMaxWidth, onImageClick)
+                }
+            }
+        }
+
+        is CommentContent.ListItemContent -> {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top
+            ) {
+                Text(
+                    text = content.prefix,
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.padding(end = 4.dp, top = 4.dp)
+                )
+                Column(
+                    modifier = Modifier.weight(1f),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    content.items.forEach { item ->
+                        RenderContent(item, containerMaxWidth, onImageClick)
+                    }
+                }
+            }
         }
 
         is CommentContent.ImageContent -> {
@@ -303,8 +340,6 @@ private fun RenderContent(
                 )
             }
         }
-
-        is CommentContent.LineBreakContent -> Spacer(Modifier.height(12.dp))
     }
 }
 
@@ -323,7 +358,9 @@ fun LazyListScope.htmlContent(
                 containerMaxWidth = maxWidth,
                 onImageClick = { clickedImage ->
                     val index = images.indexOf(clickedImage)
-                    onImageClick(images, index)
+                    if (index != -1) {
+                        onImageClick(images, index)
+                    }
                 }
             )
         }
