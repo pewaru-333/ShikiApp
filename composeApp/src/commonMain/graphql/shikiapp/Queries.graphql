@@ -168,6 +168,7 @@ query MangaList(
         score: $score,
         genre: $genre,
         publisher: $publisher,
+        censored: false,
         search: $search
     ) {
         ...MangaContent
