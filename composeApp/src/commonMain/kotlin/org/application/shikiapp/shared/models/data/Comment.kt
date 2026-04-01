@@ -42,3 +42,23 @@ class Comment {
     @SerialName("user")
     val user: UserBasic = UserBasic()
 }
+
+@Serializable
+data class CommentToCreate(
+    val broadcast: String = "false",
+    val comment: Comment
+) {
+    @Serializable
+    data class Comment(
+        val body: String,
+
+        @SerialName("commentable_id")
+        val commentableId: String,
+
+        @SerialName("commentable_type")
+        val commentableType: String = BLANK,
+
+        @SerialName("is_offtopic")
+        val isOfftopic: String
+    )
+}
