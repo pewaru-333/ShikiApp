@@ -1,363 +1,149 @@
 package org.application.shikiapp.shared.ui.templates
 
+
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.TextAutoSize
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
-import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Status
-import org.application.shikiapp.shared.utils.enums.backgroundColor
-import org.application.shikiapp.shared.utils.enums.textColor
-import org.application.shikiapp.shared.utils.navigation.Screen
-import org.application.shikiapp.shared.utils.ui.rememberWindowSize
+import org.application.shikiapp.shared.utils.enums.colors
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.vector_star
 
+data class MediaGridItemTitleConfig(
+    val style: TextStyle,
+    val textAlign: TextAlign,
+    val maxLines: Int,
+    val minLines: Int
+)
+
+data class MediaGridItemContainerConfig(
+    val color: Color,
+    val elevation: Dp
+)
+
+object MediaGridItemDefaults {
+
+    @Composable
+    fun titleConfig(
+        minLines: Int = 1,
+        maxLines: Int = 2,
+        textAlign: TextAlign = TextAlign.Start,
+        style: TextStyle = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+    ) = MediaGridItemTitleConfig(
+        style = style,
+        textAlign = textAlign,
+        maxLines = maxLines,
+        minLines = minLines
+    )
+
+    @Composable
+    fun containerConfig(color: Color = Color.Transparent, elevation: Dp = 0.dp) =
+        MediaGridItemContainerConfig(
+            color = color,
+            elevation = elevation
+        )
+}
 
 @Composable
-fun CatalogCardItem(
+fun CircleContentItem(
     title: String,
-    kind: Kind,
-    season: ResourceText,
-    score: String?,
-    status: Status,
-    image: String?,
-    relationText: String? = null,
-    modifier: Modifier = Modifier,
+    poster: String?,
+    titleConfig: MediaGridItemTitleConfig = MediaGridItemDefaults.titleConfig(),
     onClick: () -> Unit
-) = Row(
-    modifier = modifier
-        .fillMaxWidth()
-        .clickable(onClick = onClick)
-        .padding(8.dp)
 ) {
-    Box(
+    Column(
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .width(110.dp)
-            .aspectRatio(2f / 3f)
-            .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
+            .width(72.dp)
+            .clip(MaterialTheme.shapes.small)
+            .clickable(onClick = onClick)
+            .padding(4.dp)
     ) {
-        AnimatedAsyncImage(
-            model = image,
-            contentScale = ContentScale.Crop,
-            modifier = Modifier.fillMaxSize()
-        )
+        CircleContentImage(poster, Modifier.size(72.dp))
 
-        score?.let { ScoreLabel(it) }
-    }
-
-    Spacer(Modifier.width(16.dp))
-
-    Column(Modifier.weight(1f), Arrangement.spacedBy(4.dp)) {
         Text(
             text = title,
-            maxLines = 3,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = titleConfig.textAlign,
             overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.titleMedium.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-                fontWeight = FontWeight.Bold
-            )
+            minLines = titleConfig.minLines,
+            maxLines = titleConfig.maxLines,
+            style = titleConfig.style
         )
-
-        Text(
-            maxLines = 1,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            ),
-            text = buildString {
-                append(stringResource(kind.title))
-                season.asComposableString().let { if (it.isNotEmpty()) append(" · $it") }
-                relationText?.let { append(" · $it") }
-            }
-        )
-
-        Surface(
-            shape = MaterialTheme.shapes.small,
-            color = status.backgroundColor,
-            modifier = Modifier.padding(top = 6.dp)
-        ) {
-            Text(
-                text = stringResource(status.getTitle(kind)),
-                modifier = Modifier.padding(10.dp, 4.dp),
-                style = MaterialTheme.typography.labelSmall.copy(
-                    color = status.textColor,
-                    fontWeight = FontWeight.SemiBold,
-                )
-            )
-        }
     }
 }
 
 @Composable
-fun CatalogCardItem(
-    title: String,
-    image: String?,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) = Row(
-    modifier = modifier
-        .fillMaxWidth()
-        .padding(8.dp)
-        .clickable(onClick = onClick)
-) {
-    AnimatedAsyncImage(
-        model = image,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .width(120.dp)
-            .aspectRatio(2f / 3f)
-            .clip(MaterialTheme.shapes.medium)
-            .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
-    )
-
-    Spacer(Modifier.width(12.dp))
-
-    Text(
-        text = title,
-        style = MaterialTheme.typography.titleMedium,
-        fontWeight = FontWeight.Bold,
-        maxLines = 3,
-        overflow = TextOverflow.Ellipsis
-    )
-}
-
-@Composable
-fun CatalogGridItem(
-    title: String,
-    image: String?,
-    score: String?,
-    kind: Kind?,
-    season: String?,
-    modifier: Modifier = Modifier,
-    onClick: () -> Unit
-) = Card(
-    shape = MaterialTheme.shapes.medium,
-    elevation = CardDefaults.cardElevation(2.dp),
-    colors = CardDefaults.cardColors(
-        containerColor = MaterialTheme.colorScheme.surfaceContainerLow
-    ),
-    modifier = modifier
-        .fillMaxWidth()
-        .clickable(onClick = onClick)
-) {
-    Column {
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .aspectRatio(2f / 3f)
-        ) {
-            AnimatedAsyncImage(
-                model = image,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            score?.let { ScoreLabel(it) }
-        }
-
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(12.dp)
-        ) {
-            Text(
-                text = title,
-                maxLines = 2,
-                minLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleSmall.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 18.sp
-                )
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-
-            val kindSeason = buildList {
-                kind?.let { add(stringResource(it.title)) }
-                season?.let { add(it) }
-            }.joinToString(" • ")
-
-            if (kindSeason.isNotEmpty()) {
-                Text(
-                    text = kindSeason,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
-                )
-            } else {
-                Spacer(Modifier.height(16.dp))
-            }
-        }
-    }
-}
-
-@Composable
-fun UserGridItem(title: String, imageUrl: String?, onClick: () -> Unit) = Column(
-    horizontalAlignment = Alignment.CenterHorizontally,
-    verticalArrangement = Arrangement.spacedBy(8.dp),
-    modifier = Modifier
-        .fillMaxWidth()
-        .clip(MaterialTheme.shapes.small)
-        .clickable(onClick = onClick)
-        .padding(8.dp)
-) {
-    AnimatedAsyncImage(
-        model = imageUrl,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .fillMaxWidth(0.8f)
-            .aspectRatio(1f)
-            .clip(CircleShape)
-    )
-
-    Text(
-        text = title,
-        modifier = Modifier.fillMaxWidth(),
-        maxLines = 1,
-        overflow = TextOverflow.Ellipsis,
-        style = MaterialTheme.typography.labelMedium.copy(
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center
-        )
-    )
-}
-
-@Composable
-fun BasicContentItem(name: String, link: String?, modifier: Modifier = Modifier, roles: String? = null) =
+fun ListContentItem(name: String, image: String?, roles: String? = null, onClick: () -> Unit) =
     ListItem(
-        modifier = modifier,
+        modifier = Modifier.clickable(onClick = onClick),
         headlineContent = { Text(name) },
-        supportingContent = { roles?.let { Text(it) } },
-        leadingContent = {
-            AnimatedAsyncImage(
-                model = link,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(64.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, Color.Gray, CircleShape)
-            )
-        }
+        leadingContent = { CircleContentImage(image, Modifier.size(64.dp)) },
+        supportingContent = { roles?.let { Text(it) } }
     )
 
 @Composable
-fun CalendarOngoingCard(title: String, score: String?, poster: String, onNavigate: () -> Unit) {
-    val isCompact = rememberWindowSize().isCompact
-    val cardWidth = if (isCompact) 120.dp else 160.dp
-
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(cardWidth)
-            .clip(MaterialTheme.shapes.medium)
-            .clickable(onClick = onNavigate)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(cardWidth)
-                .aspectRatio(2f / 3f)
-                .clip(MaterialTheme.shapes.medium)
-                .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
-        ) {
-            AnimatedAsyncImage(
-                model = poster,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier.fillMaxSize()
-            )
-
-            score?.let { ScoreLabel(it) }
-        }
-
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            maxLines = 2,
+fun RelatedCard(title: String, poster: String, relationText: String, onClick: () -> Unit) =
+    MediaGridItem(
+        title = title,
+        poster = poster,
+        modifier = Modifier.width(120.dp),
+        posterModifier = Modifier.height(170.dp),
+        onClick = onClick,
+        titleConfig = MediaGridItemDefaults.titleConfig(
+            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
+            textAlign = TextAlign.Center,
             minLines = 2,
-            text = title,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-    }
-}
-
-@Composable
-fun RelatedCard(title: String, poster: String, relationText: String, interactionSource: MutableInteractionSource, onClick: () -> Unit) =
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .width(120.dp)
-            .clickable(
-                interactionSource = interactionSource,
-                indication = null,
-                onClick = onClick
-            )
-    ) {
-        Box(
-            modifier = Modifier
-                .height(170.dp)
-                .clip(MaterialTheme.shapes.medium)
-        ) {
-            AnimatedAsyncImage(
-                model = poster,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .indication(interactionSource, ripple())
-            )
-
+            maxLines = 2,
+        ),
+        imageOverlay = {
             Box(
                 modifier = Modifier
                     .fillMaxSize()
                     .background(
-                        Brush.verticalGradient(
+                        brush = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
                                 Color.Black.copy(alpha = 0.5f)
@@ -366,99 +152,235 @@ fun RelatedCard(title: String, poster: String, relationText: String, interaction
                     )
             )
 
+            val (text, maxLines) = remember(relationText) {
+                val words = relationText.split(' ')
+                words.joinToString("\n", transform = String::uppercase) to words.size.coerceAtMost(3)
+            }
+
             Text(
-                text = relationText.uppercase().replace(" ", "\n"),
-                maxLines = relationText.split(" ").size.coerceAtMost(3),
+                text = text,
+                maxLines = maxLines,
+                autoSize = TextAutoSize.StepBased(8.sp, 11.sp),
+                modifier = Modifier
+                    .align(Alignment.BottomCenter)
+                    .padding(8.dp),
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = Color.White,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center
-                ),
-                modifier = Modifier
-                    .align(Alignment.BottomCenter)
-                    .padding(8.dp),
-                autoSize = TextAutoSize.StepBased(
-                    minFontSize = 8.sp,
-                    maxFontSize = MaterialTheme.typography.labelSmall.fontSize
                 )
             )
         }
-
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            maxLines = 2,
-            minLines = 2,
-            text = title,
-            overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.padding(horizontal = 4.dp),
-            style = MaterialTheme.typography.bodyMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-    }
-
-@Composable
-fun FranchiseCard(
-    id: String,
-    title: String,
-    poster: String,
-    kind: Kind,
-    season: Any?,
-    type: LinkedType,
-    role: String? = null,
-    onNavigate: (Screen) -> Unit
-) = Row(
-    verticalAlignment = Alignment.CenterVertically,
-    modifier = Modifier
-        .clickable { onNavigate(type.navigateTo(id)) }
-        .padding(8.dp)
-) {
-    AnimatedAsyncImage(
-        model = poster,
-        contentScale = ContentScale.Crop,
-        modifier = Modifier
-            .size(80.dp, 120.dp)
-            .clip(MaterialTheme.shapes.small)
-            .border((0.5).dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.small)
     )
 
-    Spacer(Modifier.width(16.dp))
-
-    Column(Modifier.weight(1f)) {
-        Text(
-            maxLines = 3,
-            text = title,
-            overflow = TextOverflow.Ellipsis,
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.SemiBold
-            )
-        )
-
-        if (role != null) {
+@Composable
+fun MediaListItem(
+    title: String,
+    poster: String?,
+    score: String? = null,
+    role: String? = null,
+    description: AnnotatedString? = null,
+    kind: Kind? = null,
+    season: String? = null,
+    status: Status? = null,
+    date: String? = null,
+    actions: @Composable (() -> Unit)? = null,
+    backgroundColor: Color = MaterialTheme.colorScheme.surface,
+    onClick: () -> Unit
+) {
+    @Composable
+    fun LocalChip(
+        text: String,
+        textColor: Color,
+        chipColor: Color,
+        border: BorderStroke? = null
+    ) {
+        Surface(
+            shape = MaterialTheme.shapes.small,
+            color = chipColor,
+            border = border
+        ) {
             Text(
-                text = role,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.primary,
-                    fontWeight = FontWeight.Medium
-                )
+                text = text,
+                modifier = Modifier.padding(8.dp, 4.dp),
+                style = MaterialTheme.typography.labelMedium.copy(color = textColor)
             )
         }
+    }
 
-        Spacer(Modifier.height(4.dp))
-
-        Text(
-            text = buildString {
-                append(stringResource(kind.title))
-
-                season?.let { append(" · $it") }
-            },
-            style = MaterialTheme.typography.bodySmall.copy(
-                color = MaterialTheme.colorScheme.onSurfaceVariant
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable(onClick = onClick)
+            .background(backgroundColor)
+            .padding(8.dp)
+            .height(IntrinsicSize.Min)
+    ) {
+        Box(
+            modifier = Modifier
+                .width(110.dp)
+                .aspectRatio(2f / 3f)
+                .clip(MaterialTheme.shapes.medium)
+                .border(Dp.Hairline, MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.shapes.medium)
+        ) {
+            AnimatedAsyncImage(
+                model = poster,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier.fillMaxSize()
             )
-        )
+
+            score?.let { ScoreLabel(it) }
+        }
+
+        Spacer(Modifier.width(16.dp))
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .fillMaxHeight()
+        ) {
+            Text(
+                text = title,
+                maxLines = 2,
+                overflow = TextOverflow.Ellipsis,
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            )
+
+            if (description != null) {
+                Spacer(Modifier.height(4.dp))
+                Text(
+                    text = description,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodyMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                )
+            }
+
+            Spacer(Modifier.height(8.dp))
+
+            FlowRow(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                val kindText = kind?.let { stringResource(it.title) }
+                val metaText = buildList {
+                    kindText?.let { add(it) }
+                    season?.takeIf(String::isNotBlank)?.let { add(it) }
+                }.joinToString(" • ")
+
+                if (metaText.isNotEmpty()) {
+                    LocalChip(
+                        text = metaText,
+                        textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        chipColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+
+                if (status != null && kind != null) {
+                    LocalChip(
+                        text = stringResource(status.getTitle(kind)),
+                        textColor = status.colors.text,
+                        chipColor = status.colors.background
+                    )
+                }
+
+                if (role != null) {
+                    LocalChip(
+                        text = role,
+                        textColor = MaterialTheme.colorScheme.onPrimaryContainer,
+                        chipColor = MaterialTheme.colorScheme.primaryContainer,
+                        border = BorderStroke(
+                            width = 1.dp,
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.3f)
+                        )
+                    )
+                }
+            }
+
+            if (date != null) {
+                Spacer(Modifier.weight(1f))
+                Row(
+                    horizontalArrangement = Arrangement.End,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 8.dp)
+                ) {
+                    LocalChip(
+                        text = date,
+                        textColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                        chipColor = MaterialTheme.colorScheme.surfaceVariant
+                    )
+                }
+            }
+
+            if (actions != null) {
+                Spacer(Modifier.weight(1f))
+                actions()
+            }
+        }
+    }
+}
+
+@Composable
+fun MediaGridItem(
+    title: String,
+    poster: String?,
+    score: String? = null,
+    modifier: Modifier = Modifier,
+    posterModifier: Modifier = Modifier.aspectRatio(2f / 3f),
+    titleConfig: MediaGridItemTitleConfig = MediaGridItemDefaults.titleConfig(),
+    containerConfig: MediaGridItemContainerConfig = MediaGridItemDefaults.containerConfig(),
+    imageOverlay: @Composable (BoxScope.() -> Unit)? = null,
+    subtitleContent: @Composable (ColumnScope.() -> Unit)? = null,
+    onClick: () -> Unit
+) {
+    Surface(
+        onClick = onClick,
+        modifier = modifier,
+        shape = MaterialTheme.shapes.medium,
+        color = containerConfig.color,
+        shadowElevation = containerConfig.elevation
+    ) {
+        Column(Modifier.fillMaxWidth()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .then(posterModifier)
+                    .clip(MaterialTheme.shapes.medium)
+                    .border(Dp.Hairline, MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.shapes.medium)
+            ) {
+                AnimatedAsyncImage(
+                    model = poster,
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier.fillMaxSize()
+                )
+
+                score?.let { ScoreLabel(it) }
+
+                imageOverlay?.invoke(this)
+            }
+
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(4.dp, 8.dp)
+            ) {
+                Text(
+                    text = title,
+                    textAlign = titleConfig.textAlign,
+                    maxLines = titleConfig.maxLines,
+                    minLines = titleConfig.minLines,
+                    overflow = TextOverflow.Ellipsis,
+                    style = titleConfig.style,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                subtitleContent?.invoke(this)
+            }
+        }
     }
 }
 
