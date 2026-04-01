@@ -1,33 +1,19 @@
 package org.application.shikiapp.shared.events
 
-import org.application.shikiapp.shared.models.states.UserDialogState
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.utils.enums.Kind
-import org.application.shikiapp.shared.utils.enums.UserMenu
 
 sealed interface ContentDetailEvent {
     data object OpenLink : ContentDetailEvent
-    data object ShowComments : ContentDetailEvent
-    data object ShowSheet : ContentDetailEvent
+
+    data class ToggleDialog(val dialogState: BaseDialogState?) : ContentDetailEvent
+
+    data class SendComment(val text: String, val isOfftopic: Boolean) : ContentDetailEvent
 
     sealed interface Media : ContentDetailEvent {
-        data object ShowPoster : Media
-        data object ShowAuthors : Media
-        data object ShowCharacters : Media
-        data object ShowRelated : Media
-        data object ShowSimilar : Media
-        data object ShowStats : Media
-        data object ShowLinks : Media
-        data object ShowFansubbers : Media
-        data object ShowFandubbers : Media
-        data object ShowRate : Media
         data object ChangeRate : Media
 
-        data class ShowImage(val index: Int = 0) : Media
-
         sealed interface Anime : ContentDetailEvent {
-            data object ShowScreenshots : Anime
-            data object ShowVideo : Anime
-
             data object ToggleFavourite : Anime
         }
 
@@ -37,22 +23,19 @@ sealed interface ContentDetailEvent {
     }
 
     sealed interface Character : ContentDetailEvent {
-        data object ShowSeyu : Character
-
         data object ToggleFavourite : Character
     }
 
     sealed interface Person : ContentDetailEvent {
-        data object ShowWorks : Person
-
         data class ToggleFavourite(val kind: String) : Person
     }
 
     sealed interface User : ContentDetailEvent {
-        data class PickMenu(val menu: UserMenu? = null) : User
-
-        data class ToggleDialog(val dialog: UserDialogState?) : User
-
         data object ToggleFriend : User
+    }
+
+    sealed interface Club : ContentDetailEvent {
+        data object JoinClub : Club
+        data object LeaveClub : Club
     }
 }
