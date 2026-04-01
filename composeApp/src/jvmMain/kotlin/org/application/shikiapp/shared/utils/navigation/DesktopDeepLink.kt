@@ -62,6 +62,7 @@ object DesktopDeepLink {
             """.trimIndent()
         )
 
+        runCommand("update-desktop-database", appsDir.absolutePath)
         runCommand("xdg-mime", "default", "$DESKTOP_FILE_NAME.desktop", "x-scheme-handler/$SCHEME")
     }
 
