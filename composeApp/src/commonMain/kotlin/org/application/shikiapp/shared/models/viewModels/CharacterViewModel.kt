@@ -13,6 +13,7 @@ import org.application.shikiapp.shared.models.ui.mappers.CharacterMapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
+import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.navigation.Screen
 
@@ -36,7 +37,7 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
                     Pair(character.await(), extra.await())
                 }
 
-                setCommentParams(extra.topicId?.toLong())
+                setCommentParams(extra.topicId?.toLong(), CommentableType.CHARACTER)
 
                 emit(
                     Response.Success(
@@ -57,33 +58,20 @@ class CharacterViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Chara
     override fun onEvent(event: ContentDetailEvent) {
         super.onEvent(event)
 
-        when (event) {
-            ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
-            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
+        if (event is ContentDetailEvent.Character.ToggleFavourite) {
+            with(response.value) {
+                if (this !is Response.Success) return
 
-            ContentDetailEvent.Media.ShowPoster -> updateState { it.copy(showPoster = !it.showPoster) }
-            ContentDetailEvent.Media.ShowRelated -> updateState { it.copy(showRelated = !it.showRelated) }
+                val isFavoured = data.favoured.getValue() ?: return
+                val newData = data.copy(favoured = AsyncData.Loading)
 
-            is ContentDetailEvent.Character -> when (event) {
-                ContentDetailEvent.Character.ShowSeyu -> updateState { it.copy(showSeyu = !it.showSeyu) }
-
-                is ContentDetailEvent.Character.ToggleFavourite -> with(response.value) {
-                    if (this !is Response.Success) return
-
-                    val isFavoured = data.favoured.getValue() ?: return
-                    val newData = data.copy(favoured = AsyncData.Loading)
-
-
-                    tryEmit(Response.Success(newData))
-                    toggleFavourite(
-                        id = contentId,
-                        type = LinkedType.CHARACTER,
-                        favoured = isFavoured
-                    )
-                }
+                tryEmit(Response.Success(newData))
+                toggleFavourite(
+                    id = contentId,
+                    type = LinkedType.CHARACTER,
+                    favoured = isFavoured
+                )
             }
-
-            else -> Unit
         }
     }
 }
