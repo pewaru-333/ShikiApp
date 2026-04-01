@@ -1,0 +1,4 @@
+— Added the ability to leave comments on the content pages and in the user's profile.
+— The appearance of the main components on some pages has been unified.
+— Fixed a bug that sometimes caused the list of user ratings to fail to load.
+— Many improvements and optimizations.

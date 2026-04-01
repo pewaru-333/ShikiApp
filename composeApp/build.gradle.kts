@@ -128,7 +128,7 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.1"
+                packageVersion = "0.6.2"
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 

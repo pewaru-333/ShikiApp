@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 36
-        versionCode = 37
-        versionName = "alpha-0.6.1"
+        versionCode = 38
+        versionName = "alpha-0.6.2"
 
         buildFeatures {
             buildConfig = true
@@ -31,12 +31,7 @@ android {
             manifestPlaceholders["mirrorOne"] = "shikimori.io"
             manifestPlaceholders["mirrorTwo"] = "shiki.one"
 
-            buildConfigField("String", "BASE_URL", "\"https://shikimori.io\"")
-            buildConfigField("String", "URL_MIRROR", "\"https://shiki.one\"")
             buildConfigField("String", "USER_AGENT", "\"ShikiApp\"")
-            buildConfigField("String", "CLIENT_ID", "\"C0IlIBQYqt9VHjuoayfbBG9ulhBH9XWuTOxSX_6oE6g\"")
-            buildConfigField("String", "CLIENT_SECRET", "\"0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM\"")
-            buildConfigField("String", "REDIRECT_URI", "\"app://login\"")
         }
 
         create("DarkShiki") {
@@ -50,12 +45,7 @@ android {
             manifestPlaceholders["mirrorOne"] = "shikimori.rip"
             manifestPlaceholders["mirrorTwo"] = "shikimori.rip"
 
-            buildConfigField("String", "BASE_URL", "\"https://shikimori.fi\"")
-            buildConfigField("String", "URL_MIRROR", "\"https://shikimori.rip\"")
             buildConfigField("String", "USER_AGENT", "\"DarkShiki\"")
-            buildConfigField("String", "CLIENT_ID", "\"d8W9rjFLuEZKx_dYXzJ42nGvsUckx4vfhMu5Liyr7MY\"")
-            buildConfigField("String", "CLIENT_SECRET", "\"Sog_CyJs19eCuFbIvg06Gb8zu8AMXZE8VI2CKLN1td4\"")
-            buildConfigField("String", "REDIRECT_URI", "\"darkshiki://auth/login\"")
         }
     }
 
