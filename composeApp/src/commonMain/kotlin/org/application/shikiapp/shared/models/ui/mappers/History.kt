@@ -13,5 +13,5 @@ fun History.mapper() = org.application.shikiapp.shared.models.ui.History(
     description = fromHtml(description),
     date = Formatter.convertDate(createdAt),
     kind = Enum.safeValueOf<Kind>(target?.kind),
-    image = target?.image?.original
+    poster = target?.image?.original.orEmpty()
 )

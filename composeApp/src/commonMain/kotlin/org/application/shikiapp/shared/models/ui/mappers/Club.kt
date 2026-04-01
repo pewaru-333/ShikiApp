@@ -6,13 +6,12 @@ import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.shared.models.data.Club
 import org.application.shikiapp.shared.models.data.ClubBasic
 import org.application.shikiapp.shared.models.data.ClubImages
-import org.application.shikiapp.shared.models.data.UserBasic
 import org.application.shikiapp.shared.models.ui.list.BasicContent
-import org.application.shikiapp.shared.utils.fromHtml
+import org.application.shikiapp.shared.utils.ui.HtmlParser
 
 fun Club.mapper(
-    images: Flow<PagingData<ClubImages>>,
-    members: Flow<PagingData<UserBasic>>,
+    images: Flow<PagingData<BasicContent>>,
+    members: Flow<PagingData<BasicContent>>,
     animes: Flow<PagingData<BasicContent>>,
     mangas: Flow<PagingData<BasicContent>>,
     ranobe: Flow<PagingData<BasicContent>>,
@@ -24,7 +23,7 @@ fun Club.mapper(
     topicId = topicId,
     name = name,
     image = logo.original,
-    description = fromHtml(descriptionHtml),
+    description = HtmlParser.parseComment(descriptionHtml.orEmpty()),
     images = images,
     members = members,
     animes = animes,
@@ -50,4 +49,10 @@ fun Club.toContent() = BasicContent(
     id = id.toString(),
     title = name,
     poster = logo.main.orEmpty()
+)
+
+fun ClubImages.toContent() = BasicContent(
+    id = id.toString(),
+    title = mainUrl.orEmpty(),
+    poster = originalUrl.orEmpty()
 )

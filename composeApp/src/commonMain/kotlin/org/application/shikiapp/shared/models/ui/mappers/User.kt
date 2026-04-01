@@ -61,11 +61,12 @@ suspend fun User.mapper(
         lastOnline = lastOnline.orEmpty(),
         nickname = nickname,
         sex = sex,
+        showComments = showComments,
         showStats = Preferences.userId != id && (animeStatsSum + mangaStatsSum > 0),
         stats = Pair(
             first = Statistics(
                 sum = animeStatsSum,
-                scores = stats.statuses.anime.associate {
+                scores = stats.statuses.anime.filter { it.size > 0 }.associate {
                     ResourceText.StringResource(
                         Formatter.getWatchStatus(it.name, LinkedType.ANIME)
                     ) to it.size.toString()
@@ -73,7 +74,7 @@ suspend fun User.mapper(
             ),
             second = Statistics(
                 sum = mangaStatsSum,
-                scores = stats.statuses.manga.associate {
+                scores = stats.statuses.manga.filter { it.size > 0 }.associate {
                     ResourceText.StringResource(
                         Formatter.getWatchStatus(it.name, LinkedType.MANGA)
                     ) to it.size.toString()
@@ -87,4 +88,10 @@ fun UsersQuery.Data.User.toContent() = BasicContent(
     id = id,
     title = nickname,
     poster = avatarUrl
+)
+
+fun UserBasic.toContent() = BasicContent(
+    id = id.toString(),
+    title = nickname,
+    poster = image.x160
 )

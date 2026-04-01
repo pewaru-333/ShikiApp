@@ -96,16 +96,16 @@ object MangaMapper {
         stats = Pair(
             first = extra.scoresStats?.let { scores ->
                 Statistics(
-                    sum = scores.sumOf { it.count },
-                    scores = scores.associate {
+                    sum = scores.sumOf(MangaExtraQuery.Data.Manga.ScoresStat::count),
+                    scores = scores.filter { it.count > 0 }.associate {
                         ResourceText.StaticString(it.score.toString()) to it.count.toString()
                     }
                 )
             },
             second = extra.statusesStats?.let { statuses ->
                 Statistics(
-                    sum = statuses.sumOf { it.count },
-                    scores = statuses.associate {
+                    sum = statuses.sumOf(MangaExtraQuery.Data.Manga.StatusesStat::count),
+                    scores = statuses.filter { it.count > 0 }.associate {
                         StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.MANGA)) to it.count.toString()
                     }
                 )
