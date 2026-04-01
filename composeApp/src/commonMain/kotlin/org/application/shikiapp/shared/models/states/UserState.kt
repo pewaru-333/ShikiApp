@@ -1,14 +1,15 @@
 package org.application.shikiapp.shared.models.states
 
-import org.application.shikiapp.shared.utils.enums.UserMenu
-
 data class UserState(
-    val menu: UserMenu? = null,
     val isFriend: Boolean = false,
+    override val isSendingComment: Boolean = false,
     val showDeleteUserDialog: Boolean = false,
     val unreadMessages: UnreadMessages = UnreadMessages(),
-    val dialogState: UserDialogState? = null
-) {
+    override val dialogState: BaseDialogState? = null
+) : BaseState<UserState> {
+    override fun updateSendingState(isSending: Boolean) = copy(isSendingComment = isSending)
+    override fun updateDialogState(dialogState: BaseDialogState?) = copy(dialogState = dialogState)
+
     data class UnreadMessages(
         val messages: Int = 0,
         val news: Int = 0,
@@ -19,30 +20,11 @@ data class UserState(
     }
 }
 
-sealed interface UserDialogState {
-    data object Logout : UserDialogState
-    data object Settings : UserDialogState
-    data object Comments : UserDialogState
-    data object ToggleFriend : UserDialogState
+val UserState.contentMenu: BaseDialogState.User.Menu?
+    get() = dialogState as? BaseDialogState.User.Menu
 
-    data object DialogAll : UserDialogState
-    data class DialogUser(val userId: Long) : UserDialogState
-}
+val UserState.showContent: Boolean
+    get() = dialogState is BaseDialogState.User.Menu
 
 val UserState.showDialogs: Boolean
-    get() = dialogState is UserDialogState.DialogAll || dialogState is UserDialogState.DialogUser
-
-val UserState.showDialogUser: Boolean
-    get() = dialogState is UserDialogState.DialogUser
-
-val UserState.showFriends: Boolean
-    get() = menu == UserMenu.FRIENDS
-
-val UserState.showClubs: Boolean
-    get() = menu == UserMenu.CLUBS
-
-val UserState.showFavourite: Boolean
-    get() = menu == UserMenu.FAVOURITE
-
-val UserState.showHistory: Boolean
-    get() = menu == UserMenu.HISTORY
+    get() = dialogState is BaseDialogState.User.DialogAll || dialogState is BaseDialogState.User.DialogUser

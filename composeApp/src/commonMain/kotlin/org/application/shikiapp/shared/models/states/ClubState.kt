@@ -1,22 +1,14 @@
 package org.application.shikiapp.shared.models.states
 
-import org.application.shikiapp.shared.utils.enums.ClubMenu
-
 data class ClubState(
-    val menu: ClubMenu? = null,
     val image: String? = null,
     val isMember: Boolean = false,
-    val showClubs: Boolean = false,
-    val showBottomSheet: Boolean = false,
-    val showComments: Boolean = false,
-    val showFullImage: Boolean = false,
-)
-
-val ClubState.showMembers: Boolean
-    get() = menu == ClubMenu.MEMBERS
+    override val isSendingComment: Boolean = false,
+    override val dialogState: BaseDialogState? = null
+) : BaseState<ClubState> {
+    override fun updateSendingState(isSending: Boolean) = copy(isSendingComment = isSending)
+    override fun updateDialogState(dialogState: BaseDialogState?) = copy(dialogState = dialogState)
+}
 
 val ClubState.showContent: Boolean
-    get() = menu in listOf(ClubMenu.ANIME, ClubMenu.MANGA, ClubMenu.RANOBE, ClubMenu.CHARACTERS)
-
-val ClubState.showImages: Boolean
-    get() = menu == ClubMenu.IMAGES
+    get() = dialogState is BaseDialogState.Club.Image || dialogState is BaseDialogState.Club.Menu
