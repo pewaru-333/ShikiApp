@@ -124,7 +124,7 @@ object AnimeMapper {
                 first = extra.scoresStats?.let { scores ->
                     Statistics(
                         sum = scores.sumOf(AnimeExtraQuery.Data.Anime.ScoresStat::count),
-                        scores = scores.associate {
+                        scores = scores.filter { it.count > 0 }.associate {
                             ResourceText.StaticString(it.score.toString()) to it.count.toString()
                         }
                     )
@@ -132,7 +132,7 @@ object AnimeMapper {
                 second = extra.statusesStats?.let { statuses ->
                     Statistics(
                         sum = statuses.sumOf(AnimeExtraQuery.Data.Anime.StatusesStat::count),
-                        scores = statuses.associate {
+                        scores = statuses.filter { it.count > 0 }.associate {
                             StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) to it.count.toString()
                         }
                     )
@@ -178,15 +178,10 @@ object AnimeMapper {
                 VideoKind.entries.associateWith { entry ->
                     filter { it.kind in entry.kinds }
                 }
-            }
+            }.filterValues { it.isNotEmpty() }
         )
     }
 }
-
-data class AnimeResponse(
-    val main: AnimeMainQuery.Data.Anime,
-    val extra: AnimeExtraQuery.Data.Anime
-)
 
 fun BasicInfo.toBasicContent() = BasicContent(
     id = id.toString(),
