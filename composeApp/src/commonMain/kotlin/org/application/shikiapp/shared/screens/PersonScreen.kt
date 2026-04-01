@@ -22,10 +22,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
 import org.application.shikiapp.shared.events.ContentDetailEvent
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.PersonState
 import org.application.shikiapp.shared.models.ui.Person
 import org.application.shikiapp.shared.models.viewModels.PersonViewModel
@@ -44,6 +44,7 @@ import org.application.shikiapp.shared.ui.templates.ScaffoldContent
 import org.application.shikiapp.shared.ui.templates.profiles
 import org.application.shikiapp.shared.ui.templates.related
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -60,8 +61,23 @@ fun PersonScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 
     LinkListener(model.openLink) { (response as? Success)?.data?.url }
 
-    AnimatedScreen(response, model::loadData) { person ->
+    AnimatedScreen(response, model::loadData, Person::comments) { person, comments ->
         PersonView(person, state, model::onEvent, onNavigate, back)
+
+        val commentListState = rememberCommentListState(
+            list = comments,
+            onCommentEvent = model.commentEvent
+        )
+        Comments(
+            state = commentListState,
+            isVisible = state.dialogState is BaseDialogState.Comments,
+            isSending = state.isSendingComment,
+            onNavigate = onNavigate,
+            onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            onSendComment = { text, isOfftopic ->
+                model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+            }
+        )
     }
 }
 
@@ -73,22 +89,18 @@ private fun PersonView(
     onNavigate: (Screen) -> Unit,
     onBack: () -> Unit
 ) {
-    val commentsState = rememberLazyListState()
-    val comments = person.comments.collectAsLazyPagingItems()
-
     ScaffoldContent(
         title = { Text(person.jobTitle) },
         userRate = null,
         isFavoured = person.favoured,
         onBack = onBack,
-        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount },
         onEvent = onEvent,
         onToggleFavourite = { onEvent(ContentDetailEvent.Person.ToggleFavourite(person.personKind)) }
     ) {
         item {
             PersonHeader(
                 person = person,
-                onOpenPoster = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+                onOpenPoster = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Poster)) }
             )
         }
 
@@ -97,50 +109,42 @@ private fun PersonView(
         }
 
         related(
-            related = person.relatedList,
+            list = person.relatedList,
             onNavigate = onNavigate,
-            onShow = { onEvent(ContentDetailEvent.Person.ShowWorks) }
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Related)) }
         )
 
         profiles(
             profiles = person.characters,
             title = Res.string.text_characters,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Characters)) },
             onNavigate = { onNavigate(Screen.Character(it)) }
         )
     }
 
-    Comments(
-        list = comments,
-        listState = commentsState,
-        isVisible = state.showComments,
-        onHide = { onEvent(ContentDetailEvent.ShowComments) },
-        onNavigate = onNavigate
-    )
-
     ProfilesFull(
         list = person.characters,
-        isVisible = state.showCharacters,
+        isVisible = state.dialogState is BaseDialogState.Media.Characters,
         title = stringResource(Res.string.text_characters),
         state = rememberLazyListState(),
-        onHide = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
         onNavigate = { onNavigate(Screen.Character(it)) }
     )
 
     RelatedFull(
         related = person.relatedMap,
-        isVisible = state.showWorks,
-        onHide = { onEvent(ContentDetailEvent.Person.ShowWorks) },
-        onNavigate = onNavigate
+        isVisible = state.dialogState is BaseDialogState.Media.Related,
+        onNavigate = onNavigate,
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
     DialogPoster(
         link = person.image,
-        isVisible = state.showPoster,
-        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+        isVisible = state.dialogState is BaseDialogState.Poster,
+        onClose = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
-    if (state.showSheet) {
+    if (state.dialogState is BaseDialogState.Sheet) {
         BottomSheet(
             url = person.url,
             website = person.website,
@@ -202,7 +206,7 @@ private fun Roles(roles: List<List<String>>) =
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         ParagraphTitle(stringResource(Res.string.text_roles))
         Column {
-            roles.forEachIndexed { index, (name, count) ->
+            roles.fastForEachIndexed { index, (name, count) ->
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier

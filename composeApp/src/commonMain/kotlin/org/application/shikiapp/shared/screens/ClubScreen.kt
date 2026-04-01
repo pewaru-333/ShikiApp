@@ -2,108 +2,88 @@
 
 package org.application.shikiapp.shared.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
-import androidx.compose.foundation.layout.windowInsetsBottomHeight
-import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
-import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridItemSpan
-import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
+import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
+import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigationevent.NavigationEventInfo
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
-import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.collectLatest
 import org.application.shikiapp.shared.di.Preferences
-import org.application.shikiapp.shared.events.ClubEvent
-import org.application.shikiapp.shared.models.data.ClubImages
-import org.application.shikiapp.shared.models.data.UserBasic
+import org.application.shikiapp.shared.events.ContentDetailEvent
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.ClubState
 import org.application.shikiapp.shared.models.states.showContent
-import org.application.shikiapp.shared.models.states.showImages
-import org.application.shikiapp.shared.models.states.showMembers
 import org.application.shikiapp.shared.models.ui.Club
 import org.application.shikiapp.shared.models.ui.list.BasicContent
+import org.application.shikiapp.shared.models.ui.list.asSource
 import org.application.shikiapp.shared.models.viewModels.ClubViewModel
-import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
+import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
 import org.application.shikiapp.shared.ui.templates.AnimatedScreen
-import org.application.shikiapp.shared.ui.templates.BasicContentItem
-import org.application.shikiapp.shared.ui.templates.CatalogGridItem
+import org.application.shikiapp.shared.ui.templates.CircleBorderedImage
 import org.application.shikiapp.shared.ui.templates.Comments
-import org.application.shikiapp.shared.ui.templates.ErrorScreen
-import org.application.shikiapp.shared.ui.templates.LoadingScreen
+import org.application.shikiapp.shared.ui.templates.ContentList
+import org.application.shikiapp.shared.ui.templates.DialogImage
+import org.application.shikiapp.shared.ui.templates.DialogImages
+import org.application.shikiapp.shared.ui.templates.DialogPoster
+import org.application.shikiapp.shared.ui.templates.MenuItems
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.ui.templates.ZoomableAsyncImage
-import org.application.shikiapp.shared.utils.enums.ClubMenu
+import org.application.shikiapp.shared.ui.templates.about
+import org.application.shikiapp.shared.utils.extensions.toContentLarge
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberToastState
+import org.application.shikiapp.shared.utils.ui.CommentContent
+import org.application.shikiapp.shared.utils.ui.rememberCommentListState
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_clubs
+import shikiapp.composeapp.generated.resources.text_description
 import shikiapp.composeapp.generated.resources.text_join_club
 import shikiapp.composeapp.generated.resources.text_leave_club
-import shikiapp.composeapp.generated.resources.text_members
-import shikiapp.composeapp.generated.resources.text_pictures
 import shikiapp.composeapp.generated.resources.vector_check
 import shikiapp.composeapp.generated.resources.vector_close
 import shikiapp.composeapp.generated.resources.vector_clubs
 import shikiapp.composeapp.generated.resources.vector_comments
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
 import shikiapp.composeapp.generated.resources.vector_more
 
 @Composable
-fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
+fun ClubScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     val model = viewModel(::ClubViewModel)
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
@@ -111,11 +91,26 @@ fun ClubScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 
     val toast = rememberToastState()
 
-    AnimatedScreen(response, model::loadData) { club ->
-        ClubView(club, state, content, model::onEvent, onNavigate, back)
+    AnimatedScreen(response, model::loadData, Club::comments) { club, comments ->
+        ClubView(club, state, content, model::onEvent, onNavigate, onBack)
+
+        val commentListState = rememberCommentListState(
+            list = comments,
+            onCommentEvent = model.commentEvent
+        )
+        Comments(
+            state = commentListState,
+            isVisible = state.dialogState is BaseDialogState.Comments,
+            isSending = state.isSendingComment,
+            onNavigate = onNavigate,
+            onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            onSendComment = { text, isOfftopic ->
+                model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+            }
+        )
     }
 
-    LaunchedEffect(Unit) {
+    LaunchedEffect(model.joinChannel) {
         model.joinChannel.collectLatest {
             toast.onShow(it.asString())
         }
@@ -127,427 +122,200 @@ private fun ClubView(
     club: Club,
     state: ClubState,
     content: LazyPagingItems<BasicContent>,
-    onEvent: (ClubEvent) -> Unit,
+    onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit,
-    back: () -> Unit
+    onBack: () -> Unit
 ) {
-    val listState = rememberLazyListState()
-    val members = club.members.collectAsLazyPagingItems()
-    val images = club.images.collectAsLazyPagingItems()
-    val clubs = club.clubs.collectAsLazyPagingItems()
-    val comments = club.comments.collectAsLazyPagingItems()
+    var galleryInfo by remember { mutableStateOf<Pair<List<CommentContent.ImageContent>, Int>?>(null) }
 
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {},
-                navigationIcon = { NavigationIcon(back) },
+                navigationIcon = { NavigationIcon(onBack) },
                 actions = {
                     IconButton(
-                        onClick = { onEvent(ClubEvent.ShowComments) }
-                    ) {
-                        Icon(painterResource(Res.drawable.vector_comments), null)
-                    }
+                        onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) },
+                        content = { Icon(painterResource(Res.drawable.vector_comments), null) }
+                    )
 
                     IconButton(
-                        onClick = { onEvent(ClubEvent.ShowBottomSheet) }
-                    ) {
-                        VectorIcon(Res.drawable.vector_more)
-                    }
-                }
-            )
-        }
-    ) { paddingValues ->
-        LazyColumn(
-            contentPadding = PaddingValues(8.dp, paddingValues.calculateTopPadding()),
-            verticalArrangement = Arrangement.spacedBy(16.dp)
-        ) {
-            item {
-                ListItem(
-                    headlineContent = {},
-                    overlineContent = {
-                        Text(
-                            text = club.name,
-                            style = MaterialTheme.typography.titleLarge
-                        )
-                    },
-                    leadingContent = {
-                        AnimatedAsyncImage(
-                            model = club.image,
-                            modifier = Modifier
-                                .size(80.dp)
-                                .border(1.dp, Color.Gray)
-                        )
-                    }
-                )
-            }
-
-            item {
-                HorizontalDivider()
-            }
-
-            item {
-                ClubMenuItems(onEvent)
-            }
-
-            item {
-                HorizontalDivider()
-            }
-
-            item {
-                Text(club.description)
-            }
-        }
-    }
-
-    Members(
-        members = members,
-        isVisible = state.showMembers,
-        onNavigate = onNavigate,
-        onHide = { onEvent(ClubEvent.PickItem()) }
-    )
-
-    Content(
-        content = content,
-        state = state,
-        isVisible = state.showContent,
-        onNavigate = onNavigate,
-        onHide = { onEvent(ClubEvent.PickItem()) }
-    )
-
-    Images(
-        images = images,
-        isVisible = state.showImages,
-        onEvent = onEvent,
-        onHide = { onEvent(ClubEvent.PickItem()) }
-    )
-
-    Clubs(
-        clubs = clubs,
-        isVisible = state.showClubs,
-        onNavigate = onNavigate,
-        onHide = { onEvent(ClubEvent.ShowClubs) }
-    )
-
-    Comments(
-        list = comments,
-        listState = listState,
-        isVisible = state.showComments,
-        onHide = { onEvent(ClubEvent.ShowComments) },
-        onNavigate = onNavigate
-    )
-
-    when {
-        state.showFullImage -> DialogImage(state) {
-            onEvent(ClubEvent.ShowFullImage())
-        }
-
-        state.showBottomSheet -> BottomSheet(state, onEvent)
-    }
-}
-
-@Composable
-private fun ClubMenuItems(onEvent: (ClubEvent) -> Unit) =
-    Column(Modifier.wrapContentHeight(), Arrangement.spacedBy(8.dp), Alignment.CenterHorizontally) {
-        ClubMenu.entries.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
-                row.forEach {
-                    FilterChip(
-                        selected = true,
-                        label = { Text(stringResource(it.title)) },
-                        onClick = { onEvent(ClubEvent.PickItem(it)) },
-                        trailingIcon = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
-                        modifier = Modifier
-                            .height(48.dp)
-                            .weight(1f)
+                        onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet)) },
+                        content = { VectorIcon(Res.drawable.vector_more) }
                     )
                 }
-            }
-        }
-    }
-
-@Composable
-private fun Members(
-    members: LazyPagingItems<UserBasic>,
-    isVisible: Boolean,
-    onNavigate: (Screen) -> Unit,
-    onHide: () -> Unit,
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_members)) },
-                navigationIcon = { NavigationIcon(onHide) }
             )
         }
-    ) { padding ->
-        when (members.loadState.refresh) {
-            LoadState.Loading -> LoadingScreen()
-            is LoadState.Error -> ErrorScreen()
-            is LoadState.NotLoading -> LazyVerticalGrid(
-                columns = GridCells.FixedSize(70.dp),
-                contentPadding = padding,
-                verticalArrangement = Arrangement.spacedBy(4.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                items(members.itemCount) { index ->
-                    members[index]?.let {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            modifier = Modifier.clickable {
-                                onNavigate(Screen.User(it.id))
-                            }
-                        ) {
-                            AnimatedAsyncImage(
-                                model = it.avatar,
-                                modifier = Modifier
-                                    .size(64.dp)
-                                    .padding(4.dp)
-                                    .clip(CircleShape)
-                            )
+    ) { values ->
+        LazyColumn(contentPadding = values.toContentLarge()) {
+            item {
+                ClubProfileHeader(club.name, club.image) {
+                    onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Poster))
+                }
+            }
 
-                            Text(
-                                maxLines = 1,
-                                text = it.nickname,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.labelMedium
-                            )
-                        }
-                    }
+            item {
+                Spacer(Modifier.height(24.dp))
+            }
+
+            item {
+                MenuItems(BaseDialogState.Club.Menu.items, BaseDialogState.Club.Menu::title) {
+                    onEvent(ContentDetailEvent.ToggleDialog(it))
+                }
+            }
+
+            if (club.description.isNotEmpty()) {
+                item {
+                    Spacer(Modifier.height(24.dp))
                 }
 
-                if (members.loadState.append == LoadState.Loading) {
-                    item(
-                        span = { GridItemSpan(maxLineSpan) }
-                    ) {
-                        LoadingScreen(Modifier.padding(8.dp))
-                    }
-                }
-                if (members.loadState.hasError) {
-                    item { ErrorScreen(members::retry) }
+                about(Res.string.text_description, club.description) { images, index ->
+                    galleryInfo = images to index
                 }
             }
         }
     }
+
+    galleryInfo?.let { (imageContents, initialIndex) ->
+        val imageUrls = imageContents.map { it.fullUrl ?: it.previewUrl }
+
+        DialogImages(
+            images = imageUrls,
+            initialIndex = initialIndex,
+            isVisible = true,
+            onClose = { galleryInfo = null }
+        )
+    }
+
+    Content(
+        list = content,
+        menu = state.dialogState,
+        isVisible = state.showContent,
+        onNavigate = onNavigate,
+        onOpenImage = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Club.Image(it))) },
+        onHide = {
+            onEvent(
+                ContentDetailEvent.ToggleDialog(
+                    dialogState = if (state.dialogState == BaseDialogState.Club.Menu.CLUBS) BaseDialogState.Sheet
+                    else null
+                )
+            )
+        }
+    )
+
+    DialogPoster(
+        link = club.image.orEmpty(),
+        isVisible = state.dialogState is BaseDialogState.Poster,
+        onClose = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
+    )
+
+    DialogImage(
+        link = state.image.orEmpty(),
+        isVisible = state.dialogState is BaseDialogState.Club.Image,
+        onClose = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Club.Menu.IMAGES)) }
+    )
+
+    if (state.dialogState is BaseDialogState.Sheet) {
+        BottomSheet(state.isMember, onEvent)
+    }
 }
+
+@Composable
+private fun ClubProfileHeader(name: String, image: String?, onOpenPoster: () -> Unit) =
+    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp), Alignment.CenterVertically) {
+        CircleBorderedImage(image, onOpenPoster)
+        Text(
+            text = name,
+            modifier = Modifier.weight(1f, false),
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
+            style = MaterialTheme.typography.headlineSmall.copy(
+                fontWeight = FontWeight.Bold
+            )
+        )
+    }
 
 @Composable
 private fun Content(
-    content: LazyPagingItems<BasicContent>,
-    state: ClubState,
+    list: LazyPagingItems<BasicContent>,
+    menu: BaseDialogState?,
     isVisible: Boolean,
+    isCompactWindow: Boolean = rememberWindowSize().isCompact,
     onNavigate: (Screen) -> Unit,
-    onHide: () -> Unit,
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { state.menu?.let { Text(stringResource(it.title)) } },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { padding ->
-        when (content.loadState.refresh) {
-            LoadState.Loading -> LoadingScreen()
-            is LoadState.Error -> ErrorScreen()
-            is LoadState.NotLoading -> LazyVerticalGrid(
-                columns = GridCells.FixedSize(116.dp),
-                contentPadding = padding,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                horizontalArrangement = Arrangement.SpaceAround
-            ) {
-                items(content.itemCount) { index ->
-                    content[index]?.let {
-                        CatalogGridItem(
-                            title = it.title,
-                            image = it.poster,
-                            score = null,
-                            kind = null,
-                            season = null,
-                            modifier = Modifier.animateItem(),
-                            onClick = {
-                                when (state.menu) {
-                                    ClubMenu.ANIME -> onNavigate(Screen.Anime(it.id))
-                                    ClubMenu.MANGA, ClubMenu.RANOBE -> onNavigate(Screen.Manga(it.id))
-                                    ClubMenu.CHARACTERS -> onNavigate(Screen.Character(it.id))
-
-                                    else -> Unit
-                                }
-                            }
-                        )
-                    }
-                }
-
-                if (content.loadState.append == LoadState.Loading) {
-                    item(
-                        span = { GridItemSpan(maxLineSpan) }
-                    ) {
-                        LoadingScreen(Modifier.padding(8.dp))
-                    }
-                }
-                if (content.loadState.hasError) {
-                    item { ErrorScreen(content::retry) }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Images(
-    images: LazyPagingItems<ClubImages>,
-    isVisible: Boolean,
-    onEvent: (ClubEvent) -> Unit,
+    onOpenImage: (String?) -> Unit,
     onHide: () -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
 ) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {  Text(stringResource(Res.string.text_pictures)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { padding ->
-        when (images.loadState.refresh) {
-            LoadState.Loading -> LoadingScreen()
-            is LoadState.Error -> ErrorScreen()
-            is LoadState.NotLoading -> LazyVerticalStaggeredGrid(
-                modifier = Modifier.fillMaxSize(),
-                columns = StaggeredGridCells.Adaptive(120.dp),
+    var lastMenu by remember { mutableStateOf(menu) }
+    if (menu != null) {
+        lastMenu = menu
+    }
+
+    val targetMenu = lastMenu as? BaseDialogState.Club.Menu
+    val shouldShow = isVisible && targetMenu != null || lastMenu as? BaseDialogState.Club.Image != null
+
+    val title = targetMenu?.let { stringResource(it.title) }.orEmpty()
+
+    val listStates = BaseDialogState.Club.Menu.entries.associateWith { rememberLazyListState() }
+    val gridStates = BaseDialogState.Club.Menu.entries.associateWith { rememberLazyGridState() }
+    val staggeredGridState = rememberLazyStaggeredGridState()
+
+    AnimatedDialogScreen(shouldShow, title, onHide) { padding ->
+        if (targetMenu != null) {
+            ContentList(
+                source = list.asSource(BasicContent::id),
+                mode = targetMenu.viewType,
                 contentPadding = padding,
-                verticalItemSpacing = 4.dp,
-                horizontalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
-                items(images.itemCount, images.itemKey(ClubImages::id)) { index ->
-                    images[index]?.let {
-                        AnimatedAsyncImage(
-                            model = it.mainUrl,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .wrapContentHeight()
-                                .clickable { onEvent(ClubEvent.ShowFullImage(it.originalUrl)) }
-                        )
-                    }
-                }
-
-                if (images.loadState.append == LoadState.Loading) {
-                    item(span = StaggeredGridItemSpan.FullLine) {
-                        LoadingScreen(Modifier.padding(8.dp))
-                    }
-                }
-
-                if (images.loadState.hasError) {
-                    item { ErrorScreen(images::retry) }
-                }
-            }
+                listState = listStates.getValue(targetMenu),
+                gridState = gridStates.getValue(targetMenu),
+                staggeredGridState = staggeredGridState,
+                isCompactWindow = isCompactWindow,
+                onImageClick = onOpenImage,
+                onItemClick = { id, _ -> onNavigate(targetMenu.navigateTo(id)) }
+            )
         }
     }
 }
 
 @Composable
-private fun Clubs(
-    clubs: LazyPagingItems<BasicContent>,
-    isVisible: Boolean,
-    onNavigate: (Screen) -> Unit,
-    onHide: () -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_clubs)) },
-                navigationIcon = { NavigationIcon(onHide) }
+private fun BottomSheet(isMember: Boolean, onEvent: (ContentDetailEvent) -> Unit) =
+    ModalBottomSheet(
+        onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
+        contentWindowInsets = { WindowInsets.systemBars }
+    ) {
+        ListItem(
+            headlineContent = { Text(stringResource(Res.string.text_clubs)) },
+            leadingContent = { Icon(painterResource(Res.drawable.vector_clubs), null) },
+            modifier = Modifier.clickable { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Club.Menu.CLUBS)) },
+            colors = ListItemDefaults.colors(
+                containerColor = BottomSheetDefaults.ContainerColor,
+                headlineColor = contentColorFor(BottomSheetDefaults.ContainerColor),
+                leadingIconColor = contentColorFor(BottomSheetDefaults.ContainerColor)
             )
-        }
-    ) { padding ->
-        LazyColumn(contentPadding = padding) {
-            items(clubs.itemCount, clubs.itemKey(BasicContent::id)) { index ->
-                clubs[index]?.let {
-                    BasicContentItem(
-                        name = it.title,
-                        link = it.poster,
-                        modifier = Modifier.clickable {
-                            onNavigate(Screen.Club(it.id.toLong()))
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun BottomSheet(state: ClubState, onEvent: (ClubEvent) -> Unit) = ModalBottomSheet(
-    onDismissRequest = { onEvent(ClubEvent.ShowBottomSheet) }
-) {
-    ListItem(
-        headlineContent = { Text(stringResource(Res.string.text_clubs)) },
-        leadingContent = { Icon(painterResource(Res.drawable.vector_clubs), null) },
-        modifier = Modifier.clickable { onEvent(ClubEvent.ShowClubs) }
-    )
-
-    if (Preferences.token != null) {
-        if (state.isMember) {
-            ListItem(
-                headlineContent = { Text(stringResource(Res.string.text_leave_club)) },
-                leadingContent = { VectorIcon(Res.drawable.vector_close) },
-                modifier = Modifier.clickable { onEvent(ClubEvent.LeaveClub) }
-            )
-        } else {
-            ListItem(
-                headlineContent = { Text(stringResource(Res.string.text_join_club)) },
-                leadingContent = { VectorIcon(Res.drawable.vector_check) },
-                modifier = Modifier.clickable { onEvent(ClubEvent.JoinClub) }
-            )
-        }
-    }
-
-    Spacer(Modifier.windowInsetsBottomHeight(WindowInsets.systemBars))
-}
-
-@Composable
-private fun DialogImage(state: ClubState, onDismiss: () -> Unit) =
-    Dialog(onDismiss, DialogProperties()) {
-        ZoomableAsyncImage(
-            model = state.image,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(16.dp)
         )
+
+        if (Preferences.token != null) {
+            if (isMember) {
+                ListItem(
+                    headlineContent = { Text(stringResource(Res.string.text_leave_club)) },
+                    leadingContent = { VectorIcon(Res.drawable.vector_close) },
+                    modifier = Modifier.clickable { onEvent(ContentDetailEvent.Club.LeaveClub) },
+                    colors = ListItemDefaults.colors(
+                        containerColor = BottomSheetDefaults.ContainerColor,
+                        headlineColor = contentColorFor(BottomSheetDefaults.ContainerColor),
+                        leadingIconColor = contentColorFor(BottomSheetDefaults.ContainerColor)
+                    )
+                )
+            } else {
+                ListItem(
+                    headlineContent = { Text(stringResource(Res.string.text_join_club)) },
+                    leadingContent = { VectorIcon(Res.drawable.vector_check) },
+                    modifier = Modifier.clickable { onEvent(ContentDetailEvent.Club.JoinClub) },
+                    colors = ListItemDefaults.colors(
+                        containerColor = BottomSheetDefaults.ContainerColor,
+                        headlineColor = contentColorFor(BottomSheetDefaults.ContainerColor),
+                        leadingIconColor = contentColorFor(BottomSheetDefaults.ContainerColor)
+                    )
+                )
+            }
+        }
     }

@@ -10,10 +10,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
 import org.application.shikiapp.shared.events.ContentDetailEvent
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.MangaState
+import org.application.shikiapp.shared.models.states.showAuthors
+import org.application.shikiapp.shared.models.states.showCharacters
 import org.application.shikiapp.shared.models.ui.Manga
 import org.application.shikiapp.shared.models.viewModels.MangaViewModel
 import org.application.shikiapp.shared.models.viewModels.UserRateViewModel
@@ -38,6 +39,7 @@ import org.application.shikiapp.shared.ui.templates.summary
 import org.application.shikiapp.shared.ui.templates.title
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -52,8 +54,23 @@ fun MangaScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 
     LinkListener(model.openLink) { (response as? Success)?.data?.url }
 
-    AnimatedScreen(response, model::loadData) { manga ->
+    AnimatedScreen(response, model::loadData, Manga::comments) { manga, comments ->
         MangaView(manga, state, model::onEvent, onNavigate, back)
+
+        val commentListState = rememberCommentListState(
+            list = comments,
+            onCommentEvent = model.commentEvent
+        )
+        Comments(
+            state = commentListState,
+            isVisible = state.dialogState is BaseDialogState.Comments,
+            isSending = state.isSendingComment,
+            onNavigate = onNavigate,
+            onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            onSendComment = { text, isOfftopic ->
+                model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+            }
+        )
     }
 }
 
@@ -69,12 +86,9 @@ private fun MangaView(
     val rate = manga.userRate.getValue()
     val newRate by rateModel.newRate.collectAsStateWithLifecycle()
 
-    val commentsState = rememberLazyListState()
     val authorsState = rememberLazyListState()
     val charactersState = rememberLazyListState()
     val similarState = rememberLazyListState()
-
-    val comments = manga.comments.collectAsLazyPagingItems()
 
     LaunchedEffect(Unit) {
         rate?.let { rateModel.getRate(it, LinkedType.MANGA) }
@@ -86,8 +100,7 @@ private fun MangaView(
         isFavoured = manga.favoured,
         onBack = onBack,
         onEvent = onEvent,
-        onToggleFavourite = { onEvent(ContentDetailEvent.Media.Manga.ToggleFavourite(manga.kindEnum)) },
-        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount }
+        onToggleFavourite = { onEvent(ContentDetailEvent.Media.Manga.ToggleFavourite(manga.kindEnum)) }
     ) {
         title(manga.title)
         info(
@@ -101,7 +114,7 @@ private fun MangaView(
             chapters = manga.chapters,
             isOngoingManga = manga.isOngoing,
             publisher = manga.publisher,
-            onOpenFullscreenPoster = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+            onOpenFullscreenPoster = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Poster)) }
         )
 
         genres(manga.genres)
@@ -114,39 +127,31 @@ private fun MangaView(
         )
 
         related(
-            related = manga.related,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowRelated) },
+            list = manga.related,
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Related)) },
             onNavigate = onNavigate
         )
         profiles(
             profiles = manga.charactersMain,
             title = Res.string.text_characters,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Characters)) },
             onNavigate = { onNavigate(Screen.Character(it)) }
         )
         profiles(
             profiles = manga.personMain,
             title = Res.string.text_authors,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Authors)) },
             onNavigate = { onNavigate(Screen.Person(it.toLong())) }
         )
     }
-
-    Comments(
-        list = comments,
-        listState = commentsState,
-        isVisible = state.showComments,
-        onHide = { onEvent(ContentDetailEvent.ShowComments) },
-        onNavigate = onNavigate
-    )
 
     RelatedFull(
         related = manga.related,
         chronology = manga.chronology,
         franchise = manga.franchiseList,
-        isVisible = state.showRelated,
-        onHide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
-        onNavigate = onNavigate
+        isVisible = state.dialogState is BaseDialogState.Media.Related,
+        onNavigate = onNavigate,
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
     ProfilesFull(
@@ -154,12 +159,7 @@ private fun MangaView(
         isVisible = state.showCharacters || state.showAuthors,
         title = stringResource(if (state.showCharacters) Res.string.text_characters else Res.string.text_authors),
         state = if (state.showCharacters) charactersState else authorsState,
-        onHide = {
-            onEvent(
-                if (state.showCharacters) ContentDetailEvent.Media.ShowCharacters
-                else ContentDetailEvent.Media.ShowAuthors
-            )
-        },
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
         onNavigate = {
             onNavigate(
                 if (state.showCharacters) Screen.Character(it)
@@ -169,32 +169,32 @@ private fun MangaView(
     )
 
     SimilarFull(
-        onHide = { onEvent(ContentDetailEvent.Media.ShowSimilar) },
         listState = similarState,
-        isVisible = state.showSimilar,
+        isVisible = state.dialogState is BaseDialogState.Media.Similar,
         list = manga.similar,
-        onNavigate = { onNavigate(Screen.Manga(it)) }
+        onNavigate = { onNavigate(Screen.Manga(it)) },
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
     )
 
     Statistics(
         statistics = manga.stats,
-        isVisible = state.showStats,
-        onHide = { onEvent(ContentDetailEvent.Media.ShowStats) }
+        isVisible = state.dialogState is BaseDialogState.Media.Stats,
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
     )
 
     DialogPoster(
         link = manga.poster,
-        isVisible = state.showPoster,
-        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+        isVisible = state.dialogState is BaseDialogState.Poster,
+        onClose = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
     )
 
-    when {
-        state.showRate -> DialogEditRate(
+    when (state.dialogState) {
+        BaseDialogState.Media.Rate -> DialogEditRate(
             state = newRate,
             type = LinkedType.MANGA,
             isExists = rate != null,
             onEvent = rateModel::onEvent,
-            onDismiss = { onEvent(ContentDetailEvent.Media.ShowRate) },
+            onDismiss = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
             onCreate = { type ->
                 rateModel.create(
                     id = manga.id,
@@ -216,14 +216,16 @@ private fun MangaView(
             }
         )
 
-        state.showSheet -> BottomSheet(
+        BaseDialogState.Sheet -> BottomSheet(
             url = manga.url,
             canShowLinks = manga.links.isNotEmpty(),
             onEvent = onEvent
         )
 
-        state.showLinks -> LinksSheet(manga.links) {
-            onEvent(ContentDetailEvent.Media.ShowLinks)
+        BaseDialogState.Media.Links -> LinksSheet(manga.links) {
+            onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet))
         }
+
+        else -> Unit
     }
 }

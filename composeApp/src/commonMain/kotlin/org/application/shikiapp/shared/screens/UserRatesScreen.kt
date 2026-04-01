@@ -50,7 +50,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -83,7 +82,7 @@ import org.application.shikiapp.shared.ui.templates.DialogEditRate
 import org.application.shikiapp.shared.ui.templates.ErrorScreen
 import org.application.shikiapp.shared.ui.templates.LoadingScreen
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
-import org.application.shikiapp.shared.ui.templates.SearchAppBar
+import org.application.shikiapp.shared.ui.templates.ScaffoldSearchBar
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.OrderDirection
@@ -91,7 +90,6 @@ import org.application.shikiapp.shared.utils.enums.OrderRates
 import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.application.shikiapp.shared.utils.enums.WindowSize
 import org.application.shikiapp.shared.utils.extensions.pairwise
-import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberToastState
 import org.application.shikiapp.shared.utils.ui.IWindowSize
@@ -117,7 +115,7 @@ import shikiapp.composeapp.generated.resources.vector_star
 
 @Composable
 fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
-    val barVisibility = LocalBarVisibility.current
+    val windowSize = rememberWindowSize()
     val toast = rememberToastState()
 
     val model = viewModel(::UserRateViewModel)
@@ -136,16 +134,8 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     val type by model.type.collectAsStateWithLifecycle()
     val search by model.search.collectAsStateWithLifecycle()
 
-    val windowSize = rememberWindowSize()
-
     LaunchedEffect(type) {
-        snapshotFlow { type }
-            .pairwise()
-            .collectLatest { (old, new) ->
-                if (new != old) {
-                    pagerState.requestScrollToPage(0)
-                }
-            }
+        pagerState.requestScrollToPage(0)
     }
 
     LaunchedEffect(Unit) {
@@ -178,74 +168,72 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 
     when (response) {
         RatesResponse.Unlogged -> UnloggedScreen(onNavigate)
-        RatesResponse.Error -> ErrorScreen(model::loadRates)
-        is RatesResponse.Success, RatesResponse.Loading, RatesResponse.NoAccess -> Scaffold(
-            topBar = {
-                SearchAppBar(
-                    search = search,
-                    onSearch = model::setSearch,
-                    navigationIcon = { if (!model.editable) NavigationIcon(onBack) },
-                    actions = {
-                        if (model.editable) {
-                            FilledIconToggleButton(
-                                checked = type == LinkedType.ANIME,
-                                onCheckedChange = { model.setLinkedType(LinkedType.ANIME) },
-                                content = { VectorIcon(Res.drawable.vector_anime) }
-                            )
-                            FilledIconToggleButton(
-                                checked = type == LinkedType.MANGA,
-                                onCheckedChange = { model.setLinkedType(LinkedType.MANGA) },
-                                content = { VectorIcon(Res.drawable.vector_manga) }
-                            )
-                        }
-                    }
-                )
-            }
-        ) { values ->
-            when (response) {
-                is RatesResponse.Loading -> LoadingScreen()
-                is RatesResponse.NoAccess -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    Text(stringResource(Res.string.text_profile_closed))
-                }
-
-                else -> Column(Modifier.padding(values)) {
-                    PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
-                        WatchStatus.entries.forEach { status ->
-                            Tab(
-                                selected = pagerState.targetPage == status.ordinal,
-                                onClick = { scope.launch { pagerState.animateScrollToPage(status.ordinal) } },
-                                text = { Text(stringResource(type.getWatchStatusTitle(status))) }
-                            )
-                        }
-                    }
-
-                    LazyRow(
-                        contentPadding = PaddingValues(horizontal = 16.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(OrderRates.entries, OrderRates::name) { order ->
-                            SortChip(
-                                order = order,
-                                state = orderState,
-                                type = type,
-                                onClick = { model.onSortChanged(order) }
-                            )
-                        }
-                    }
-
-                    HorizontalPager(pagerState) { page ->
-                        UserRateList(
-                            rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
-                            listState = listStates[page],
-                            gridState = gridStates[page],
-                            type = type,
-                            getRate = model::getRate,
-                            editable = model.editable,
-                            windowSize = windowSize,
-                            rateState = rateState,
-                            increment = model::increment,
-                            onNavigate = onNavigate
+        RatesResponse.Error -> ErrorScreen(model::loadRates, if (!model.editable) onBack else null)
+        is RatesResponse.Success, RatesResponse.Loading, RatesResponse.NoAccess -> {
+            ScaffoldSearchBar(
+                search = search,
+                onSearch = model::setSearch,
+                navigationIcon = { if (!model.editable) NavigationIcon(onBack) },
+                actions = {
+                    if (model.editable) {
+                        FilledIconToggleButton(
+                            checked = type == LinkedType.ANIME,
+                            onCheckedChange = { model.setLinkedType(LinkedType.ANIME) },
+                            content = { VectorIcon(Res.drawable.vector_anime) }
                         )
+                        FilledIconToggleButton(
+                            checked = type == LinkedType.MANGA,
+                            onCheckedChange = { model.setLinkedType(LinkedType.MANGA) },
+                            content = { VectorIcon(Res.drawable.vector_manga) }
+                        )
+                    }
+                }
+            ) {
+                when (response) {
+                    is RatesResponse.Loading -> LoadingScreen()
+                    is RatesResponse.NoAccess -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        Text(stringResource(Res.string.text_profile_closed))
+                    }
+
+                    else -> Column {
+                        PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
+                            WatchStatus.entries.forEach { status ->
+                                Tab(
+                                    selected = pagerState.targetPage == status.ordinal,
+                                    onClick = { scope.launch { pagerState.animateScrollToPage(status.ordinal) } },
+                                    text = { Text(stringResource(type.getWatchStatusTitle(status))) }
+                                )
+                            }
+                        }
+
+                        LazyRow(
+                            contentPadding = PaddingValues(horizontal = 16.dp),
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(OrderRates.entries, OrderRates::name) { order ->
+                                SortChip(
+                                    order = order,
+                                    state = orderState,
+                                    type = type,
+                                    onClick = { model.onSortChanged(order) }
+                                )
+                            }
+                        }
+
+                        HorizontalPager(pagerState) { page ->
+                            UserRateList(
+                                rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
+                                listState = listStates[page],
+                                gridState = gridStates[page],
+                                type = type,
+                                getRate = model::getRate,
+                                editable = model.editable,
+                                windowSize = windowSize,
+                                rateState = rateState,
+                                increment = model::increment,
+                                onNavigate = onNavigate
+                            )
+                        }
                     }
                 }
             }

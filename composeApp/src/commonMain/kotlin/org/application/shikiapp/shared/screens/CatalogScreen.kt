@@ -14,29 +14,18 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawing
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridScope
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -100,21 +89,17 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.paging.LoadState
-import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.collectAsLazyPagingItems
-import androidx.paging.compose.itemKey
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.drop
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import org.application.shikiapp.generated.shikiapp.fragment.Genres
-import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.FilterEvent
 import org.application.shikiapp.shared.events.FilterEvent.SetDuration
 import org.application.shikiapp.shared.events.FilterEvent.SetGenre
@@ -129,31 +114,22 @@ import org.application.shikiapp.shared.models.states.ExpandedFilters
 import org.application.shikiapp.shared.models.states.FiltersState
 import org.application.shikiapp.shared.models.states.isFiltersVisible
 import org.application.shikiapp.shared.models.ui.list.BasicContent
-import org.application.shikiapp.shared.models.ui.list.Content
+import org.application.shikiapp.shared.models.ui.list.asSource
 import org.application.shikiapp.shared.models.viewModels.CatalogViewModel
-import org.application.shikiapp.shared.ui.templates.CatalogCardItem
-import org.application.shikiapp.shared.ui.templates.CatalogGridItem
-import org.application.shikiapp.shared.ui.templates.ErrorScreen
-import org.application.shikiapp.shared.ui.templates.LoadingScreen
+import org.application.shikiapp.shared.ui.templates.ContentList
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
-import org.application.shikiapp.shared.ui.templates.SearchAppBar
-import org.application.shikiapp.shared.ui.templates.UserGridItem
+import org.application.shikiapp.shared.ui.templates.ScaffoldSearchBar
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.enums.CatalogItem
-import org.application.shikiapp.shared.utils.enums.CatalogItem.CLUBS
-import org.application.shikiapp.shared.utils.enums.CatalogItem.PEOPLE
-import org.application.shikiapp.shared.utils.enums.CatalogItem.USERS
 import org.application.shikiapp.shared.utils.enums.Duration
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
-import org.application.shikiapp.shared.utils.enums.ListView
 import org.application.shikiapp.shared.utils.enums.Order
 import org.application.shikiapp.shared.utils.enums.PeopleFilterItem
 import org.application.shikiapp.shared.utils.enums.Rating
 import org.application.shikiapp.shared.utils.enums.Season
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.extensions.isDigitsOnly
-import org.application.shikiapp.shared.utils.extensions.pairwise
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
@@ -185,7 +161,6 @@ import shikiapp.composeapp.generated.resources.vector_menu
 import shikiapp.composeapp.generated.resources.vector_refresh
 import shikiapp.composeapp.generated.resources.vector_star
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     val barVisibility = LocalBarVisibility.current
@@ -208,102 +183,82 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
         }
     }
 
-    LaunchedEffect(state.dialogFilter) { barVisibility.toggle(state.isFiltersVisible) }
-
-    LaunchedEffect(filters) {
-        snapshotFlow { filters }
-            .pairwise()
-            .collectLatest { (old, new) ->
-                if (new != old) {
-                    scope.launch {
-                        val listState = listStates[state.menu]
-                        val gridState = gridStates[state.menu]
-
-                        snapshotFlow {
-                            (listState?.layoutInfo?.totalItemsCount ?: 0) +
-                                    (gridState?.layoutInfo?.totalItemsCount ?: 0)
-                        }
-                            .drop(1)
-                            .first { it > 0 }
-
-                        listState?.scrollToItem(0)
-                        gridState?.scrollToItem(0)
-                    }
-                }
-            }
+    LaunchedEffect(state.dialogFilter) {
+        barVisibility.toggle(state.isFiltersVisible)
     }
 
-    val scaffoldContent = @Composable {
-        Scaffold(contentWindowInsets = WindowInsets.safeDrawing) { values ->
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(top = values.calculateTopPadding())
+    val menuRow: @Composable (() -> Unit)? = if (isCompact) null else {
+        {
+            LazyRow(
+                modifier = Modifier.fillMaxWidth(),
+                contentPadding = PaddingValues(16.dp, 8.dp),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                SearchAppBar(
-                    search = state.search,
-                    onSearch = { model.onEvent(SetTitle(it)) },
-                    navigationIcon = {
-                        if (isCompact) {
-                            IconButton(::toggleDrawer) { VectorIcon(Res.drawable.vector_menu) }
-                        }
-                    },
-                    actions = {
-                        if (state.menu.showFilter) {
-                            IconButton(
-                                onClick = { model.showFilters(state.menu) },
-                                content = {
-                                    BadgedBox(
-                                        badge = { if (filters != FiltersState()) Badge() },
-                                        content = { VectorIcon(Res.drawable.vector_filter) }
-                                    )
-                                }
+                items(CatalogItem.entries, CatalogItem::name) { item ->
+                    FilterChip(
+                        selected = state.menu == item,
+                        onClick = { model.pick(item) },
+                        label = {
+                            Text(
+                                text = stringResource(item.title),
+                                style = MaterialTheme.typography.labelLarge
                             )
+                        },
+                        leadingIcon = {
+                            VectorIcon(item.icon, Modifier.size(18.dp))
                         }
-                    }
-                )
-
-                if (!isCompact) {
-                    LazyRow(
-                        modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(16.dp, 8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(CatalogItem.entries) { item ->
-                            FilterChip(
-                                selected = state.menu == item,
-                                onClick = { model.pick(item) },
-                                label = {
-                                    Text(
-                                        text = stringResource(item.title),
-                                        style = MaterialTheme.typography.labelLarge
-                                    )
-                                },
-                                leadingIcon = {
-                                    VectorIcon(item.icon, Modifier.size(18.dp))
-                                }
-                            )
-                        }
-                    }
-                }
-
-                Box(Modifier.weight(1f)) {
-                    key(state.menu) {
-                        val catalogList = model.list.collectAsLazyPagingItems()
-
-                        CatalogList(
-                            menu = state.menu,
-                            list = catalogList,
-                            listState = listStates.getValue(state.menu),
-                            gridState = gridStates.getValue(state.menu),
-                            paddingValues = PaddingValues(bottom = values.calculateBottomPadding()),
-                            isCompactWindow = isCompact,
-                            onNavigate = onNavigate
-                        )
-                    }
+                    )
                 }
             }
         }
+    }
+
+    val scaffoldContent = @Composable {
+        ScaffoldSearchBar(
+            search = state.search,
+            onSearch = { model.onEvent(SetTitle(it)) },
+            menuRow = menuRow,
+            navigationIcon = {
+                if (isCompact) {
+                    IconButton(::toggleDrawer) { VectorIcon(Res.drawable.vector_menu) }
+                }
+            },
+            actions = {
+                if (state.menu.showFilter) {
+                    IconButton(
+                        onClick = { model.showFilters(state.menu) },
+                        content = {
+                            BadgedBox(
+                                badge = { if (filters != FiltersState()) Badge() },
+                                content = { VectorIcon(Res.drawable.vector_filter) }
+                            )
+                        }
+                    )
+                }
+            },
+            content = {
+                key(state.menu) {
+                    val catalogList = model.list.collectAsLazyPagingItems()
+                    val isRefreshing = catalogList.loadState.refresh is LoadState.Loading
+
+                    ContentList(
+                        mode = state.menu.viewType,
+                        isCompactWindow = isCompact,
+                        source = catalogList.asSource(BasicContent::id),
+                        listState = listStates.getValue(state.menu),
+                        gridState = gridStates.getValue(state.menu),
+                        onItemClick = { id, _ -> onNavigate(state.menu.navigateTo(id)) }
+                    )
+
+                    LaunchedEffect(isRefreshing) {
+                        if (isRefreshing) {
+                            listStates[state.menu]?.requestScrollToItem(0)
+                            gridStates[state.menu]?.requestScrollToItem(0)
+                        }
+                    }
+                }
+            }
+        )
     }
 
     if (isCompact) {
@@ -332,7 +287,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
                             }
                         )
 
-                        if (item == PEOPLE) {
+                        if (item == CatalogItem.PEOPLE) {
                             HorizontalDivider(Modifier.padding(8.dp))
                         }
                     }
@@ -363,102 +318,8 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     }
 }
 
-// ============================================= Lists =============================================
-
-@Composable
-fun CatalogList(
-    menu: CatalogItem,
-    list: LazyPagingItems<BasicContent>,
-    listState: LazyListState,
-    gridState: LazyGridState,
-    paddingValues: PaddingValues,
-    isCompactWindow: Boolean = rememberWindowSize().isCompact,
-    onNavigate: (Screen) -> Unit
-) {
-    BoxWithConstraints(Modifier.fillMaxSize()) {
-        val userMinSize = when {
-            maxWidth >= 840.dp -> 120.dp
-            maxWidth >= 600.dp -> 90.dp
-            else -> 70.dp
-        }
-        val catalogMinSize = when {
-            maxWidth >= 840.dp -> 180.dp
-            maxWidth >= 600.dp -> 140.dp
-            else -> 116.dp
-        }
-
-        when (list.loadState.refresh) {
-            LoadState.Loading -> LoadingScreen()
-            is LoadState.Error -> ErrorScreen(list::retry)
-            is LoadState.NotLoading -> {
-                when (menu) {
-                    USERS, CLUBS -> LazyVerticalGrid(
-                        columns = GridCells.Adaptive(userMinSize),
-                        contentPadding = paddingValues,
-                        verticalArrangement = Arrangement.spacedBy(8.dp),
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(list.itemCount) { index ->
-                            list[index]?.let {
-                                UserGridItem(
-                                    title = it.title,
-                                    imageUrl = it.poster,
-                                    onClick = { onNavigate(menu.navigateTo(it.id)) }
-                                )
-                            }
-                        }
-
-                        if (list.loadState.append == LoadState.Loading) {
-                            item(span = { GridItemSpan(maxLineSpan) }) {
-                                LoadingScreen(Modifier.padding(8.dp))
-                            }
-                        }
-                        if (list.loadState.hasError) {
-                            item(span = { GridItemSpan(maxLineSpan) }) { ErrorScreen(list::retry) }
-                        }
-                    }
-
-                    else -> {
-                        if (isCompactWindow && Preferences.listView == ListView.COLUMN) {
-                            LazyColumn(Modifier, listState, paddingValues) {
-                                columnList(list) { onNavigate(menu.navigateTo(it)) }
-
-                                if (list.loadState.append == LoadState.Loading) item { LoadingScreen() }
-                                if (list.loadState.hasError) item { ErrorScreen(list::retry) }
-                            }
-                        } else {
-                            LazyVerticalGrid(
-                                columns = GridCells.Adaptive(catalogMinSize),
-                                contentPadding = PaddingValues(
-                                    start = 8.dp,
-                                    end = 8.dp,
-                                    top = 8.dp,
-                                    bottom = paddingValues.calculateBottomPadding()
-                                ),
-                                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                verticalArrangement = Arrangement.spacedBy(8.dp),
-                                state = gridState
-                            ) {
-                                gridList(list) { onNavigate(menu.navigateTo(it)) }
-
-                                if (list.loadState.append == LoadState.Loading) {
-                                    item(span = { GridItemSpan(maxLineSpan) }) { LoadingScreen() }
-                                }
-                                if (list.loadState.hasError) {
-                                    item(span = { GridItemSpan(maxLineSpan) }) { ErrorScreen(list::retry) }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
 // ======================================= Dialogs Filters ========================================
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun DialogFilters(
     state: CatalogState,
@@ -956,7 +817,7 @@ private fun Genres(
     onClick: (String) -> Unit
 ) = AnimatedColumn(Res.string.text_genres, isExpanded, onExpandedChange) {
     FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
-        genres.forEach { genre ->
+        genres.fastForEach { genre ->
             key(genre.id) {
                 FilterChip(
                     modifier = Modifier.height(36.dp),
@@ -1009,45 +870,3 @@ private fun AnimatedColumn(
         }
     }
 }
-
-// ========================================== Extensions ===========================================
-
-private fun LazyListScope.columnList(list: LazyPagingItems<BasicContent>, onNavigate: (String) -> Unit) =
-    items(list.itemCount, list.itemKey(BasicContent::id)) { index ->
-        list[index]?.let { item ->
-            if (item is Content) {
-                CatalogCardItem(
-                    title = item.title,
-                    image = item.poster,
-                    kind = item.kind,
-                    season = item.season,
-                    status = item.status,
-                    score = item.score,
-                    modifier = Modifier.animateItem(),
-                    onClick = { onNavigate(item.id) }
-                )
-            } else {
-                CatalogCardItem(
-                    title = item.title,
-                    image = item.poster,
-                    modifier = Modifier.animateItem(),
-                    onClick = { onNavigate(item.id) }
-                )
-            }
-        }
-    }
-
-private fun LazyGridScope.gridList(list: LazyPagingItems<BasicContent>, onNavigate: (String) -> Unit) =
-    items(list.itemCount, list.itemKey(BasicContent::id)) { index ->
-        list[index]?.let { item ->
-            CatalogGridItem(
-                title = item.title,
-                image = item.poster,
-                score = (item as? Content)?.score,
-                kind = (item as? Content)?.kind,
-                season = (item as? Content)?.season?.asComposableString()?.split(" ")?.lastOrNull(),
-                modifier = Modifier.animateItem(),
-                onClick = { onNavigate(item.id) }
-            )
-        }
-    }

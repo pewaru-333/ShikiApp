@@ -29,13 +29,15 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import io.ktor.http.URLBuilder
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.events.ContentDetailEvent
-import org.application.shikiapp.shared.models.states.UserDialogState
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.showDialogs
 import org.application.shikiapp.shared.models.viewModels.ProfileViewModel
 import org.application.shikiapp.shared.network.response.LoginResponse
+import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.AUTH_URL
 import org.application.shikiapp.shared.utils.CLIENT_ID
@@ -44,6 +46,7 @@ import org.application.shikiapp.shared.utils.REDIRECT_URI
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberVerifiedDomain
+import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -68,16 +71,34 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
     val state by model.state.collectAsStateWithLifecycle()
 
     when (val data = loginState) {
-        is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
-        is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
-        is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
-        is LoginResponse.Logged -> UserView(data.user, state, model.mailManager, model::onEvent, onNavigate, model::onShowSignOut, barVisibility)
+        is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+        is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+        is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+        is LoginResponse.Logged -> {
+            UserView(data.user, state, model.mailManager, model::onEvent, onNavigate, model::onShowSignOut, barVisibility)
+
+            val comments = data.user.comments.collectAsLazyPagingItems()
+            val commentListState = rememberCommentListState(
+                list = comments,
+                onCommentEvent = model.commentEvent
+            )
+            Comments(
+                state = commentListState,
+                isVisible = state.dialogState is BaseDialogState.Comments,
+                isSending = state.isSendingComment,
+                onNavigate = onNavigate,
+                onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
+                onSendComment = { text, isOfftopic ->
+                    model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+                }
+            )
+        }
 
         else -> Unit
     }
 
-    LaunchedEffect(state.dialogState, state.menu, state.showDialogs) {
-        if (state.dialogState != null && state.dialogState != UserDialogState.Logout || state.menu != null || state.showDialogs) {
+    LaunchedEffect(state.dialogState, state.showDialogs) {
+        if (state.dialogState != null && state.dialogState != BaseDialogState.User.Logout || state.showDialogs) {
             barVisibility.hide()
         } else {
             barVisibility.show()
@@ -85,14 +106,14 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
     }
 
     SettingsScreen(
-        isVisible = state.dialogState is UserDialogState.Settings,
-        onBack = { model.onEvent(ContentDetailEvent.User.ToggleDialog(UserDialogState.Settings)) }
+        isVisible = state.dialogState is BaseDialogState.User.Settings,
+        onBack = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
-    if (state.dialogState is UserDialogState.Logout) {
+    if (state.dialogState is BaseDialogState.User.Logout) {
         DialogLogout(
             onConfirm = model::signOut,
-            onDismiss = { model.onEvent(ContentDetailEvent.User.ToggleDialog(null)) }
+            onDismiss = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) }
         )
     }
 }

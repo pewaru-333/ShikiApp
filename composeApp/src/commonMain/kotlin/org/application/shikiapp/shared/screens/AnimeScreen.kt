@@ -2,25 +2,26 @@
 
 package org.application.shikiapp.shared.screens
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.grid.itemsIndexed
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
@@ -28,9 +29,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -40,16 +40,15 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.navigationevent.NavigationEventInfo
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.AnimeState
+import org.application.shikiapp.shared.models.states.BaseDialogState
+import org.application.shikiapp.shared.models.states.showAuthors
+import org.application.shikiapp.shared.models.states.showCharacters
+import org.application.shikiapp.shared.models.states.showFandubbers
+import org.application.shikiapp.shared.models.states.showScreenshots
 import org.application.shikiapp.shared.models.states.showSheetContent
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.Video
@@ -57,6 +56,7 @@ import org.application.shikiapp.shared.models.viewModels.AnimeViewModel
 import org.application.shikiapp.shared.models.viewModels.UserRateViewModel
 import org.application.shikiapp.shared.network.response.Response.Success
 import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
+import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
 import org.application.shikiapp.shared.ui.templates.AnimatedScreen
 import org.application.shikiapp.shared.ui.templates.BottomSheet
 import org.application.shikiapp.shared.ui.templates.Comments
@@ -65,14 +65,15 @@ import org.application.shikiapp.shared.ui.templates.DialogImages
 import org.application.shikiapp.shared.ui.templates.DialogPoster
 import org.application.shikiapp.shared.ui.templates.LinkListener
 import org.application.shikiapp.shared.ui.templates.LinksSheet
-import org.application.shikiapp.shared.ui.templates.NavigationIcon
+import org.application.shikiapp.shared.ui.templates.MediaGridItem
+import org.application.shikiapp.shared.ui.templates.MediaGridItemDefaults
 import org.application.shikiapp.shared.ui.templates.ParagraphTitle
 import org.application.shikiapp.shared.ui.templates.ProfilesFull
 import org.application.shikiapp.shared.ui.templates.RelatedFull
 import org.application.shikiapp.shared.ui.templates.ScaffoldContent
-import org.application.shikiapp.shared.ui.templates.SheetColumn
 import org.application.shikiapp.shared.ui.templates.SimilarFull
 import org.application.shikiapp.shared.ui.templates.Statistics
+import org.application.shikiapp.shared.ui.templates.TextStickyHeader
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.ui.templates.description
 import org.application.shikiapp.shared.ui.templates.genres
@@ -83,7 +84,9 @@ import org.application.shikiapp.shared.ui.templates.summary
 import org.application.shikiapp.shared.ui.templates.title
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.VideoKind
+import org.application.shikiapp.shared.utils.extensions.toContent
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -105,8 +108,23 @@ fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
 
     LinkListener(model.openLink) { (response as? Success)?.data?.url }
 
-    AnimatedScreen(response, model::loadData) { anime ->
+    AnimatedScreen(response, model::loadData, Anime::comments) { anime, comments ->
         AnimeView(anime, state, model::onEvent, onNavigate, back)
+
+        val commentListState = rememberCommentListState(
+            list = comments,
+            onCommentEvent = model.commentEvent
+        )
+        Comments(
+            state = commentListState,
+            isVisible = state.dialogState is BaseDialogState.Comments,
+            isSending = state.isSendingComment,
+            onNavigate = onNavigate,
+            onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            onSendComment = { text, isOfftopic ->
+                model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+            }
+        )
     }
 }
 
@@ -122,12 +140,10 @@ private fun AnimeView(
     val rate = anime.userRate.getValue()
     val newRate by rateModel.newRate.collectAsStateWithLifecycle()
 
-    val commentsState = rememberLazyListState()
     val authorsState = rememberLazyListState()
     val charactersState = rememberLazyListState()
     val similarState = rememberLazyListState()
-
-    val comments = anime.comments.collectAsLazyPagingItems()
+    val screenshotsState = rememberLazyGridState()
 
     LaunchedEffect(Unit) {
         rate?.let { rateModel.getRate(it, LinkedType.ANIME) }
@@ -139,8 +155,7 @@ private fun AnimeView(
         isFavoured = anime.favoured,
         onBack = onBack,
         onEvent = onEvent,
-        onToggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) },
-        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount }
+        onToggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) }
     ) {
         title(anime.title)
         info(
@@ -153,7 +168,7 @@ private fun AnimeView(
             episodes = anime.episodes,
             origin = anime.origin,
             rating = anime.rating,
-            onOpenFullscreenPoster = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+            onOpenFullscreenPoster = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Poster)) }
         )
 
         genres(anime.genres)
@@ -168,72 +183,61 @@ private fun AnimeView(
 
         description(anime.description)
         related(
-            related = anime.related,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowRelated) },
+            list = anime.related,
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Related)) },
             onNavigate = onNavigate
         )
         profiles(
             profiles = anime.charactersMain,
             title = Res.string.text_characters,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowCharacters) },
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Characters)) },
             onNavigate = { onNavigate(Screen.Character(it)) }
         )
         profiles(
             profiles = anime.personMain,
             title = Res.string.text_authors,
-            onShow = { onEvent(ContentDetailEvent.Media.ShowAuthors) },
+            onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Authors)) },
             onNavigate = { onNavigate(Screen.Person(it.toLong())) }
         )
 
-        anime.screenshots.let { list ->
-            if (list.isNotEmpty()) {
-                item {
-                    Screenshots(
-                        list = list,
-                        onShow = { onEvent(ContentDetailEvent.Media.ShowImage(it)) },
-                        onHide = { onEvent(ContentDetailEvent.Media.Anime.ShowScreenshots) },
-                    )
-                }
+        if (anime.screenshots.isNotEmpty()) {
+            item {
+                Screenshots(
+                    list = anime.screenshots,
+                    onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Screenshots)) },
+                    onShowScreenshot = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Image(it))) }
+                )
             }
         }
-        anime.video.let { list ->
-            if (list.isNotEmpty()) {
-                item {
-                    Video(list) { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) }
-                }
+
+        if (anime.video.isNotEmpty()) {
+            item {
+                Video(anime.video) { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Video)) }
             }
         }
     }
-
-    Comments(
-        list = comments,
-        listState = commentsState,
-        isVisible = state.showComments,
-        onHide = { onEvent(ContentDetailEvent.ShowComments) },
-        onNavigate = onNavigate
-    )
 
     RelatedFull(
         related = anime.related,
         chronology = anime.chronology,
         franchise = anime.franchiseList,
-        isVisible = state.showRelated,
-        onHide = { onEvent(ContentDetailEvent.Media.ShowRelated) },
-        onNavigate = onNavigate
+        isVisible = state.dialogState is BaseDialogState.Media.Related,
+        onNavigate = onNavigate,
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
     SimilarFull(
         list = anime.similar,
         listState = similarState,
-        isVisible = state.showSimilar,
+        isVisible = state.dialogState is BaseDialogState.Media.Similar,
         onNavigate = { onNavigate(Screen.Anime(it)) },
-        onHide = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
     Statistics(
         statistics = anime.stats,
-        isVisible = state.showStats,
-        onHide = { onEvent(ContentDetailEvent.Media.ShowStats) },
+        isVisible = state.dialogState is BaseDialogState.Media.Stats,
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
     )
 
     ProfilesFull(
@@ -241,12 +245,7 @@ private fun AnimeView(
         isVisible = state.showCharacters || state.showAuthors,
         title = stringResource(if (state.showCharacters) Res.string.text_characters else Res.string.text_authors),
         state = if (state.showCharacters) charactersState else authorsState,
-        onHide = {
-            onEvent(
-                if (state.showCharacters) ContentDetailEvent.Media.ShowCharacters
-                else ContentDetailEvent.Media.ShowAuthors
-            )
-        },
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
         onNavigate = {
             onNavigate(
                 if (state.showCharacters) Screen.Character(it)
@@ -257,37 +256,44 @@ private fun AnimeView(
 
     Screenshots(
         list = anime.screenshots,
+        listState = screenshotsState,
         isVisible = state.showScreenshots,
-        onShowScreenshot = { onEvent(ContentDetailEvent.Media.ShowImage(it)) },
-        onHide = { onEvent(ContentDetailEvent.Media.Anime.ShowScreenshots) }
+        onShowScreenshot = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Image(it, BaseDialogState.Anime.Screenshots))) },
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
     DialogImages(
         images = anime.screenshots,
         initialIndex = state.screenshot,
-        isVisible = state.showScreenshot,
-        onClose = { onEvent(ContentDetailEvent.Media.ShowImage()) }
+        isVisible = state.dialogState is BaseDialogState.Media.Image,
+        onClose = {
+            onEvent(
+                ContentDetailEvent.ToggleDialog(
+                    dialogState = (state.dialogState as BaseDialogState.Media.Image).parentDialog
+                )
+            )
+        }
     )
 
     DialogPoster(
         link = anime.poster,
-        isVisible = state.showPoster,
-        onClose = { onEvent(ContentDetailEvent.Media.ShowPoster) }
+        isVisible = state.dialogState is BaseDialogState.Poster,
+        onClose = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
     Video(
         video = anime.videoGrouped,
-        isVisible = state.showVideo,
-        onHide = { onEvent(ContentDetailEvent.Media.Anime.ShowVideo) }
+        isVisible = state.dialogState is BaseDialogState.Anime.Video,
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 
-    when {
-        state.showRate -> DialogEditRate(
+    when (state.dialogState) {
+        BaseDialogState.Media.Rate -> DialogEditRate(
             state = newRate,
             type = LinkedType.ANIME,
             isExists = rate != null,
             onEvent = rateModel::onEvent,
-            onDismiss = { onEvent(ContentDetailEvent.Media.ShowRate) },
+            onDismiss = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
             onCreate = { type ->
                 rateModel.create(
                     id = anime.id,
@@ -309,44 +315,59 @@ private fun AnimeView(
             }
         )
 
-        state.showSheet -> BottomSheet(
+        BaseDialogState.Sheet -> BottomSheet(
             url = anime.url,
             canShowLinks = anime.links.isNotEmpty(),
             onEvent = onEvent
         )
 
-        state.showLinks -> LinksSheet(anime.links) {
-            onEvent(ContentDetailEvent.Media.ShowLinks)
+        BaseDialogState.Media.Links -> LinksSheet(anime.links) {
+            onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet))
         }
 
-        state.showSheetContent -> SheetColumn(
-            label = stringResource(if (state.showFansubbers) Res.string.text_subtitles else Res.string.text_voices),
-            list = if (state.showFansubbers) anime.fansubbers else anime.fandubbers,
-            onHide = {
-                onEvent(
-                    if (state.showFansubbers) ContentDetailEvent.Media.ShowFansubbers
-                    else ContentDetailEvent.Media.ShowFandubbers
-                )
+        else -> Unit
+    }
+
+    if (state.showSheetContent) {
+        ModalBottomSheet(
+            onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            contentWindowInsets = { WindowInsets.systemBars }
+        ) {
+            val (text, list) = if (state.showFandubbers) Res.string.text_voices to anime.fandubbers
+            else Res.string.text_subtitles to anime.fansubbers
+
+            Text(
+                text = stringResource(text),
+                style = MaterialTheme.typography.titleLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(start = 12.dp, bottom = 8.dp)
+            )
+
+            LazyColumn {
+                items(list) { item ->
+                    Text(item, Modifier.padding(16.dp))
+                }
             }
-        )
+        }
     }
 }
 
 @Composable
-private fun Screenshots(list: List<String>, onShow: (Int) -> Unit, onHide: () -> Unit) =
+private fun Screenshots(list: List<String>, onShowScreenshot: (Int) -> Unit, onShow: () -> Unit) =
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
             ParagraphTitle(stringResource(Res.string.text_screenshots), Modifier.padding(bottom = 4.dp))
-            IconButton(onHide) { VectorIcon(Res.drawable.vector_arrow_forward) }
+            IconButton(onShow) { VectorIcon(Res.drawable.vector_arrow_forward) }
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            itemsIndexed(list.take(6)) { index, item ->
+            itemsIndexed(list.take(6), ::Pair) { index, item ->
                 AnimatedAsyncImage(
                     model = item,
                     modifier = Modifier
                         .size(172.dp, 97.dp)
                         .clip(MaterialTheme.shapes.small)
-                        .clickable { onShow(index) }
+                        .clickable { onShowScreenshot(index) }
                 )
             }
         }
@@ -378,108 +399,62 @@ private fun Video(list: List<Video>, onShow: () -> Unit) {
 @Composable
 private fun Screenshots(
     list: List<String>,
+    listState: LazyGridState,
     isVisible: Boolean,
     onShowScreenshot: (Int) -> Unit,
     onHide: () -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_screenshots)) },
-                navigationIcon = { NavigationIcon(onHide) }
+) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_screenshots), onHide) { values ->
+    LazyVerticalGrid(
+        columns = GridCells.Adaptive(160.dp),
+        modifier = Modifier.fillMaxSize(),
+        state = listState,
+        contentPadding = values.toContent(),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+        horizontalArrangement = Arrangement.spacedBy(4.dp)
+    ) {
+        itemsIndexed(list, ::Pair) { index, item ->
+            AnimatedAsyncImage(
+                model = item,
+                contentScale = ContentScale.Crop,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .aspectRatio(16f / 9f)
+                    .clip(MaterialTheme.shapes.small)
+                    .clickable { onShowScreenshot(index) }
             )
-        }
-    ) { values ->
-        LazyVerticalGrid(
-            columns = GridCells.Adaptive(160.dp),
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 12.dp,
-                end = 12.dp,
-                top = values.calculateTopPadding() + 8.dp,
-                bottom = 12.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
-        ) {
-            itemsIndexed(items = list, key = { _, item -> item }) { index, item ->
-                AnimatedAsyncImage(
-                    model = item,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .aspectRatio(16f / 9f)
-                        .clickable { onShowScreenshot(index) }
-                )
-            }
         }
     }
 }
 
 @Composable
 private fun Video(video: Map<VideoKind, List<Video>>, isVisible: Boolean, onHide: () -> Unit) =
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = slideInHorizontally(initialOffsetX = { it }),
-        exit = slideOutHorizontally(targetOffsetX = { it })
-    ) {
+    AnimatedDialogScreen(isVisible, stringResource(Res.string.text_video), onHide) { values ->
         val handler = LocalUriHandler.current
 
-        NavigationBackHandler(
-            state = rememberNavigationEventState(NavigationEventInfo.None),
-            isBackEnabled = isVisible,
-            onBackCompleted = onHide
-        )
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(Res.string.text_video)) },
-                    navigationIcon = { NavigationIcon(onHide) }
-                )
-            }
-        ) { values ->
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(120.dp),
-                contentPadding = PaddingValues(8.dp, values.calculateTopPadding(), 8.dp, 0.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
-            ) {
-                video.filterValues { it.isNotEmpty() }.forEach { (entry, values) ->
-                    item(entry.name, { GridItemSpan(maxLineSpan) }) {
-                        ParagraphTitle(stringResource(entry.title), Modifier.padding(bottom = 4.dp))
-                    }
-
-                    items(values, Video::url) { video ->
-                        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                            AnimatedAsyncImage(
-                                model = video.imageUrl,
-                                contentScale = ContentScale.Crop,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(172f / 130f)
-                                    .clip(MaterialTheme.shapes.small)
-                                    .clickable { handler.openUri(video.url) }
-                            )
-                            Text(
-                                text = video.name ?: stringResource(Res.string.text_unknown),
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.Center,
-                                minLines = 2,
-                                maxLines = 2,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.titleSmall
-                            )
-                        }
-                    }
+        LazyVerticalGrid(
+            columns = GridCells.Adaptive(120.dp),
+            modifier = Modifier.padding(values), // Без этого stickyHeader не двигается при прокрутке
+            contentPadding = PaddingValues(8.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            video.forEach { (entry, values) ->
+                stickyHeader { TextStickyHeader(stringResource(entry.title)) }
+                items(values, Video::url) { video ->
+                    MediaGridItem(
+                        title = video.name ?: stringResource(Res.string.text_unknown),
+                        poster = video.imageUrl,
+                        onClick = { handler.openUri(video.url) },
+                        posterModifier = Modifier
+                            .fillMaxWidth()
+                            .aspectRatio(172f / 130f)
+                            .clip(MaterialTheme.shapes.small),
+                        titleConfig = MediaGridItemDefaults.titleConfig(
+                            minLines = 2,
+                            textAlign = TextAlign.Center,
+                            style = MaterialTheme.typography.titleSmall
+                        )
+                    )
                 }
             }
         }

@@ -21,7 +21,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -40,9 +39,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import androidx.paging.LoadState
-import androidx.paging.compose.collectAsLazyPagingItems
 import org.application.shikiapp.shared.events.ContentDetailEvent
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.NewsDetailState
 import org.application.shikiapp.shared.models.ui.NewsDetail
 import org.application.shikiapp.shared.models.viewModels.NewsDetailViewModel
@@ -55,6 +53,7 @@ import org.application.shikiapp.shared.ui.templates.IconComment
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.CommentContent
+import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
@@ -67,8 +66,23 @@ fun NewsDetail(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     val response by model.response.collectAsStateWithLifecycle()
     val state by model.state.collectAsStateWithLifecycle()
 
-    AnimatedScreen(response, model::loadData) { newsDetail ->
+    AnimatedScreen(response, model::loadData, NewsDetail::comments) { newsDetail, comments ->
         NewsDetailView(newsDetail, state, model::onEvent, onNavigate, onBack)
+
+        val commentListState = rememberCommentListState(
+            list = comments,
+            onCommentEvent = model.commentEvent
+        )
+        Comments(
+            state = commentListState,
+            isVisible = state.dialogState is BaseDialogState.Comments,
+            isSending = state.isSendingComment,
+            onNavigate = onNavigate,
+            onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            onSendComment = { text, isOfftopic ->
+                model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+            }
+        )
     }
 }
 
@@ -80,9 +94,6 @@ fun NewsDetailView(
     onNavigate: (Screen) -> Unit,
     onBack: () -> Unit
 ) {
-    val commentsListState = rememberLazyListState()
-    val comments = news.comments.collectAsLazyPagingItems()
-
     val isExpanded = !rememberWindowSize().isCompact
 
     val isPosterImage = remember(news.poster) { news.poster is CommentContent.ImageContent }
@@ -155,7 +166,7 @@ fun NewsDetailView(
                         .padding(bottom = 16.dp)
                         .aspectRatio(16f / 9f)
                         .clip(MaterialTheme.shapes.medium)
-                        .clickable { onEvent(ContentDetailEvent.Media.ShowImage()) }
+                        .clickable { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Image())) }
                 )
             }
         }
@@ -181,7 +192,7 @@ fun NewsDetailView(
                                 .fillMaxWidth()
                                 .aspectRatio(16f / 9f)
                                 .clip(MaterialTheme.shapes.medium)
-                                .clickable { onEvent(ContentDetailEvent.Media.ShowImage(index)) }
+                                .clickable { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Image(index))) }
                         ) {
                             AnimatedAsyncImage(
                                 model = image,
@@ -210,7 +221,7 @@ fun NewsDetailView(
                             modifier = Modifier
                                 .size(200.dp, 120.dp)
                                 .clip(MaterialTheme.shapes.medium)
-                                .clickable { onEvent(ContentDetailEvent.Media.ShowImage(if (isPosterImage) index + 1 else index)) }
+                                .clickable { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Image(if (isPosterImage) index + 1 else index))) }
                         ) {
                             AnimatedAsyncImage(
                                 model = image,
@@ -229,12 +240,7 @@ fun NewsDetailView(
             TopAppBar(
                 title = { Text(stringResource(Res.string.text_news_one)) },
                 navigationIcon = { NavigationIcon(onBack) },
-                actions = {
-                    IconComment(
-                        onLoadState = { (comments.loadState.refresh is LoadState.Loading) to comments.itemCount },
-                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
-                    )
-                }
+                actions = { IconComment { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) } }
             )
         }
     ) { values ->
@@ -283,19 +289,11 @@ fun NewsDetailView(
         }
     }
 
-    Comments(
-        list = comments,
-        listState = commentsListState,
-        isVisible = state.showComments,
-        onHide = { onEvent(ContentDetailEvent.ShowComments) },
-        onNavigate = onNavigate
-    )
-
     DialogImages(
         images = if (news.poster is CommentContent.ImageContent) listOf(news.poster.fullUrl ?: news.poster.previewUrl) + news.images
         else news.images,
         initialIndex = state.image,
-        isVisible = state.showImage,
-        onClose = { onEvent(ContentDetailEvent.Media.ShowImage()) }
+        isVisible = state.dialogState is BaseDialogState.Media.Image,
+        onClose = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 }
