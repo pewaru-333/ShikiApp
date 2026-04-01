@@ -4,34 +4,44 @@ package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.indication
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Arrangement.spacedBy
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.GridItemSpan
+import androidx.compose.foundation.lazy.grid.LazyGridState
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
+import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
+import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
+import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
@@ -43,22 +53,18 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.ripple
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -66,27 +72,24 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
-import androidx.compose.ui.Alignment.Companion.CenterVertically
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEach
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
+import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.Franchise
 import org.application.shikiapp.shared.models.ui.History
 import org.application.shikiapp.shared.models.ui.Label
@@ -95,39 +98,41 @@ import org.application.shikiapp.shared.models.ui.Related
 import org.application.shikiapp.shared.models.ui.Score
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.Studio
-import org.application.shikiapp.shared.models.ui.User
 import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
+import org.application.shikiapp.shared.models.ui.list.ContentSource
+import org.application.shikiapp.shared.models.ui.list.ContentViewType
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.screens.LabelInfoItem
 import org.application.shikiapp.shared.utils.BLANK
-import org.application.shikiapp.shared.utils.enums.FavouriteItem
+import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
+import org.application.shikiapp.shared.utils.enums.ListView
 import org.application.shikiapp.shared.utils.enums.RelationKind
-import org.application.shikiapp.shared.utils.enums.UserMenu
+import org.application.shikiapp.shared.utils.extensions.add
+import org.application.shikiapp.shared.utils.extensions.appendLoadState
 import org.application.shikiapp.shared.utils.extensions.substringAfter
 import org.application.shikiapp.shared.utils.extensions.substringBefore
 import org.application.shikiapp.shared.utils.extensions.toContent
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.ui.CommentContent
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_anime_list
 import shikiapp.composeapp.generated.resources.text_chronology
-import shikiapp.composeapp.generated.resources.text_clubs
 import shikiapp.composeapp.generated.resources.text_date_from
 import shikiapp.composeapp.generated.resources.text_date_till
 import shikiapp.composeapp.generated.resources.text_description
 import shikiapp.composeapp.generated.resources.text_directly
+import shikiapp.composeapp.generated.resources.text_empty
 import shikiapp.composeapp.generated.resources.text_episode
 import shikiapp.composeapp.generated.resources.text_episode_next
 import shikiapp.composeapp.generated.resources.text_episodes
-import shikiapp.composeapp.generated.resources.text_favourite
 import shikiapp.composeapp.generated.resources.text_franchise
-import shikiapp.composeapp.generated.resources.text_friends
-import shikiapp.composeapp.generated.resources.text_history
 import shikiapp.composeapp.generated.resources.text_in_lists
 import shikiapp.composeapp.generated.resources.text_kind
 import shikiapp.composeapp.generated.resources.text_manga_list
@@ -161,7 +166,6 @@ import shikiapp.composeapp.generated.resources.vector_statistics
 import shikiapp.composeapp.generated.resources.vector_subtitles
 import shikiapp.composeapp.generated.resources.vector_timer
 import shikiapp.composeapp.generated.resources.vector_voice_actors
-import kotlin.math.roundToInt
 
 @Composable
 fun ScaffoldContent(
@@ -170,7 +174,6 @@ fun ScaffoldContent(
     isFavoured: AsyncData<Boolean>,
     onBack: () -> Unit,
     onToggleFavourite: () -> Unit,
-    onLoadState: () -> Pair<Boolean, Int>,
     onEvent: (ContentDetailEvent) -> Unit,
     content: LazyListScope.() -> Unit
 ) {
@@ -187,13 +190,10 @@ fun ScaffoldContent(
                 title = title,
                 navigationIcon = { NavigationIcon(onBack) },
                 actions = {
-                    IconComment(
-                        onLoadState = onLoadState,
-                        onEvent = { onEvent(ContentDetailEvent.ShowComments) }
-                    )
+                    IconComment { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) }
 
                     IconButton(
-                        onClick = { onEvent(ContentDetailEvent.ShowSheet) },
+                        onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet)) },
                         content = { VectorIcon(Res.drawable.vector_more) }
                     )
                 }
@@ -213,9 +213,226 @@ fun ScaffoldContent(
             modifier = Modifier.fillMaxSize(),
             state = listState,
             contentPadding = values.toContent(),
-            verticalArrangement = spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp),
             content = content
         )
+    }
+}
+
+@Composable
+fun ContentList(
+    source: ContentSource<BasicContent>,
+    mode: ContentViewType,
+    modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(0.dp),
+    listState: LazyListState = rememberLazyListState(),
+    gridState: LazyGridState = rememberLazyGridState(),
+    staggeredGridState: LazyStaggeredGridState = rememberLazyStaggeredGridState(),
+    isCompactWindow: Boolean = rememberWindowSize().isCompact,
+    onItemClick: (id: String, kind: Kind?) -> Unit,
+    onImageClick: (String?) -> Unit = {}
+) {
+    BoxWithConstraints(modifier.fillMaxSize()) {
+        val userMinSize = when {
+            maxWidth >= 840.dp -> 120.dp
+            maxWidth >= 600.dp -> 90.dp
+            else -> 70.dp
+        }
+
+        val catalogMinSize = when {
+            maxWidth >= 840.dp -> 180.dp
+            maxWidth >= 600.dp -> 140.dp
+            else -> 116.dp
+        }
+
+        if (source.isLoadingRefresh) {
+            LoadingScreen()
+            return@BoxWithConstraints
+        }
+        if (source.isError) {
+            ErrorScreen(onRetry = source.onRetry)
+            return@BoxWithConstraints
+        }
+        if (source.isEmpty) {
+            Box(Modifier.fillMaxSize().padding(contentPadding), Alignment.Center) {
+                Text(stringResource(Res.string.text_empty))
+            }
+            return@BoxWithConstraints
+        }
+
+        when (mode) {
+            ContentViewType.GRID_ITEM_SMALL -> {
+                val titleConfig = MediaGridItemDefaults.titleConfig(
+                    maxLines = 1,
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.labelMedium.copy(
+                        fontWeight = FontWeight.SemiBold
+                    )
+                )
+
+                LazyVerticalGrid(
+                    state = gridState,
+                    columns = GridCells.Adaptive(userMinSize),
+                    contentPadding = contentPadding.add(PaddingValues(horizontal = 8.dp)),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(source.itemCount, source.itemKey) { index ->
+                        source.itemProvider(index)?.let { item ->
+                            CircleContentItem(
+                                title = item.title,
+                                poster = item.poster,
+                                onClick = { onItemClick(item.id, null) },
+                                titleConfig = titleConfig
+                            )
+                        }
+                    }
+
+                    appendLoadState(source) { GridItemSpan(maxLineSpan) }
+                }
+            }
+
+            ContentViewType.LIST_ITEM -> {
+                LazyColumn(state = listState, contentPadding = contentPadding) {
+                    items(source.itemCount, source.itemKey) { index ->
+                        source.itemProvider(index)?.let { item ->
+                            ListContentItem(item.title, item.poster) {
+                                onItemClick(item.id, null)
+                            }
+                        }
+                    }
+
+                    appendLoadState(source)
+                }
+            }
+
+            ContentViewType.STAGGERED_GRID_ITEM_IMAGES -> {
+                LazyVerticalStaggeredGrid(
+                    state = staggeredGridState,
+                    columns = StaggeredGridCells.Adaptive(120.dp),
+                    contentPadding = contentPadding.add(PaddingValues(8.dp)),
+                    verticalItemSpacing = 8.dp,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(source.itemCount, source.itemKey) { index ->
+                        source.itemProvider(index)?.let { item ->
+                            AnimatedAsyncImage(
+                                model = item.title,
+                                contentScale = ContentScale.Crop,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .wrapContentHeight()
+                                    .clip(MaterialTheme.shapes.small)
+                                    .clickable { onImageClick(item.poster) }
+                            )
+                        }
+                    }
+
+                    appendLoadState(source)
+                }
+            }
+
+            ContentViewType.ADAPTIVE_ITEM -> {
+                if (isCompactWindow && Preferences.listView == ListView.COLUMN) {
+                    LazyColumn(state = listState, contentPadding = contentPadding) {
+                        items(source.itemCount, source.itemKey) { index ->
+                            source.itemProvider(index)?.let { item ->
+                                val content = item as? Content
+                                val history = item as? History
+
+                                val navId = history?.contentId ?: item.id
+                                val navKind = history?.kind ?: content?.kind
+
+                                MediaListItem(
+                                    title = item.title,
+                                    poster = item.poster,
+                                    description = history?.description,
+                                    score = content?.score,
+                                    status = content?.status,
+                                    kind = content?.kind,
+                                    date = history?.date,
+                                    season = content?.season?.asComposableString()?.takeIf(String::isNotEmpty),
+                                    onClick = {
+                                        if (navId.isNotEmpty()) {
+                                            onItemClick(navId, navKind)
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        appendLoadState(source)
+                    }
+                } else {
+                    val titleConfig = MediaGridItemDefaults.titleConfig(
+                        minLines = 2,
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 18.sp
+                        )
+                    )
+                    val textStyle = MaterialTheme.typography.labelSmall.copy(
+                        letterSpacing = 0.5.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(
+                            alpha = 0.7f
+                        )
+                    )
+
+                    LazyVerticalGrid(
+                        state = gridState,
+                        columns = GridCells.Adaptive(catalogMinSize),
+                        contentPadding = contentPadding.add(PaddingValues(8.dp)),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        items(source.itemCount, source.itemKey) { index ->
+                            source.itemProvider(index)?.let { item ->
+                                val content = item as? Content
+                                val history = item as? History
+
+                                val navId = history?.contentId ?: item.id
+                                val navKind = history?.kind ?: content?.kind
+
+                                val season = content?.season?.asComposableString()?.substringAfterLast(' ')
+                                val kindName = content?.kind?.let { stringResource(it.title) }
+                                val kindSeason = if (kindName != null && season != null) {
+                                    "$kindName • $season"
+                                } else {
+                                    kindName ?: season.orEmpty()
+                                }
+
+                                MediaGridItem(
+                                    title = item.title,
+                                    poster = item.poster,
+                                    score = content?.score,
+                                    titleConfig = titleConfig,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(4.dp),
+                                    onClick = {
+                                        if (navId.isNotEmpty()) {
+                                            onItemClick(navId, navKind)
+                                        }
+                                    },
+                                    subtitleContent = {
+                                        if (kindSeason.isNotEmpty()) {
+                                            Text(
+                                                text = kindSeason,
+                                                maxLines = 1,
+                                                overflow = TextOverflow.Ellipsis,
+                                                style = textStyle
+                                            )
+                                        }
+                                    }
+                                )
+                            }
+                        }
+
+                        appendLoadState(source) { GridItemSpan(maxLineSpan) }
+                    }
+                }
+            }
+        }
     }
 }
 
@@ -238,7 +455,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
     val isTextExpanded = !hasOverflow || maxLines > 8
 
     Column(Modifier.animateContentSize()) {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, CenterVertically) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
             ParagraphTitle(stringResource(Res.string.text_description), Modifier.padding(bottom = 4.dp))
 
             if (hasOverflow || maxLines > 8) {
@@ -274,7 +491,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                     .clickable { isVisible = !isVisible }
                     .padding(12.dp, 8.dp)
             ) {
-                Row(verticalAlignment = CenterVertically) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
                     VectorIcon(
                         modifier = Modifier.size(20.dp),
                         resId = if (isVisible) Res.drawable.vector_keyboard_arrow_down
@@ -310,7 +527,7 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
 
 @Composable
 fun Names(russian: String?, english: String?, japanese: String?) =
-    Column(verticalArrangement = spacedBy(4.dp)) {
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         when {
             !russian.isNullOrEmpty() -> {
                 Text(
@@ -373,35 +590,18 @@ fun SimilarFull(
     isVisible: Boolean,
     onNavigate: (String) -> Unit,
     onHide: () -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_similar)) },
-                navigationIcon = { NavigationIcon(onHide) })
-        }
-    ) { values ->
-        LazyColumn(Modifier, listState, values) {
-            items(list) { item ->
-                CatalogCardItem(
-                    title = item.title,
-                    kind = item.kind,
-                    season = item.season,
-                    status = item.status,
-                    image = item.poster,
-                    score = item.score,
-                    onClick = { onNavigate(item.id) }
-                )
-            }
+) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_similar), onHide) { values ->
+    LazyColumn(Modifier, listState, values) {
+        items(list, Content::id) { item ->
+            MediaListItem(
+                title = item.title,
+                poster = item.poster,
+                score = item.score,
+                status = item.status,
+                kind = item.kind,
+                season = item.season.asComposableString().takeIf(String::isNotEmpty),
+                onClick = { onNavigate(item.id) },
+            )
         }
     }
 }
@@ -413,45 +613,22 @@ fun Profiles(
     onShowFull: () -> Unit,
     onNavigate: (String) -> Unit
 ) = Column {
-    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, CenterVertically) {
+    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle(title)
         IconButton(onShowFull) { VectorIcon(Res.drawable.vector_arrow_forward) }
     }
-    LazyRow(horizontalArrangement = spacedBy(8.dp)) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(list, BasicContent::id) {
-            val interactionSource = remember(::MutableInteractionSource)
-
-            Column(
-                verticalArrangement = spacedBy(4.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .width(72.dp)
-                    .clickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onClick = { onNavigate(it.id) }
-                    )
-            ) {
-                AnimatedAsyncImage(
-                    model = it.poster,
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier
-                        .size(72.dp)
-                        .clip(CircleShape)
-                        .border((0.4).dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                        .indication(interactionSource, ripple())
-                )
-
-                Text(
+            CircleContentItem(
+                title = it.title,
+                poster = it.poster,
+                onClick = { onNavigate(it.id) },
+                titleConfig = MediaGridItemDefaults.titleConfig(
                     minLines = 2,
-                    maxLines = 2,
-                    text = it.title,
-                    modifier = Modifier.fillMaxWidth(),
                     textAlign = TextAlign.Center,
-                    overflow = TextOverflow.Ellipsis,
                     style = MaterialTheme.typography.labelLarge
                 )
-            }
+            )
         }
     }
 }
@@ -464,59 +641,33 @@ fun <T : BasicContent> ProfilesFull(
     state: LazyListState,
     onHide: () -> Unit,
     onNavigate: (String) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(title) },
-                navigationIcon = { NavigationIcon(onHide) }
+) = AnimatedDialogScreen(isVisible, title, onHide) { values ->
+    LazyColumn(Modifier, state, values) {
+        items(list, BasicContent::id) {
+            ListContentItem(
+                name = it.title,
+                image = it.poster,
+                roles = (it as? Content)?.season?.asComposableString(),
+                onClick = { onNavigate(it.id) }
             )
-        }
-    ) { values ->
-        LazyColumn(Modifier, state, values) {
-            items(list, BasicContent::id) {
-                BasicContentItem(
-                    name = it.title,
-                    link = it.poster,
-                    modifier = Modifier.clickable { onNavigate(it.id) },
-                    roles = if (it is Content) it.season.asComposableString() else null
-                )
-            }
         }
     }
 }
 
 @Composable
-fun Related(list: List<Related>, showAllRelated: () -> Unit, onNavigate: (Screen) -> Unit) =
-    Column(verticalArrangement = spacedBy(4.dp)) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = CenterVertically
-        ) {
+fun Related(list: List<Related>, onShowAll: () -> Unit, onNavigate: (Screen) -> Unit) =
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
             ParagraphTitle(stringResource(Res.string.text_related))
-            TextButton(showAllRelated) { Text(stringResource(Res.string.text_show_all_u)) }
+            TextButton(onShowAll) { Text(stringResource(Res.string.text_show_all_u)) }
         }
 
-        LazyRow(
-            horizontalArrangement = spacedBy(12.dp),
-            contentPadding = PaddingValues(horizontal = 4.dp)
-        ) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             items(list.take(6), Related::id) { related ->
                 RelatedCard(
                     title = related.title,
                     poster = related.poster,
                     relationText = related.relationText.ifEmpty { stringResource(related.kind.title) },
-                    interactionSource = remember(::MutableInteractionSource),
                     onClick = { onNavigate(related.linkedType.navigateTo(related.id)) }
                 )
             }
@@ -531,96 +682,72 @@ fun RelatedFull(
     isVisible: Boolean,
     onHide: () -> Unit,
     onNavigate: (Screen) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
+) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_related), onHide) { values ->
     val tabs = arrayOf(
         stringResource(Res.string.text_directly),
         stringResource(Res.string.text_chronology),
         stringResource(Res.string.text_franchise)
     )
-
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(pageCount = tabs::size)
 
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_related)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { values ->
-        Column(Modifier.padding(values)) {
-            PrimaryTabRow(pagerState.currentPage) {
-                tabs.forEachIndexed { index, title ->
-                    Tab(
-                        selected = pagerState.targetPage == index,
-                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                        text = { Text(title) }
-                    )
-                }
+    Column(Modifier.padding(values)) {
+        PrimaryTabRow(pagerState.currentPage) {
+            tabs.forEachIndexed { index, title ->
+                Tab(
+                    selected = pagerState.targetPage == index,
+                    onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
+                    text = { Text(title) }
+                )
             }
+        }
 
-            HorizontalPager(
-                state = pagerState,
-                modifier = Modifier.fillMaxSize(),
-                verticalAlignment = Alignment.Top
-            ) { page ->
-                when (page) {
-                    0 -> LazyColumn {
-                        items(related) { item ->
-                            CatalogCardItem(
+        HorizontalPager(
+            state = pagerState,
+            modifier = Modifier.fillMaxSize(),
+            verticalAlignment = Alignment.Top
+        ) { page ->
+            when (page) {
+                0 -> LazyColumn {
+                    items(related, Related::id) { item ->
+                        MediaListItem(
+                            title = item.title,
+                            poster = item.poster,
+                            score = item.score,
+                            status = item.status,
+                            kind = item.kind,
+                            role = item.relationText,
+                            season = item.season.asComposableString().takeIf(String::isNotEmpty),
+                            onClick = { onNavigate(item.linkedType.navigateTo(item.id)) },
+                        )
+                    }
+                }
+
+                1 -> LazyColumn {
+                    items(chronology, Content::id) { item ->
+                        MediaListItem(
+                            title = item.title,
+                            poster = item.poster,
+                            score = item.score,
+                            status = item.status,
+                            kind = item.kind,
+                            season = item.season.asComposableString().takeIf(String::isNotEmpty),
+                            onClick = { onNavigate(item.kind.linkedType.navigateTo(item.id)) }
+                        )
+                    }
+                }
+
+                2 -> LazyColumn {
+                    franchise.forEach { (relation, items) ->
+                        stickyHeader { TextStickyHeader(stringResource(relation.title)) }
+                        items(items, Franchise::id) { item ->
+                            MediaListItem(
                                 title = item.title,
+                                poster = item.poster,
                                 kind = item.kind,
-                                season = item.season,
-                                status = item.status,
-                                image = item.poster,
-                                score = item.score,
-                                relationText = item.relationText,
+                                season = item.year.asComposableString(),
                                 onClick = { onNavigate(item.linkedType.navigateTo(item.id)) }
                             )
-                        }
-                    }
-
-                    1 -> LazyColumn {
-                        items(chronology) { item ->
-                            CatalogCardItem(
-                                title = item.title,
-                                kind = item.kind,
-                                season = item.season,
-                                status = item.status,
-                                image = item.poster,
-                                score = item.score,
-                                onClick = { onNavigate(item.kind.linkedType.navigateTo(item.id)) }
-                            )
-                        }
-                    }
-
-                    2 -> LazyColumn {
-                        franchise.forEach { (relation, items) ->
-                            stickyHeader {
-                                TextStickyHeader(stringResource(relation.title))
-                            }
-
-                            items(items) { item ->
-                                FranchiseCard(
-                                    id = item.id,
-                                    title = item.title,
-                                    poster = item.poster,
-                                    kind = item.kind,
-                                    season = item.year.asComposableString(),
-                                    type = item.linkedType,
-                                    onNavigate = onNavigate,
-                                )
-                            }
                         }
                     }
                 }
@@ -635,43 +762,20 @@ fun RelatedFull(
     isVisible: Boolean,
     onHide: () -> Unit,
     onNavigate: (Screen) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_related)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { values ->
-        Column(Modifier.padding(values)) { // Без этого stickyHeader не двигается при прокрутке
-            LazyColumn {
-                related.forEach { (type, items) ->
-                    stickyHeader {
-                        TextStickyHeader(stringResource(type.title))
-                    }
-
-                    items(items) { item ->
-                        FranchiseCard(
-                            id = item.id,
-                            title = item.title,
-                            poster = item.poster,
-                            kind = item.kind,
-                            season = item.season.asComposableString(),
-                            type = item.linkedType,
-                            role = item.relationText,
-                            onNavigate = onNavigate,
-                        )
-                    }
+) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_related), onHide) { values ->
+    Column(Modifier.padding(values)) { // Без этого stickyHeader не двигается при прокрутке
+        LazyColumn {
+            related.forEach { (type, items) ->
+                stickyHeader { TextStickyHeader(stringResource(type.title)) }
+                items(items, Related::id) { item ->
+                    MediaListItem(
+                        title = item.title,
+                        poster = item.poster,
+                        kind = item.kind,
+                        role = item.relationText.takeIf(String::isNotEmpty),
+                        season = item.season.asComposableString(),
+                        onClick = { onNavigate(item.linkedType.navigateTo(item.id)) }
+                    )
                 }
             }
         }
@@ -684,7 +788,10 @@ fun ScoreInfo(score: String) = Column {
         text = stringResource(Res.string.text_score),
         style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Light)
     )
-    Row(horizontalArrangement = spacedBy(4.dp), verticalAlignment = CenterVertically) {
+    Row(
+        horizontalArrangement = Arrangement.spacedBy(4.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
         VectorIcon(Res.drawable.vector_star, Modifier.size(16.dp), Color(0xFFFFC319))
         Text(
             text = score,
@@ -733,109 +840,41 @@ fun Statuses(
     label: StringResource,
     content: (@Composable () -> Unit)? = null,
 ) {
-    val textStyle = MaterialTheme.typography.labelLarge
-    val minBarWidth = 40.dp.value.roundToInt()
-    val gap = 8.dp.value.roundToInt()
+    Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                )
+            )
 
-    val textMeasurer = rememberTextMeasurer()
-
-    var maxStatusTextWidth by remember { mutableFloatStateOf(0f) }
-
-    LaunchedEffect(scores, textStyle) {
-        val maxW = scores.keys.maxOfOrNull { resource ->
-            val text = resource.asString()
-
-            textMeasurer.measure(AnnotatedString(text), textStyle).size.width.toFloat()
+            content?.invoke()
         }
 
-        maxStatusTextWidth = maxW ?: 0f
-    }
+        Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            scores.entries.forEach { (key, value) ->
+                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
+                        Text(
+                            text = key.asComposableString(),
+                            style = MaterialTheme.typography.bodyMedium
+                        )
+                        Text(
+                            text = value,
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+                    }
 
-    Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-        Text(
-            text = stringResource(label),
-            style = MaterialTheme.typography.titleMedium.copy(
-                fontWeight = FontWeight.Bold
-            )
-        )
-        content?.invoke()
-    }
-    Column(verticalArrangement = spacedBy(8.dp)) {
-        scores.entries.filter { it.value.toInt() > 0 }.forEach { (key, value) ->
-            Layout(
-                modifier = Modifier.fillMaxWidth(),
-                content = {
-                    Box(
+                    LinearProgressIndicator(
+                        drawStopIndicator = { },
+                        progress = { if (sum > 0) value.toFloat() / sum else 0f },
                         modifier = Modifier
-                            .clip(RoundedCornerShape(8.dp))
-                            .background(MaterialTheme.colorScheme.secondary)
-                            .height(24.dp)
-                    )
-
-                    Text(
-                        text = value,
-                        style = MaterialTheme.typography.labelLarge.copy(
-                            color = MaterialTheme.colorScheme.onSecondary
-                        )
-                    )
-
-                    Text(
-                        text = key.asComposableString(),
-                        style = MaterialTheme.typography.labelLarge,
-                        maxLines = 1,
-                        textAlign = TextAlign.End
-                    )
-                }
-            ) { measurables, constraints ->
-                val (horizontalBar, textCount, textStatus) = measurables
-
-                val countTextPlaceable = textCount.measure(Constraints())
-                val statusTextPlaceable = textStatus.measure(
-                    Constraints(0, constraints.maxWidth, 0, constraints.maxHeight)
-                )
-
-                val countTextWidth = countTextPlaceable.width + 4.dp.roundToPx()
-                val idealWidth = (constraints.maxWidth * (value.toFloat() / sum)).roundToInt()
-                val maxAvailableWidth = constraints.maxWidth - maxStatusTextWidth - gap
-
-
-                val calculatedBarWidth = maxOf(minBarWidth, countTextWidth, idealWidth)
-                val finalBarWidth = minOf(calculatedBarWidth, maxAvailableWidth.toInt())
-
-
-                val barPlaceable = horizontalBar.measure(
-                    Constraints(finalBarWidth, finalBarWidth, 0, constraints.maxHeight)
-                )
-
-                val rowHeight = maxOf(
-                    barPlaceable.height,
-                    statusTextPlaceable.height,
-                    countTextPlaceable.height
-                )
-
-                layout(constraints.maxWidth, rowHeight) {
-                    barPlaceable.placeRelative(
-                        x = 0,
-                        y = CenterVertically.align(
-                            barPlaceable.height,
-                            rowHeight
-                        )
-                    )
-
-                    countTextPlaceable.placeRelative(
-                        x = finalBarWidth - countTextPlaceable.width - 4.dp.roundToPx(),
-                        y = CenterVertically.align(
-                            countTextPlaceable.height,
-                            rowHeight
-                        )
-                    )
-
-                    statusTextPlaceable.placeRelative(
-                        x = constraints.maxWidth - statusTextPlaceable.width,
-                        y = CenterVertically.align(
-                            statusTextPlaceable.height,
-                            rowHeight
-                        )
+                            .fillMaxWidth()
+                            .height(8.dp)
+                            .clip(RoundedCornerShape(4.dp))
                     )
                 }
             }
@@ -847,7 +886,7 @@ fun Statuses(
 fun Statistics(id: Long, statistics: Pair<Statistics, Statistics>, onNavigate: (Screen) -> Unit) =
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         statistics.first.let {
-            if (it.scores.isNotEmpty()) {
+            if (it.sum > 0) {
                 Statuses(
                     scores = it.scores,
                     sum = it.sum,
@@ -862,12 +901,10 @@ fun Statistics(id: Long, statistics: Pair<Statistics, Statistics>, onNavigate: (
             }
         }
 
-        if (statistics.first.scores.isNotEmpty() && statistics.second.scores.isNotEmpty()) {
-            HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
-        }
-
         statistics.second.let {
-            if (it.scores.isNotEmpty()) {
+            if (it.sum > 0) {
+                HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
+
                 Statuses(
                     scores = it.scores,
                     sum = it.sum,
@@ -884,62 +921,30 @@ fun Statistics(id: Long, statistics: Pair<Statistics, Statistics>, onNavigate: (
     }
 
 @Composable
-fun Statistics(statistics: Pair<Statistics?, Statistics?>, isVisible: Boolean, onHide: () -> Unit) =
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = slideInHorizontally { it },
-        exit = slideOutHorizontally { it }
+fun Statistics(
+    statistics: Pair<Statistics?, Statistics?>,
+    isVisible: Boolean,
+    onHide: () -> Unit
+) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_statistics), onHide) { values ->
+    LazyColumn(
+        contentPadding = values.toContent(),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-        Scaffold(
-            topBar = {
-                TopAppBar(
-                    title = { Text(stringResource(Res.string.text_statistics)) },
-                    navigationIcon = { NavigationIcon(onHide) }
-                )
-            }
-        ) { values ->
-            LazyColumn(
-                contentPadding = PaddingValues(8.dp, values.calculateTopPadding()),
-                verticalArrangement = spacedBy(16.dp)
-            ) {
-                statistics.first?.let {
-                    item {
-                        Statuses(
-                            scores = it.scores,
-                            sum = it.sum,
-                            label = Res.string.text_user_rates
-                        )
-                    }
-                }
-
-                statistics.second?.let {
-                    item {
-                        Statuses(
-                            scores = it.scores,
-                            sum = it.sum,
-                            label = Res.string.text_in_lists
-                        )
-                    }
-                }
-            }
+        statistics.first?.let {
+            item { Statuses(it.scores, it.sum, Res.string.text_user_rates) }
+        }
+        statistics.second?.let {
+            item { Statuses(it.scores, it.sum, Res.string.text_in_lists) }
         }
     }
+}
 
 @Composable
 private fun DetailBox(icon: DrawableResource, label: String, value: String? = null, onClick: (() -> Unit)? = null) =
     Box(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
-            .border(
-                1.dp,
-                MaterialTheme.colorScheme.outline.copy(alpha = 0.3f),
-                MaterialTheme.shapes.medium
-            )
+            .border(1.dp, MaterialTheme.colorScheme.outline.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
             .clickable(
                 enabled = onClick != null,
                 onClick = { onClick?.invoke() }
@@ -947,8 +952,8 @@ private fun DetailBox(icon: DrawableResource, label: String, value: String? = nu
     ) {
         if (value != null) {
             Row(
-                horizontalArrangement = spacedBy(8.dp),
-                verticalAlignment = CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
                     .height(56.dp)
                     .padding(12.dp, 8.dp),
@@ -978,7 +983,7 @@ private fun DetailBox(icon: DrawableResource, label: String, value: String? = nu
             }
         } else {
             Column(
-                verticalArrangement = spacedBy(2.dp, CenterVertically),
+                verticalArrangement = Arrangement.spacedBy(2.dp, Alignment.CenterVertically),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier
                     .height(56.dp)
@@ -997,310 +1002,79 @@ private fun DetailBox(icon: DrawableResource, label: String, value: String? = nu
     }
 
 @Composable
-fun DialogFavourites(
-    favourites: Map<FavouriteItem, List<BasicContent>>,
-    isVisible: Boolean,
-    listStates: List<LazyListState>,
-    onHide: () -> Unit,
-    onNavigate: (Screen) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    val scope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = favourites::size)
-    val navigate = remember(pagerState) {
-        { id: String -> FavouriteItem.entries[pagerState.currentPage].linkedType.navigateTo(id) }
-    }
-
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_favourite)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { values ->
-        Column(Modifier.padding(values)) {
-            PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
-                FavouriteItem.entries.forEachIndexed { index, item ->
-                    Tab(
-                        selected = pagerState.targetPage == index,
-                        onClick = { scope.launch { pagerState.animateScrollToPage(index) } },
-                        text = { Text(stringResource(item.title)) }
-                    )
-                }
-            }
-
-            HorizontalPager(pagerState) { tab ->
-                LazyColumn(Modifier.fillMaxSize(), listStates[tab]) {
-                    items(favourites.getOrDefault(FavouriteItem.entries[tab], emptyList()), BasicContent::id) {
-                        BasicContentItem(
-                            name = it.title,
-                            link = it.poster,
-                            modifier = Modifier.clickable { onNavigate(navigate(it.id)) }
-                        )
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DialogHistory(
-    history: LazyPagingItems<History>,
-    isVisible: Boolean,
-    onHide: () -> Unit,
-    onNavigate: (Screen) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_history)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { values ->
-        LazyColumn(contentPadding = values) {
-            items(history.itemCount, history.itemKey(History::id)) { index ->
-                history[index]?.let { node ->
-                    Row(
-                        verticalAlignment = Alignment.Top,
-                        modifier = Modifier
-                            .clickable(enabled = node.contentId != null) {
-                                node.contentId?.let { onNavigate(node.kind.linkedType.navigateTo(it)) }
-                            }
-                            .padding(12.dp)
-                    ) {
-                        AnimatedAsyncImage(
-                            model = node.image,
-                            contentScale = ContentScale.Crop,
-                            modifier = Modifier
-                                .size(80.dp, 121.dp)
-                                .clip(MaterialTheme.shapes.small)
-                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.small)
-                        )
-
-                        Spacer(Modifier.width(16.dp))
-
-                        Column(
-                            verticalArrangement = Arrangement.SpaceBetween,
-                            modifier = Modifier
-                                .weight(1f)
-                                .heightIn(min = 121.dp)
-                        ) {
-                            Column {
-                                Text(
-                                    text = node.title,
-                                    maxLines = 3,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.titleMedium.copy(
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                )
-
-                                Spacer(Modifier.height(4.dp))
-
-                                Text(
-                                    text = node.description,
-                                    maxLines = 2,
-                                    overflow = TextOverflow.Ellipsis,
-                                    style = MaterialTheme.typography.bodyMedium.copy(
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                )
-                            }
-
-                            Text(
-                                text = node.date,
-                                modifier = Modifier.fillMaxWidth(),
-                                textAlign = TextAlign.End,
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            )
-                        }
-                    }
-                }
-            }
-        }
-    }
-}
-
-@Composable
-fun DialogFriends(
-    friends: LazyPagingItems<BasicContent>,
-    isVisible: Boolean,
-    onHide: () -> Unit,
-    onNavigate: (Screen) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_friends)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { values ->
-        LazyColumn(contentPadding = values) {
-            friends(friends, onNavigate)
-        }
-    }
-}
-
-@Composable
-fun DialogClubs(
-    clubs: List<BasicContent>,
-    isVisible: Boolean,
-    onHide: () -> Unit,
-    onNavigate: (Screen) -> Unit
-) = AnimatedVisibility(
-    visible = isVisible,
-    enter = slideInHorizontally(initialOffsetX = { it }),
-    exit = slideOutHorizontally(targetOffsetX = { it })
-) {
-    NavigationBackHandler(
-        state = rememberNavigationEventState(NavigationEventInfo.None),
-        isBackEnabled = isVisible,
-        onBackCompleted = onHide
-    )
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(Res.string.text_clubs)) },
-                navigationIcon = { NavigationIcon(onHide) }
-            )
-        }
-    ) { values ->
-        LazyColumn(contentPadding = values) {
-            clubs(clubs, onNavigate)
-        }
-    }
-}
-
-@Composable
-fun UserProfileHeader(user: User) =
-    Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(20.dp), Alignment.CenterVertically) {
-        AnimatedAsyncImage(
-            model = user.avatar,
-            modifier = Modifier
-                .size(96.dp)
-                .clip(CircleShape)
-                .border(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    shape = CircleShape,
-                    width = (0.5).dp
-                )
-        )
-
-        Column(Modifier.weight(1f)) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                Text(
-                    text = user.nickname,
-                    modifier = Modifier.weight(1f, false),
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    style = MaterialTheme.typography.headlineSmall.copy(
-                        fontWeight = FontWeight.Bold
-                    )
-                )
-
-                if (user.banned) {
-                    Surface(
-                        shape = MaterialTheme.shapes.small,
-                        color = MaterialTheme.colorScheme.errorContainer,
-                        contentColor = MaterialTheme.colorScheme.onErrorContainer
-                    ) {
+fun <T : BaseDialogState> MenuItems(
+    items: List<T>,
+    getTitle: (T) -> StringResource,
+    onClick: (BaseDialogState) -> Unit
+) = Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
+    items.chunked(2).forEach { row ->
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
+            row.fastForEach { entry ->
+                AssistChip(
+                    border = null,
+                    onClick = { onClick(entry) },
+                    trailingIcon = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
+                    label = {
                         Text(
-                            text = if (user.sex == "female") "Забанена" else "Забанен",
-                            modifier = Modifier.padding(6.dp, 2.dp),
-                            style = MaterialTheme.typography.labelMedium.copy(
-                                fontWeight = FontWeight.Bold
-                            )
+                            text = stringResource(getTitle(entry)),
+                            overflow = TextOverflow.Ellipsis,
+                            maxLines = 1
                         )
-                    }
-                }
+                    },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(56.dp),
+                    colors = AssistChipDefaults.assistChipColors(
+                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                        labelColor = MaterialTheme.colorScheme.onSurface,
+                        trailingIconContentColor = MaterialTheme.colorScheme.onSurface
+                    )
+                )
             }
-
-            Spacer(Modifier.height(2.dp))
-
-            Text(
-                text = user.lastOnline,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            )
-
-            Spacer(Modifier.height(4.dp))
-
-            Text(
-                text = user.commonInfo,
-                style = MaterialTheme.typography.bodySmall.copy(
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    lineHeight = 16.sp
-                )
-            )
         }
     }
+}
 
 @Composable
-fun UserMenuItems(onPick: (UserMenu) -> Unit) =
-    Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
-        UserMenu.entries.chunked(2).forEach { row ->
-            Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
-                row.forEach { entry ->
-                    AssistChip(
-                        border = null,
-                        onClick = { onPick(entry) },
-                        trailingIcon = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
-                        label = {
-                            Text(
-                                text = stringResource(entry.title),
-                                overflow = TextOverflow.Ellipsis,
-                                maxLines = 1
-                            )
-                        },
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(56.dp),
-                        colors = AssistChipDefaults.assistChipColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                            labelColor = MaterialTheme.colorScheme.onSurface,
-                            trailingIconContentColor = MaterialTheme.colorScheme.onSurface
-                        )
-                    )
-                }
-            }
+fun CircleBorderedImage(image: String?, onOpenFullscreenPoster: () -> Unit) =
+    CircleContentImage(
+        image = image,
+        modifier = Modifier
+            .size(96.dp)
+            .clip(CircleShape)
+            .clickable(onClick = onOpenFullscreenPoster)
+    )
+
+@Composable
+fun AnimatedDialogScreen(
+    isVisible: Boolean,
+    title: String,
+    onHide: () -> Unit,
+    modifier: Modifier = Modifier,
+    actions: @Composable RowScope.() -> Unit = {},
+    content: @Composable (PaddingValues) -> Unit
+) = AnimatedVisibility(
+    visible = isVisible,
+    enter = slideInHorizontally { it } + fadeIn(),
+    exit = slideOutHorizontally { it } + fadeOut()
+) {
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        isBackEnabled = isVisible,
+        onBackCompleted = onHide
+    )
+    Scaffold(
+        content = content,
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = { Text(title) },
+                navigationIcon = { NavigationIcon(onHide) },
+                actions = actions
+            )
         }
-    }
+    )
+}
 
 fun LazyListScope.title(title: String) = item {
     Text(
@@ -1325,7 +1099,7 @@ fun LazyListScope.info(
     rating: StringResource? = null,
     onOpenFullscreenPoster: () -> Unit
 ) = item {
-    Row(horizontalArrangement = spacedBy(8.dp)) {
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         Poster(link = poster, onOpenFullscreen = onOpenFullscreenPoster)
         Column(Modifier.height(300.dp), Arrangement.SpaceBetween) {
             LabelInfoItem(stringResource(Res.string.text_kind), stringResource(kind))
@@ -1352,7 +1126,7 @@ fun LazyListScope.info(
 
 fun LazyListScope.genres(genres: List<String>?) = genres?.let { list ->
     item {
-        LazyRow(horizontalArrangement = spacedBy(4.dp)) {
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             items(list) {
                 SuggestionChip(
                     onClick = {},
@@ -1373,10 +1147,7 @@ fun LazyListScope.summary(
     onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit
 ) = item {
-    LazyRow(
-        horizontalArrangement = spacedBy(12.dp),
-        contentPadding = PaddingValues(horizontal = 8.dp)
-    ) {
+    LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         studio?.let { studio ->
             item {
                 DetailBox(
@@ -1433,7 +1204,7 @@ fun LazyListScope.summary(
                 DetailBox(
                     icon = Res.drawable.vector_similar,
                     label = stringResource(Res.string.text_similar),
-                    onClick = { onEvent(ContentDetailEvent.Media.ShowSimilar) }
+                    onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Similar)) }
                 )
             }
         }
@@ -1442,7 +1213,7 @@ fun LazyListScope.summary(
             DetailBox(
                 icon = Res.drawable.vector_statistics,
                 label = stringResource(Res.string.text_statistics),
-                onClick = { onEvent(ContentDetailEvent.Media.ShowStats) }
+                onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Stats)) }
             )
         }
 
@@ -1451,7 +1222,7 @@ fun LazyListScope.summary(
                 DetailBox(
                     icon = Res.drawable.vector_subtitles,
                     label = stringResource(Res.string.text_subtitles),
-                    onClick = { onEvent(ContentDetailEvent.Media.ShowFansubbers) }
+                    onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Fansubbers)) }
                 )
             }
 
@@ -1459,7 +1230,7 @@ fun LazyListScope.summary(
                 DetailBox(
                     icon = Res.drawable.vector_voice_actors,
                     label = stringResource(Res.string.text_voices),
-                    onClick = { onEvent(ContentDetailEvent.Media.ShowFandubbers) }
+                    onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Fandubbers)) }
                 )
             }
         }
@@ -1472,21 +1243,18 @@ fun LazyListScope.description(text: AnnotatedString) = text.let { description ->
     }
 }
 
-fun LazyListScope.related(
-    related: List<Related>,
-    onShow: () -> Unit,
-    onNavigate: (Screen) -> Unit
-) = related.let { list ->
-    if (list.isNotEmpty()) {
-        item {
-            Related(
-                list = list,
-                showAllRelated = onShow,
-                onNavigate = onNavigate
-            )
+fun LazyListScope.related(list: List<Related>, onShow: () -> Unit, onNavigate: (Screen) -> Unit) =
+    list.let { related ->
+        if (related.isNotEmpty()) {
+            item {
+                Related(
+                    list = related,
+                    onShowAll = onShow,
+                    onNavigate = onNavigate
+                )
+            }
         }
     }
-}
 
 fun LazyListScope.profiles(
     profiles: List<BasicContent>,
@@ -1504,4 +1272,25 @@ fun LazyListScope.profiles(
             )
         }
     }
+}
+
+fun LazyListScope.about(
+    title: StringResource,
+    contentList: List<CommentContent>,
+    onImageClick: (List<CommentContent.ImageContent>, Int) -> Unit
+) {
+    item {
+        Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+            HorizontalDivider(Modifier.padding(4.dp, 8.dp, 4.dp, 0.dp))
+
+            Text(
+                text = stringResource(title),
+                style = MaterialTheme.typography.titleMedium.copy(
+                    fontWeight = FontWeight.Bold
+                )
+            )
+        }
+    }
+
+    htmlContent(contentList, onImageClick)
 }
