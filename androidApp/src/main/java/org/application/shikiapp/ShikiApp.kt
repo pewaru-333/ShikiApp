@@ -18,15 +18,7 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
 
-        val config = AppConfig(
-            baseUrl = BuildConfig.BASE_URL,
-            urlMirror = BuildConfig.URL_MIRROR,
-            userAgent = BuildConfig.USER_AGENT,
-            clientId = BuildConfig.CLIENT_ID,
-            clientSecret = BuildConfig.CLIENT_SECRET,
-            redirectUri = BuildConfig.REDIRECT_URI
-        )
-
+        val config = AppConfig.createFlavourConfig(BuildConfig.USER_AGENT)
         val app = AppModuleInitializer(applicationContext, config)
         AppContext.init(app)
     }
