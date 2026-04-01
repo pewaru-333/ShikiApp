@@ -19,6 +19,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
 import org.application.shikiapp.shared.di.Preferences
+import org.application.shikiapp.shared.models.data.CommentToCreate
 import org.application.shikiapp.shared.models.data.Dialog
 import org.application.shikiapp.shared.models.data.FullMessage
 import org.application.shikiapp.shared.models.data.MessageToSend
@@ -140,6 +141,11 @@ class Profile(private val client: HttpClient) {
 
     suspend fun deleteAllMessages(type: MessageType) = client.post("messages/delete_all") {
         parameter("type", type.name.lowercase())
+    }
+
+    suspend fun createComment(comment: CommentToCreate) = client.post("comments") {
+        contentType(ContentType.Application.Json)
+        setBody(comment)
     }
 
 //    suspend fun editMessage(id: Long, message: MessageToSend) = client.patch("messages/$id") {
