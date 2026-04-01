@@ -20,7 +20,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navDeepLink
 import kotlinx.serialization.builtins.nullable
-import kotlinx.serialization.builtins.serializer
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.screens.AnimeScreen
 import org.application.shikiapp.shared.screens.CalendarScreen
