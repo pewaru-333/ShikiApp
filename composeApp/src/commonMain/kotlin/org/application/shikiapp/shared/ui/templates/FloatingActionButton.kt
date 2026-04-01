@@ -18,6 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.network.response.AsyncData
 import shikiapp.composeapp.generated.resources.Res
@@ -59,7 +60,7 @@ fun FloatingActionButtonContent(
                     ),
                 button = {
                     FloatingActionButton(
-                        onClick = { onEvent(ContentDetailEvent.Media.ShowRate) },
+                        onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Rate)) },
                         content = {
                             when (userRate) {
                                 AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
