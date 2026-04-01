@@ -35,7 +35,7 @@ import org.application.shikiapp.shared.models.data.FullMessage
 import org.application.shikiapp.shared.models.data.MessageToSend
 import org.application.shikiapp.shared.models.data.MessageToSendShort
 import org.application.shikiapp.shared.models.data.UserBasic
-import org.application.shikiapp.shared.models.states.UserDialogState
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.UserMessagesState
 import org.application.shikiapp.shared.models.states.UserState
 import org.application.shikiapp.shared.models.ui.History
@@ -53,6 +53,8 @@ import org.application.shikiapp.shared.network.paging.CommonPaging
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.ResourceText
+import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.enums.FavouriteItem
 import org.application.shikiapp.shared.utils.enums.MessageType
 import org.application.shikiapp.shared.utils.navigation.Screen
@@ -120,7 +122,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             try {
                 val userLoaded = user.await()
 
-                setCommentParams(userId, "User")
+                setCommentParams(userId, CommentableType.USER)
 
                 updateState {
                     it.copy(
@@ -146,30 +148,14 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
     }
 
     override fun onEvent(event: ContentDetailEvent) {
+        super.onEvent(event)
+
         when (event) {
-            ContentDetailEvent.ShowComments -> updateState {
-                it.copy(
-                    dialogState = if (it.dialogState == null) UserDialogState.Comments else null
-                )
+            is ContentDetailEvent.ToggleDialog if event.dialogState is BaseDialogState.User.DialogUser -> {
+                mailManager.getDialog(event.dialogState.userId)
             }
 
-            is ContentDetailEvent.User -> when (event) {
-                is ContentDetailEvent.User.ToggleDialog -> {
-                    if (event.dialog is UserDialogState.DialogUser) {
-                        mailManager.getDialog(event.dialog.userId)
-                    }
-
-                    updateState {
-                        it.copy(
-                            dialogState = if (event.dialog == it.dialogState) null else event.dialog
-                        )
-                    }
-                }
-
-                ContentDetailEvent.User.ToggleFriend -> toggleFriend()
-
-                is ContentDetailEvent.User.PickMenu -> updateState { it.copy(menu = event.menu) }
-            }
+            ContentDetailEvent.User.ToggleFriend -> toggleFriend()
 
             else -> Unit
         }
@@ -283,38 +269,29 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             }
         }
 
-        fun getDialog(userId: Long, nickname: String, avatar: String) {
-            updateState { it.copy(dialogState = UserDialogState.DialogUser(userId)) }
-            _state.update {
-                it.copy(
-                    userId = userId,
-                    userNickname = AsyncData.Success(nickname),
-                    userAvatar = AsyncData.Success(avatar),
-                    isFromList = true
-                )
-            }
-        }
+        fun getDialog(userId: Long, isFromList: Boolean = false) {
+            updateState { it.copy(dialogState = BaseDialogState.User.DialogUser(userId)) }
 
-        fun getDialog(userId: Long) {
             viewModelScope.launch {
                 _state.update {
                     it.copy(
                         userId = userId,
                         userNickname = AsyncData.Loading,
                         userAvatar = AsyncData.Loading,
-                        isFromList = false
+                        isFromList = isFromList
                     )
                 }
 
                 try {
-                    val (userNickname, userAvatar) = with(Network.user.getUser(userId)) {
-                        Pair(nickname, avatar)
+                    val (userNickname, userAvatar, lastOnline) = with(Network.user.getUser(userId)) {
+                        Triple(nickname, avatar, lastOnline)
                     }
 
                     _state.update {
                         it.copy(
                             userNickname = AsyncData.Success(userNickname),
-                            userAvatar = AsyncData.Success(userAvatar)
+                            userAvatar = AsyncData.Success(userAvatar),
+                            lastOnlineAt = lastOnline.orEmpty()
                         )
                     }
                 } catch (_: Exception) {
@@ -340,7 +317,8 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                     userId = Preferences.userId,
                     userNickname = BLANK,
                     userAvatar = BLANK,
-                    lastMessage = HtmlParser.parseComment(messageToSend.message.body),
+                    lastMessages = HtmlParser.parseComment(messageToSend.message.body),
+                    lastMessage = ResourceText.StaticString(BLANK),
                     lastDate = Formatter.convertDate(),
                     accountUser = true,
                     isSending = true,
@@ -389,7 +367,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                     val request = Network.profile.deleteUserDialog(state.value.userId)
 
                     if (request.status == HttpStatusCode.OK) {
-                        updateState { it.copy(dialogState = UserDialogState.DialogAll) }
+                        updateState { it.copy(dialogState = BaseDialogState.User.DialogAll) }
                         _dialogDeleteError.send(Res.string.text_successfully_deleted_dialog)
                     } else {
                         _dialogDeleteError.send(Res.string.text_unsuccessfully_deleted_dialog)
