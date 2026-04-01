@@ -74,7 +74,7 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
     }
 }
 
-actual fun getDefaultLocale(context: PlatformContext): String = Locale.getDefault().toLanguageTag()
+actual fun getDefaultLocale(context: PlatformContext): String = Locale.getDefault().language
 
 actual fun isDynamicColorAvailable() = false
 
@@ -86,14 +86,14 @@ actual object AppLocale {
     private val AppLocale = staticCompositionLocalOf { defaultLocale }
 
     actual val current: String
-        @Composable get() = androidx.compose.ui.text.intl.Locale.current.platformLocale.language
+        @Composable get() = getDefaultLocale(DesktopContext())
 
     @Composable
     actual infix fun provides(value: String?): ProvidedValue<*> {
         val locale = Locale.forLanguageTag(value ?: current)
         Locale.setDefault(locale)
 
-        return AppLocale provides locale.toLanguageTag()
+        return AppLocale provides locale.language
     }
 }
 
