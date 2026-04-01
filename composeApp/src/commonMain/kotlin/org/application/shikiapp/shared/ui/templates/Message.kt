@@ -1,18 +1,17 @@
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
+
 package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -21,13 +20,12 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -36,8 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -52,9 +48,6 @@ import org.application.shikiapp.shared.network.response.Response
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.Status
-import org.application.shikiapp.shared.utils.enums.backgroundColor
-import org.application.shikiapp.shared.utils.enums.textColor
-import org.application.shikiapp.shared.utils.extensions.getLastMessage
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -66,49 +59,39 @@ import shikiapp.composeapp.generated.resources.vector_trash
 @Composable
 fun DialogList(
     dialogs: Response<List<Dialog>, Exception>,
-    getDialog: (Long, String, String) -> Unit,
+    getDialog: (Long, Boolean) -> Unit,
     loadData: () -> Unit
-) = AnimatedScreen(dialogs, loadData) { dialogs ->
-    LazyColumn {
-        items(dialogs, Dialog::id) { dialog ->
-            Column(
-                modifier = Modifier.clickable {
-                    getDialog(dialog.userId, dialog.userNickname, dialog.userAvatar)
-                },
-            ) {
+) = AnimatedScreen(dialogs, loadData) { dialogList ->
+    LazyColumn(Modifier.fillMaxSize()) {
+        items(dialogList, key = Dialog::id) { dialog ->
+            Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     modifier = Modifier
                         .fillMaxWidth()
+                        .clickable { getDialog(dialog.userId, true) }
                         .padding(16.dp, 12.dp)
                 ) {
-                    AnimatedAsyncImage(
-                        model = dialog.userAvatar,
-                        modifier = Modifier
-                            .size(56.dp)
-                            .clip(CircleShape)
-                            .border((0.5).dp, MaterialTheme.colorScheme.onSurfaceVariant, CircleShape)
-                    )
+                    CircleContentImage(dialog.userAvatar, Modifier.size(56.dp))
 
                     Spacer(Modifier.width(16.dp))
 
-                    Column(Modifier.weight(1f), Arrangement.spacedBy(4.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
+                    Column(
+                        modifier = Modifier.weight(1f),
+                        verticalArrangement = Arrangement.Center
+                    ) {
+                        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                             Text(
-                                text = dialog.userNickname,
-                                modifier = Modifier.weight(1f),
                                 maxLines = 1,
+                                text = dialog.userNickname,
                                 overflow = TextOverflow.Ellipsis,
                                 style = MaterialTheme.typography.titleMedium.copy(
-                                    color = MaterialTheme.colorScheme.onSurface,
                                     fontWeight = FontWeight.SemiBold
-                                )
+                                ),
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .padding(end = 8.dp)
                             )
-
-                            Spacer(Modifier.width(8.dp))
 
                             Text(
                                 text = dialog.lastDate,
@@ -118,19 +101,19 @@ fun DialogList(
                             )
                         }
 
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = dialog.lastMessage.getLastMessage().asComposableString(),
-                                maxLines = 1,
-                                overflow = TextOverflow.Ellipsis,
-                                style = MaterialTheme.typography.bodyMedium
+                        Spacer(Modifier.height(4.dp))
+
+                        Text(
+                            text = dialog.lastMessage.asComposableString(),
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        }
+                        )
                     }
                 }
+
                 HorizontalDivider(
                     modifier = Modifier.padding(start = 88.dp),
                     thickness = 0.5.dp
@@ -141,7 +124,7 @@ fun DialogList(
 }
 
 @Composable
-fun MessageCardItem(
+private fun MessageCardItem(
     title: String,
     kind: Kind,
     season: ResourceText,
@@ -150,7 +133,6 @@ fun MessageCardItem(
     image: String?,
     isRead: AsyncData<Boolean>,
     isDeleting: AsyncData<Boolean>,
-    modifier: Modifier = Modifier,
     onClick: () -> Unit,
     onMarkRead: (Int) -> Unit,
     onDelete: () -> Unit
@@ -167,67 +149,16 @@ fun MessageCardItem(
         else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
     )
 
-    Row(
-        modifier = modifier
-            .height(IntrinsicSize.Min)
-            .background(backgroundColor)
-            .clickable(onClick = onClick)
-            .padding(16.dp)
-    ) {
-        Box(
-            modifier = Modifier
-                .width(110.dp)
-                .aspectRatio(2f / 3f)
-                .clip(MaterialTheme.shapes.medium)
-        ) {
-            AnimatedAsyncImage(
-                model = image,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .border((0.5).dp, MaterialTheme.colorScheme.onSurfaceVariant, MaterialTheme.shapes.medium)
-            )
-
-            score?.let { ScoreLabel(it) }
-        }
-
-        Spacer(Modifier.width(16.dp))
-
-        Column(Modifier.weight(1f), Arrangement.spacedBy(8.dp)) {
-            Text(
-                text = title,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                style = MaterialTheme.typography.titleMedium.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                    fontWeight = FontWeight.Bold
-                )
-            )
-
-            Text(
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                text = stringResource(kind.title) + season.asComposableString().run {
-                    if (isEmpty()) "" else (" · $this")
-                }
-            )
-
-            Surface(
-                shape = MaterialTheme.shapes.small,
-                color = status.backgroundColor
-            ) {
-                Text(
-                    text = stringResource(status.getTitle(kind)),
-                    modifier = Modifier.padding(8.dp, 4.dp),
-                    style = MaterialTheme.typography.labelSmall.copy(
-                        color = status.textColor,
-                        fontWeight = FontWeight.SemiBold
-                    )
-                )
-            }
-
-            Spacer(Modifier.weight(1f))
-
+    MediaListItem(
+        title = title,
+        poster = image,
+        score = score,
+        season = season.asComposableString(),
+        kind = kind,
+        status = status,
+        onClick = onClick,
+        backgroundColor = backgroundColor,
+        actions = {
             Row(Modifier.fillMaxWidth(), Arrangement.End, Alignment.CenterVertically) {
                 AnimatedContent(isRead) { state ->
                     when (state) {
@@ -269,7 +200,7 @@ fun MessageCardItem(
                 }
             }
         }
-    }
+    )
 }
 
 @Composable
@@ -278,45 +209,57 @@ fun Messages(
     onNavigate: (Screen) -> Unit,
     onMarkRead: (Long, Int) -> Unit,
     onDelete: (Long) -> Unit
-) = Box(Modifier.fillMaxSize()) {
-    LazyColumn {
-        items(list.itemCount, list.itemKey(Message::id)) { index ->
-            list[index]?.let { news ->
-                news.linked?.let { linked ->
-                    MessageCardItem(
-                        title = linked.title,
-                        kind = linked.kind,
-                        season = linked.season,
-                        score = linked.score,
-                        status = linked.status,
-                        image = linked.poster,
-                        isRead = news.read,
-                        isDeleting = news.isDeleting,
-                        modifier = Modifier.animateItem(),
-                        onMarkRead = { onMarkRead(news.id, it) },
-                        onDelete = { onDelete(news.id) },
-                        onClick = { onNavigate(Screen.Anime(linked.id)) })
+) {
+    Box(Modifier.fillMaxSize()) {
+        when (list.loadState.refresh) {
+            is LoadState.Loading if list.itemCount == 0 -> {
+                LoadingScreen(Modifier.background(MaterialTheme.colorScheme.surface))
+            }
+
+            is LoadState.Error if list.itemCount == 0 -> {
+                ErrorScreen(list::retry)
+            }
+
+            is LoadState.NotLoading if list.itemCount == 0 && list.loadState.append.endOfPaginationReached -> {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Text(stringResource(Res.string.text_no_messages))
                 }
             }
 
-            if (index < list.itemCount - 1) {
-                HorizontalDivider()
-            }
-        }
+            else -> {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    items(list.itemCount, list.itemKey(Message::id)) { index ->
+                        list[index]?.let { news ->
+                            news.linked?.let { linked ->
+                                MessageCardItem(
+                                    title = linked.title,
+                                    kind = linked.kind,
+                                    season = linked.season,
+                                    score = linked.score,
+                                    status = linked.status,
+                                    image = linked.poster,
+                                    isRead = news.read,
+                                    isDeleting = news.isDeleting,
+                                    onMarkRead = { onMarkRead(news.id, it) },
+                                    onDelete = { onDelete(news.id) },
+                                    onClick = { onNavigate(Screen.Anime(linked.id)) }
+                                )
 
-        when (list.loadState.append) {
-            is LoadState.Loading -> item { LoadingScreen() }
-            is LoadState.Error -> item { ErrorScreen(list::retry) }
-            else -> Unit
-        }
-    }
+                                if (index < list.itemCount - 1) {
+                                    HorizontalDivider()
+                                }
+                            }
+                        }
+                    }
 
-    if (list.itemCount == 0) {
-        when (list.loadState.refresh) {
-            is LoadState.Loading -> LoadingScreen(Modifier.background(MaterialTheme.colorScheme.surface))
-            is LoadState.Error -> ErrorScreen(list::retry)
-            is LoadState.NotLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text(stringResource(Res.string.text_no_messages))
+                    if (list.loadState.append is LoadState.Loading) {
+                        item { LoadingScreen(Modifier.padding(8.dp)) }
+                    }
+
+                    if (list.loadState.append is LoadState.Error) {
+                        item { ErrorScreen(list::retry) }
+                    }
+                }
             }
         }
     }
@@ -324,7 +267,7 @@ fun Messages(
 
 
 @Composable
-fun Notification(
+private fun Notification(
     notification: Message,
     modifier: Modifier = Modifier,
     onMarkRead: (Long, Int) -> Unit,
@@ -355,14 +298,7 @@ fun Notification(
                 .fillMaxWidth()
                 .clickable { onNavigate(Screen.User(notification.from.id)) }
         ) {
-            AnimatedAsyncImage(
-                model = notification.from.avatar,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .size(56.dp)
-                    .clip(CircleShape)
-                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
-            )
+            CircleContentImage(notification.from.avatar, Modifier.size(56.dp))
 
             Spacer(Modifier.width(12.dp))
 
@@ -433,31 +369,50 @@ fun Notifications(
     onMarkRead: (Long, Int) -> Unit,
     onDelete: (Long) -> Unit,
     onNavigate: (Screen) -> Unit
-) = Box(Modifier.fillMaxSize()) {
-    LazyColumn {
-        items(list.itemCount, list.itemKey(Message::id)) { index ->
-            list[index]?.let { notification ->
-                Notification(notification, Modifier.animateItem(), onMarkRead, onDelete, onNavigate)
+) {
+    Box(Modifier.fillMaxSize()) {
+        when (list.loadState.refresh) {
+            is LoadState.Loading if list.itemCount == 0 -> {
+                LoadingScreen(Modifier.background(MaterialTheme.colorScheme.surface))
+            }
 
-                if (index < list.itemCount - 1) {
-                    HorizontalDivider()
+            is LoadState.Error if list.itemCount == 0 -> {
+                ErrorScreen(list::retry)
+            }
+
+            is LoadState.NotLoading if list.itemCount == 0 && list.loadState.append.endOfPaginationReached -> {
+                Box(Modifier.fillMaxSize(), Alignment.Center) {
+                    Text(stringResource(Res.string.text_no_messages))
                 }
             }
-        }
 
-        when (list.loadState.append) {
-            is LoadState.Loading -> item { LoadingScreen() }
-            is LoadState.Error -> item { ErrorScreen(list::retry) }
-            else -> Unit
-        }
-    }
+            else -> {
+                LazyColumn(Modifier.fillMaxSize()) {
+                    items(list.itemCount, list.itemKey(Message::id)) { index ->
+                        list[index]?.let { notification ->
+                            Notification(
+                                notification = notification,
+                                modifier = Modifier.animateItem(),
+                                onMarkRead = onMarkRead,
+                                onDelete = onDelete,
+                                onNavigate = onNavigate
+                            )
 
-    if (list.itemCount == 0) {
-        when (list.loadState.refresh) {
-            is LoadState.Loading -> LoadingScreen(Modifier.background(MaterialTheme.colorScheme.surface))
-            is LoadState.Error -> ErrorScreen(list::retry)
-            is LoadState.NotLoading -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                Text(stringResource(Res.string.text_no_messages))
+                            if (index < list.itemCount - 1) {
+                                HorizontalDivider()
+                            }
+                        }
+                    }
+
+
+                    if (list.loadState.append is LoadState.Loading) {
+                        item { LoadingScreen(Modifier.padding(8.dp)) }
+                    }
+
+                    if (list.loadState.append is LoadState.Error) {
+                        item { ErrorScreen(list::retry) }
+                    }
+                }
             }
         }
     }
