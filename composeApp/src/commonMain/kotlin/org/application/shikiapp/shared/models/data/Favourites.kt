@@ -12,13 +12,13 @@ data class Favourites(
     val mangakas: List<Favourite>,
     val seyu: List<Favourite>,
     val producers: List<Favourite>
-)
-
-@Serializable
-data class Favourite(
-    val id: Long,
-    val name: String,
-    val russian: String?,
-    val image: String,
-    val url: String?
-)
+) {
+    @Serializable
+    data class Favourite(
+        val id: Long,
+        val name: String,
+        val russian: String?,
+        val image: String,
+        val url: String?
+    )
+}
