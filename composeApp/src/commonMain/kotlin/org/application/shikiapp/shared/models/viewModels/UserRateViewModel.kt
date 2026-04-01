@@ -13,7 +13,6 @@ import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
-import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -145,7 +144,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 val firstPage = fetchPage(1) ?: emptyList()
                 allRates.addAll(firstPage.map(BaseRate::mapper))
 
-                if (firstPage.size == limit) {
+                if (firstPage.size >= limit) {
                     val pools = 5
                     var currentPage = 2
                     var moreDataAvailable = true
@@ -155,7 +154,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                             (0 until pools).map { pool -> async { fetchPage(currentPage + pool) } }
                         }
 
-                        val result = jobs.awaitAll().filterNotNull()
+                        val result = jobs.mapNotNull { it.await() }
                         allRates.addAll(result.flatMap { it.map(BaseRate::mapper) })
 
                         if (result.size < pools || result.any { it.size < limit }) {
