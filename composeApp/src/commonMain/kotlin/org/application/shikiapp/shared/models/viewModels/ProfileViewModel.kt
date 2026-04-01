@@ -9,10 +9,11 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.Token
-import org.application.shikiapp.shared.models.states.UserDialogState
+import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.LoginResponse
+import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.navigation.Screen.Login
 import java.net.UnknownHostException
 
@@ -38,6 +39,8 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
             }
 
             try {
+                setCommentParams(userId, CommentableType.USER)
+
                 emit(
                     LoginResponse.Logged(
                         user.await().mapper(
@@ -119,5 +122,5 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
         }
     }
 
-    fun onShowSignOut() = updateState { it.copy(dialogState = UserDialogState.Logout) }
+    fun onShowSignOut() = updateState { it.copy(dialogState = BaseDialogState.User.Logout) }
 }
