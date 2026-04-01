@@ -1,5 +1,6 @@
 package org.application.shikiapp.shared.models.ui.list
 
+import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.ui.CommentContent
 
 data class Dialog(
@@ -7,7 +8,8 @@ data class Dialog(
     val userId: Long,
     val userNickname: String,
     val userAvatar: String,
-    val lastMessage: List<CommentContent>,
+    val lastMessages: List<CommentContent>,
+    val lastMessage: ResourceText,
     val lastDate: String,
     val accountUser: Boolean,
     val isSending: Boolean = false,

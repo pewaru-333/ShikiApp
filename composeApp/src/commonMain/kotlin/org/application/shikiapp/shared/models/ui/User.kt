@@ -24,6 +24,7 @@ data class User(
     val lastOnline: String,
     val nickname: String,
     val sex: String?,
+    val showComments: Boolean,
     val showStats: Boolean,
     val stats: Pair<Statistics, Statistics>
 )
