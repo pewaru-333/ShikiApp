@@ -11,6 +11,7 @@ import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
+import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.navigation.Screen
 
@@ -27,7 +28,7 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
 
             try {
                 val person = Network.content.getPerson(contentId)
-                setCommentParams(person.topicId)
+                setCommentParams(person.topicId, CommentableType.PERSON)
 
                 emit(Response.Success(person.mapper(comments)))
             } catch (e: Exception) {
@@ -39,16 +40,8 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
     override fun onEvent(event: ContentDetailEvent) {
         super.onEvent(event)
 
-        when (event) {
-            ContentDetailEvent.ShowComments -> updateState { it.copy(showComments = !it.showComments) }
-            ContentDetailEvent.ShowSheet -> updateState { it.copy(showSheet = !it.showSheet) }
-
-            ContentDetailEvent.Media.ShowPoster -> updateState { it.copy(showPoster = !it.showPoster) }
-            ContentDetailEvent.Media.ShowCharacters -> updateState { it.copy(showCharacters = !it.showCharacters) }
-
-            ContentDetailEvent.Person.ShowWorks -> updateState { it.copy(showWorks = !it.showWorks) }
-
-            is ContentDetailEvent.Person.ToggleFavourite -> with(response.value) {
+        if (event is ContentDetailEvent.Person.ToggleFavourite) {
+            with(response.value) {
                 if (this !is Response.Success) return
 
                 val isFavoured = data.favoured.getValue() ?: return
@@ -62,8 +55,6 @@ class PersonViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Person, 
                     kind = event.kind
                 )
             }
-
-            else -> Unit
         }
     }
 }
