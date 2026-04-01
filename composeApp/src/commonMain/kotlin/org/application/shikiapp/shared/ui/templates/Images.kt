@@ -15,12 +15,14 @@ import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.IconButton
@@ -55,6 +57,7 @@ import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -74,6 +77,7 @@ import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_error_loading
 import shikiapp.composeapp.generated.resources.text_image_of
+import shikiapp.composeapp.generated.resources.text_picture
 import shikiapp.composeapp.generated.resources.text_poster
 import shikiapp.composeapp.generated.resources.text_saved
 import shikiapp.composeapp.generated.resources.vector_bad
@@ -192,6 +196,17 @@ fun AnimatedAsyncImage(
 )
 
 @Composable
+fun CircleContentImage(image: String?, modifier: Modifier = Modifier, contentScale: ContentScale = ContentScale.Crop) =
+    AnimatedAsyncImage(
+        model = image,
+        contentScale = contentScale,
+        modifier = modifier
+            .aspectRatio(1f)
+            .clip(CircleShape)
+            .border(Dp.Hairline, MaterialTheme.colorScheme.onSurface, CircleShape)
+    )
+
+@Composable
 fun Poster(
     link: String,
     modifier: Modifier = Modifier,
@@ -206,6 +221,16 @@ fun Poster(
         .border(1.dp, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.medium)
         .clickable(onClick = onOpenFullscreen)
 )
+
+@Composable
+fun DialogImage(link: String, isVisible: Boolean, onClose: () -> Unit) =
+    DialogImages(
+        images = listOf(link),
+        initialIndex = 0,
+        isVisible = isVisible,
+        isClubImage = true,
+        onClose = onClose
+    )
 
 @Composable
 fun DialogPoster(link: String, isVisible: Boolean, onClose: () -> Unit) =
@@ -224,6 +249,7 @@ fun DialogImages(
     initialIndex: Int,
     isVisible: Boolean,
     isPoster: Boolean = false,
+    isClubImage: Boolean = false,
     onClose: () -> Unit
 ) {
     if (!isVisible || images.isEmpty()) return
@@ -329,6 +355,7 @@ fun DialogImages(
                         Text(
                             color = Color.White,
                             text = if (isPoster) stringResource(Res.string.text_poster)
+                            else if (isClubImage) stringResource(Res.string.text_picture)
                             else stringResource(Res.string.text_image_of, pagerState.currentPage + 1, images.size)
                         )
                     },
