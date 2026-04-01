@@ -159,45 +159,37 @@ object Formatter {
         return Pair(birthString, deathString)
     }
 
-    fun getSeason(text: Any?, kind: String?) = when (text) {
-        is Int -> ResourceText.StaticString(text.toString())
-        is String -> when (text) {
-            "?" -> ResourceText.StringResource(Res.string.text_unknown)
-            else -> when {
-                Enum.safeValueOf<Kind>(kind).linkedType
-                        in listOf(LinkedType.MANGA, LinkedType.RANOBE) -> ResourceText.StaticString(LocalDate.parse(text).year.toString())
+    fun getSeason(text: Any?, kind: String?): ResourceText {
+        if (text is Int) return ResourceText.StaticString(text.toString())
+        if (text !is String) return ResourceText.StringResource(Res.string.blank)
 
-                text.contains("_") -> {
-                    val season = text.substringBefore("_").let { if (it == "fall") "autumn" else it }
-                    val year = text.substringAfter("_")
+        fun formatSeason(season: Season, year: Any) = ResourceText.MultiString(
+            value = listOf(ResourceText.StringResource(season.title), " ", year.toString())
+        )
 
-                    ResourceText.MultiString(
-                        value = listOf(
-                            ResourceText.StringResource(Enum.safeValueOf<Season>(season).title),
-                            " ",
-                            year
-                        )
-                    )
-                }
+        return when {
+            text == "?" -> ResourceText.StringResource(Res.string.text_unknown)
 
-                text.length == 10 -> {
-                    val date = LocalDate.parse(text)
-                    val season = Season.entries.first { date.month in it.months }
-
-                    ResourceText.MultiString(
-                        value = listOf(
-                            ResourceText.StringResource(season.title),
-                            " ",
-                            date.year
-                        )
-                    )
-                }
-
-                else -> ResourceText.StringResource(Res.string.blank)
+            Enum.safeValueOf<Kind>(kind).linkedType.let { it == LinkedType.MANGA || it == LinkedType.RANOBE } -> {
+                ResourceText.StaticString(LocalDate.parse(text).year.toString())
             }
-        }
 
-        else -> ResourceText.StringResource(Res.string.blank)
+            "_" in text -> {
+                val (season, year) = text.split("_", limit = 2)
+                val seasonMapped = if (season == "fall") "autumn" else season
+
+                formatSeason(Enum.safeValueOf(seasonMapped), year)
+            }
+
+            text.length == 10 -> {
+                val date = LocalDate.parse(text)
+                val season = Season.entries.first { date.month in it.months }
+
+                formatSeason(season, date.year)
+            }
+
+            else -> ResourceText.StringResource(Res.string.blank)
+        }
     }
 
     suspend fun getLinks(text: String?): Triple<List<String>, List<CommentContent.VideoContent>, CommentContent?> = withContext(Dispatchers.Default) {
