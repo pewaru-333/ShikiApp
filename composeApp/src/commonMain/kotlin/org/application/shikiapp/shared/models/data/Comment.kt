@@ -33,11 +33,14 @@ class Comment {
     @SerialName("is_offtopic")
     val isOfftopic: Boolean = false
 
-//    @SerialName("is_summary")
+    //    @SerialName("is_summary")
 //    val isSummary: Boolean = false
 //
-//    @SerialName("can_be_edited")
-//    val canBeEdited: Boolean = false
+    @SerialName("can_be_edited")
+    val canBeEdited: Boolean = false
+
+    @SerialName("type")
+    val type: String? = null // dark -- shiki is always null
 
     @SerialName("user")
     val user: UserBasic = UserBasic()
@@ -53,12 +56,12 @@ data class CommentToCreate(
         val body: String,
 
         @SerialName("commentable_id")
-        val commentableId: String,
+        val commentableId: String = BLANK,
 
         @SerialName("commentable_type")
         val commentableType: String = BLANK,
 
         @SerialName("is_offtopic")
-        val isOfftopic: String
+        val isOfftopic: String = BLANK
     )
 }
