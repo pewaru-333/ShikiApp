@@ -72,7 +72,7 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
     protected fun setCommentParams(id: Long?, commentableType: CommentableType) =
         _commentParams.update { CommentParams(id, commentableType) }
 
-    protected fun sendComment(text: String, isOfftopic: Boolean) {
+    protected fun createComment(text: String, isOfftopic: Boolean) {
         val targetId = with(_commentParams.value) {
             if (commentableType == CommentableType.USER) topicId
             else contentId
@@ -97,11 +97,48 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
                 if (request.status == HttpStatusCode.Created) {
                     _commentEvent.send(Unit)
                 }
-            } catch (e: Exception) {
-                e.printStackTrace()
+            } catch (_: Exception) {
+
             } finally {
                 commentsPagingSource?.invalidate()
                 updateState { it.updateSendingState(false) }
+            }
+        }
+    }
+
+    protected fun updateComment(id: Long, text: String, isOfftopicChanged: Boolean) {
+        viewModelScope.launch {
+            updateState { it.updateSendingState(true) }
+
+            try {
+                val newComment = CommentToCreate.Comment(body = text)
+                val request = Network.profile.updateComment(id, newComment)
+                val offtopic = if (!isOfftopicChanged) true
+                else Network.profile.changeOfftopic(id).status == HttpStatusCode.Created
+
+                if (request.status == HttpStatusCode.Created && offtopic) {
+                    _commentEvent.send(Unit)
+                }
+            } catch (_: Exception) {
+
+            } finally {
+                commentsPagingSource?.invalidate()
+                updateState { it.updateSendingState(false) }
+            }
+        }
+    }
+
+    protected fun deleteComment(id: Long) {
+        viewModelScope.launch {
+            try {
+                val request = Network.profile.deleteComment(id)
+                if (request.status == HttpStatusCode.OK) {
+                    _commentEvent.send(Unit)
+                }
+            } catch (_: Exception) {
+
+            } finally {
+                commentsPagingSource?.invalidate()
             }
         }
     }
@@ -129,7 +166,9 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
                 )
             }
 
-            is ContentDetailEvent.SendComment -> sendComment(event.text, event.isOfftopic)
+            is ContentDetailEvent.CreateComment -> createComment(event.text, event.isOfftopic)
+            is ContentDetailEvent.UpdateComment -> updateComment(event.id, event.text, event.isOfftopicChanged)
+            is ContentDetailEvent.DeleteComment -> deleteComment(event.id)
 
             else -> Unit
         }
