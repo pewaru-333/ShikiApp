@@ -6,6 +6,7 @@
 * View and read news and topics.
 * View user profiles, clubs, and friends.
 * View your conversations and send messages to other users.
+* Sending comments, changing them, and deleting them.
 * Add anime, manga, and ranobe to your list and favorites.
 * Add characters and people to favorites.
 * The ability to join or leave clubs(s).
