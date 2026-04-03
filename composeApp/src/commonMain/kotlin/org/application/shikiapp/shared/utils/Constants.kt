@@ -25,6 +25,7 @@ const val PREF_APP_CACHE = "app_cache"
 const val PREF_APP_LANGUAGE = "app_language"
 const val PREF_APP_THEME = "app_theme"
 const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
+const val PREF_DEEP_LINK_SETTINGS = "deeplink_settings"
 const val PREF_DYNAMIC_COLORS = "dynamic_colors"
 const val PREF_START_PAGE = "start_page"
 
