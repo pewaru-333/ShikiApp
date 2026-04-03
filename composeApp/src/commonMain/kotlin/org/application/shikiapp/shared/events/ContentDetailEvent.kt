@@ -8,7 +8,9 @@ sealed interface ContentDetailEvent {
 
     data class ToggleDialog(val dialogState: BaseDialogState?) : ContentDetailEvent
 
-    data class SendComment(val text: String, val isOfftopic: Boolean) : ContentDetailEvent
+    data class CreateComment(val text: String, val isOfftopic: Boolean) : ContentDetailEvent
+    data class UpdateComment(val id: Long, val text: String, val isOfftopicChanged: Boolean) : ContentDetailEvent
+    data class DeleteComment(val id: Long) : ContentDetailEvent
 
     sealed interface Media : ContentDetailEvent {
         data object ChangeRate : Media
