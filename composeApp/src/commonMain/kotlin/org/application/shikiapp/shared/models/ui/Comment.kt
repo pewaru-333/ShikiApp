@@ -9,5 +9,7 @@ data class Comment(
     val userNickname: String,
     val createdAt: String,
     val commentContent: List<CommentContent>?,
-    val isOfftopic: Boolean
+    val isOfftopic: Boolean,
+    val canBeEdited: Boolean,
+    val type: String? // from dark -- shiki is always null
 )
