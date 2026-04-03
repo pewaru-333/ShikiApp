@@ -7,9 +7,7 @@ import android.os.LocaleList
 import androidx.activity.ComponentActivity
 import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
-import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.enableEdgeToEdge
-import androidx.activity.result.contract.ActivityResultContracts
 import androidx.annotation.ChecksSdkIntAtLeast
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
@@ -31,12 +29,13 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
-import org.application.shikiapp.shared.utils.extensions.appLinksSettings
-import org.application.shikiapp.shared.utils.extensions.isDomainVerified
+import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
+import org.application.shikiapp.shared.utils.extensions.isAllDomainsVerified
 import org.application.shikiapp.shared.utils.extensions.showToast
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.permissions.rememberPermissionState
@@ -109,19 +108,20 @@ actual fun rememberDataManager(): Pair<DataManager, PermissionState> {
 actual fun rememberVerifiedDomain(): IDomain {
     val context = LocalContext.current
 
-    var verified by remember { mutableStateOf(context.isDomainVerified()) }
+    var verified by remember { mutableStateOf(context.isAllDomainsVerified()) }
 
-    val launcher =
-        rememberLauncherForActivityResult(ActivityResultContracts.StartActivityForResult()) {
-            verified = context.isDomainVerified()
-        }
+    LifecycleResumeEffect(Unit) {
+        verified = context.isAllDomainsVerified()
+
+        onPauseOrDispose { }
+    }
 
     return remember(verified) {
         object : IDomain {
             override val isVerified: Boolean
                 get() = verified
 
-            override fun onSettingsLaunch() = launcher.launch(context.appLinksSettings())
+            override fun onSettingsLaunch() = context.openAppLinksSettings()
         }
     }
 }
