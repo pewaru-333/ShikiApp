@@ -183,8 +183,14 @@ fun UserScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             canSend = user.showComments,
             onNavigate = onNavigate,
             onHide = { model.onEvent(ContentDetailEvent.ToggleDialog(null)) },
-            onSendComment = { text, isOfftopic ->
-                model.onEvent(ContentDetailEvent.SendComment(text, isOfftopic))
+            onCreateComment = { text, isOfftopic ->
+                model.onEvent(ContentDetailEvent.CreateComment(text, isOfftopic))
+            },
+            onUpdateComment = { id, text, isOfftopicChanged ->
+                model.onEvent(ContentDetailEvent.UpdateComment(id, text, isOfftopicChanged))
+            },
+            onDeleteComment = { id ->
+                model.onEvent(ContentDetailEvent.DeleteComment(id))
             }
         )
     }
