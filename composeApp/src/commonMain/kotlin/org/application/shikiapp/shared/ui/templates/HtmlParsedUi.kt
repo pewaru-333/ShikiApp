@@ -4,6 +4,11 @@ package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -38,17 +43,18 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
-import org.application.shikiapp.shared.utils.extensions.clickableUrl
+import androidx.compose.ui.util.fastForEach
 import org.application.shikiapp.shared.utils.extensions.flattenImages
 import org.application.shikiapp.shared.utils.ui.CommentContent
 import shikiapp.composeapp.generated.resources.Res
@@ -66,8 +72,8 @@ fun HtmlContent(commentContent: List<CommentContent>?) {
     BoxWithConstraints {
         val containerMaxWidth = maxWidth
 
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            commentContent?.forEach { item ->
+        Column {
+            commentContent?.fastForEach { item ->
                 RenderContent(
                     content = item,
                     containerMaxWidth = containerMaxWidth,
@@ -102,16 +108,11 @@ private fun RenderContent(
 ) {
     when (content) {
         is CommentContent.TextContent -> {
-            var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-
             Text(
                 text = content.text,
                 style = MaterialTheme.typography.bodyLarge,
                 inlineContent = content.inlineContent,
-                onTextLayout = { layoutResult = it },
-                modifier = Modifier
-                    .padding(vertical = 4.dp)
-                    .clickableUrl(content.text) { layoutResult }
+                modifier = Modifier.padding(vertical = 4.dp)
             )
         }
 
@@ -120,7 +121,7 @@ private fun RenderContent(
                 modifier = Modifier.padding(vertical = 4.dp),
                 verticalArrangement = Arrangement.spacedBy(4.dp)
             ) {
-                content.items.forEach { item ->
+                content.items.fastForEach { item ->
                     RenderContent(item, containerMaxWidth, onImageClick)
                 }
             }
@@ -134,13 +135,13 @@ private fun RenderContent(
                 Text(
                     text = content.prefix,
                     style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(end = 4.dp, top = 4.dp)
+                    modifier = Modifier.padding(top = 4.dp, end = 4.dp)
                 )
                 Column(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
-                    content.items.forEach { item ->
+                    content.items.fastForEach { item ->
                         RenderContent(item, containerMaxWidth, onImageClick)
                     }
                 }
@@ -176,7 +177,7 @@ private fun RenderContent(
                 model = content.previewUrl,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .padding(vertical = 6.dp)
+                    .padding(vertical = 4.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .then(modifier)
                     .clickable { onImageClick(content) }
@@ -190,7 +191,7 @@ private fun RenderContent(
                 contentAlignment = Alignment.Center,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
+                    .padding(vertical = 4.dp)
                     .aspectRatio(16f / 9f)
                     .clip(MaterialTheme.shapes.medium)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
@@ -234,7 +235,7 @@ private fun RenderContent(
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 6.dp)
+                    .padding(vertical = 4.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
                     .clickable { isVisible = !isVisible }
@@ -260,14 +261,14 @@ private fun RenderContent(
                     )
                 }
 
-                AnimatedVisibility(isVisible) {
+                AnimatedVisibility(
+                    visible = isVisible,
+                    enter = expandVertically(tween(300)) + fadeIn(tween(300)),
+                    exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
+                ) {
                     Column(Modifier.padding(start = 8.dp, top = 12.dp)) {
-                        content.items.forEach {
-                            RenderContent(
-                                content = it,
-                                containerMaxWidth = containerMaxWidth,
-                                onImageClick = onImageClick
-                            )
+                        content.items.fastForEach {
+                            RenderContent(it, containerMaxWidth, onImageClick)
                         }
                     }
                 }
@@ -275,47 +276,49 @@ private fun RenderContent(
         }
 
         is CommentContent.QuoteContent -> {
+            val primary = MaterialTheme.colorScheme.primary
+
             Column(
                 modifier = Modifier
-                    .background(MaterialTheme.colorScheme.surfaceVariant, MaterialTheme.shapes.medium)
-                    .padding(8.dp)
+                    .fillMaxWidth()
+                    .padding(vertical = 6.dp)
+                    .drawBehind {
+                        drawLine(
+                            color = primary,
+                            start = Offset(0f, 0f),
+                            end = Offset(0f, size.height),
+                            strokeWidth = 4.dp.toPx()
+                        )
+                    }
+                    .padding(start = 12.dp)
             ) {
                 Text(
                     text = content.author,
-                    style = MaterialTheme.typography.labelLarge.copy(
+                    style = MaterialTheme.typography.labelMedium.copy(
                         fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
+                        color = primary
                     )
                 )
 
                 Spacer(Modifier.height(4.dp))
 
-                content.items.forEach {
+                content.items.fastForEach {
                     RenderContent(it, containerMaxWidth, onImageClick)
                 }
             }
         }
 
         is CommentContent.BanContent -> {
-            var layoutResult by remember { mutableStateOf<TextLayoutResult?>(null) }
-
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.5f))
                     .border(1.dp, MaterialTheme.colorScheme.error.copy(alpha = 0.3f), MaterialTheme.shapes.medium)
                     .padding(16.dp)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    AnimatedAsyncImage(
-                        model = content.moderatorAvatar,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .size(24.dp)
-                            .clip(CircleShape)
-                    )
+                    CircleContentImage(content.moderatorAvatar, Modifier.size(24.dp), ContentScale.Crop)
 
                     Spacer(Modifier.width(8.dp))
 
@@ -332,8 +335,6 @@ private fun RenderContent(
 
                 Text(
                     text = content.reason,
-                    modifier = Modifier.clickableUrl(content.reason) { layoutResult },
-                    onTextLayout = { layoutResult = it },
                     style = MaterialTheme.typography.bodyMedium.copy(
                         color = MaterialTheme.colorScheme.onErrorContainer,
                     )
