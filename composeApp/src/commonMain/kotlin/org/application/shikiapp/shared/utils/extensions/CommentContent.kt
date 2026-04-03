@@ -22,6 +22,11 @@ fun List<CommentContent>.flattenImages() = asSequence()
     .filterIsInstance<CommentContent.ImageContent>()
     .toList()
 
+fun List<CommentContent>.flattenText() = asSequence()
+    .flatMap(CommentContent::deepFlatten)
+    .filterIsInstance<CommentContent.TextContent>()
+    .joinToString(separator = " ", transform = CommentContent.TextContent::text)
+
 private fun CommentContent.deepFlatten(): Sequence<CommentContent> = sequence {
     yield(this@deepFlatten)
     items.forEach { yieldAll(it.deepFlatten()) }
