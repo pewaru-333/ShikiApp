@@ -50,6 +50,18 @@ class CommentListState(
             }
         }
     }
+
+    fun refresh() {
+        scope.launch {
+            if (comments.itemCount > 0) {
+                listState.scrollToItem(0)
+            }
+
+            yield()
+
+            comments.refresh()
+        }
+    }
 }
 
 @Composable
@@ -73,9 +85,9 @@ fun rememberCommentListState(
         state.onEventListener(onCommentEvent)
     }
 
-    LaunchedEffect(list.loadState.refresh) {
-        if (list.loadState.refresh is LoadState.NotLoading && list.itemCount > 0) {
-            listState.animateScrollToItem(0)
+    LaunchedEffect(list.itemCount) {
+        if (listState.firstVisibleItemIndex <= 1) {
+            listState.requestScrollToItem(0)
         }
     }
 
