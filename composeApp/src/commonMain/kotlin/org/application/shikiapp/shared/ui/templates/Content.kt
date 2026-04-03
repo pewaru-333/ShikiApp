@@ -106,6 +106,7 @@ import org.application.shikiapp.shared.models.ui.list.ContentViewType
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.screens.LabelInfoItem
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ListView
@@ -1142,7 +1143,7 @@ fun LazyListScope.summary(
     studio: Studio? = null,
     publisher: Publisher? = null,
     linkedType: LinkedType? = null,
-    duration: String? = null,
+    duration: ResourceText? = null,
     nextEpisodeAt: String? = null,
     onEvent: (ContentDetailEvent) -> Unit,
     onNavigate: (Screen) -> Unit
@@ -1182,7 +1183,7 @@ fun LazyListScope.summary(
                 DetailBox(
                     icon = Res.drawable.vector_timer,
                     label = stringResource(Res.string.text_episode),
-                    value = duration
+                    value = duration.asComposableString()
                 )
             }
         }
