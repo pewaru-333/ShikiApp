@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.network.response.AsyncData
+import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.RelationKind
 import org.application.shikiapp.shared.utils.enums.VideoKind
 import org.jetbrains.compose.resources.StringResource
@@ -17,7 +18,7 @@ data class Anime(
     val chronology: List<Content>,
     val comments: Flow<PagingData<Comment>>,
     val description: AnnotatedString,
-    val duration: String,
+    val duration: ResourceText?,
     val episodes: String,
     val fandubbers: List<String>,
     val fansubbers: List<String>,
