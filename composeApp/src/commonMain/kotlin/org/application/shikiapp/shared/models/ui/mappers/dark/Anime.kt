@@ -23,7 +23,6 @@ import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.shared.utils.ROLES_RUSSIAN
 import org.application.shikiapp.shared.utils.ResourceText
-import org.application.shikiapp.shared.utils.ResourceText.StringResource
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Origin
@@ -35,6 +34,7 @@ import org.application.shikiapp.shared.utils.extensions.safeValueOf
 import org.application.shikiapp.shared.utils.fromHtml
 import org.application.shikiapp.shared.utils.ui.Formatter
 import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.text_minutes_short
 import shikiapp.composeapp.generated.resources.text_unknown
 import java.time.OffsetDateTime
 
@@ -79,7 +79,13 @@ object AnimeMapper {
             },
             comments = comments,
             description = fromHtml(main.descriptionHtml),
-            duration = main.duration?.toString()?.plus(" мин.").orEmpty(),
+            duration = if (main.duration == null || main.duration == 0) null
+            else ResourceText.MultiString(
+                value = listOf(
+                    ResourceText.StaticString("${main.duration} "),
+                    ResourceText.StringResource(Res.string.text_minutes_short)
+                )
+            ),
             episodes = when (Enum.safeValueOf<Status>(main.status?.rawValue)) {
                 Status.ONGOING -> "${main.episodesAired} / ${Formatter.getFullEpisodes(main.episodes)}"
                 Status.RELEASED -> "${main.episodes} / ${main.episodes}"
@@ -125,7 +131,7 @@ object AnimeMapper {
                     Statistics(
                         sum = statuses.sumOf(AnimeExtraQuery.Data.Anime.StatusesStat::count),
                         scores = statuses.filter { it.count > 0 }.associate {
-                            StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) to it.count.toString()
+                            ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) to it.count.toString()
                         }
                     )
                 }
