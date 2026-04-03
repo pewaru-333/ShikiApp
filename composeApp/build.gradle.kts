@@ -128,18 +128,16 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.2"
+                packageVersion = "0.6.3"
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 
                 modules(
-                    "java.net.http",
                     "java.logging",
-                    "jdk.crypto.ec",
+                    "java.net.http",
                     "jdk.crypto.cryptoki",
-                    "java.naming",
-                    "java.sql",
-                    "java.management",
+                    "jdk.crypto.ec",
+                    "jdk.localedata",
                     "jdk.unsupported"
                 )
 
@@ -148,9 +146,6 @@ compose {
                 }
 
                 linux {
-                    shortcut = true
-                    appCategory = "Multimedia"
-                    menuGroup = "Multimedia"
                     iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.png"))
                 }
             }

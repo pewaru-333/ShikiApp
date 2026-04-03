@@ -1,0 +1,3 @@
+— Added the feature to edit and delete user's comments.
+— Added an option in the application settings to check the app links.
+— Fixed an issue where the list of comments sometimes scrolled automatically.
