@@ -5,10 +5,14 @@ package org.application.shikiapp.shared.screens
 import AppLanguages
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -52,6 +56,8 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
 
     val isCompact = rememberWindowSize().isCompact
+
+    var showDeeplinkSetting by rememberSaveable { mutableStateOf(false) }
 
     AnimatedDialogScreen(isVisible, stringResource(Res.string.text_settings), onBack) { values ->
         ProvidePreferenceLocals(rememberAppPreferences()) {
@@ -131,7 +137,16 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                         valueToText = { AnnotatedString(stringResource(Res.string.preference_cache_size_mb, it)) }
                     )
                 }
+
+                deeplinkSetting { showDeeplinkSetting = true }
             }
         }
     }
+
+    DeeplinkScreen(showDeeplinkSetting) { showDeeplinkSetting = false }
 }
+
+expect fun LazyListScope.deeplinkSetting(onClick: () -> Unit)
+
+@Composable
+expect fun DeeplinkScreen(isVisible: Boolean, onBack: () -> Unit)
