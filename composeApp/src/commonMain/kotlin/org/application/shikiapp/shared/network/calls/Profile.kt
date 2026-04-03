@@ -7,6 +7,7 @@ import io.ktor.client.request.delete
 import io.ktor.client.request.forms.submitForm
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
+import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -50,45 +51,46 @@ class Profile(private val client: HttpClient) {
         }
     ).body<Token>()
 
-    suspend fun refreshToken(refreshToken: String, builder: HttpRequestBuilder.() -> Unit): Token? = mutex.withLock {
-        with(Preferences.token) {
-            if (this != null && this.refreshToken != refreshToken) {
-                return@withLock this
+    suspend fun refreshToken(refreshToken: String, builder: HttpRequestBuilder.() -> Unit): Token? =
+        mutex.withLock {
+            with(Preferences.token) {
+                if (this != null && this.refreshToken != refreshToken) {
+                    return@withLock this
+                }
             }
-        }
 
-        repeat(3) { attempt ->
-            try {
-                val response = client.submitForm(
-                    url = TOKEN_URL,
-                    block = builder,
-                    formParameters = parameters {
-                        append("grant_type", REFRESH_TOKEN)
-                        append("client_id", CLIENT_ID)
-                        append("client_secret", CLIENT_SECRET)
-                        append("refresh_token", refreshToken)
+            repeat(3) { attempt ->
+                try {
+                    val response = client.submitForm(
+                        url = TOKEN_URL,
+                        block = builder,
+                        formParameters = parameters {
+                            append("grant_type", REFRESH_TOKEN)
+                            append("client_id", CLIENT_ID)
+                            append("client_secret", CLIENT_SECRET)
+                            append("refresh_token", refreshToken)
+                        }
+                    )
+
+                    if (response.status.isSuccess()) {
+                        val newToken = response.body<Token>()
+                        Preferences.saveToken(newToken)
+                        return@withLock newToken
+                    } else if (response.status == HttpStatusCode.BadRequest || response.status == HttpStatusCode.Unauthorized) {
+                        Preferences.saveToken(Token.empty)
+                        return@withLock null
                     }
-                )
+                } catch (e: Exception) {
+                    if (e !is IOException || attempt == 2) {
+                        return@withLock null
+                    }
 
-                if (response.status.isSuccess()) {
-                    val newToken = response.body<Token>()
-                    Preferences.saveToken(newToken)
-                    return@withLock newToken
-                } else if (response.status == HttpStatusCode.BadRequest || response.status == HttpStatusCode.Unauthorized) {
-                    Preferences.saveToken(Token.empty)
-                    return@withLock null
+                    delay(1000L * (attempt + 1))
                 }
-            } catch (e: Exception) {
-                if (e !is IOException || attempt == 2) {
-                    return@withLock null
-                }
-
-                delay(1000L * (attempt + 1))
             }
-        }
 
-        return@withLock null
-    }
+            return@withLock null
+        }
 
     suspend fun whoAmI() = client.get("users/whoami").body<UserBrief>()
 
@@ -147,6 +149,19 @@ class Profile(private val client: HttpClient) {
         contentType(ContentType.Application.Json)
         setBody(comment)
     }
+
+    suspend fun updateComment(id: Long, comment: CommentToCreate.Comment) =
+        client.patch("comments/$id") {
+            contentType(ContentType.Application.Json)
+            setBody(comment)
+        }
+
+    suspend fun deleteComment(id: Long) = client.delete("comments/$id")
+
+    suspend fun changeOfftopic(id: Long) = client.post("v2/abuse_requests/offtopic") {
+        parameter("comment_id", id)
+    }
+
 
 //    suspend fun editMessage(id: Long, message: MessageToSend) = client.patch("messages/$id") {
 //        contentType(ContentType.Application.Json)
