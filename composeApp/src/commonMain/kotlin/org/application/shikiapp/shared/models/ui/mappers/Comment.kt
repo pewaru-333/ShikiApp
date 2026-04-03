@@ -13,5 +13,7 @@ suspend fun Comment.mapper() = org.application.shikiapp.shared.models.ui.Comment
     userNickname = user.nickname,
     createdAt = Formatter.convertDate(createdAt),
     commentContent = withContext(Dispatchers.Default) { HtmlParser.parseComment(htmlBody) },
-    isOfftopic = isOfftopic
+    isOfftopic = isOfftopic,
+    canBeEdited = canBeEdited,
+    type = type?.uppercase()
 )
