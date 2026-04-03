@@ -17,7 +17,7 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.ui.theme.Theme
 import org.application.shikiapp.shared.utils.AppLocale
-import org.application.shikiapp.shared.utils.extensions.toFullUri
+import org.application.shikiapp.shared.utils.extensions.toFullUrl
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Navigation
@@ -60,7 +60,7 @@ private fun rememberDeepLinkHandler(onNavigate: (NavDeepLinkRequest) -> Unit): U
     return remember {
         object : UriHandler {
             override fun openUri(uri: String) {
-                val link = uri.toFullUri().toString()
+                val link = uri.toFullUrl()
 
                 if (link.contains("oauth/authorize")) {
                     linkHandler.onOpenLink(link)
