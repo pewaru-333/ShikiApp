@@ -11,7 +11,7 @@ import androidx.core.net.toUri
 import kotlinx.coroutines.runBlocking
 import org.application.shikiapp.shared.utils.BASE_URL
 import org.application.shikiapp.shared.utils.extensions.showToast
-import org.application.shikiapp.shared.utils.extensions.toFullUri
+import org.application.shikiapp.shared.utils.extensions.toFullUrl
 import org.jetbrains.compose.resources.getString
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_error_open_link
@@ -30,7 +30,7 @@ private class AndroidLinkHandler(private val context: Context) : IAction {
 
         if (resolveInfo != null) {
             try {
-                val intent = Intent(Intent.ACTION_VIEW, url.toFullUri().toString().toUri())
+                val intent = Intent(Intent.ACTION_VIEW, url.toFullUrl().toUri())
                     .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
                     .setPackage(resolveInfo.activityInfo.packageName)
 
