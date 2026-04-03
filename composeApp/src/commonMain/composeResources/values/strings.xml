@@ -232,6 +232,7 @@
     <string name="text_close">Закрыть</string>
     <string name="text_confirm">Подтвердить</string>
     <string name="text_copy_link">Скопировать ссылку</string>
+    <string name="text_delete">Удалить</string>
     <string name="text_dismiss">Отменить</string>
     <string name="text_rate">Оценить</string>
     <string name="text_save">Сохранить</string>
@@ -266,8 +267,11 @@
 
     <string name="preference_language">Язык приложения</string>
 
+    <string name="preference_deep_link">Ссылки приложения</string>
+
     <!-- Другое -->
     <string name="blank" />
+    <string name="text_editing">Редактирование</string>
     <string name="text_empty">Пусто</string>
     <string name="text_error">Ошибка!</string>
     <string name="text_error_loading">Ошибка загрузки!</string>
@@ -282,8 +286,13 @@
     <string name="text_to_profile">В профиль</string>
     <string name="text_to_settings">В настройки</string>
     <string name="text_try_again">Повторить</string>
+    <string name="text_turned_off">Выключено</string>
+    <string name="text_turned_on">Включено</string>
     <string name="text_unknown">Неизвестно</string>
+    <string name="text_verified">Верифицировано</string>
     <string name="text_year_in">в %1$d году</string>
+
+    <string name="text_minutes_short">мин.</string>
 
     <string name="text_image">изображение</string>
     <string name="text_quote">цитата</string>
@@ -296,11 +305,16 @@
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
     <string name="text_login_to_modify_lists">Для работы со списками необходимо осуществить вход в приложение</string>
 
+    <string name="text_app_links_support">Поддержка ссылок</string>
+    <string name="text_app_links_domain_status">Состояние доменов</string>
+
     <string name="text_enter_message">Введите сообщение</string>
     <string name="text_pay_attention">Обратите внимание!</string>
 
     <string name="text_sure_to_delete_dialog">Вы действительно хотите удалить всю переписку с пользователем %1$s?</string>
     <string name="text_sure_to_delete_all_notifications">Вы действительно хотите очистить текущий список уведомлений?</string>
+
+    <string name="text_sure_to_delete_comment">Вы действительно хотите удалить данный комментарий?</string>
 
     <string name="text_sure_to_logout">Вы действительно хотите выйти из профиля?</string>
 
