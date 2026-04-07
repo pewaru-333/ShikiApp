@@ -9,6 +9,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavType
+import androidx.navigation.navDeepLink
 import androidx.savedstate.SavedState
 import androidx.savedstate.read
 import androidx.savedstate.write
@@ -21,16 +22,21 @@ import coil3.network.NetworkFetcher
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import kotlinx.serialization.KSerializer
+import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
 import okio.Path
+import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.client.CoilClient
 import org.application.shikiapp.shared.network.client.ImageInterceptor
 import org.application.shikiapp.shared.utils.data.DataManager
+import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
+import kotlin.reflect.KType
+import kotlin.reflect.typeOf
 
 @OptIn(ExperimentalCoilApi::class)
 fun sharedImageLoader(
@@ -81,9 +87,26 @@ inline fun <reified T> serializableNavType(
     override fun serializeAsValue(value: T) = json.encodeToString(serializer, value)
 }
 
+inline fun <reified T : Any> generateDeepLinks(
+    vararg paths: String,
+    typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap()
+) = (listOf(AppConfig.baseUrl) + AppConfig.urlMirrors).flatMap { domain ->
+    paths.map { path ->
+        navDeepLink<T>(
+            basePath = "*",
+            typeMap = typeMap,
+            deepLinkBuilder = { uriPattern = "$domain$path" }
+        )
+    }
+}
+
 @Composable
 inline fun <reified T : ViewModel> viewModel(crossinline factory: (SavedStateHandle) -> T) =
     viewModel { factory(createSavedStateHandle()) }
+
+val linkedTypeMap = mapOf(
+    typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
+)
 
 expect object AppLocale {
     val current: String @Composable get
