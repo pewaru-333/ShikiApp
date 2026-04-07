@@ -18,7 +18,7 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
     override fun onCreate() {
         super.onCreate()
 
-        val config = AppConfig.createFlavourConfig(BuildConfig.USER_AGENT)
+        val config = AppConfig.createFlavorConfig(BuildConfig.USER_AGENT)
         val app = AppModuleInitializer(applicationContext, config)
         AppContext.init(app)
     }
