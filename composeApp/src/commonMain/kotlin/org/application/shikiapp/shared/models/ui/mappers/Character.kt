@@ -15,8 +15,8 @@ import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.Related
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.AsyncData
-import org.application.shikiapp.shared.utils.BASE_URL
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.Status
@@ -47,7 +47,7 @@ object CharacterMapper {
             relatedMap = relatedList.groupBy(Related::linkedType).toSortedMap(),
             russian = character.russian,
             seyu = character.seyu.map(BasicInfo::toBasicContent),
-            url = "$BASE_URL${character.url}"
+            url = "${ApiRoutes.workingBaseUrl}${character.url}"
         )
     }
 }

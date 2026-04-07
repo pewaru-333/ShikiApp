@@ -11,8 +11,8 @@ import org.application.shikiapp.shared.models.data.Roles
 import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.Related
 import org.application.shikiapp.shared.models.ui.list.BasicContent
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.AsyncData
-import org.application.shikiapp.shared.utils.BASE_URL
 import org.application.shikiapp.shared.utils.enums.LinkedKind
 import org.application.shikiapp.shared.utils.ui.Formatter
 
@@ -44,7 +44,7 @@ suspend fun Person.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dis
         relatedList = works,
         relatedMap = works.groupBy(Related::linkedType).toSortedMap(),
         russian = russian,
-        url = "$BASE_URL$url",
+        url = "${ApiRoutes.workingBaseUrl}$url",
         website = website
     )
 }
