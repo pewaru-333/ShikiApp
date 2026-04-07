@@ -15,6 +15,7 @@ import io.ktor.client.plugins.defaultRequest
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
+import kotlinx.io.IOException
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.json.Json
 import org.application.shikiapp.shared.di.AppConfig
@@ -30,8 +31,6 @@ import org.application.shikiapp.shared.network.calls.UserRates
 import org.application.shikiapp.shared.network.calls.shiki.IAnimeRepository
 import org.application.shikiapp.shared.network.calls.shiki.ICharacterRepository
 import org.application.shikiapp.shared.network.calls.shiki.IMangaRepository
-import org.application.shikiapp.shared.utils.API_URL
-import org.application.shikiapp.shared.utils.GRAPH_URL
 
 
 object Network {
@@ -46,7 +45,7 @@ object Network {
             }
 
             install(HttpTimeout) {
-                requestTimeoutMillis = 30_000
+                requestTimeoutMillis = 60_000
                 connectTimeoutMillis = 30_000
                 socketTimeoutMillis = 15_000
             }
@@ -87,20 +86,31 @@ object Network {
 
                 delayMillis { 1000 }
 
-                retryIf { _, response ->
-                    response.status == HttpStatusCode.TooManyRequests
+                retryIf { _, response -> response.status == HttpStatusCode.TooManyRequests }
+
+                retryOnExceptionIf { _, throwable -> throwable is IOException }
+            }
+
+            install(RateLimit)
+
+            install(BaseUrlResolverPlugin) {
+                baseUrl = AppConfig.baseUrl
+                mirrors = AppConfig.urlMirrors
+
+                onNewUrl = { workingUrl ->
+                    ApiRoutes.workingBaseUrl = workingUrl
                 }
             }
 
             defaultRequest {
-                url(API_URL)
+                url("/api/")
             }
         }
     }
 
     val apollo by lazy {
         ApolloClient.Builder()
-            .serverUrl(GRAPH_URL)
+            .serverUrl("/api/graphql")
             .httpEngine(KtorEngine(client))
             .build()
     }
