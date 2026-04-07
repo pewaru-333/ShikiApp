@@ -133,7 +133,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
             try {
                 val allRates = mutableListOf<UserRate>()
-                val limit = 250
+                val limit = 500
 
                 suspend fun fetchPage(page: Int) = if (type == LinkedType.ANIME) {
                     Network.rates.getAnimeRates(userId, page, limit)
