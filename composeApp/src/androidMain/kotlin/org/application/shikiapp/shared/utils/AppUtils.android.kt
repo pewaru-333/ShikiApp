@@ -34,8 +34,8 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
-import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
 import org.application.shikiapp.shared.utils.extensions.isAllDomainsVerified
+import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
 import org.application.shikiapp.shared.utils.extensions.showToast
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.permissions.rememberPermissionState
