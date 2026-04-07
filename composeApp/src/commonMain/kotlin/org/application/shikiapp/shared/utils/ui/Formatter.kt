@@ -9,7 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.models.data.Date
-import org.application.shikiapp.shared.utils.BASE_URL
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
@@ -203,7 +203,7 @@ object Formatter {
 
         }
 
-        val body = Ksoup.parse(text, BASE_URL)
+        val body = Ksoup.parse(text, ApiRoutes.workingBaseUrl)
 
         val (videos, images) = coroutineScope {
             val videos = async {

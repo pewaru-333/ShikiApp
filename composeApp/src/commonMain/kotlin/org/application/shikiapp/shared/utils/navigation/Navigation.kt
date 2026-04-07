@@ -19,7 +19,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navDeepLink
-import kotlinx.serialization.builtins.nullable
+import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.screens.AnimeScreen
 import org.application.shikiapp.shared.screens.CalendarScreen
@@ -34,14 +34,11 @@ import org.application.shikiapp.shared.screens.ProfileScreen
 import org.application.shikiapp.shared.screens.UserRates
 import org.application.shikiapp.shared.screens.UserScreen
 import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.utils.BASE_PATH
-import org.application.shikiapp.shared.utils.BASE_URL
-import org.application.shikiapp.shared.utils.REDIRECT_URI
-import org.application.shikiapp.shared.utils.URL_MIRROR
-import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Menu
 import org.application.shikiapp.shared.utils.extensions.isTopLevelRouteSelected
 import org.application.shikiapp.shared.utils.extensions.onNavigationItemClick
+import org.application.shikiapp.shared.utils.generateDeepLinks
+import org.application.shikiapp.shared.utils.linkedTypeMap
 import org.application.shikiapp.shared.utils.navigation.Screen.Anime
 import org.application.shikiapp.shared.utils.navigation.Screen.Calendar
 import org.application.shikiapp.shared.utils.navigation.Screen.Club
@@ -52,9 +49,7 @@ import org.application.shikiapp.shared.utils.navigation.Screen.NewsDetail
 import org.application.shikiapp.shared.utils.navigation.Screen.Person
 import org.application.shikiapp.shared.utils.navigation.Screen.Profile
 import org.application.shikiapp.shared.utils.navigation.Screen.User
-import org.application.shikiapp.shared.utils.serializableNavType
 import org.jetbrains.compose.resources.stringResource
-import kotlin.reflect.typeOf
 
 @Composable
 fun Navigation(navigator: NavHostController) {
@@ -122,56 +117,28 @@ private fun AppNavHost(navigator: NavHostController) =
     NavHost(navigator, Preferences.startPage.route, Modifier.systemBarsPadding()) {
         // Bottom menu items //
         composable<Screen.Catalog>(
-            typeMap = mapOf(
-                typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
-            ),
-            deepLinks = listOf(
-                navDeepLink<Screen.Catalog>(
-                    basePath = BASE_PATH,
-                    typeMap = mapOf(
-                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
-                    )
-                ) {
-                    uriPattern = "$BASE_URL/animes/studio/{studio}-.*"
-                },
-                navDeepLink<Screen.Catalog>(
-                    basePath = BASE_PATH,
-                    typeMap = mapOf(
-                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
-                    )
-                ) {
-                    uriPattern = "$URL_MIRROR/animes/studio/{studio}-.*"
-                },
-                navDeepLink<Screen.Catalog>(
-                    basePath = BASE_PATH,
-                    typeMap = mapOf(
-                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
-                    )
-                ) {
-                    uriPattern = "$BASE_URL/mangas/publisher/{publisher}-.*"
-                },
-                navDeepLink<Screen.Catalog>(
-                    basePath = BASE_PATH,
-                    typeMap = mapOf(
-                        typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
-                    )
-                ) {
-                    uriPattern = "$URL_MIRROR/mangas/publisher/{publisher}-.*"
-                }
+            typeMap = linkedTypeMap,
+            deepLinks = generateDeepLinks<Screen.Catalog>(
+                "/animes/studio/{studio}-.*",
+                "/mangas/publisher/{publisher}-.*",
+                typeMap = linkedTypeMap
             )
         ) {
             CatalogScreen(navigator::navigate)
         }
+
         composable<Calendar> {
             CalendarScreen(navigator::navigate)
         }
+
         composable<News> {
             NewsScreen(navigator::navigate)
         }
+
         composable<Profile>(
             deepLinks = listOf(
-                navDeepLink<Login>(BASE_PATH) {
-                    uriPattern = "$REDIRECT_URI?code={code}"
+                navDeepLink<Login>("*") {
+                    uriPattern = "${AppConfig.redirectUri}?code={code}"
                 }
             )
         ) {
@@ -179,74 +146,40 @@ private fun AppNavHost(navigator: NavHostController) =
         }
 
         // Screens //
-        composable<Anime>(
-            deepLinks = listOf(
-                navDeepLink<Anime>(BASE_PATH) {
-                    uriPattern = "$BASE_URL/animes/{id}-.*"
-                },
-                navDeepLink<Anime>(BASE_PATH) {
-                    uriPattern = "$URL_MIRROR/animes/{id}-.*"
-                }
-            )
-        ) {
+        composable<Anime>(deepLinks = generateDeepLinks<Anime>("/animes/{id}-.*")) {
             AnimeScreen(navigator::navigate, navigator::navigateUp)
         }
+
         composable<Manga>(
-            deepLinks = listOf(
-                navDeepLink<Manga>(BASE_PATH) {
-                    uriPattern = "$BASE_URL/mangas/{id}-.*"
-                },
-                navDeepLink<Manga>(BASE_PATH) {
-                    uriPattern = "$BASE_URL/ranobe/{id}-.*"
-                },
-                navDeepLink<Manga>(BASE_PATH) {
-                    uriPattern = "$URL_MIRROR/mangas/{id}-.*"
-                },
-                navDeepLink<Manga>(BASE_PATH) {
-                    uriPattern = "$URL_MIRROR/ranobe/{id}-.*"
-                }
+            deepLinks = generateDeepLinks<Manga>(
+                "/mangas/{id}-.*",
+                "/ranobe/{id}-.*"
             )
         ) {
             MangaScreen(navigator::navigate, navigator::navigateUp)
         }
-        composable<Screen.Character>(
-            deepLinks = listOf(
-                navDeepLink<Screen.Character>(BASE_PATH) {
-                    uriPattern = "$BASE_URL/characters/{id}-.*"
-                },
-                navDeepLink<Screen.Character>(BASE_PATH) {
-                    uriPattern = "$URL_MIRROR/characters/{id}-.*"
-                }
-            )
-        ) {
+
+        composable<Screen.Character>(deepLinks = generateDeepLinks<Screen.Character>("/characters/{id}-.*")) {
             CharacterScreen(navigator::navigate, navigator::navigateUp)
         }
-        composable<Person>(
-            deepLinks = listOf(
-                navDeepLink<Person>(BASE_PATH) {
-                    uriPattern = "$BASE_URL/people/{id}-.*"
-                },
-                navDeepLink<Person>(BASE_PATH) {
-                    uriPattern = "$URL_MIRROR/people/{id}-.*"
-                }
-            )
-        ) {
+
+        composable<Person>(deepLinks = generateDeepLinks<Person>("/people/{id}-.*")) {
             PersonScreen(navigator::navigate, navigator::navigateUp)
         }
+
         composable<User> {
             UserScreen(navigator::navigate, navigator::navigateUp)
         }
+
         composable<Club> {
             ClubScreen(navigator::navigate, navigator::navigateUp)
         }
+
         composable<NewsDetail> {
             NewsDetail(navigator::navigate, navigator::navigateUp)
         }
-        composable<Screen.UserRates>(
-            typeMap = mapOf(
-                typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
-            )
-        ) {
+
+        composable<Screen.UserRates>(linkedTypeMap) {
             UserRates(navigator::navigate, navigator::navigateUp)
         }
     }

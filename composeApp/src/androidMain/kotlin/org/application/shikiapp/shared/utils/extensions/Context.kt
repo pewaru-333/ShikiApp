@@ -9,7 +9,6 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.annotation.RequiresApi
-import kotlin.collections.emptyMap
 
 fun Context.openAppLinksSettings() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) Unit else
     try {

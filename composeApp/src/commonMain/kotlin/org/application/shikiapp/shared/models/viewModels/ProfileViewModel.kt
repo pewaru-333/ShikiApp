@@ -3,6 +3,7 @@ package org.application.shikiapp.shared.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import io.ktor.client.plugins.auth.clearAuthTokens
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
@@ -111,6 +112,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                 if (request.status == HttpStatusCode.OK) {
                     Preferences.saveToken(Token.empty)
                     Preferences.setUserId(0L)
+                    Network.client.clearAuthTokens()
 
                     emit(LoginResponse.NotLogged)
                 } else {

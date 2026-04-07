@@ -1,22 +1,7 @@
 package org.application.shikiapp.shared.utils
 
-import org.application.shikiapp.shared.di.AppConfig
-
 // =========================================== Strings ============================================
 
-
-val BASE_URL = AppConfig.baseUrl
-val URL_MIRROR = AppConfig.urlMirror
-val API_URL = "$BASE_URL/api/"
-val GRAPH_URL = "$BASE_URL/api/graphql"
-val AUTH_URL = "$BASE_URL/oauth/authorize"
-val TOKEN_URL = "$BASE_URL/oauth/token"
-
-const val CODE = "code"
-val CLIENT_ID = AppConfig.clientId
-val CLIENT_SECRET = AppConfig.clientSecret
-val REDIRECT_URI = AppConfig.redirectUri
-const val GRANT_TYPE = "authorization_code"
 
 const val PREF_GROUP_APP_VIEW = "app_view"
 const val PREF_GROUP_APP_SYSTEM = "app_system"
@@ -35,13 +20,11 @@ const val EXPIRES_IN = "expires_in"
 const val CREATED_AT = "created_at"
 
 const val USER_ID = "user_id"
-const val BASE_PATH = "*"
 
 const val BLANK = ""
 
 // =========================================== Lists ==============================================
 val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
-
 val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
 
 // =========================================== Maps ===============================================

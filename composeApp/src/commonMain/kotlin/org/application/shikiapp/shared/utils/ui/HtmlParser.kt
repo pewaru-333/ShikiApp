@@ -24,8 +24,8 @@ import com.fleeksoft.ksoup.nodes.Document
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
-import org.application.shikiapp.shared.utils.BASE_URL
 import org.application.shikiapp.shared.utils.BLANK
 
 sealed interface CommentContent {
@@ -52,7 +52,7 @@ object HtmlParser {
 
     fun parseComment(html: String): List<CommentContent> {
         val localizedHtml = Formatter.localizeNames(html)
-        val document = Ksoup.parse(localizedHtml, BASE_URL).apply {
+        val document = Ksoup.parse(localizedHtml, ApiRoutes.workingBaseUrl).apply {
             select("div.right-text").remove()
             select(".b-replies").remove()
         }

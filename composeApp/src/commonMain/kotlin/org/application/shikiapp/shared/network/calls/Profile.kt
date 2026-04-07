@@ -19,6 +19,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
+import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.CommentToCreate
 import org.application.shikiapp.shared.models.data.Dialog
@@ -27,13 +28,9 @@ import org.application.shikiapp.shared.models.data.MessageToSend
 import org.application.shikiapp.shared.models.data.Token
 import org.application.shikiapp.shared.models.data.UnreadMessages
 import org.application.shikiapp.shared.models.data.UserBrief
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.BLANK
-import org.application.shikiapp.shared.utils.CLIENT_ID
-import org.application.shikiapp.shared.utils.CLIENT_SECRET
-import org.application.shikiapp.shared.utils.GRANT_TYPE
-import org.application.shikiapp.shared.utils.REDIRECT_URI
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
-import org.application.shikiapp.shared.utils.TOKEN_URL
 import org.application.shikiapp.shared.utils.enums.MessageType
 import org.application.shikiapp.shared.utils.extensions.requestWithCache
 
@@ -41,13 +38,13 @@ class Profile(private val client: HttpClient) {
     private val mutex = Mutex()
 
     suspend fun getToken(code: String) = client.submitForm(
-        url = TOKEN_URL,
+        url = ApiRoutes.tokenUrl,
         formParameters = parameters {
-            append("grant_type", GRANT_TYPE)
-            append("client_id", CLIENT_ID)
-            append("client_secret", CLIENT_SECRET)
+            append("grant_type", "authorization_code")
+            append("client_id", AppConfig.clientId)
+            append("client_secret", AppConfig.clientSecret)
             append("code", code)
-            append("redirect_uri", REDIRECT_URI)
+            append("redirect_uri", AppConfig.redirectUri)
         }
     ).body<Token>()
 
@@ -62,12 +59,12 @@ class Profile(private val client: HttpClient) {
             repeat(3) { attempt ->
                 try {
                     val response = client.submitForm(
-                        url = TOKEN_URL,
+                        url = ApiRoutes.tokenUrl,
                         block = builder,
                         formParameters = parameters {
                             append("grant_type", REFRESH_TOKEN)
-                            append("client_id", CLIENT_ID)
-                            append("client_secret", CLIENT_SECRET)
+                            append("client_id", AppConfig.clientId)
+                            append("client_secret", AppConfig.clientSecret)
                             append("refresh_token", refreshToken)
                         }
                     )

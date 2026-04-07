@@ -9,7 +9,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import kotlinx.coroutines.runBlocking
-import org.application.shikiapp.shared.utils.BASE_URL
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.extensions.showToast
 import org.application.shikiapp.shared.utils.extensions.toFullUrl
 import org.jetbrains.compose.resources.getString
@@ -19,7 +19,7 @@ import shikiapp.composeapp.generated.resources.text_no_browser
 
 private class AndroidLinkHandler(private val context: Context) : IAction {
     override fun onOpenLink(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, BASE_URL.toUri())
+        val intent = Intent(Intent.ACTION_VIEW, ApiRoutes.workingBaseUrl.toUri())
         val resolveInfo = context.packageManager.run {
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
                 resolveActivity(intent, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))

@@ -4,6 +4,7 @@ package org.application.shikiapp.shared.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -16,10 +17,8 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -30,19 +29,14 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
-import io.ktor.http.URLBuilder
-import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.showDialogs
 import org.application.shikiapp.shared.models.viewModels.ProfileViewModel
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.LoginResponse
 import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.utils.AUTH_URL
-import org.application.shikiapp.shared.utils.CLIENT_ID
-import org.application.shikiapp.shared.utils.CODE
-import org.application.shikiapp.shared.utils.REDIRECT_URI
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberVerifiedDomain
@@ -125,54 +119,42 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
 }
 
 @Composable
-private fun LoginScreen(openSettings: () -> Unit) {
+private fun LoginScreen(onClick: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val domainHelper = rememberVerifiedDomain()
 
-    val uri = URLBuilder(AUTH_URL).apply {
-        encodedParameters.apply {
-            append("client_id", CLIENT_ID)
-            append("redirect_uri", REDIRECT_URI)
-            append("response_type", CODE)
-            append("scope", AppConfig.authScopes.joinToString("+", transform = String::lowercase))
-        }
-    }.buildString()
+    Box(Modifier.fillMaxSize()) {
+        IconButtonSettings(onClick)
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {},
-                actions = {
-                    IconButton(openSettings) { VectorIcon(Res.drawable.vector_settings) }
-                }
-            )
-        }
-    ) { values ->
         if (domainHelper.isVerified) {
-            Box(
-                contentAlignment = Alignment.Center,
+            Column(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp, values.calculateTopPadding())
+                    .align(Alignment.Center)
+                    .width(240.dp)
             ) {
-                Column(Modifier.width(240.dp)) {
-                    Button(
-                        modifier = Modifier.fillMaxWidth(),
-                        onClick = { uriHandler.openUri(uri) }
-                    ) {
-                        Text(stringResource(Res.string.text_login))
-                        VectorIcon(Res.drawable.vector_keyboard_arrow_right)
-                    }
-
-                    Text(
-                        text = stringResource(Res.string.text_forward_to_browser),
-                        textAlign = TextAlign.Center,
-                        style = MaterialTheme.typography.bodySmall
-                    )
+                Button(
+                    modifier = Modifier.fillMaxWidth(),
+                    onClick = { uriHandler.openUri(ApiRoutes.authUri) }
+                ) {
+                    Text(stringResource(Res.string.text_login))
+                    VectorIcon(Res.drawable.vector_keyboard_arrow_right)
                 }
+
+                Text(
+                    text = stringResource(Res.string.text_forward_to_browser),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall
+                )
             }
         } else {
-            Column(Modifier.fillMaxSize(), Arrangement.spacedBy(8.dp, Alignment.CenterVertically), Alignment.CenterHorizontally) {
+            Column(
+                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                modifier = Modifier
+                    .align(Alignment.Center)
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp)
+            ) {
                 Text(
                     text = stringResource(Res.string.text_pay_attention),
                     textAlign = TextAlign.Center,
@@ -193,55 +175,31 @@ private fun LoginScreen(openSettings: () -> Unit) {
 }
 
 @Composable
-private fun LoadingScreen(openSettings: () -> Unit) = Scaffold(
-    topBar = {
-        TopAppBar(
-            title = {},
-            actions = {
-                IconButton(
-                    onClick = openSettings,
-                    content = { VectorIcon(Res.drawable.vector_settings) }
-                )
-            }
-        )
-    }
-) { values ->
-    Box(
-        content = { CircularProgressIndicator() },
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(values)
+private fun LoadingScreen(onClick: () -> Unit) = Box(Modifier.fillMaxSize()) {
+    IconButtonSettings(onClick)
+
+    CircularProgressIndicator(Modifier.align(Alignment.Center))
+}
+
+@Composable
+private fun ErrorScreen(onReload: () -> Unit, onClick: () -> Unit) = Box(Modifier.fillMaxSize()) {
+    IconButtonSettings(onClick)
+
+    FilledTonalButton(
+        onClick = onReload,
+        modifier = Modifier.align(Alignment.Center),
+        content = { Text(stringResource(Res.string.text_repeat_the_loading)) }
     )
 }
 
 @Composable
-private fun ErrorScreen(reload: () -> Unit, openSettings: () -> Unit) = Scaffold(
-    topBar = {
-        TopAppBar(
-            title = {},
-            actions = {
-                IconButton(
-                    onClick = openSettings,
-                    content = { VectorIcon(Res.drawable.vector_settings) }
-                )
-            }
-        )
-    }
-) { values ->
-    Box(
-        contentAlignment = Alignment.Center,
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(values),
-        content = {
-            FilledTonalButton(
-                onClick = reload,
-                content = { Text(stringResource(Res.string.text_repeat_the_loading)) }
-            )
-        }
-    )
-}
+private fun BoxScope.IconButtonSettings(onClick: () -> Unit) = IconButton(
+    content = { VectorIcon(Res.drawable.vector_settings) },
+    onClick = onClick,
+    modifier = Modifier
+        .align(Alignment.TopEnd)
+        .padding(8.dp)
+)
 
 @Composable
 private fun DialogLogout(onDismiss: () -> Unit, onConfirm: () -> Unit) =

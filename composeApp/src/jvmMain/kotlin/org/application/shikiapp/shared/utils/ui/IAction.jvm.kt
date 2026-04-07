@@ -8,7 +8,7 @@ import java.net.URI
 private class DesktopLinkHandler : IAction {
     override fun onOpenLink(url: String) {
         if (Desktop.isDesktopSupported()) {
-            val desktop = Desktop.getDesktop();
+            val desktop = Desktop.getDesktop()
 
             if (desktop.isSupported(Desktop.Action.BROWSE)) {
                 try {

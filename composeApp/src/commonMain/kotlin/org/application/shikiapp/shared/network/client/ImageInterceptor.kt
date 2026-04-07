@@ -2,7 +2,6 @@ package org.application.shikiapp.shared.network.client
 
 import coil3.intercept.Interceptor
 import coil3.request.ImageResult
-import org.application.shikiapp.shared.utils.BASE_URL
 
 object ImageInterceptor : Interceptor {
     override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
@@ -10,7 +9,7 @@ object ImageInterceptor : Interceptor {
         val data = request.data
 
         if (data is String && data.startsWith("/")) {
-            val newRequest = request.newBuilder().data(BASE_URL + data).build()
+            val newRequest = request.newBuilder().data(ApiRoutes.workingBaseUrl + data).build()
             val newChain = chain.withRequest(newRequest)
 
             return newChain.proceed()
