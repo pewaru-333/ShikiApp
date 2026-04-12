@@ -274,6 +274,10 @@ object Formatter {
         return@withContext Triple(images, videos, poster)
     }
 
+    fun replaceMissingAnimePoster(poster: String?, id: Any?) = poster?.takeIf { "missing" !in it }
+        ?: id?.let { "https://smarthard.net/static/animes/$it.jpeg" }
+            .orEmpty()
+
     fun localizeNames(text: String) : String {
         val fullPattern = Regex("""<span class="name-en">(.*?)</span><span class="name-ru">(.*?)</span>""")
         val englishPattern = Regex("""<span class="name-en">(.*?)</span>""")
