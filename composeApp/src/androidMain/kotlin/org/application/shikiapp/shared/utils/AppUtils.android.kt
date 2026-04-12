@@ -2,6 +2,7 @@ package org.application.shikiapp.shared.utils
 
 import android.Manifest
 import android.app.LocaleManager
+import android.content.pm.ActivityInfo
 import android.os.Build
 import android.os.LocaleList
 import androidx.activity.ComponentActivity
@@ -23,17 +24,22 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.PlatformSpanStyle
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
+import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.extensions.isAllDomainsVerified
 import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
 import org.application.shikiapp.shared.utils.extensions.showToast
@@ -179,5 +185,41 @@ actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
         }
 
         onDispose { }
+    }
+}
+
+@Composable
+actual fun LockScreenOrientation(orientation: ScreenOrientation) {
+    val activity = LocalActivity.current ?: return
+
+    DisposableEffect(orientation) {
+        val lastOrientation = activity.requestedOrientation
+
+        activity.requestedOrientation = when (orientation) {
+            ScreenOrientation.PORTRAIT -> ActivityInfo.SCREEN_ORIENTATION_PORTRAIT
+            ScreenOrientation.LANDSCAPE -> ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE
+            ScreenOrientation.UNSPECIFIED -> ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
+        }
+
+        onDispose {
+            activity.requestedOrientation = lastOrientation
+        }
+    }
+}
+
+@Composable
+actual fun HideSystemBars() {
+    val activity = LocalActivity.current ?: return
+    val view = LocalView.current
+
+    DisposableEffect(view) {
+        val insetsController = WindowCompat.getInsetsController(activity.window, view)
+
+        insetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+        insetsController.hide(WindowInsetsCompat.Type.systemBars())
+
+        onDispose {
+            insetsController.show(WindowInsetsCompat.Type.systemBars())
+        }
     }
 }

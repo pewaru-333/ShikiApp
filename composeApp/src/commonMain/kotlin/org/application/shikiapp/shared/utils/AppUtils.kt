@@ -18,7 +18,7 @@ import coil3.ImageLoader
 import coil3.annotation.ExperimentalCoilApi
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
-import coil3.network.NetworkFetcher
+import coil3.network.ktor3.KtorNetworkFetcherFactory
 import coil3.request.CachePolicy
 import coil3.request.crossfade
 import kotlinx.serialization.KSerializer
@@ -28,10 +28,11 @@ import okio.Path
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.di.Preferences
-import org.application.shikiapp.shared.network.client.CoilClient
 import org.application.shikiapp.shared.network.client.ImageInterceptor
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.enums.LinkedType
+import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
@@ -45,7 +46,7 @@ fun sharedImageLoader(
     components: ComponentRegistry.Builder.() -> Unit = {}
 ) = ImageLoader.Builder(context)
     .components {
-        add(NetworkFetcher.Factory({ CoilClient }))
+        add(KtorNetworkFetcherFactory(Network.baseClient))
         add(ImageInterceptor)
         components()
     }
@@ -135,3 +136,9 @@ expect fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): Color
 
 @Composable
 expect fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean)
+
+@Composable
+expect fun LockScreenOrientation(orientation: ScreenOrientation)
+
+@Composable
+expect fun HideSystemBars()

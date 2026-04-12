@@ -22,6 +22,7 @@ import com.fleeksoft.ksoup.nodes.TextNode
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
+import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
@@ -138,3 +139,9 @@ actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): Color
 
 @Composable
 actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) = Unit
+
+@Composable
+actual fun LockScreenOrientation(orientation: ScreenOrientation) = Unit
+
+@Composable
+actual fun HideSystemBars() = Unit
