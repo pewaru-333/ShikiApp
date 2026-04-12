@@ -7,12 +7,14 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
+import androidx.paging.PagingData
 import androidx.paging.cachedIn
 import androidx.paging.filter
 import androidx.paging.map
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -21,6 +23,7 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -28,6 +31,7 @@ import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.data.ClubBasic
@@ -92,8 +96,11 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         ),
         pagingSourceFactory = {
             CommonPaging(History::id) { page, params ->
-                Network.user.getHistory(userId, page, params.loadSize)
-                    .map(org.application.shikiapp.shared.models.data.History::mapper)
+                val history = Network.user.getHistory(userId, page, params.loadSize)
+
+                withContext(Dispatchers.Default) {
+                    history.map(org.application.shikiapp.shared.models.data.History::mapper)
+                }
             }
         }
     ).flow
@@ -191,7 +198,8 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         val dialogDeleteError = _dialogDeleteError.receiveAsFlow()
 
         val oldMessages = _state.flatMapLatest { state ->
-            Pager(
+            if (state.userId == -1L) flowOf(PagingData.empty())
+            else Pager(
                 config = PagingConfig(pageSize = 30, enablePlaceholders = false),
                 pagingSourceFactory = {
                     CommonPaging(FullMessage::id) { page, params ->
