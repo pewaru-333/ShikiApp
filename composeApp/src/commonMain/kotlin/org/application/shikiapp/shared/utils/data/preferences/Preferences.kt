@@ -14,6 +14,7 @@ import org.application.shikiapp.shared.utils.PREF_APP_LANGUAGE
 import org.application.shikiapp.shared.utils.PREF_APP_THEME
 import org.application.shikiapp.shared.utils.PREF_CATALOG_LIST_VIEW
 import org.application.shikiapp.shared.utils.PREF_DYNAMIC_COLORS
+import org.application.shikiapp.shared.utils.PREF_HAS_AGREED_TO_WATCH
 import org.application.shikiapp.shared.utils.PREF_START_PAGE
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
 import org.application.shikiapp.shared.utils.USER_ID
@@ -59,6 +60,12 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
     val userId: Long
         get() = auth.getLong(USER_ID, 0L)
 
+    val canWatch: Boolean
+        get() = app.getBoolean(PREF_HAS_AGREED_TO_WATCH, false)
+
+    val canWatchFlow: Flow<Boolean>
+        get() = app.getFlow(PREF_HAS_AGREED_TO_WATCH, false)
+
     val token: Token?
         get() {
             val accessToken = auth.getString(ACCESS_TOKEN, BLANK)
@@ -99,6 +106,8 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
     fun setCache(size: Int) = app.edit { putInt(PREF_APP_CACHE, size) }
 
     fun setLanguage(locale: String) = app.edit { putString(PREF_APP_LANGUAGE, locale) }
+
+    fun setCanWatch() = app.edit { putBoolean(PREF_HAS_AGREED_TO_WATCH, true) }
 }
 
 @Composable
