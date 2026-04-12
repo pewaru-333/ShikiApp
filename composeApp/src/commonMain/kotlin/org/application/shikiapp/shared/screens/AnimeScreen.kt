@@ -97,8 +97,9 @@ import shikiapp.composeapp.generated.resources.text_screenshots
 import shikiapp.composeapp.generated.resources.text_subtitles
 import shikiapp.composeapp.generated.resources.text_unknown
 import shikiapp.composeapp.generated.resources.text_video
-import shikiapp.composeapp.generated.resources.text_voices
+import shikiapp.composeapp.generated.resources.text_voices_one
 import shikiapp.composeapp.generated.resources.vector_arrow_forward
+import shikiapp.composeapp.generated.resources.vector_episode_play
 
 @Composable
 fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
@@ -161,7 +162,12 @@ private fun AnimeView(
         isFavoured = anime.favoured,
         onBack = onBack,
         onEvent = onEvent,
-        onToggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) }
+        onToggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) },
+        watchButton = {
+            IconButton({ onNavigate(Screen.Watch(anime.id)) }) {
+                VectorIcon(Res.drawable.vector_episode_play)
+            }
+        }
     ) {
         title(anime.title)
         info(
@@ -339,7 +345,7 @@ private fun AnimeView(
             onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
             contentWindowInsets = { WindowInsets.systemBars }
         ) {
-            val (text, list) = if (state.showFandubbers) Res.string.text_voices to anime.fandubbers
+            val (text, list) = if (state.showFandubbers) Res.string.text_voices_one to anime.fandubbers
             else Res.string.text_subtitles to anime.fansubbers
 
             Text(
