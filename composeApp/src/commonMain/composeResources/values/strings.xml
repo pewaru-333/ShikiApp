@@ -30,6 +30,7 @@
     <string name="text_description">Описание</string>
     <string name="text_directly">Напрямую</string>
     <string name="text_episode">Эпизод</string>
+    <string name="text_episode_holder">Эпизод %1$d</string>
     <string name="text_episode_next">Следующий эпизод</string>
     <string name="text_featured">Подборка</string>
     <string name="text_franchise">Франшиза</string>
@@ -58,7 +59,8 @@
     <string name="text_updates">Обновления</string>
     <string name="text_updates_anime">Обновления аниме</string>
     <string name="text_users">Пользователи</string>
-    <string name="text_voices">Озвучка</string>
+    <string name="text_voices">Озвучки</string>
+    <string name="text_voices_one">Озвучка</string>
 
     <string name="text_video">Видео</string>
     <string name="text_video_character_trailers">Трейлеры персонажей</string>
@@ -292,6 +294,9 @@
     <string name="text_verified">Верифицировано</string>
     <string name="text_year_in">в %1$d году</string>
 
+    <string name="text_video_voice">Озвучка</string>
+    <string name="text_video_subtitles">Субтитры</string>
+
     <string name="text_minutes_short">мин.</string>
 
     <string name="text_image">изображение</string>
@@ -335,6 +340,17 @@
 
     <string name="text_error_open_link">Не удалось открыть ссылку</string>
     <string name="text_no_browser">На устройстве не найден подходящий браузер</string>
+
+    <string name="text_explain_before_watch">Приложение не хранит видеофайлы, а воспроизводит их из открытых сторонних источников. Разработчики не несут ответственности за контент на внешних серверах. Продолжая просмотр, вы соглашаетесь с данными условиями.</string>
+
+    <plurals name="plural_count_episodes">
+        <item quantity="zero">%1$d эпизодов</item>
+        <item quantity="one">%1$d эпизод</item>
+        <item quantity="two">%1$d эпизода</item>
+        <item quantity="few">%1$d эпизода</item>
+        <item quantity="many">%1$d эпизодов</item>
+        <item quantity="other">%1$d эпизодов</item>
+    </plurals>
 
     <plurals name="plural_years_old">
         <item quantity="zero">(%1$s лет)</item>

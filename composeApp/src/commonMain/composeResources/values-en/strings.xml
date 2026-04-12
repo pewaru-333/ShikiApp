@@ -30,6 +30,7 @@
     <string name="text_description">Description</string>
     <string name="text_directly">Directly</string>
     <string name="text_episode">Episode</string>
+    <string name="text_episode_holder">Episode %1$d</string>
     <string name="text_episode_next">Next episode</string>
     <string name="text_featured">Featured</string>
     <string name="text_franchise">Franchise</string>
@@ -58,7 +59,8 @@
     <string name="text_updates">Updates</string>
     <string name="text_updates_anime">Anime updates</string>
     <string name="text_users">Users</string>
-    <string name="text_voices">Voice actors</string>
+    <string name="text_voices">Voiceovers</string>
+    <string name="text_voices_one">Voice actors</string>
 
     <string name="text_video">Videos</string>
     <string name="text_video_character_trailers">Character trailers</string>
@@ -292,6 +294,9 @@
     <string name="text_verified">Verified</string>
     <string name="text_year_in">in %1$d</string>
 
+    <string name="text_video_voice">Voiceover</string>
+    <string name="text_video_subtitles">Subtitles</string>
+
     <string name="text_minutes_short">min.</string>
 
     <string name="text_image">image</string>
@@ -328,12 +333,18 @@
     <string name="text_successfully_deleted_dialog">Dialog deleted successfully</string>
     <string name="text_unsuccessfully_deleted_dialog">Error deleting dialog</string>
 
-
     <string name="text_applied_immediately">applied immediately</string>
     <string name="text_repeat_the_loading">Retry loading</string>
 
     <string name="text_error_open_link">Failed to open link</string>
     <string name="text_no_browser">No suitable browser found on the device</string>
+
+    <string name="text_explain_before_watch">This app does not host video files, but streams them from publicly available third-party sources. The developers are not responsible for content on external servers. By continuing to watch, you acknowledge and agree to these terms.</string>
+
+    <plurals name="plural_count_episodes">
+        <item quantity="one">%1$d episode</item>
+        <item quantity="other">%1$d episodes</item>
+    </plurals>
 
     <plurals name="plural_years_old">
         <item quantity="one">(%1$s year)</item>
