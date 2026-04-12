@@ -33,6 +33,7 @@ import org.application.shikiapp.shared.screens.PersonScreen
 import org.application.shikiapp.shared.screens.ProfileScreen
 import org.application.shikiapp.shared.screens.UserRates
 import org.application.shikiapp.shared.screens.UserScreen
+import org.application.shikiapp.shared.screens.WatchScreen
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.enums.Menu
 import org.application.shikiapp.shared.utils.extensions.isTopLevelRouteSelected
@@ -181,5 +182,9 @@ private fun AppNavHost(navigator: NavHostController) =
 
         composable<Screen.UserRates>(linkedTypeMap) {
             UserRates(navigator::navigate, navigator::navigateUp)
+        }
+
+        composable<Screen.Watch> {
+            WatchScreen(navigator::navigateUp)
         }
     }
