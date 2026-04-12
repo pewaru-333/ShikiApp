@@ -4,6 +4,7 @@ package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.ApolloClient
 import io.ktor.client.HttpClient
+import io.ktor.client.plugins.BrowserUserAgent
 import io.ktor.client.plugins.HttpRequestRetry
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.UserAgent
@@ -34,7 +35,7 @@ import org.application.shikiapp.shared.network.calls.shiki.IMangaRepository
 
 
 object Network {
-    val client: HttpClient by lazy {
+    val baseClient: HttpClient by lazy {
         HttpClient {
             engine {
                 dispatcher = Dispatchers.IO
@@ -43,7 +44,21 @@ object Network {
             install(UserAgent) {
                 agent = AppConfig.userAgent
             }
+        }
+    }
 
+    val watchClient: HttpClient by lazy {
+        HttpClient {
+            engine {
+                dispatcher = Dispatchers.IO
+            }
+
+            BrowserUserAgent()
+        }
+    }
+
+    val client: HttpClient by lazy {
+        baseClient.config {
             install(HttpTimeout) {
                 requestTimeoutMillis = 60_000
                 connectTimeoutMillis = 30_000
