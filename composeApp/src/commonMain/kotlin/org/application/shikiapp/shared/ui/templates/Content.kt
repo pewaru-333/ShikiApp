@@ -152,7 +152,7 @@ import shikiapp.composeapp.generated.resources.text_status
 import shikiapp.composeapp.generated.resources.text_studio
 import shikiapp.composeapp.generated.resources.text_subtitles
 import shikiapp.composeapp.generated.resources.text_user_rates
-import shikiapp.composeapp.generated.resources.text_voices
+import shikiapp.composeapp.generated.resources.text_voices_one
 import shikiapp.composeapp.generated.resources.text_volumes
 import shikiapp.composeapp.generated.resources.vector_anime
 import shikiapp.composeapp.generated.resources.vector_arrow_forward
@@ -171,6 +171,7 @@ import shikiapp.composeapp.generated.resources.vector_voice_actors
 @Composable
 fun ScaffoldContent(
     title: @Composable (() -> Unit),
+    watchButton: @Composable (() -> Unit)? = null,
     userRate: AsyncData<UserRate?>?,
     isFavoured: AsyncData<Boolean>,
     onBack: () -> Unit,
@@ -192,6 +193,8 @@ fun ScaffoldContent(
                 navigationIcon = { NavigationIcon(onBack) },
                 actions = {
                     IconComment { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) }
+
+                    watchButton?.invoke()
 
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet)) },
@@ -679,7 +682,7 @@ fun Related(list: List<Related>, onShowAll: () -> Unit, onNavigate: (Screen) -> 
 fun RelatedFull(
     related: List<Related>,
     chronology: List<Content>,
-    franchise: Map<RelationKind, List<Franchise>>,
+    franchise: List<Pair<RelationKind, List<Franchise>>>,
     isVisible: Boolean,
     onHide: () -> Unit,
     onNavigate: (Screen) -> Unit
@@ -739,7 +742,7 @@ fun RelatedFull(
                 }
 
                 2 -> LazyColumn {
-                    franchise.forEach { (relation, items) ->
+                    franchise.fastForEach { (relation, items) ->
                         stickyHeader { TextStickyHeader(stringResource(relation.title)) }
                         items(items, Franchise::id) { item ->
                             MediaListItem(
@@ -1230,7 +1233,7 @@ fun LazyListScope.summary(
             item {
                 DetailBox(
                     icon = Res.drawable.vector_voice_actors,
-                    label = stringResource(Res.string.text_voices),
+                    label = stringResource(Res.string.text_voices_one),
                     onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Fandubbers)) }
                 )
             }
