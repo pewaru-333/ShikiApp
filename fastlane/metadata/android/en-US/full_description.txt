@@ -3,6 +3,7 @@
 * Search and view information about anime, manga and ranobe.
 * Search and view information about characters and people.
 * View the anime series release schedule.
+* Watch available anime series (demo watch only).
 * View and read news and topics.
 * View user profiles, clubs, and friends.
 * View your conversations and send messages to other users.

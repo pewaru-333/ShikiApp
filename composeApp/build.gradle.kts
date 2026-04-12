@@ -79,7 +79,7 @@ kotlin {
 
                 // Utils
                 implementation(libs.coil.compose)
-                implementation(libs.coil.network)
+                implementation(libs.coil.network.ktor)
                 implementation(libs.icu4j)
                 implementation(libs.ksoup)
                 implementation(libs.material.preferences)
@@ -91,6 +91,8 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.activity.compose)
                 implementation(libs.ktor.client.android)
+
+                implementation(libs.bundles.media3)
             }
         }
 
@@ -100,6 +102,9 @@ kotlin {
 
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(libs.ktor.client.java)
+
+                implementation(libs.vlcj)
+                implementation(libs.vlcj.natives)
             }
         }
     }
@@ -128,7 +133,7 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.4"
+                packageVersion = "0.6.5"
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 

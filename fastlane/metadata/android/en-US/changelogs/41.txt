@@ -1,0 +1,4 @@
+— Added a demo watch of the anime on its page.
+— Standard "blank" posters have been replaced with normal ones (if available).
+— Fixed an issue where the full list of anime/manga franchises was not displayed.
+— Fixed a bug that sometimes caused images to fail to load.
