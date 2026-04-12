@@ -1,5 +1,9 @@
 package org.application.shikiapp.shared.utils
 
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.text_video_subtitles
+import shikiapp.composeapp.generated.resources.text_video_voice
+
 // =========================================== Strings ============================================
 
 
@@ -12,6 +16,7 @@ const val PREF_APP_THEME = "app_theme"
 const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
 const val PREF_DEEP_LINK_SETTINGS = "deeplink_settings"
 const val PREF_DYNAMIC_COLORS = "dynamic_colors"
+const val PREF_HAS_AGREED_TO_WATCH = "agreed_to_watch"
 const val PREF_START_PAGE = "start_page"
 
 const val ACCESS_TOKEN = "access_token"
@@ -63,4 +68,9 @@ val EXTERNAL_LINK_KINDS = mapOf(
     "ruranobe" to "RuRanobe",
     "ranobelib" to "RanobeLib",
     "novelupdates" to "Novel Updates"
+)
+
+val VIDEO_WATCH_TYPE = mapOf(
+    "voice" to Res.string.text_video_voice,
+    "subtitles" to Res.string.text_video_subtitles
 )
