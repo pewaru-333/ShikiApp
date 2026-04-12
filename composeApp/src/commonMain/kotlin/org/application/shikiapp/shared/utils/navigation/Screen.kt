@@ -52,4 +52,7 @@ sealed interface Screen {
         val type: LinkedType? = null,
         val editable: Boolean = false
     ) : Screen
+
+    @Serializable
+    data class Watch(val contentId: String) : Screen
 }
