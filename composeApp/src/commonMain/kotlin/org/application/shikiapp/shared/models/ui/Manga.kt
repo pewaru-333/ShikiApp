@@ -20,7 +20,7 @@ data class Manga(
     val description: AnnotatedString,
     val favoured: AsyncData<Boolean>,
     val franchise: String,
-    val franchiseList: Map<RelationKind, List<Franchise>>,
+    val franchiseList: List<Pair<RelationKind, List<Franchise>>>,
     val genres: List<String>?,
     val id: String,
     val isOngoing: Boolean,

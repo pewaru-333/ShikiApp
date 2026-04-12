@@ -14,6 +14,8 @@ import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.models.ui.mappers.mapper
+import org.application.shikiapp.shared.models.ui.mappers.toContent
+import org.application.shikiapp.shared.models.ui.mappers.toMappedList
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.EXTERNAL_LINK_KINDS
