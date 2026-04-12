@@ -67,11 +67,13 @@ object AnimeMapper {
                 )
             }
 
+        val status = Enum.safeValueOf<Status>(main.status?.rawValue)
+        val characterRoles = extra.characterRoles.orEmpty()
+
         return Anime(
             airedOn = Formatter.convertDate(main.airedOn?.date, false),
-            charactersAll = extra.characterRoles.orEmpty()
-                .map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
-            charactersMain = extra.characterRoles.orEmpty()
+            charactersAll = characterRoles.map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
+            charactersMain = characterRoles
                 .filter { it.rolesRu.contains("Main") }
                 .map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
             chronology = extra.chronology.orEmpty().map {
@@ -94,7 +96,7 @@ object AnimeMapper {
                     ResourceText.StringResource(Res.string.text_minutes_short)
                 )
             ),
-            episodes = when (Enum.safeValueOf<Status>(main.status?.rawValue)) {
+            episodes = when (status) {
                 Status.ONGOING -> "${main.episodesAired} / ${Formatter.getFullEpisodes(main.episodes)}"
                 Status.RELEASED -> "${main.episodes} / ${main.episodes}"
                 else -> "${main.episodesAired} / ${main.episodes}"
@@ -119,7 +121,7 @@ object AnimeMapper {
             personMain = extra.personRoles.orEmpty()
                 .filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
-            poster = main.poster?.originalUrl.orEmpty(),
+            poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
             related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper),
             releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
@@ -144,7 +146,7 @@ object AnimeMapper {
                     )
                 }
             ),
-            status = Enum.safeValueOf<Status>(main.status?.rawValue).animeTitle ?: Res.string.text_unknown,
+            status = status.animeTitle ?: Res.string.text_unknown,
             studio = main.studios.firstOrNull()?.let {
                 Studio(
                     id = it.id,
@@ -253,20 +255,58 @@ fun AnimeRandomQuery.Data.Anime.mapper() = Content(
     status = Status.RELEASED
 )
 
-fun Franchise.toMappedList() = links.filter { it.sourceId == currentId }.map { link ->
-    nodes.associateBy { it.id }[link.targetId].let { node ->
-        org.application.shikiapp.shared.models.ui.Franchise(
-            id = node?.id.toString(),
-            title = node?.name.orEmpty(),
-            poster = node?.imageUrl.orEmpty(),
-            year = Formatter.getSeason(node?.year, node?.kind),
-            kind = Enum.safeValueOf<Kind>(node?.kind),
-            relationType = Enum.safeValueOf<RelationKind>(link.relation),
-            linkedType = if (node?.url?.contains("/animes") == true) LinkedType.ANIME
-            else LinkedType.MANGA
-        )
+fun Franchise.toMappedList(): List<Pair<RelationKind, List<org.application.shikiapp.shared.models.ui.Franchise>>> {
+    val linksGrouped = links.groupBy { it.sourceId }
+    val relativeRelations = mutableMapOf<Long, RelationKind>()
+
+    val queue = ArrayDeque<Long>()
+    queue.add(currentId)
+
+    val visited = mutableSetOf<Long>()
+    visited.add(currentId)
+
+    while (queue.isNotEmpty()) {
+        val current = queue.removeFirst()
+        val currentRelation = relativeRelations[current]
+
+        linksGrouped[current]?.forEach { link ->
+            if (visited.add(link.targetId)) {
+                val linkRelation = Enum.safeValueOf<RelationKind>(link.relation)
+                val inheritedRelation = when {
+                    currentRelation == null -> linkRelation
+                    linkRelation == RelationKind.PREQUEL || linkRelation == RelationKind.SEQUEL -> currentRelation
+                    else -> linkRelation
+                }
+
+                relativeRelations[link.targetId] = inheritedRelation
+                queue.add(link.targetId)
+            }
+        }
     }
-}.groupBy { it.relationType }.apply { entries.sortedBy { it.key.order } }
+
+    return nodes
+        .asSequence()
+        .filter { it.id != currentId }
+        .map { node ->
+            val finalRelation = relativeRelations[node.id] ?: RelationKind.OTHER
+            val linkedType = if ("/animes" in node.url) LinkedType.ANIME else LinkedType.MANGA
+
+            org.application.shikiapp.shared.models.ui.Franchise(
+                id = node.id.toString(),
+                title = node.name,
+                poster = if (linkedType != LinkedType.ANIME) node.imageUrl
+                else Formatter.replaceMissingAnimePoster(node.imageUrl, node.id),
+                year = Formatter.getSeason(node.year, node.kind),
+                kind = Enum.safeValueOf<Kind>(node.kind),
+                relationType = finalRelation,
+                linkedType = linkedType
+            )
+        }
+        .groupBy { it.relationType }
+        .toList()
+        .sortedBy { (relation, _) -> relation.order }
+        .toList()
+}
 
 fun PagingData<Topic>.toAnimeContent() = map {
     Content(

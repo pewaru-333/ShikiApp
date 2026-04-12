@@ -18,6 +18,7 @@ import org.application.shikiapp.shared.models.ui.Video
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.models.ui.mappers.toContent
+import org.application.shikiapp.shared.models.ui.mappers.toMappedList
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.EXTERNAL_LINK_KINDS
@@ -27,7 +28,6 @@ import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Origin
 import org.application.shikiapp.shared.utils.enums.Rating
-import org.application.shikiapp.shared.utils.enums.RelationKind
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.VideoKind
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
@@ -202,18 +202,3 @@ fun RelatedFragment.mapper() = Related(
     relationText = relationText,
     linkedType = if (anime != null) LinkedType.ANIME else LinkedType.MANGA
 )
-
-fun Franchise.toMappedList() = links.filter { it.sourceId == currentId }.map { link ->
-    nodes.associateBy { it.id }[link.targetId].let { node ->
-        org.application.shikiapp.shared.models.ui.Franchise(
-            id = node?.id.toString(),
-            title = node?.name.orEmpty(),
-            poster = node?.imageUrl.orEmpty(),
-            year = Formatter.getSeason(node?.year, node?.kind),
-            kind = Enum.safeValueOf<Kind>(node?.kind),
-            relationType = Enum.safeValueOf<RelationKind>(link.relation),
-            linkedType = if (node?.url?.contains("/animes") == true) LinkedType.ANIME
-            else LinkedType.MANGA
-        )
-    }
-}.groupBy { it.relationType }.apply { entries.sortedBy { it.key.order } }
