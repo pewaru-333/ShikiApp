@@ -1,15 +1,19 @@
 package org.application.shikiapp.shared.network.calls
 
 import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.delete
+import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.request.patch
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.BaseRate
 import org.application.shikiapp.shared.models.data.NewRate
+import org.application.shikiapp.shared.models.data.UserRate
 import org.application.shikiapp.shared.utils.extensions.requestWithCache
 
 class UserRates(private val client: HttpClient) {
@@ -28,6 +32,12 @@ class UserRates(private val client: HttpClient) {
         parameter("page", page)
         parameter("limit", limit)
     }
+
+    suspend fun getAnimeRate(animeId: String) = client.get("v2/user_rates") {
+        parameter("user_id", Preferences.userId)
+        parameter("target_id", animeId)
+        parameter("target_type", "Anime")
+    }.body<List<UserRate>>()
 
     suspend fun createRate(newRate: NewRate) = client.post("v2/user_rates") {
         contentType(ContentType.Application.Json)
