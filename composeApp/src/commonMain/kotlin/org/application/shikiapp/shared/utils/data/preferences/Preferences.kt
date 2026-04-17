@@ -14,6 +14,7 @@ import org.application.shikiapp.shared.utils.PREF_APP_LANGUAGE
 import org.application.shikiapp.shared.utils.PREF_APP_THEME
 import org.application.shikiapp.shared.utils.PREF_CATALOG_LIST_VIEW
 import org.application.shikiapp.shared.utils.PREF_DYNAMIC_COLORS
+import org.application.shikiapp.shared.utils.PREF_EPISODE_AUTO_ADD
 import org.application.shikiapp.shared.utils.PREF_HAS_AGREED_TO_WATCH
 import org.application.shikiapp.shared.utils.PREF_START_PAGE
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
@@ -38,6 +39,12 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
 
     val listViewFlow: Flow<ListView>
         get() = app.getEnumFlow(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
+
+    val episodeAutoAdd: Boolean
+        get() = app.getBoolean(PREF_EPISODE_AUTO_ADD, false)
+
+    val episodeAutoAddFlow: Flow<Boolean>
+        get() = app.getFlow(PREF_EPISODE_AUTO_ADD, false)
 
     val cache: Int
         get() = app.getInt(PREF_APP_CACHE, 16)
@@ -93,6 +100,10 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
 
     fun setStartPage(page: Menu) = app.edit {
         putEnum(PREF_START_PAGE, page)
+    }
+
+    fun setAutoIncrementEpisode(flag: Boolean) = app.edit {
+        app.putBoolean(PREF_EPISODE_AUTO_ADD, flag)
     }
 
     fun setListView(view: ListView) = app.edit {

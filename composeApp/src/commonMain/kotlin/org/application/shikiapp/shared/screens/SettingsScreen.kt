@@ -18,6 +18,7 @@ import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import me.zhanghai.compose.preference.ListPreference
 import me.zhanghai.compose.preference.ProvidePreferenceLocals
+import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.preferenceCategory
 import me.zhanghai.compose.preference.switchPreference
 import org.application.shikiapp.shared.di.Preferences
@@ -41,6 +42,7 @@ import shikiapp.composeapp.generated.resources.preference_cache_size_mb
 import shikiapp.composeapp.generated.resources.preference_category_app_view
 import shikiapp.composeapp.generated.resources.preference_category_system
 import shikiapp.composeapp.generated.resources.preference_dynamic_colors
+import shikiapp.composeapp.generated.resources.preference_episode_auto_add
 import shikiapp.composeapp.generated.resources.preference_language
 import shikiapp.composeapp.generated.resources.preference_list_view
 import shikiapp.composeapp.generated.resources.preference_start_page
@@ -52,7 +54,8 @@ import java.util.Locale
 fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     val startPage by Preferences.startPageFlow.collectAsStateWithLifecycle(Menu.NEWS)
     val listView by Preferences.listViewFlow.collectAsStateWithLifecycle(ListView.COLUMN)
-    val cache by Preferences.cacheFlow.collectAsStateWithLifecycle(CACHE_LIST.first())
+    val isAutoAdd by Preferences.episodeAutoAddFlow.collectAsStateWithLifecycle(false)
+    val cache by Preferences.cacheFlow.collectAsStateWithLifecycle(CACHE_LIST[0])
     val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
 
     val isCompact = rememberWindowSize().isCompact
@@ -89,6 +92,15 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                             valueToText = { AnnotatedString(stringResource(it.title)) }
                         )
                     }
+                }
+
+                item {
+                    SwitchPreference(
+                        value = isAutoAdd,
+                        onValueChange = Preferences::setAutoIncrementEpisode,
+                        enabled = Preferences.token != null,
+                        title = { Text(stringResource(Res.string.preference_episode_auto_add)) }
+                    )
                 }
 
                 preferenceCategory(
