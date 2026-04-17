@@ -20,23 +20,23 @@ data class BaseRate(
     @SerialName("manga") val manga: MangaBasic?
 )
 
-//@Serializable
-//data class UserRate(
-//    @SerialName("id") val id: Long,
-//    @SerialName("user_id") val userId: Long?,
-//    @SerialName("target_id") val targetId: Long?,
-//    @SerialName("target_type") val targetType: String?,
-//    @SerialName("score") val score: Int,
-//    @SerialName("status") val status: String,
-//    @SerialName("rewatches") val rewatches: Int?,
-//    @SerialName("episodes") val episodes: Int?,
-//    @SerialName("volumes") val volumes: Int?,
-//    @SerialName("chapters") val chapters: Int?,
-//    @SerialName("text") val text: String?,
-//    @SerialName("text_html") val textHtml: String?,
-//    @SerialName("created_at") val createdAt: String?,
-//    @SerialName("updated_at") val updatedAt: String?
-//)
+@Serializable
+data class UserRate(
+    @SerialName("id") val id: Long,
+    @SerialName("user_id") val userId: Long?,
+    @SerialName("target_id") val targetId: Long?,
+    @SerialName("target_type") val targetType: String?,
+    @SerialName("score") val score: Int,
+    @SerialName("status") val status: String,
+    @SerialName("rewatches") val rewatches: Int?,
+    @SerialName("episodes") val episodes: Int?,
+    @SerialName("volumes") val volumes: Int?,
+    @SerialName("chapters") val chapters: Int?,
+    @SerialName("text") val text: String?,
+    @SerialName("text_html") val textHtml: String?,
+    @SerialName("created_at") val createdAt: String?,
+    @SerialName("updated_at") val updatedAt: String?
+)
 
 @Serializable
 data class NewRate(
