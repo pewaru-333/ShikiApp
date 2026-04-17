@@ -3,6 +3,7 @@ package org.application.shikiapp.shared.utils
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -108,6 +109,10 @@ inline fun <reified T : ViewModel> viewModel(crossinline factory: (SavedStateHan
 val linkedTypeMap = mapOf(
     typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
 )
+
+
+expect val showVideoControls: Boolean
+expect val invisiblePointer: PointerIcon
 
 expect object AppLocale {
     val current: String @Composable get

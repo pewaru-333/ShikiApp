@@ -8,6 +8,7 @@ import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -28,6 +29,9 @@ import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
+import java.awt.Point
+import java.awt.Toolkit
+import java.awt.image.BufferedImage
 import java.util.Locale
 
 actual fun fromHtml(text: String?) = buildAnnotatedString {
@@ -145,3 +149,14 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) = Unit
 
 @Composable
 actual fun HideSystemBars() = Unit
+
+actual val showVideoControls = false
+actual val invisiblePointer by lazy {
+    val cursor = Toolkit.getDefaultToolkit().createCustomCursor(
+        /* cursor = */ BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB),
+        /* hotSpot = */ Point(0,0),
+        /* name = */ BLANK
+    )
+
+    PointerIcon(cursor)
+}
