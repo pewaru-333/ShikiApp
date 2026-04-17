@@ -15,6 +15,7 @@ import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
@@ -69,12 +70,25 @@ import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.PointerEventType
+import androidx.compose.ui.input.pointer.PointerIcon
+import androidx.compose.ui.input.pointer.PointerInputChange
+import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
@@ -86,7 +100,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.states.WatchState
 import org.application.shikiapp.shared.models.ui.EpisodeModel
@@ -99,6 +118,8 @@ import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.HideSystemBars
 import org.application.shikiapp.shared.utils.LockScreenOrientation
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
+import org.application.shikiapp.shared.utils.invisiblePointer
+import org.application.shikiapp.shared.utils.showVideoControls
 import org.application.shikiapp.shared.utils.ui.VideoPlayer
 import org.application.shikiapp.shared.utils.ui.rememberVideoPlayerState
 import org.application.shikiapp.shared.utils.viewModel
@@ -194,6 +215,7 @@ fun WatchScreen(onBack: () -> Unit) {
             state = state,
             onQualitySelected = model::changeQuality,
             onEpisodeSelected = model::selectEpisode,
+            onEpisodeWatched = model::setEpisodeWatched,
             onBack = model::stopWatching
         )
     }
@@ -322,12 +344,23 @@ private fun Player(
     state: WatchState,
     onEpisodeSelected: (Int) -> Unit,
     onQualitySelected: (Int) -> Unit,
+    onEpisodeWatched: () -> Unit,
     onBack: () -> Unit
 ) {
     val playerState = rememberVideoPlayerState()
 
+    val scope = rememberCoroutineScope()
+    val focusRequester = remember(::FocusRequester)
+
     val sliderInteractionSource = remember(::MutableInteractionSource)
     val isDragging by sliderInteractionSource.collectIsDraggedAsState()
+
+    val interactionFlow = remember {
+        MutableSharedFlow<Unit>(
+            extraBufferCapacity = 1,
+            onBufferOverflow = BufferOverflow.DROP_OLDEST
+        )
+    }
 
     var showEpisodes by remember { mutableStateOf(false) }
     var expandedQuality by remember { mutableStateOf(false) }
@@ -339,8 +372,15 @@ private fun Player(
     var savedSeekTime by remember { mutableFloatStateOf(0f) }
     var currentSpeedIndex by remember { mutableIntStateOf(1) }
 
+    var watchedSeconds by remember { mutableIntStateOf(0) }
+    var markedAsWatched by remember { mutableStateOf(false) }
+
     val speeds = listOf(0.5f, 1.0f, 1.5f, 2.0f)
-    val speedLabels = listOf("0.5x", "1.0x", "1.5x", "2.0x") // технически скорость видео через точку везде?
+    val speedLabels = listOf("0.5x", "1.0x", "1.5x", "2.0x")
+
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
 
     LaunchedEffect(playerState.currentTime, playerState.totalTime, isDragging) {
         if (!isDragging && playerState.totalTime > 0f) {
@@ -350,6 +390,8 @@ private fun Player(
 
     LaunchedEffect(state.videoUrl) {
         state.videoUrl?.let {
+            watchedSeconds = 0
+            markedAsWatched = false
             playerState.loadUrl(it)
 
             if (savedSeekTime > 0f) {
@@ -363,6 +405,36 @@ private fun Player(
         if (isControlsVisible && playerState.isPlaying && !isDragging && !isVolumeDragging) {
             delay(3000L)
             isControlsVisible = false
+        }
+    }
+
+    LaunchedEffect(playerState.isPlaying, playerState.isLoading) {
+        while (playerState.isPlaying && !playerState.isLoading) {
+            delay(1000L)
+            watchedSeconds++
+        }
+    }
+
+    LaunchedEffect(watchedSeconds, playerState.currentTime, playerState.totalTime) {
+        if (!markedAsWatched && playerState.totalTime > 0f) {
+            val isTimeReached = watchedSeconds >= 30
+            val isVideoEnded = playerState.currentTime >= (playerState.totalTime - 2f)
+
+            if (isTimeReached || isVideoEnded) {
+                markedAsWatched = true
+                onEpisodeWatched()
+            }
+        }
+    }
+
+    LaunchedEffect(playerState.isPlaying) {
+        interactionFlow.collectLatest {
+            isControlsVisible = true
+
+            if (playerState.isPlaying) {
+                delay(3000L)
+                isControlsVisible = false
+            }
         }
     }
 
@@ -389,6 +461,57 @@ private fun Player(
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .focusRequester(focusRequester)
+                .focusable()
+                .pointerHoverIcon(if (isControlsVisible) PointerIcon.Default else invisiblePointer)
+                .onPreviewKeyEvent { event ->
+                    if (event.type != KeyEventType.KeyUp) return@onPreviewKeyEvent false
+
+                    when (event.key) {
+                        Key.F -> playerState.toggleFullscreen()
+                        Key.Spacebar -> playerState.togglePlayPause()
+                        Key.DirectionLeft -> playerState.seekTo(playerState.currentTime - 10f)
+                        Key.DirectionRight -> playerState.seekTo(playerState.currentTime + 10f)
+                        else -> return@onPreviewKeyEvent false
+                    }
+
+                    true
+                }
+                .pointerInput(Unit) {
+                    var volumeDragJob: Job? = null
+
+                    awaitPointerEventScope {
+                        while (true) {
+                            val event = awaitPointerEvent(PointerEventPass.Main)
+
+                            when (event.type) {
+                                PointerEventType.Move -> interactionFlow.tryEmit(Unit)
+
+                                PointerEventType.Press -> {
+                                    if (event.changes.none(PointerInputChange::isConsumed)) {
+                                        playerState.togglePlayPause()
+                                    }
+                                }
+
+                                PointerEventType.Scroll -> {
+                                    val delta = event.changes.firstOrNull()?.scrollDelta?.y ?: 0f
+                                    if (delta != 0f) {
+                                        playerState.setVolume((playerState.volume - delta / 20f).coerceIn(0f, 1f))
+
+                                        volumeDragJob?.cancel()
+                                        volumeDragJob = scope.launch {
+                                            isVolumeDragging = true
+                                            delay(2000L)
+                                            isVolumeDragging = false
+                                        }
+
+                                        event.changes.forEach { it.consume() }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
         ) {
             VideoPlayer(playerState, Modifier.fillMaxSize())
 
@@ -400,40 +523,42 @@ private fun Player(
                 content = { CircularProgressIndicator(Modifier.size(64.dp), Color.White, 4.dp) }
             )
 
-            Row(Modifier.fillMaxSize()) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .fillMaxHeight()
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = { isControlsVisible = !isControlsVisible },
-                                onDoubleTap = { playerState.toggleZoom() }
-                            )
-                        }
-                )
+            if (showVideoControls) {
+                Row(Modifier.fillMaxSize()) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .fillMaxHeight()
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = { isControlsVisible = !isControlsVisible },
+                                    onDoubleTap = { playerState.toggleZoom() }
+                                )
+                            }
+                    )
 
-                Box(
-                    modifier = Modifier
-                        .fillMaxHeight()
-                        .fillMaxWidth(0.3f)
-                        .pointerInput(Unit) {
-                            detectVerticalDragGestures(
-                                onDragStart = { isVolumeDragging = true },
-                                onDragEnd = { isVolumeDragging = false },
-                                onDragCancel = { isVolumeDragging = false },
-                                onVerticalDrag = { _, dragAmount ->
-                                    playerState.setVolume(playerState.volume - dragAmount / 400f)
-                                }
-                            )
-                        }
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onTap = { isControlsVisible = !isControlsVisible },
-                                onDoubleTap = { playerState.toggleZoom() }
-                            )
-                        }
-                )
+                    Box(
+                        modifier = Modifier
+                            .fillMaxHeight()
+                            .fillMaxWidth(0.3f)
+                            .pointerInput(Unit) {
+                                detectVerticalDragGestures(
+                                    onDragStart = { isVolumeDragging = true },
+                                    onDragEnd = { isVolumeDragging = false },
+                                    onDragCancel = { isVolumeDragging = false },
+                                    onVerticalDrag = { _, dragAmount ->
+                                        playerState.setVolume(playerState.volume - dragAmount / 400f)
+                                    }
+                                )
+                            }
+                            .pointerInput(Unit) {
+                                detectTapGestures(
+                                    onTap = { isControlsVisible = !isControlsVisible },
+                                    onDoubleTap = { playerState.toggleZoom() }
+                                )
+                            }
+                    )
+                }
             }
 
             AnimatedVisibility(
@@ -547,55 +672,57 @@ private fun Player(
                         }
                     }
 
-                    Row(Modifier.align(Alignment.Center), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
-                        IconButton(
-                            onClick = { playerState.seekTo(playerState.currentTime - 10f) },
-                            modifier = Modifier
-                                .size(50.dp)
-                                .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                            content = {
-                                VectorIcon(
-                                    resId = Res.drawable.vector_ten_seconds_left,
-                                    tint = Color.White,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(8.dp)
-                                )
-                            }
-                        )
+                    if (showVideoControls) {
+                        Row(Modifier.align(Alignment.Center), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
+                            IconButton(
+                                onClick = { playerState.seekTo(playerState.currentTime - 10f) },
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                                content = {
+                                    VectorIcon(
+                                        resId = Res.drawable.vector_ten_seconds_left,
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(8.dp)
+                                    )
+                                }
+                            )
 
-                        IconButton(
-                            onClick = { playerState.togglePlayPause() },
-                            modifier = Modifier
-                                .size(64.dp)
-                                .background(MaterialTheme.colorScheme.primary, CircleShape),
-                            content = {
-                                VectorIcon(
-                                    tint = Color.White,
-                                    resId = if (playerState.isPlaying) Res.drawable.vector_pause
-                                    else Res.drawable.vector_play,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(4.dp)
-                                )
-                            }
-                        )
+                            IconButton(
+                                onClick = { playerState.togglePlayPause() },
+                                modifier = Modifier
+                                    .size(64.dp)
+                                    .background(MaterialTheme.colorScheme.primary, CircleShape),
+                                content = {
+                                    VectorIcon(
+                                        tint = Color.White,
+                                        resId = if (playerState.isPlaying) Res.drawable.vector_pause
+                                        else Res.drawable.vector_play,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(4.dp)
+                                    )
+                                }
+                            )
 
-                        IconButton(
-                            onClick = { playerState.seekTo(playerState.currentTime + 10f) },
-                            modifier = Modifier
-                                .size(50.dp)
-                                .background(Color.White.copy(alpha = 0.2f), CircleShape),
-                            content = {
-                                VectorIcon(
-                                    resId = Res.drawable.vector_ten_seconds_right,
-                                    tint = Color.White,
-                                    modifier = Modifier
-                                        .fillMaxSize()
-                                        .padding(8.dp),
-                                )
-                            }
-                        )
+                            IconButton(
+                                onClick = { playerState.seekTo(playerState.currentTime + 10f) },
+                                modifier = Modifier
+                                    .size(50.dp)
+                                    .background(Color.White.copy(alpha = 0.2f), CircleShape),
+                                content = {
+                                    VectorIcon(
+                                        resId = Res.drawable.vector_ten_seconds_right,
+                                        tint = Color.White,
+                                        modifier = Modifier
+                                            .fillMaxSize()
+                                            .padding(8.dp),
+                                    )
+                                }
+                            )
+                        }
                     }
 
                     Row(
@@ -653,15 +780,29 @@ private fun Player(
                                 }
                             },
                             track = { sliderState ->
-                                SliderDefaults.Track(
-                                    sliderState = sliderState,
-                                    thumbTrackGapSize = 0.dp,
-                                    drawStopIndicator = {},
-                                    colors = SliderDefaults.colors(
-                                        activeTrackColor = MaterialTheme.colorScheme.primary,
-                                        inactiveTrackColor = Color.White.copy(alpha = 0.3f)
+                                Box(Modifier.fillMaxWidth(), Alignment.CenterStart) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(16.dp)
+                                            .background(Color.White.copy(alpha = 0.3f), CircleShape)
                                     )
-                                )
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth(playerState.bufferPercentage.coerceIn(0f, 1f))
+                                            .height(16.dp)
+                                            .background(Color.White.copy(alpha = 0.6f), CircleShape)
+                                    )
+                                    SliderDefaults.Track(
+                                        sliderState = sliderState,
+                                        thumbTrackGapSize = 0.dp,
+                                        drawStopIndicator = {},
+                                        colors = SliderDefaults.colors(
+                                            activeTrackColor = MaterialTheme.colorScheme.primary,
+                                            inactiveTrackColor = Color.Transparent
+                                        )
+                                    )
+                                }
                             }
                         )
 

@@ -13,7 +13,7 @@ import androidx.compose.ui.Modifier
 class VideoPlayerState {
     var url by mutableStateOf<String?>(null)
         internal set
-    var isLoading by mutableStateOf(false)
+    var isLoading by mutableStateOf(true)
         internal set
     var isPlaying by mutableStateOf(true)
         internal set
@@ -25,7 +25,11 @@ class VideoPlayerState {
         internal set
     var totalTime by mutableFloatStateOf(0f)
         internal set
+    var bufferPercentage by mutableFloatStateOf(0f)
+        internal set
     var isZoomed by mutableStateOf(false)
+        internal set
+    var isFullscreen by mutableStateOf(false) // desktop only
         internal set
 
     internal var seekTrigger by mutableStateOf<Float?>(null)
@@ -34,7 +38,9 @@ class VideoPlayerState {
         url = newUrl
         currentTime = 0f
         totalTime = 0f
+        bufferPercentage = 0f
         seekTrigger = null
+        isLoading = true
     }
 
     fun pause() {
@@ -47,6 +53,10 @@ class VideoPlayerState {
 
     fun toggleZoom() {
         isZoomed = !isZoomed
+    }
+
+    fun toggleFullscreen() {
+        isFullscreen = !isFullscreen
     }
 
     fun setVolume(newVolume: Float) {
@@ -66,6 +76,10 @@ class VideoPlayerState {
     internal fun updateTime(current: Float, total: Float) {
         currentTime = current
         totalTime = total
+    }
+
+    internal fun updateBuffer(percent: Float) {
+        bufferPercentage = percent.coerceIn(0f, 1f)
     }
 
     internal fun clearSeekTrigger() {

@@ -22,7 +22,7 @@ import kotlinx.coroutines.delay
 actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
     val context = LocalContext.current
 
-    val exoPlayer = remember {
+    val exoPlayer = remember(context.applicationContext) {
         ExoPlayer.Builder(context).build().apply {
             addListener(
                 object : Player.Listener {
@@ -70,13 +70,17 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
 
     LaunchedEffect(exoPlayer) {
         while (true) {
-            if (exoPlayer.isPlaying) {
-                val current = exoPlayer.currentPosition / 1000f
-                val total = exoPlayer.duration.coerceAtLeast(0) / 1000f
-                state.updateTime(current, total)
+            val total = exoPlayer.duration.coerceAtLeast(0) / 1000f
+
+            if (total > 0f) {
+                if (exoPlayer.isPlaying) {
+                    val current = exoPlayer.currentPosition / 1000f
+                    state.updateTime(current, total)
+                }
+                state.updateBuffer(exoPlayer.bufferedPercentage / 100f)
             }
 
-            delay(500)
+            delay(500L)
         }
     }
 
