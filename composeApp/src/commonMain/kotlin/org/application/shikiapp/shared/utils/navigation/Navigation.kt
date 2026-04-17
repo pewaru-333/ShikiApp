@@ -9,7 +9,9 @@ import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteType
+import androidx.compose.material3.adaptive.navigationsuite.rememberNavigationSuiteScaffoldState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -54,19 +56,25 @@ import org.jetbrains.compose.resources.stringResource
 
 @Composable
 fun Navigation(navigator: NavHostController) {
-    val backStack by navigator.currentBackStackEntryAsState()
     val barVisibility = LocalBarVisibility.current
     val adaptiveInfo = currentWindowAdaptiveInfo()
+
+    val navigationBarState = rememberNavigationSuiteScaffoldState()
+    val backStack by navigator.currentBackStackEntryAsState()
 
     val routes = remember { Menu.entries.map(Menu::route) }
     val isTopLevel = remember(backStack) {
         routes.any { backStack.isTopLevelRouteSelected(it) }
     }
 
-    val suiteType = if (isTopLevel && barVisibility.isVisible) {
-        NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
-    } else {
-        NavigationSuiteType.None
+    val suiteType = NavigationSuiteScaffoldDefaults.navigationSuiteType(adaptiveInfo)
+
+    LaunchedEffect(isTopLevel, barVisibility.isVisible) {
+        if (isTopLevel && barVisibility.isVisible) {
+            navigationBarState.show()
+        } else {
+            navigationBarState.hide()
+        }
     }
 
     fun getLabel(screen: Menu): (@Composable () -> Unit)? {
@@ -98,6 +106,7 @@ fun Navigation(navigator: NavHostController) {
     }
 
     NavigationSuiteScaffold(
+        state = navigationBarState,
         navigationSuiteType = suiteType,
         content = { AppNavHost(navigator) },
         navigationItems = {
