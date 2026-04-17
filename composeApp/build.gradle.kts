@@ -35,7 +35,7 @@ kotlin {
     android {
         namespace = "org.application.shikiapp.shared"
         minSdk = 26
-        compileSdk = 36
+        compileSdk = 37
 
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
@@ -103,8 +103,7 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(libs.ktor.client.java)
 
-                implementation(libs.vlcj)
-                implementation(libs.vlcj.natives)
+                implementation(libs.javacv.platform)
             }
         }
     }
@@ -126,6 +125,8 @@ compose {
                 "-XX:+UseZGC",
                 "-XX:+ZGenerational",
                 "-XX:+UseStringDeduplication",
+                "-XX:+TieredCompilation",
+                "-Xshare:auto",
 
                 "-Dskiko.vsync.enabled=true",
                 "-Dskiko.fps.limit=120"

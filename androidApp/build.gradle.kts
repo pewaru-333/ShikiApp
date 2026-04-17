@@ -6,13 +6,13 @@ plugins {
 android {
     flavorDimensions += "version"
     namespace = "org.application.shikiapp"
-    compileSdk = 36
+    compileSdk = 37
 
     defaultConfig {
         minSdk = 26
-        targetSdk = 36
-        versionCode = 41
-        versionName = "alpha-0.6.5"
+        targetSdk = 37
+        versionCode = 42
+        versionName = "alpha-0.6.6"
 
         buildFeatures {
             buildConfig = true
