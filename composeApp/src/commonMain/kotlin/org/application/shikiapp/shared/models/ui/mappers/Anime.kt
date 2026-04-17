@@ -123,7 +123,7 @@ object AnimeMapper {
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
             poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
-            related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper),
+            related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
             releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
             score = main.score.let(Formatter::convertScore),
             screenshots = main.screenshots.map(AnimeMainQuery.Data.Anime.Screenshot::originalUrl),
@@ -308,16 +308,18 @@ fun Franchise.toMappedList(): List<Pair<RelationKind, List<org.application.shiki
         .toList()
 }
 
-fun PagingData<Topic>.toAnimeContent() = map {
-    Content(
-        id = it.linked.id.toString(),
-        title = it.linked.russian.orEmpty().ifEmpty(it.linked::name),
-        kind = Enum.safeValueOf<Kind>(it.linked.kind),
-        status = Enum.safeValueOf<Status>(it.linked.status),
-        season = Formatter.getSeason(it.linked.airedOn, it.linked.kind),
-        poster = it.linked.image.original,
-        score = null
-    )
+fun PagingData<Topic>.toAnimeContent() = map { topic ->
+    with(topic.linked) {
+        Content(
+            id = id.toString(),
+            title = russian.takeUnless { it.isNullOrBlank() } ?: name,
+            kind = Enum.safeValueOf<Kind>(kind),
+            status = Enum.safeValueOf<Status>(status),
+            season = Formatter.getSeason(airedOn, kind),
+            poster = Formatter.replaceMissingAnimePoster(image.original, id),
+            score = null
+        )
+    }
 }
 
 fun PagingData<AnimeBasic>.toContent(): PagingData<BasicContent> = map(AnimeBasic::toContent)

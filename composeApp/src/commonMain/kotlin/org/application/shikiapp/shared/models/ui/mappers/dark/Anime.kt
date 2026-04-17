@@ -113,7 +113,7 @@ object AnimeMapper {
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
             poster = main.poster?.originalUrl.orEmpty(),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
-            related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper),
+            related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
             releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
             score = main.score.let(Formatter::convertScore),
             screenshots = main.screenshots.map(AnimeMainQuery.Data.Anime.Screenshot::originalUrl),
