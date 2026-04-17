@@ -4,12 +4,17 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import io.ktor.client.call.body
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.application.shikiapp.shared.di.Preferences
+import org.application.shikiapp.shared.models.data.NewRate
+import org.application.shikiapp.shared.models.data.UserRate
 import org.application.shikiapp.shared.models.states.WatchState
 import org.application.shikiapp.shared.models.ui.EpisodeModel
 import org.application.shikiapp.shared.models.ui.mappers.toVideoVoice
@@ -146,6 +151,35 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
             currentEpisode = null,
             videoUrl = null
         )
+    }
+
+    fun setEpisodeWatched() {
+        if (Preferences.token != null && Preferences.episodeAutoAdd) {
+            viewModelScope.launch {
+                try {
+                    val animeRate = Network.rates.getAnimeRate(contentId).firstOrNull()
+
+                    if (animeRate == null) {
+                        val newRate = Network.rates.createRate(
+                            newRate = NewRate(
+                                userId = Preferences.userId,
+                                targetId = contentId.toLong(),
+                                targetType = "Anime"
+                            )
+                        )
+
+                        if (newRate.status == HttpStatusCode.Created) {
+                            val newRate = newRate.body<UserRate>()
+                            Network.rates.increment(newRate.id)
+                        }
+                    } else if (compareValues(animeRate.episodes, currentState.currentEpisode) < 0) {
+                        Network.rates.increment(animeRate.id)
+                    }
+                } catch (_: Exception) {
+
+                }
+            }
+        }
     }
 
     private val currentState: WatchState
