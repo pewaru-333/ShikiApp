@@ -256,6 +256,8 @@
     <string name="preference_list_view_column">List</string>
     <string name="preference_list_view_grid">Grid</string>
 
+    <string name="preference_episode_auto_add">Automatically add an episode to the list 30 seconds after viewing</string>
+
     <string name="preference_theme">App theme</string>
     <string name="preference_theme_system">System</string>
     <string name="preference_theme_light">Light</string>
