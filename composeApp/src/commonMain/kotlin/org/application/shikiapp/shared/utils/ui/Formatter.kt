@@ -294,6 +294,30 @@ object Formatter {
             .replace(englishPattern, "$1")
     }
 
+    fun localizeHtmlBody(html: String) =
+        Regex("""<([a-zA-Z0-9]+)([^>]*)>(.*?)</\1>""").replace(html) { result ->
+            val tagName = result.groupValues[1]
+            val attributes = result.groupValues[2]
+            val content = result.groupValues[3]
+
+            val ruMatch = Regex("""data-text-ru="([^"]*)"""").find(attributes)
+            val enMatch = Regex("""data-text-en="([^"]*)"""").find(attributes)
+
+            if (ruMatch != null || enMatch != null) {
+                val ruText = ruMatch?.groupValues?.get(1)?.takeIf(String::isNotBlank)
+                val enText = enMatch?.groupValues?.get(1)?.takeIf(String::isNotBlank)
+                val localizedText = ruText ?: enText ?: content
+
+                if (tagName.lowercase() == "span") {
+                    localizedText
+                } else {
+                    "<$tagName$attributes>$localizedText</$tagName>"
+                }
+            } else {
+                result.value
+            }
+        }
+
     fun getOngoingSeason(): String {
         val currentDate = LocalDate.now()
 
