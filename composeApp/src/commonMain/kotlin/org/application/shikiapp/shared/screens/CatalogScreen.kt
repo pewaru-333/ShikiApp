@@ -95,7 +95,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
-import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
@@ -130,6 +129,7 @@ import org.application.shikiapp.shared.utils.enums.Rating
 import org.application.shikiapp.shared.utils.enums.Season
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.extensions.isDigitsOnly
+import org.application.shikiapp.shared.utils.extensions.pairwise
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
@@ -239,7 +239,6 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
             content = {
                 key(state.menu) {
                     val catalogList = model.list.collectAsLazyPagingItems()
-                    val isRefreshing = catalogList.loadState.refresh is LoadState.Loading
 
                     ContentList(
                         mode = state.menu.viewType,
@@ -250,11 +249,15 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
                         onItemClick = { id, _ -> onNavigate(state.menu.navigateTo(id)) }
                     )
 
-                    LaunchedEffect(isRefreshing) {
-                        if (isRefreshing) {
-                            listStates[state.menu]?.requestScrollToItem(0)
-                            gridStates[state.menu]?.requestScrollToItem(0)
-                        }
+                    LaunchedEffect(Unit) {
+                        snapshotFlow { filters }
+                            .pairwise()
+                            .collectLatest { (old, new) ->
+                                if (old != new) {
+                                    listStates[state.menu]?.requestScrollToItem(0)
+                                    gridStates[state.menu]?.requestScrollToItem(0)
+                                }
+                            }
                     }
                 }
             }
