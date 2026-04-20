@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -26,6 +27,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -51,6 +53,7 @@ import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.text_broadcast_message_club
 import shikiapp.composeapp.generated.resources.text_no_messages
 import shikiapp.composeapp.generated.resources.vector_bookmark
 import shikiapp.composeapp.generated.resources.vector_check
@@ -230,24 +233,31 @@ fun Messages(
                 LazyColumn(Modifier.fillMaxSize()) {
                     items(list.itemCount, list.itemKey(Message::id)) { index ->
                         list[index]?.let { news ->
-                            news.linked?.let { linked ->
+                            if (news.linked != null) {
                                 MessageCardItem(
-                                    title = linked.title,
-                                    kind = linked.kind,
-                                    season = linked.season,
-                                    score = linked.score,
-                                    status = linked.status,
-                                    image = linked.poster,
+                                    title = news.linked.title,
+                                    kind = news.linked.kind,
+                                    season = news.linked.season,
+                                    score = news.linked.score,
+                                    status = news.linked.status,
+                                    image = news.linked.poster,
                                     isRead = news.read,
                                     isDeleting = news.isDeleting,
                                     onMarkRead = { onMarkRead(news.id, it) },
                                     onDelete = { onDelete(news.id) },
-                                    onClick = { onNavigate(Screen.Anime(linked.id)) }
+                                    onClick = { onNavigate(Screen.Anime(news.linked.id)) }
                                 )
+                            } else {
+                                BaseMessageCardItem(
+                                    news = news,
+                                    onMarkRead = { onMarkRead(news.id, it) },
+                                    onDelete = { onDelete(news.id) },
+                                    onUserClick = { onNavigate(Screen.User(it)) }
+                                )
+                            }
 
-                                if (index < list.itemCount - 1) {
-                                    HorizontalDivider()
-                                }
+                            if (index < list.itemCount - 1) {
+                                HorizontalDivider()
                             }
                         }
                     }
@@ -265,6 +275,111 @@ fun Messages(
     }
 }
 
+@Composable
+private fun BaseMessageCardItem(
+    news: Message,
+    onUserClick: (Long) -> Unit,
+    onMarkRead: (Int) -> Unit,
+    onDelete: () -> Unit
+) {
+    var lastRead by remember { mutableStateOf(news.read.getValue() ?: false) }
+    if (news.read is AsyncData.Success) {
+        lastRead = news.read.data
+    }
+    val readState = news.read.getValue() ?: lastRead
+
+    val backgroundColor by animateColorAsState(
+        animationSpec = tween(300),
+        targetValue = if (readState) MaterialTheme.colorScheme.surface
+        else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.4f)
+    )
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .background(backgroundColor)
+            .padding(12.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable { onUserClick(news.from.id) }
+                .padding(vertical = 4.dp)
+        ) {
+            CircleContentImage(news.from.avatar, Modifier.size(40.dp))
+
+            Spacer(Modifier.width(12.dp))
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = news.from.nickname,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                )
+
+                if (news.isBroadcast) {
+                    Surface(
+                        color = MaterialTheme.colorScheme.tertiaryContainer,
+                        shape = MaterialTheme.shapes.extraSmall
+                    ) {
+                        Text(
+                            text = stringResource(Res.string.text_broadcast_message_club),
+                            modifier = Modifier.padding(6.dp, 2.dp),
+                            style = MaterialTheme.typography.labelSmall.copy(
+                                color = MaterialTheme.colorScheme.onTertiaryContainer
+                            )
+                        )
+                    }
+                }
+            }
+
+            Row(Modifier.offset(x = 4.dp), Arrangement.End, Alignment.CenterVertically) {
+                AnimatedContent(news.read) { state ->
+                    when (state) {
+                        is AsyncData.Loading -> CircularProgressIndicator(Modifier.size(40.dp))
+                        is AsyncData.Success -> with(state.getValue()) {
+                            FilledTonalIconButton(
+                                onClick = { onMarkRead(if (this) 0 else 1) },
+                                content = {
+                                    VectorIcon(
+                                        resId = if (this) Res.drawable.vector_bookmark
+                                        else Res.drawable.vector_check
+                                    )
+                                }
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.width(8.dp))
+
+                AnimatedContent(news.isDeleting) { state ->
+                    when (state) {
+                        is AsyncData.Loading -> CircularProgressIndicator(Modifier.size(40.dp))
+                        is AsyncData.Success -> {
+                            if (!state.getValue()) {
+                                FilledTonalIconButton(
+                                    content = { VectorIcon(Res.drawable.vector_trash) },
+                                    onClick = onDelete,
+                                    colors = IconButtonDefaults.filledTonalIconButtonColors(
+                                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                                        contentColor = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        HtmlContent(news.body)
+    }
+}
 
 @Composable
 private fun Notification(
