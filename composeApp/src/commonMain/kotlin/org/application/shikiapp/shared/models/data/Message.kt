@@ -2,6 +2,7 @@ package org.application.shikiapp.shared.models.data
 
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import org.application.shikiapp.shared.utils.BLANK
 
 @Serializable
@@ -22,7 +23,7 @@ open class Message {
 
     @SerialName("linked_type")
     val linkedType: String? = null
-    val linked: AnimeBasic? = null
+    val linked: JsonElement? = null
 }
 
 @Serializable
