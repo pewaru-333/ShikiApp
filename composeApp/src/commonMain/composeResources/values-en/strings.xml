@@ -275,9 +275,11 @@
 
     <!-- Другое -->
     <string name="blank" />
+    <string name="text_broadcast_message_club">Broadcast</string>
     <string name="text_editing">Editing</string>
     <string name="text_empty">Empty</string>
     <string name="text_error">Error!</string>
+    <string name="text_error_comment_create">Error while creating comment!</string>
     <string name="text_error_loading">Loading error!</string>
     <string name="text_link">Link</string>
     <string name="text_loading">Loading</string>

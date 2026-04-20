@@ -275,9 +275,11 @@
 
     <!-- Другое -->
     <string name="blank" />
+    <string name="text_broadcast_message_club">Рассылка</string>
     <string name="text_editing">Редактирование</string>
     <string name="text_empty">Пусто</string>
     <string name="text_error">Ошибка!</string>
+    <string name="text_error_comment_create">Ошибка отправки комментария!</string>
     <string name="text_error_loading">Ошибка загрузки!</string>
     <string name="text_link">Ссылка</string>
     <string name="text_loading">Загрузка</string>
