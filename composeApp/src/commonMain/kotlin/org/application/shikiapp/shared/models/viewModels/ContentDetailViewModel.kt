@@ -38,7 +38,7 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
     private val _openLink = Channel<Unit>()
     val openLink = _openLink.receiveAsFlow()
 
-    private val _commentEvent = Channel<Unit>()
+    private val _commentEvent = Channel<Boolean>()
     val commentEvent = _commentEvent.receiveAsFlow()
 
     private val _commentParams = MutableStateFlow<CommentParams>(CommentParams())
@@ -94,11 +94,9 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
 
                 val request = Network.profile.createComment(newComment)
 
-                if (request.status == HttpStatusCode.Created) {
-                    _commentEvent.send(Unit)
-                }
+                _commentEvent.send(request.status == HttpStatusCode.Created)
             } catch (_: Exception) {
-
+                _commentEvent.send(false)
             } finally {
                 commentsPagingSource?.invalidate()
                 updateState { it.updateSendingState(false) }
@@ -116,11 +114,9 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
                 val offtopic = if (!isOfftopicChanged) true
                 else Network.profile.changeOfftopic(id).status == HttpStatusCode.Created
 
-                if (request.status == HttpStatusCode.Created && offtopic) {
-                    _commentEvent.send(Unit)
-                }
+                _commentEvent.send(request.status == HttpStatusCode.Created && offtopic)
             } catch (_: Exception) {
-
+                _commentEvent.send(false)
             } finally {
                 commentsPagingSource?.invalidate()
                 updateState { it.updateSendingState(false) }
@@ -132,11 +128,9 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
         viewModelScope.launch {
             try {
                 val request = Network.profile.deleteComment(id)
-                if (request.status == HttpStatusCode.OK) {
-                    _commentEvent.send(Unit)
-                }
+                _commentEvent.send(request.status == HttpStatusCode.OK)
             } catch (_: Exception) {
-
+                _commentEvent.send(false)
             } finally {
                 commentsPagingSource?.invalidate()
             }

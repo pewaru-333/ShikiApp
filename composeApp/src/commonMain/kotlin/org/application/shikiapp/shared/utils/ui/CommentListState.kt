@@ -6,8 +6,11 @@ import androidx.compose.foundation.text.input.TextFieldState
 import androidx.compose.foundation.text.input.clearText
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.focus.FocusRequester
 import androidx.paging.LoadState
@@ -28,24 +31,36 @@ class CommentListState(
     val focusRequester: FocusRequester,
     private val scope: CoroutineScope
 ) {
-    fun onEventListener(event: Flow<Unit>) {
+    var errorTrigger by mutableLongStateOf(0L)
+        private set
+
+    fun hideError() {
+        errorTrigger = 0L
+    }
+
+    fun onEventListener(event: Flow<Boolean>) {
         scope.launch {
-            event.collectLatest {
-                textFieldState.clearText()
-                focusRequester.requestFocus()
+            event.collectLatest { success ->
+                if (success) {
+                    hideError()
+                    textFieldState.clearText()
+                    focusRequester.requestFocus()
 
-                snapshotFlow { comments.loadState.refresh }
-                    .filter { it is LoadState.Loading }
-                    .firstOrNull()
+                    snapshotFlow { comments.loadState.refresh }
+                        .filter { it is LoadState.Loading }
+                        .firstOrNull()
 
-                snapshotFlow { comments.loadState.refresh }
-                    .filter { it is LoadState.NotLoading }
-                    .firstOrNull()
+                    snapshotFlow { comments.loadState.refresh }
+                        .filter { it is LoadState.NotLoading }
+                        .firstOrNull()
 
-                yield()
+                    yield()
 
-                if (comments.itemCount > 0) {
-                    listState.animateScrollToItem(0)
+                    if (comments.itemCount > 0) {
+                        listState.animateScrollToItem(0)
+                    }
+                } else {
+                    errorTrigger = System.currentTimeMillis()
                 }
             }
         }
@@ -67,7 +82,7 @@ class CommentListState(
 @Composable
 fun rememberCommentListState(
     list: LazyPagingItems<Comment>,
-    onCommentEvent: Flow<Unit>,
+    onCommentEvent: Flow<Boolean>,
     listState: LazyListState = rememberLazyListState(),
     scope: CoroutineScope = rememberCoroutineScope()
 ): CommentListState {

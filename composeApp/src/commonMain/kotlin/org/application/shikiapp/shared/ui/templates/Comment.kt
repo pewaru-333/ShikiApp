@@ -3,6 +3,9 @@
 package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.animate
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.foundation.background
@@ -40,6 +43,7 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -49,7 +53,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -88,6 +94,7 @@ import shikiapp.composeapp.generated.resources.text_dismiss
 import shikiapp.composeapp.generated.resources.text_editing
 import shikiapp.composeapp.generated.resources.text_empty
 import shikiapp.composeapp.generated.resources.text_enter_message
+import shikiapp.composeapp.generated.resources.text_error_comment_create
 import shikiapp.composeapp.generated.resources.text_offtopic
 import shikiapp.composeapp.generated.resources.text_sure_to_delete_comment
 import shikiapp.composeapp.generated.resources.vector_check
@@ -348,6 +355,54 @@ fun Comments(
                     HorizontalDivider()
 
                     Column(Modifier.fillMaxWidth()) {
+                        AnimatedVisibility(state.errorTrigger > 0L) {
+                            var progress by remember { mutableFloatStateOf(1f) }
+
+                            LaunchedEffect(state.errorTrigger) {
+                                if (state.errorTrigger > 0L) {
+                                    progress = 0f
+                                    animate(
+                                        initialValue = 0f,
+                                        targetValue = 1f,
+                                        animationSpec = tween(durationMillis = 3000, easing = LinearEasing),
+                                        block = { value, _ -> progress = value }
+                                    )
+                                    state.hideError()
+                                }
+                            }
+
+                            Column(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .background(MaterialTheme.colorScheme.errorContainer)
+                            ) {
+                                Row(
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(16.dp, 8.dp)
+                                ) {
+                                    VectorIcon(
+                                        resId = Res.drawable.vector_close,
+                                        tint = MaterialTheme.colorScheme.onErrorContainer
+                                    )
+                                    Text(
+                                        text = stringResource(Res.string.text_error_comment_create),
+                                        style = MaterialTheme.typography.labelMedium.copy(
+                                            color = MaterialTheme.colorScheme.onErrorContainer
+                                        )
+                                    )
+                                }
+                                LinearProgressIndicator(
+                                    progress = { progress },
+                                    modifier = Modifier.fillMaxWidth(),
+                                    color = MaterialTheme.colorScheme.errorContainer,
+                                    trackColor = MaterialTheme.colorScheme.onError
+                                )
+                            }
+                        }
+
                         AnimatedVisibility(editComment != null) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
