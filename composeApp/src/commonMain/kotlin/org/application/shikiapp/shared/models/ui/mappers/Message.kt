@@ -1,12 +1,15 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
+import kotlinx.serialization.json.decodeFromJsonElement
 import org.application.shikiapp.shared.di.Preferences
+import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.FullMessage
 import org.application.shikiapp.shared.models.ui.list.Dialog
 import org.application.shikiapp.shared.models.ui.list.Message
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ResourceText
+import org.application.shikiapp.shared.utils.basicJson
 import org.application.shikiapp.shared.utils.extensions.getLastMessage
 import org.application.shikiapp.shared.utils.ui.Formatter
 import org.application.shikiapp.shared.utils.ui.HtmlParser
@@ -38,14 +41,24 @@ fun FullMessage.toDialogMessage() = Dialog(
     accountUser = from.id == Preferences.userId
 )
 
-fun FullMessage.toNewsMessage() = Message(
-    id = id,
-    kind = kind,
-    read = AsyncData.Success(read),
-    body = HtmlParser.parseComment(htmlBody.orEmpty()),
-    linked = linked?.toRelated(),
-    from = from,
-    to = to,
-    createdAt = Formatter.convertDate(createdAt),
-    isDeleting = AsyncData.Success(false)
-)
+fun FullMessage.toNewsMessage(): Message {
+    val anime = try {
+        if (linked == null || !(linkedType == "Topic" || linkedType == "Anime")) null
+        else linked.let { basicJson.decodeFromJsonElement<AnimeBasic>(it) }
+    } catch (_: Exception) {
+        null
+    }
+
+    return Message(
+        id = id,
+        kind = kind,
+        read = AsyncData.Success(read),
+        body = HtmlParser.parseComment(Formatter.localizeHtmlBody(htmlBody.orEmpty())),
+        linked = anime?.toRelated(),
+        from = from,
+        to = to,
+        createdAt = Formatter.convertDate(createdAt),
+        isDeleting = AsyncData.Success(false),
+        isBroadcast = kind == "ClubBroadcast"
+    )
+}
