@@ -14,5 +14,6 @@ data class Message(
     val from: UserBasic,
     val to: UserBasic,
     val createdAt: String,
-    val isDeleting: AsyncData<Boolean>
+    val isDeleting: AsyncData<Boolean>,
+    val isBroadcast: Boolean = false
 )
