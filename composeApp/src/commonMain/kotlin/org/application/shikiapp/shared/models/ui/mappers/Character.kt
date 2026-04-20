@@ -52,18 +52,21 @@ object CharacterMapper {
     }
 }
 
-fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationText: String = BLANK) =
-    Related(
+fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationText: String = BLANK): Related {
+    val kindEnum = Enum.safeValueOf<Kind>(kind)
+
+    return Related(
         id = id.toString(),
-        title = russian.orEmpty().ifEmpty(::name),
-        poster = image.original,
-        kind = Enum.safeValueOf<Kind>(kind),
+        title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
+        poster = Formatter.replaceMissingAnimePoster(image.original, id),
+        kind = kindEnum,
         status = Enum.safeValueOf<Status>(status),
         season = Formatter.getSeason(airedOn, kind),
         score = Formatter.convertScore(score),
         relationText = relationText,
-        linkedType = Enum.safeValueOf<Kind>(kind).linkedType
+        linkedType = kindEnum.linkedType
     )
+}
 
 fun org.application.shikiapp.shared.models.data.BasicContent.toContent() = Content(
     id = id.toString(),
