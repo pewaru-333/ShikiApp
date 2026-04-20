@@ -103,7 +103,17 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.swing)
                 implementation(libs.ktor.client.java)
 
-                implementation(libs.javacv.platform)
+                // Video player libraries
+                implementation(libs.javacv)
+                implementation(libs.ffmpeg)
+
+                val ffmpegVersion = libs.versions.ffmpeg.get()
+                val currentOs = org.gradle.internal.os.OperatingSystem.current()
+                if (currentOs.isWindows) {
+                    runtimeOnly("org.bytedeco:ffmpeg:$ffmpegVersion:windows-x86_64")
+                } else if (currentOs.isLinux) {
+                    runtimeOnly("org.bytedeco:ffmpeg:$ffmpegVersion:linux-x86_64")
+                }
             }
         }
     }
@@ -134,7 +144,7 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.5"
+                packageVersion = "0.6.7"
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 

@@ -27,6 +27,7 @@ ktor = "3.4.2"
 # Utils
 coil = "3.4.0"
 compose-preferences = "2.2.0"
+ffmpeg = "8.0.1-1.5.13"
 icu = "78.3"
 javacv = "1.5.13"
 ksoup = "0.2.6"
@@ -84,8 +85,9 @@ coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil"
 coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
 
 # Utils
+ffmpeg = { group = "org.bytedeco", name = "ffmpeg", version.ref = "ffmpeg" }
 icu4j = { group = "com.ibm.icu", name = "icu4j", version.ref = "icu" }
-javacv-platform = { group = "org.bytedeco", name = "javacv-platform", version.ref = "javacv" }
+javacv = { group = "org.bytedeco", name = "javacv", version.ref = "javacv" }
 ksoup = { group = "com.fleeksoft.ksoup", name = "ksoup", version.ref = "ksoup" }
 material-preferences = { group = "me.zhanghai.compose.preference", name = "preference", version.ref = "compose-preferences" }
 zoomable = { group = "net.engawapg.lib", name = "zoomable", version.ref = "zoomable" }

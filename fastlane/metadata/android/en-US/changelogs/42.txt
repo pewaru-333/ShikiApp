@@ -1,4 +1,0 @@
-— Added a working videoplayer on PC.
-— Added video buffer display.
-— Added a setting to automatically add an episode to the list after watching.
-— Fixed animation of the navigation bar on large-screen devices.
