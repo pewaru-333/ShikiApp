@@ -6,15 +6,14 @@ import coil3.request.ImageResult
 object ImageInterceptor : Interceptor {
     override suspend fun intercept(chain: Interceptor.Chain): ImageResult {
         val request = chain.request
-        val data = request.data
+        val data = request.data as? String ?: return chain.proceed()
 
-        if (data is String && data.startsWith("/")) {
-            val newRequest = request.newBuilder().data(ApiRoutes.workingBaseUrl + data).build()
-            val newChain = chain.withRequest(newRequest)
-
-            return newChain.proceed()
+        val newData = when {
+            data.startsWith("/") -> ApiRoutes.workingBaseUrl + data
+            data.startsWith("http://") -> data.replace("http://", "https://")
+            else -> data
         }
 
-        return chain.proceed()
+        return chain.withRequest(request.newBuilder().data(newData).build()).proceed()
     }
 }
