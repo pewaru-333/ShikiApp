@@ -1,5 +1,8 @@
 package org.application.shikiapp.shared.ui.templates
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalContentColor
@@ -19,6 +22,12 @@ fun IconComment(onEvent: () -> Unit) =
 @Composable
 fun NavigationIcon(onClick: () -> Unit) =
     IconButton(onClick) { VectorIcon(Res.drawable.vector_arrow_back) }
+
+@Composable
+fun IconVideoControl(resId: DrawableResource, modifier: Modifier, modifierI: Modifier, onClick: () -> Unit) =
+    IconButton(onClick, modifier.background(Color.White.copy(alpha = 0.2f), CircleShape)) {
+        VectorIcon(resId, modifierI.fillMaxSize(), Color.White)
+    }
 
 @Composable
 fun VectorIcon(
