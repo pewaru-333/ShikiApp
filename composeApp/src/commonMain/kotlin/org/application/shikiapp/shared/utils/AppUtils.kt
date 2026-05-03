@@ -110,7 +110,10 @@ val linkedTypeMap = mapOf(
     typeOf<LinkedType?>() to serializableNavType(LinkedType.serializer().nullable)
 )
 
-val basicJson = Json { ignoreUnknownKeys = true }
+val basicJson = Json {
+    isLenient = true
+    ignoreUnknownKeys = true
+}
 
 expect val showVideoControls: Boolean
 expect val invisiblePointer: PointerIcon

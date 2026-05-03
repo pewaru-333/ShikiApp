@@ -20,6 +20,7 @@ import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
+import com.sun.jna.Platform
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
@@ -29,9 +30,11 @@ import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
+import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import java.awt.Point
 import java.awt.Toolkit
 import java.awt.image.BufferedImage
+import java.io.File
 import java.util.Locale
 
 actual fun fromHtml(text: String?) = buildAnnotatedString {
@@ -77,6 +80,30 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
             }
         }
     }
+}
+
+fun initVlc() {
+    val resourcesDir = System.getProperty("compose.application.resources.dir")
+    val isDevEnvironment = resourcesDir == null
+    val archFolder = Platform.RESOURCE_PREFIX
+
+    val vlcPath = if (isDevEnvironment) {
+        val userDir = System.getProperty("user.dir")
+        val baseDir = if (userDir.endsWith("composeApp")) File(userDir)
+        else File(userDir, "composeApp")
+
+        File(baseDir, "resources/vlc/$archFolder").absolutePath
+    } else {
+        File("$resourcesDir/vlc/$archFolder").absolutePath
+    }
+
+    val vlcDirectory = File(vlcPath)
+    if (vlcDirectory.exists() && vlcDirectory.isDirectory) {
+        System.setProperty("jna.library.path", vlcPath)
+        System.setProperty("VLC_PLUGIN_PATH", "$vlcPath/plugins")
+    }
+
+    NativeDiscovery().discover()
 }
 
 actual fun getDefaultLocale(context: PlatformContext): String = Locale.getDefault().language

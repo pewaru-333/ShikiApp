@@ -162,8 +162,9 @@ actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean) =
 @Composable
 actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
     val activity = LocalActivity.current as? ComponentActivity ?: return
+    val orientation = LocalConfiguration.current.orientation
 
-    DisposableEffect(darkTheme, isAmoled) {
+    DisposableEffect(darkTheme, isAmoled, orientation) {
         activity.enableEdgeToEdge(
             statusBarStyle = SystemBarStyle.auto(
                 lightScrim = android.graphics.Color.TRANSPARENT,
