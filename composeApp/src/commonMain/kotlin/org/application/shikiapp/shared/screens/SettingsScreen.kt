@@ -52,11 +52,11 @@ import java.util.Locale
 
 @Composable
 fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
-    val startPage by Preferences.startPageFlow.collectAsStateWithLifecycle(Menu.NEWS)
-    val listView by Preferences.listViewFlow.collectAsStateWithLifecycle(ListView.COLUMN)
-    val isAutoAdd by Preferences.episodeAutoAddFlow.collectAsStateWithLifecycle(false)
-    val cache by Preferences.cacheFlow.collectAsStateWithLifecycle(CACHE_LIST[0])
-    val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
+    val startPage by Preferences.startPageFlow.collectAsStateWithLifecycle()
+    val listView by Preferences.listViewFlow.collectAsStateWithLifecycle()
+    val isAutoAdd by Preferences.episodeAutoAddFlow.collectAsStateWithLifecycle()
+    val cache by Preferences.cacheFlow.collectAsStateWithLifecycle()
+    val theme by Preferences.theme.collectAsStateWithLifecycle()
 
     val isCompact = rememberWindowSize().isCompact
 

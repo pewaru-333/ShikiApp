@@ -1,7 +1,7 @@
 package org.application.shikiapp.shared.utils.data.preferences
 
 import androidx.compose.runtime.Composable
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import me.zhanghai.compose.preference.Preferences
 import org.application.shikiapp.shared.models.data.Token
@@ -24,45 +24,38 @@ import org.application.shikiapp.shared.utils.enums.Menu
 import org.application.shikiapp.shared.utils.enums.Theme
 import org.application.shikiapp.shared.utils.extensions.edit
 import org.application.shikiapp.shared.utils.extensions.getEnum
-import org.application.shikiapp.shared.utils.extensions.getEnumFlow
-import org.application.shikiapp.shared.utils.extensions.getFlow
+import org.application.shikiapp.shared.utils.extensions.getEnumStateFlow
+import org.application.shikiapp.shared.utils.extensions.getStateFlow
 
-class Preferences(private val app: IPreferences, private val auth: IPreferences) {
+class Preferences(private val app: IPreferences, private val auth: IPreferences, scope: CoroutineScope) {
     val startPage: Menu
         get() = app.getEnum(PREF_START_PAGE, Menu.NEWS)
 
-    val startPageFlow: Flow<Menu>
-        get() = app.getEnumFlow(PREF_START_PAGE, Menu.NEWS)
+    val startPageFlow = app.getEnumStateFlow(PREF_START_PAGE, Menu.NEWS, scope)
 
     val listView: ListView
         get() = app.getEnum(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
 
-    val listViewFlow: Flow<ListView>
-        get() = app.getEnumFlow(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
+    val listViewFlow = app.getEnumStateFlow(PREF_CATALOG_LIST_VIEW, ListView.COLUMN, scope)
 
     val episodeAutoAdd: Boolean
         get() = app.getBoolean(PREF_EPISODE_AUTO_ADD, false)
 
-    val episodeAutoAddFlow: Flow<Boolean>
-        get() = app.getFlow(PREF_EPISODE_AUTO_ADD, false)
+    val episodeAutoAddFlow = app.getStateFlow(PREF_EPISODE_AUTO_ADD, false, scope)
 
-    val cache: Int
-        get() = app.getInt(PREF_APP_CACHE, 16)
+    val theme = app.getEnumStateFlow(PREF_APP_THEME, Theme.SYSTEM, scope)
 
-    val cacheFlow: Flow<Int>
-        get() = app.getFlow(PREF_APP_CACHE, 16)
-
-    val theme: Flow<Theme>
-        get() = app.getEnumFlow(PREF_APP_THEME, Theme.SYSTEM)
+    val dynamicColors = app.getStateFlow(PREF_DYNAMIC_COLORS, false, scope)
 
     val language: String
         get() = app.getString(PREF_APP_LANGUAGE, "ru")
 
-    val languageFlow: Flow<String>
-        get() = app.getFlow(PREF_APP_LANGUAGE, "ru")
+    val languageFlow = app.getStateFlow(PREF_APP_LANGUAGE, "ru", scope)
 
-    val dynamicColors: Flow<Boolean>
-        get() = app.getFlow(PREF_DYNAMIC_COLORS, false)
+    val cache: Int
+        get() = app.getInt(PREF_APP_CACHE, 16)
+
+    val cacheFlow = app.getStateFlow(PREF_APP_CACHE, 16, scope)
 
     val userId: Long
         get() = auth.getLong(USER_ID, 0L)
@@ -70,8 +63,7 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
     val canWatch: Boolean
         get() = app.getBoolean(PREF_HAS_AGREED_TO_WATCH, false)
 
-    val canWatchFlow: Flow<Boolean>
-        get() = app.getFlow(PREF_HAS_AGREED_TO_WATCH, false)
+    val canWatchFlow = app.getStateFlow(PREF_HAS_AGREED_TO_WATCH, false, scope)
 
     val token: Token?
         get() {
@@ -87,6 +79,30 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
             )
         }
 
+    fun setStartPage(page: Menu) = app.edit {
+        putEnum(PREF_START_PAGE, page)
+    }
+
+    fun setListView(view: ListView) = app.edit {
+        putEnum(PREF_CATALOG_LIST_VIEW, view)
+    }
+
+    fun setAutoIncrementEpisode(flag: Boolean) = app.edit {
+        putBoolean(PREF_EPISODE_AUTO_ADD, flag)
+    }
+
+    fun setTheme(theme: Theme) = app.edit {
+        putEnum(PREF_APP_THEME, theme)
+    }
+
+    fun setLanguage(locale: String) = app.edit {
+        putString(PREF_APP_LANGUAGE, locale)
+    }
+
+    fun setCache(size: Int) = app.edit {
+        putInt(PREF_APP_CACHE, size)
+    }
+
     fun saveToken(token: Token) = auth.edit {
         putString(ACCESS_TOKEN, token.accessToken)
         putString(REFRESH_TOKEN, token.refreshToken)
@@ -98,27 +114,9 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences)
         putLong(USER_ID, userId)
     }
 
-    fun setStartPage(page: Menu) = app.edit {
-        putEnum(PREF_START_PAGE, page)
+    fun setCanWatch() = app.edit {
+        putBoolean(PREF_HAS_AGREED_TO_WATCH, true)
     }
-
-    fun setAutoIncrementEpisode(flag: Boolean) = app.edit {
-        app.putBoolean(PREF_EPISODE_AUTO_ADD, flag)
-    }
-
-    fun setListView(view: ListView) = app.edit {
-        putEnum(PREF_CATALOG_LIST_VIEW, view)
-    }
-
-    fun setTheme(theme: Theme) = app.edit {
-        putEnum(PREF_APP_THEME, theme)
-    }
-
-    fun setCache(size: Int) = app.edit { putInt(PREF_APP_CACHE, size) }
-
-    fun setLanguage(locale: String) = app.edit { putString(PREF_APP_LANGUAGE, locale) }
-
-    fun setCanWatch() = app.edit { putBoolean(PREF_HAS_AGREED_TO_WATCH, true) }
 }
 
 @Composable

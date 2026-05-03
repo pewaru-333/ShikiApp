@@ -1,13 +1,14 @@
 package org.application.shikiapp.shared.utils.extensions
 
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
 import org.application.shikiapp.shared.utils.data.preferences.IPreferences
 
 fun <T> IPreferences.flow(key: String, mapper: () -> T) = flow(key).map { mapper() }
 
-inline fun IPreferences.edit(action: IPreferences.() -> Unit) {
-    action()
-}
+inline fun IPreferences.edit(action: IPreferences.() -> Unit) = action()
 
 inline fun <reified E : Enum<E>> IPreferences.getEnum(key: String, defaultValue: E) =
     runCatching { enumValueOf<E>(getString(key, defaultValue.name)) }.getOrDefault(defaultValue)
@@ -18,6 +19,12 @@ inline fun <reified T> IPreferences.getFlow(key: String, defaultValue: T) = flow
 
 inline fun <reified E : Enum<E>> IPreferences.getEnumFlow(key: String, defaultValue: E) =
     flow(key) { getEnum(key, defaultValue) }
+
+inline fun <reified T> IPreferences.getStateFlow(key: String, defaultValue: T, scope: CoroutineScope) =
+    getFlow(key, defaultValue).stateIn(scope, SharingStarted.WhileSubscribed(5000L), safeGetValue(key, defaultValue))
+
+inline fun <reified E : Enum<E>> IPreferences.getEnumStateFlow(key: String, defaultValue: E, scope: CoroutineScope) =
+    getEnumFlow(key, defaultValue).stateIn(scope, SharingStarted.WhileSubscribed(5000L), getEnum(key, defaultValue))
 inline fun <reified T> IPreferences.safeGetValue(key: String, defaultValue: T) =
     when (defaultValue) {
         is Boolean -> runCatching { getBoolean(key, defaultValue as Boolean) as T }.getOrDefault(defaultValue)

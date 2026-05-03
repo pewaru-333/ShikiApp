@@ -2,6 +2,9 @@ package org.application.shikiapp.shared.di
 
 import android.content.Context
 import android.content.Context.MODE_PRIVATE
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import org.application.shikiapp.shared.AppConfig
 import org.application.shikiapp.shared.utils.data.preferences.Preferences
 import org.application.shikiapp.shared.utils.data.preferences.PreferencesAndroid
@@ -10,6 +13,7 @@ import org.application.shikiapp.shared.utils.data.preferences.PreferencesAndroid
 actual typealias PlatformContext = Context
 
 actual class AppModuleInitializer actual constructor(context: Context, private val appConfig: AppConfig) : AppModule {
+    private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val config: AppConfig
         get() = appConfig
@@ -18,6 +22,6 @@ actual class AppModuleInitializer actual constructor(context: Context, private v
         val auth = context.getSharedPreferences("auth_${context.packageName}", MODE_PRIVATE)
         val app = context.getSharedPreferences("preferences_${context.packageName}", MODE_PRIVATE)
 
-        Preferences(PreferencesAndroid(app), PreferencesAndroid(auth))
+        Preferences(PreferencesAndroid(app), PreferencesAndroid(auth), applicationScope)
     }
 }
