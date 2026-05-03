@@ -1,0 +1,5 @@
+— The design of the text field for sending messages and comments has been changed.
+— Added new controls for the player.
+— Added keyboard control in the player on the PC.
+— Fixed an error that caused the update status of a comment to be displayed incorrectly.
+— Lots of small changes and improvements.

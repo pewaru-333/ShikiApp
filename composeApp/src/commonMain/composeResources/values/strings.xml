@@ -273,6 +273,11 @@
 
     <string name="preference_deep_link">Ссылки приложения</string>
 
+    <!-- Источники -->
+    <string name="video_source_kodik">Кодик</string>
+    <string name="video_source_collapse">Collaps</string>
+    <string name="video_source_videohub">ВидеоХаб</string>
+
     <!-- Другое -->
     <string name="blank" />
     <string name="text_broadcast_message_club">Рассылка</string>
@@ -298,8 +303,9 @@
     <string name="text_verified">Верифицировано</string>
     <string name="text_year_in">в %1$d году</string>
 
-    <string name="text_video_voice">Озвучка</string>
+    <string name="text_video_sources">Источники</string>
     <string name="text_video_subtitles">Субтитры</string>
+    <string name="text_video_voice">Озвучка</string>
 
     <string name="text_minutes_short">мин.</string>
 
@@ -346,6 +352,15 @@
     <string name="text_no_browser">На устройстве не найден подходящий браузер</string>
 
     <string name="text_explain_before_watch">Приложение не хранит видеофайлы, а воспроизводит их из открытых сторонних источников. Разработчики не несут ответственности за контент на внешних серверах. Продолжая просмотр, вы соглашаетесь с данными условиями.</string>
+
+    <plurals name="plural_count_dubbers">
+        <item quantity="zero">%1$d озвучек</item>
+        <item quantity="one">%1$d озвучка</item>
+        <item quantity="two">%1$d озвучки</item>
+        <item quantity="few">%1$d озвучки</item>
+        <item quantity="many">%1$d озвучек</item>
+        <item quantity="other">%1$d озвучек</item>
+    </plurals>
 
     <plurals name="plural_count_episodes">
         <item quantity="zero">%1$d эпизодов</item>
