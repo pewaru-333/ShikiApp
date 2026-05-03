@@ -93,8 +93,8 @@ private val darkScheme = darkColorScheme(
 
 @Composable
 fun Theme(content: @Composable () -> Unit) {
-    val theme by Preferences.theme.collectAsStateWithLifecycle(Theme.SYSTEM)
-    val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle(false)
+    val theme by Preferences.theme.collectAsStateWithLifecycle()
+    val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle()
 
     val darkTheme = when (theme) {
         Theme.LIGHT -> false
