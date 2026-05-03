@@ -4,7 +4,7 @@ import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteItem
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffold
 import androidx.compose.material3.adaptive.navigationsuite.NavigationSuiteScaffoldDefaults
@@ -57,7 +57,7 @@ import org.jetbrains.compose.resources.stringResource
 @Composable
 fun Navigation(navigator: NavHostController) {
     val barVisibility = LocalBarVisibility.current
-    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
 
     val navigationBarState = rememberNavigationSuiteScaffoldState()
     val backStack by navigator.currentBackStackEntryAsState()
