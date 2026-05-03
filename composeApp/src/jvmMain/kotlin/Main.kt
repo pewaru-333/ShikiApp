@@ -21,6 +21,7 @@ import org.application.shikiapp.shared.AppConfig
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.di.AppModuleInitializer
 import org.application.shikiapp.shared.di.DesktopContext
+import org.application.shikiapp.shared.utils.initVlc
 import org.application.shikiapp.shared.utils.navigation.DesktopDeepLink
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.sharedImageLoader
@@ -41,6 +42,7 @@ fun main(args: Array<String>) {
     }
 
     DesktopDeepLink.registerUriSchemeIfNeeded()
+    initVlc()
 
     application {
         val app = AppModuleInitializer(DesktopContext(), AppConfig.createDesktopConfig())
