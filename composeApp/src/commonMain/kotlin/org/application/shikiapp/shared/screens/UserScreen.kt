@@ -33,6 +33,7 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -46,7 +47,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
@@ -802,36 +802,73 @@ private fun UserDialog(
 
             if (dialogMessages.loadState.refresh !is LoadState.Error) {
                 Row(
-                    verticalAlignment = Alignment.CenterVertically,
+                    verticalAlignment = Alignment.Bottom,
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(8.dp)
                 ) {
-                    OutlinedTextField(
+                    BasicTextField(
                         state = textFieldState,
-                        lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 2),
-                        placeholder = { Text(stringResource(Res.string.text_enter_message)) },
+                        lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
                         keyboardOptions = KeyboardOptions(
                             capitalization = KeyboardCapitalization.Sentences,
                             imeAction = ImeAction.Default
                         ),
+                        textStyle = MaterialTheme.typography.bodyLarge.copy(
+                            color = MaterialTheme.colorScheme.onSurface
+                        ),
                         modifier = Modifier
                             .weight(1f)
-                            .focusRequester(focusRequester)
+                            .focusRequester(focusRequester),
+                        decorator = { innerTextField ->
+                            Box(
+                                contentAlignment = Alignment.CenterStart,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(24.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    .padding(16.dp, 12.dp)
+                            ) {
+                                if (textFieldState.text.isEmpty()) {
+                                    Text(
+                                        text = stringResource(Res.string.text_enter_message),
+                                        style = MaterialTheme.typography.bodyLarge,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                    )
+                                }
+
+                                innerTextField()
+                            }
+                        }
                     )
 
                     Spacer(Modifier.width(8.dp))
 
-                    IconButton(
-                        content = { VectorIcon(Res.drawable.vector_send) },
-                        enabled = textFieldState.text.isNotBlank(),
-                        onClick = {
-                            sendMessage(textFieldState.text.toString())
-                            textFieldState.clearText()
-                            focusRequester.requestFocus()
-                            scope.launch { listState.animateScrollToItem(0) }
-                        }
-                    )
+                    Box(
+                        contentAlignment = Alignment.Center,
+                        modifier = Modifier
+                            .size(48.dp)
+                            .clip(CircleShape)
+                            .background(
+                                color = if (textFieldState.text.isNotBlank()) MaterialTheme.colorScheme.primary
+                                else MaterialTheme.colorScheme.surfaceVariant
+                            )
+                            .clickable(
+                                enabled = textFieldState.text.isNotBlank(),
+                                onClick = {
+                                    sendMessage(textFieldState.text.toString())
+                                    textFieldState.clearText()
+                                    focusRequester.requestFocus()
+                                    scope.launch { listState.animateScrollToItem(0) }
+                                }
+                            )
+                    ) {
+                        VectorIcon(
+                            resId = Res.drawable.vector_send,
+                            tint = if (textFieldState.text.isNotBlank()) MaterialTheme.colorScheme.onPrimary
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
             }
         }

@@ -29,6 +29,9 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
 import androidx.compose.foundation.text.input.clearText
@@ -39,14 +42,11 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.DropdownMenuPopup
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FilledTonalIconButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -68,6 +68,7 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontStyle
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import androidx.compose.ui.text.style.TextOverflow
@@ -354,7 +355,12 @@ fun Comments(
                 if (list.loadState.refresh !is LoadState.Error && Preferences.token != null && canSend) {
                     HorizontalDivider()
 
-                    Column(Modifier.fillMaxWidth()) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(MaterialTheme.colorScheme.surface)
+                            .padding(8.dp)
+                    ) {
                         AnimatedVisibility(state.errorTrigger > 0L) {
                             var progress by remember { mutableFloatStateOf(1f) }
 
@@ -374,6 +380,8 @@ fun Comments(
                             Column(
                                 modifier = Modifier
                                     .fillMaxWidth()
+                                    .padding(bottom = 8.dp)
+                                    .clip(MaterialTheme.shapes.small)
                                     .background(MaterialTheme.colorScheme.errorContainer)
                             ) {
                                 Row(
@@ -408,31 +416,27 @@ fun Comments(
                                 verticalAlignment = Alignment.CenterVertically,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .background(MaterialTheme.colorScheme.surfaceVariant)
-                                    .padding(16.dp, 8.dp)
+                                    .padding(bottom = 8.dp)
+                                    .clip(RoundedCornerShape(16.dp))
+                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+                                    .padding(12.dp, 6.dp)
                             ) {
                                 VectorIcon(
                                     resId = Res.drawable.vector_edit,
-                                    tint = MaterialTheme.colorScheme.primary
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(16.dp)
                                 )
 
                                 Spacer(Modifier.width(8.dp))
 
-                                Column(modifier = Modifier.weight(1f)) {
-                                    Text(
-                                        text = stringResource(Res.string.text_editing),
-                                        style = MaterialTheme.typography.labelMedium,
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = editComment?.commentContent?.flattenText().orEmpty(),
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis,
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                }
+                                Text(
+                                    text = stringResource(Res.string.text_editing),
+                                    modifier = Modifier.weight(1f),
+                                    color = MaterialTheme.colorScheme.primary,
+                                    style = MaterialTheme.typography.labelMedium
+                                )
                                 IconButton(
+                                    modifier = Modifier.size(24.dp),
                                     content = { VectorIcon(Res.drawable.vector_close) },
                                     onClick = {
                                         editComment = null
@@ -444,58 +448,104 @@ fun Comments(
                         }
 
                         Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(8.dp)
+                            modifier = Modifier.fillMaxWidth(),
+                            verticalAlignment = Alignment.Bottom
                         ) {
-                            OutlinedTextField(
+                            BasicTextField(
                                 state = state.textFieldState,
-                                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 2),
-                                placeholder = { Text(stringResource(Res.string.text_enter_message)) },
-                                trailingIcon = {
-                                    FilterChip(
-                                        modifier = Modifier.padding(end = 4.dp),
-                                        selected = isOfftopic,
-                                        onClick = { isOfftopic = !isOfftopic },
-                                        label = { Text(stringResource(Res.string.text_offtopic)) }
-                                    )
-                                },
+                                lineLimits = TextFieldLineLimits.MultiLine(maxHeightInLines = 5),
                                 keyboardOptions = KeyboardOptions(
                                     capitalization = KeyboardCapitalization.Sentences,
                                     imeAction = ImeAction.Default
                                 ),
+                                textStyle = MaterialTheme.typography.bodyLarge.copy(
+                                    color = MaterialTheme.colorScheme.onSurface
+                                ),
                                 modifier = Modifier
                                     .weight(1f)
-                                    .focusRequester(state.focusRequester)
-                            )
+                                    .focusRequester(state.focusRequester),
+                                decorator = { innerTextField ->
+                                    Row(
+                                        verticalAlignment = Alignment.Bottom,
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .clip(RoundedCornerShape(24.dp))
+                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                    ) {
+                                        Box(
+                                            modifier = Modifier
+                                                .weight(1f)
+                                                .padding(16.dp, 12.dp, 8.dp, 12.dp)
+                                        ) {
+                                            if (state.textFieldState.text.isEmpty()) {
+                                                Text(
+                                                    text = stringResource(Res.string.text_enter_message),
+                                                    style = MaterialTheme.typography.bodyLarge,
+                                                    color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                                                )
+                                            }
+                                            innerTextField()
+                                        }
 
-                            Spacer(Modifier.width(8.dp))
-
-                            FilledTonalIconButton(
-                                enabled = state.textFieldState.text.isNotBlank() && !isSending,
-                                onClick = {
-                                    val text = state.textFieldState.text.toString()
-
-                                    editComment?.let {
-                                        onUpdateComment(it.id, text, isOfftopic != it.isOfftopic)
-                                    } ?: onCreateComment(text, isOfftopic)
-
-                                    state.textFieldState.clearText()
-                                    editComment = null
-                                    isOfftopic = false
-                                },
-                                content = {
-                                    if (isSending) {
-                                        CircularProgressIndicator(Modifier.size(24.dp))
-                                    } else {
-                                        VectorIcon(
-                                            resId = if (editComment != null) Res.drawable.vector_check
-                                            else Res.drawable.vector_send
+                                        Text(
+                                            text = stringResource(Res.string.text_offtopic).uppercase(),
+                                            style = MaterialTheme.typography.labelSmall.copy(
+                                                fontWeight = FontWeight.Bold
+                                            ),
+                                            color = if (isOfftopic) MaterialTheme.colorScheme.tertiary
+                                            else MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+                                            modifier = Modifier
+                                                .padding(end = 12.dp, bottom = 12.dp)
+                                                .clip(RoundedCornerShape(8.dp))
+                                                .clickable { isOfftopic = !isOfftopic }
+                                                .padding(4.dp)
                                         )
                                     }
                                 }
                             )
+
+                            Spacer(Modifier.width(8.dp))
+
+                            Box(
+                                contentAlignment = Alignment.Center,
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(CircleShape)
+                                    .background(
+                                        color = if (state.textFieldState.text.isNotBlank() && !isSending)
+                                            MaterialTheme.colorScheme.primary
+                                        else
+                                            MaterialTheme.colorScheme.surfaceVariant
+                                    )
+                                    .clickable(
+                                        enabled = state.textFieldState.text.isNotBlank() && !isSending,
+                                        onClick = {
+                                            val text = state.textFieldState.text.toString()
+
+                                            editComment?.let {
+                                                onUpdateComment(it.id, text, isOfftopic != it.isOfftopic)
+                                            } ?: onCreateComment(text, isOfftopic)
+
+                                            state.textFieldState.clearText()
+                                            editComment = null
+                                            isOfftopic = false
+                                        }
+                                    )
+                            ) {
+                                if (isSending) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(20.dp),
+                                        strokeWidth = 2.dp,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                } else {
+                                    VectorIcon(
+                                        resId = if (editComment != null) Res.drawable.vector_check else Res.drawable.vector_send,
+                                        tint = if (state.textFieldState.text.isNotBlank()) MaterialTheme.colorScheme.onPrimary
+                                        else MaterialTheme.colorScheme.onSurfaceVariant
+                                    )
+                                }
+                            }
                         }
                     }
                 }
