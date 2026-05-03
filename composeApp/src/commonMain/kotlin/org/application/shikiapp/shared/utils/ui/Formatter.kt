@@ -192,6 +192,21 @@ object Formatter {
         }
     }
 
+    fun formatTime(seconds: Float): String {
+        if (seconds.isNaN() || seconds < 0f) return "00:00"
+
+        val totalSecs = seconds.toInt()
+        val h = totalSecs / 3600
+        val m = (totalSecs % 3600) / 60
+        val s = totalSecs % 60
+
+        return if (h > 0) {
+            "${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+        } else {
+            "${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}"
+        }
+    }
+
     suspend fun getLinks(text: String?): Triple<List<String>, List<CommentContent.VideoContent>, CommentContent?> = withContext(Dispatchers.Default) {
         if (text.isNullOrBlank()) return@withContext Triple(emptyList(), emptyList(), null)
 
