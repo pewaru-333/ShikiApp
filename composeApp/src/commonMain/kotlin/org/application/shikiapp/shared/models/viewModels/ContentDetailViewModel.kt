@@ -114,7 +114,7 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
                 val offtopic = if (!isOfftopicChanged) true
                 else Network.profile.changeOfftopic(id).status == HttpStatusCode.Created
 
-                _commentEvent.send(request.status == HttpStatusCode.Created && offtopic)
+                _commentEvent.send(request.status == HttpStatusCode.OK && offtopic)
             } catch (_: Exception) {
                 _commentEvent.send(false)
             } finally {
