@@ -1,9 +1,5 @@
 package org.application.shikiapp.shared.utils
 
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_video_subtitles
-import shikiapp.composeapp.generated.resources.text_video_voice
-
 // =========================================== Strings ============================================
 
 
@@ -68,9 +64,4 @@ val EXTERNAL_LINK_KINDS = mapOf(
     "ruranobe" to "RuRanobe",
     "ranobelib" to "RanobeLib",
     "novelupdates" to "Novel Updates"
-)
-
-val VIDEO_WATCH_TYPE = mapOf(
-    "voice" to Res.string.text_video_voice,
-    "subtitles" to Res.string.text_video_subtitles
 )
