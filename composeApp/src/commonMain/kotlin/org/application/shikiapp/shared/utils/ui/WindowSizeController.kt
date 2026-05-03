@@ -1,6 +1,6 @@
 package org.application.shikiapp.shared.utils.ui
 
-import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfoV2
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.window.core.layout.WindowSizeClass
@@ -13,7 +13,7 @@ interface IWindowSize {
 
 @Composable
 fun rememberWindowSize(): IWindowSize {
-    val adaptiveInfo = currentWindowAdaptiveInfo()
+    val adaptiveInfo = currentWindowAdaptiveInfoV2()
     val windowSizeClass = adaptiveInfo.windowSizeClass
 
     val windowSize = when {
