@@ -7,20 +7,18 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.parameters
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import org.application.shikiapp.shared.models.ui.KodikPlaylistResult
+import org.application.shikiapp.shared.models.ui.PlaylistResult
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.basicJson
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
 @OptIn(ExperimentalEncodingApi::class)
-class KodikParser private constructor(
-    private val token: String,
-    private val client: HttpClient
-) {
+class KodikParser private constructor(override val token: String, client: HttpClient) : BaseParser(client) {
     private var cryptStep: Int? = null
 
     companion object {
@@ -36,24 +34,22 @@ class KodikParser private constructor(
         private var INSTANCE: KodikParser? = null
         private val mutex = Mutex()
 
-        private val json = Json { ignoreUnknownKeys = true }
-
-        suspend fun getInstance(client: HttpClient): KodikParser {
+        suspend fun getInstance(): KodikParser {
             INSTANCE?.let { return it }
 
             return mutex.withLock {
                 INSTANCE?.let { return@withLock it }
 
-                val tokensText = client.get(TOKENS_URL).bodyAsText()
-                val tokensData = json.decodeFromString<KodikTokensResponse>(tokensText)
+                val tokensText = Network.watchClient.get(TOKENS_URL).bodyAsText()
+                val tokensData = basicJson.decodeFromString<KodikTokensResponse>(tokensText)
 
                 val allTokens = tokensData.stable + tokensData.unstable + tokensData.legacy
 
                 var validParser: KodikParser? = null
                 for (tokenItem in allTokens) {
                     val decryptedToken = decryptToken(tokenItem.tokn)
-                    if (validateToken(decryptedToken, client)) {
-                        validParser = KodikParser(decryptedToken, client)
+                    if (validateToken(decryptedToken, Network.watchClient)) {
+                        validParser = KodikParser(decryptedToken, Network.watchClient)
                         break
                     }
                 }
@@ -67,25 +63,16 @@ class KodikParser private constructor(
             }
         }
 
-        private fun cypher13(input: String) = input.map { char ->
-            when (char) {
-                in 'a'..'z' -> ((char - 'a' + 13) % 26 + 'a'.code).toChar()
-                in 'A'..'Z' -> ((char - 'A' + 13) % 26 + 'A'.code).toChar()
-                else -> char
-            }
-        }.joinToString(BLANK)
-
         private fun decryptToken(token: String): String {
             val half = token.length / 2
             val p1Reversed = token.substring(0, half).reversed()
             val p2Reversed = token.substring(half).reversed()
 
-            val p1Decoded = Base64.decode(p1Reversed.encodeToByteArray()).decodeToString()
-            val p2Decoded = Base64.decode(p2Reversed.encodeToByteArray()).decodeToString()
+            val p1Decoded = decodeBase64(p1Reversed)
+            val p2Decoded = decodeBase64(p2Reversed)
 
             return p2Decoded + p1Decoded
         }
-
 
         private suspend fun validateToken(testToken: String, client: HttpClient) = try {
             val response = client.submitForm(
@@ -97,7 +84,7 @@ class KodikParser private constructor(
                 }
             )
             val text = response.bodyAsText()
-            val obj = json.parseToJsonElement(text).jsonObject
+            val obj = basicJson.parseToJsonElement(text).jsonObject
 
             obj["error"]?.jsonPrimitive?.content != "Отсутствует или неверный токен"
         } catch (_: Exception) {
@@ -105,7 +92,7 @@ class KodikParser private constructor(
         }
     }
 
-    suspend fun searchByShikimoriId(id: String): List<KodikResultItem> {
+    override suspend fun searchById(id: String): List<KodikResultItem> {
         val response = client.submitForm(
             url = SEARCH_URL,
             formParameters = parameters {
@@ -116,13 +103,12 @@ class KodikParser private constructor(
             }
         )
 
-        val text = response.bodyAsText()
-        val data = json.decodeFromString<KodikSearchResponse>(text)
+        val data = basicJson.decodeFromString<KodikSearchResponse>(response.bodyAsText())
         return data.results
     }
 
-    suspend fun getPlaylistLink(episodeLink: String, quality: Int = 720): KodikPlaylistResult {
-        val iframeUrl = if (episodeLink.startsWith("//")) "https:$episodeLink" else episodeLink
+    override suspend fun getPlaylistLink(parseUrl: String, quality: Int): PlaylistResult {
+        val iframeUrl = if (parseUrl.startsWith("//")) "https:$parseUrl" else parseUrl
         val playerHtml = client.get(iframeUrl).bodyAsText()
 
         val urlParamsMatch = Regex("""urlParams\s*=\s*['"]?(\{.*?\})['"]?\s*;""", RegexOption.DOT_MATCHES_ALL)
@@ -144,7 +130,7 @@ class KodikParser private constructor(
             jsonStr
         }
 
-        val paramsObj = json.parseToJsonElement(urlParamsJsonString).jsonObject
+        val paramsObj = basicJson.parseToJsonElement(urlParamsJsonString).jsonObject
 
         val videoType = Regex("""\.type\s*=\s*'([^']*)'""").find(playerHtml)?.groupValues?.get(1).orEmpty()
         val videoHash = Regex("""\.hash\s*=\s*'([^']*)'""").find(playerHtml)?.groupValues?.get(1).orEmpty()
@@ -173,7 +159,7 @@ class KodikParser private constructor(
             }
         ).bodyAsText()
 
-        val linksJson = json.parseToJsonElement(videoLinksResponse).jsonObject
+        val linksJson = basicJson.parseToJsonElement(videoLinksResponse).jsonObject
         if (linksJson.containsKey("error")) {
             throw Exception(linksJson["error"]?.jsonPrimitive?.content.toString())
         }
@@ -194,7 +180,10 @@ class KodikParser private constructor(
             .replace("https:", BLANK)
             .substringBeforeLast("/") + "/$qualitySelected.mp4:hls:manifest.m3u8"
 
-        return KodikPlaylistResult("https:$finalLink", qualityList)
+        return PlaylistResult(
+            url = "https:$finalLink",
+            qualityList = qualityList
+        )
     }
 
     private suspend fun getPostLink(scriptUrl: String): String {
