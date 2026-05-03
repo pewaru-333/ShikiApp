@@ -1,19 +1,24 @@
 package org.application.shikiapp.shared.models.ui
 
-import org.jetbrains.compose.resources.StringResource
+import org.application.shikiapp.shared.utils.enums.VideoSource
 
 data class EpisodeModel(
     val number: Int,
     val link: String,
-    val screenshot: String?
+    val audioIndex: Int? = null,
+    val screenshot: String? = null
+)
+
+data class SubtitleTrack(
+    val name: String,
+    val url: String
 )
 
 data class VideoVoice(
     val id: Int,
     val title: String,
-    val type: StringResource,
-    val isSubtitles: Boolean,
-    val link: String,
+    val hasDubbers: Boolean,
+    val hasSubtitles: Boolean,
     val episodes: List<EpisodeModel>,
     val quality: String?,
     val lastEpisode: Int
@@ -22,7 +27,15 @@ data class VideoVoice(
         get() = episodes.size
 }
 
-data class KodikPlaylistResult(
+data class VideoSourceData(
+    val type: VideoSource,
+    val voices: List<VideoVoice>
+)
+
+data class PlaylistResult(
     val url: String,
-    val qualityList: List<Int>
+    val fallbackUrls: List<String> = emptyList(),
+    val qualityList: List<Int> = emptyList(),
+    val subtitles: List<SubtitleTrack> = emptyList(),
+    val headers: Map<String, String> = emptyMap()
 )
