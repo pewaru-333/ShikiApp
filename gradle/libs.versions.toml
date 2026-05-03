@@ -1,40 +1,42 @@
 [versions]
 # Android
 activity = "1.13.0"
-compose-bom = "2026.03.01"
+compose-bom = "2026.04.01"
 core-ktx = "1.18.0"
 media3 = "1.10.0"
 
 # Compose Multiplatform / JetBrains
-compose-adaptive = "1.3.0-alpha06"
+compose-adaptive = "1.3.0-alpha07"
 compose-lifecycle = "2.11.0-alpha03"
-compose-material3 = "1.11.0-alpha06"
-compose-multiplatform = "1.11.0-beta02"
+compose-material3 = "1.11.0-alpha07"
+compose-multiplatform = "1.11.0-beta03"
 compose-navigation = "2.9.2"
-compose-navigation-event = "1.1.0-alpha01"
+compose-navigation-event = "1.1.0-beta01"
 compose-navigation-suite = "1.9.0"
 compose-paging = "3.4.2"
 
 # Kotlin
-kotlin = "2.3.20"
+kotlin = "2.3.21"
 kotlinx-coroutines = "1.10.2"
 kotlinx-serialization-json = "1.11.0"
 
 # Network
 apollo-api = "4.4.3"
-ktor = "3.4.2"
+ktor = "3.4.3"
+
+# Video (desktop)
+vlcj = "4.12.1"
+vlcj-subs = "1.0.0"
 
 # Utils
 coil = "3.4.0"
 compose-preferences = "2.2.0"
-ffmpeg = "8.0.1-1.5.13"
 icu = "78.3"
-javacv = "1.5.13"
 ksoup = "0.2.6"
 zoomable = "2.11.1"
 
 # Build
-gradle = "9.1.1"
+gradle = "9.2.0"
 
 [libraries]
 # AndroidX
@@ -45,6 +47,7 @@ androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = 
 # Media3 (Android)
 androidx-media3-exoplayer = { group = "androidx.media3", name = "media3-exoplayer", version.ref = "media3" }
 androidx-media3-exoplayer-hls = { group = "androidx.media3", name = "media3-exoplayer-hls", version.ref = "media3" }
+androidx-media3-exoplayer-dash = { group = "androidx.media3", name = "media3-exoplayer-dash", version.ref = "media3" }
 androidx-media3-ui-compose = { group = "androidx.media3", name = "media3-ui-compose", version.ref = "media3" }
 
 # Paging
@@ -72,11 +75,10 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 
 # Network
 apollo-api = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apollo-api" }
-ktor-client-android = { group = "io.ktor", name = "ktor-client-android", version.ref = "ktor" }
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
-ktor-client-java = { group = "io.ktor", name = "ktor-client-java", version.ref = "ktor" }
+ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 # Coil
@@ -84,10 +86,12 @@ coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref 
 coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil" }
 coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
 
+# Video (desktop)
+vlcj = { group = "uk.co.caprica", name = "vlcj", version.ref = "vlcj" }
+vlcj-subs = { group = "uk.co.caprica", name = "vlcj-subs", version.ref = "vlcj-subs" }
+
 # Utils
-ffmpeg = { group = "org.bytedeco", name = "ffmpeg", version.ref = "ffmpeg" }
 icu4j = { group = "com.ibm.icu", name = "icu4j", version.ref = "icu" }
-javacv = { group = "org.bytedeco", name = "javacv", version.ref = "javacv" }
 ksoup = { group = "com.fleeksoft.ksoup", name = "ksoup", version.ref = "ksoup" }
 material-preferences = { group = "me.zhanghai.compose.preference", name = "preference", version.ref = "compose-preferences" }
 zoomable = { group = "net.engawapg.lib", name = "zoomable", version.ref = "zoomable" }
@@ -96,12 +100,14 @@ zoomable = { group = "net.engawapg.lib", name = "zoomable", version.ref = "zooma
 media3 = [
     "androidx-media3-exoplayer",
     "androidx-media3-exoplayer-hls",
+    "androidx-media3-exoplayer-dash",
     "androidx-media3-ui-compose"
 ]
 ktor = [
     "ktor-client-auth",
     "ktor-client-content-negotiation",
     "ktor-client-core",
+    "ktor-client-okhttp",
     "ktor-serialization-kotlinx-json"
 ]
 

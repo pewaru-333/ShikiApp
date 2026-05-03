@@ -90,7 +90,6 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.androidx.activity.compose)
-                implementation(libs.ktor.client.android)
 
                 implementation(libs.bundles.media3)
             }
@@ -101,19 +100,10 @@ kotlin {
                 implementation(compose.desktop.currentOs)
 
                 implementation(libs.kotlinx.coroutines.swing)
-                implementation(libs.ktor.client.java)
 
                 // Video player libraries
-                implementation(libs.javacv)
-                implementation(libs.ffmpeg)
-
-                val ffmpegVersion = libs.versions.ffmpeg.get()
-                val currentOs = org.gradle.internal.os.OperatingSystem.current()
-                if (currentOs.isWindows) {
-                    runtimeOnly("org.bytedeco:ffmpeg:$ffmpegVersion:windows-x86_64")
-                } else if (currentOs.isLinux) {
-                    runtimeOnly("org.bytedeco:ffmpeg:$ffmpegVersion:linux-x86_64")
-                }
+                implementation(libs.vlcj)
+                implementation(libs.vlcj.subs)
             }
         }
     }
@@ -144,7 +134,9 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.7"
+                packageVersion = "0.6.8"
+
+                appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 
@@ -179,9 +171,13 @@ tasks.register<Zip>("packageZipDistributable") {
     val buildDir = layout.buildDirectory.get().asFile
 
     val appImageDir = file("$buildDir/compose/binaries/main-release/app/$appName")
-
     from(appImageDir) {
         into(appName)
+    }
+
+    val resourcesDir = project.layout.projectDirectory.dir("resources").asFile
+    from(resourcesDir) {
+        into("$appName/app/resources")
     }
 
     destinationDirectory.set(file("$buildDir/distributions"))
