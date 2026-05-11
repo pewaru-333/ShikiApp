@@ -12,6 +12,7 @@
     <string name="text_poster">Постер</string>
     <string name="text_publisher">Издательство</string>
     <string name="text_related">Связанное</string>
+    <string name="text_reviews">Отзывы</string>
     <string name="text_screenshots">Кадры</string>
     <string name="text_similar">Похожее</string>
     <string name="text_statistics">Статистика</string>
@@ -65,6 +66,10 @@
     <string name="text_video">Видео</string>
     <string name="text_video_character_trailers">Трейлеры персонажей</string>
     <string name="text_video_episodes_preview">Превью эпизодов</string>
+
+    <string name="review_positive">Положительный</string>
+    <string name="review_neutral">Нейтральный</string>
+    <string name="review_negative">Отрицательный</string>
 
     <!-- Статус просмотра/прочтения -->
     <string name="status_planned">Запланировано</string>
@@ -247,7 +252,8 @@
     <string name="text_leave_club">Покинуть клуб</string>
 
     <!-- Настройки -->
-    <string name="preference_category_app_view">Вид приложения</string>
+    <string name="preference_category_app_view">Внешний вид</string>
+    <string name="preference_category_lists">Списки и навигация</string>
     <string name="preference_category_system">Системные</string>
 
     <string name="preference_start_page">Начальная страница</string>
@@ -256,7 +262,8 @@
     <string name="preference_list_view_column">Столбец</string>
     <string name="preference_list_view_grid">Сетка</string>
 
-    <string name="preference_episode_auto_add">Автоматически добавлять эпизод в список через 30 секунд после просмотра</string>
+    <string name="preference_episode_auto_add">Автоматически добавлять эпизод в список</string>
+    <string name="preference_episode_auto_add_summary">Через 30 секунд после просмотра</string>
 
     <string name="preference_theme">Тема приложения</string>
     <string name="preference_theme_system">Системная</string>
@@ -266,12 +273,24 @@
 
     <string name="preference_dynamic_colors">Системные цвета</string>
 
+    <string name="preference_user_rates_start_type">Стартовая вкладка в списке оценок</string>
+    <string name="preference_user_rates_start_status">Стартовый статус просмотра в списке оценок</string>
+
     <string name="preference_cache_size">Размер кэша</string>
     <string name="preference_cache_size_mb">%1$d МБ</string>
 
     <string name="preference_language">Язык приложения</string>
 
     <string name="preference_deep_link">Ссылки приложения</string>
+
+    <!-- Палитра -->
+    <string name="palette_default">Стандартная</string>
+    <string name="palette_sakura">Сакура</string>
+    <string name="palette_ocean">Океан</string>
+    <string name="palette_forest">Лес</string>
+    <string name="palette_sunset">Закат</string>
+    <string name="palette_night">Ночь</string>
+    <string name="palette_graphite">Графит</string>
 
     <!-- Источники -->
     <string name="video_source_kodik">Кодик</string>
@@ -292,6 +311,7 @@
     <string name="text_no_messages">Нет сообщений</string>
     <string name="text_offtopic">ОФФТОП</string>
     <string name="text_open_in_browser">Открыть в браузере</string>
+    <string name="text_palette">Палитра</string>
     <string name="text_saved">Сохранено!</string>
     <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
