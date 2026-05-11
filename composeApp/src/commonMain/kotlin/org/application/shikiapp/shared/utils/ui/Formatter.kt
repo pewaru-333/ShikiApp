@@ -9,11 +9,13 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.models.data.Date
+import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
+import org.application.shikiapp.shared.utils.enums.OpinionType
 import org.application.shikiapp.shared.utils.enums.Season
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.WatchStatus
@@ -289,7 +291,7 @@ object Formatter {
         return@withContext Triple(images, videos, poster)
     }
 
-    fun replaceMissingAnimePoster(poster: String?, id: Any?) = poster?.takeIf { "missing" !in it }
+    fun replaceMissingAnimePoster(poster: String?, id: Any?) = poster?.takeIf { it.isNotBlank() && "missing" !in it }
         ?: id?.let { "https://smarthard.net/static/animes/$it.jpeg" }
             .orEmpty()
 
@@ -333,6 +335,55 @@ object Formatter {
             }
         }
 
+    fun parseReviews(dto: org.application.shikiapp.shared.models.data.Review) =
+        Ksoup.parse(dto.content).select("article.b-review-topic").map { review ->
+            val id = review.attr("id")
+            val userId = review.attr("data-user_id").toLongOrNull() ?: 0L
+            val nickname = review.selectFirst("meta[itemprop=author]")?.attr("content").orEmpty()
+
+            val avatarImg = review.selectFirst("img")
+            val avatarUrl = avatarImg?.attr("src").orEmpty()
+
+            val body = review.selectFirst("div.body[itemprop=text]")?.html().orEmpty()
+            val date = review.selectFirst("meta[itemprop=datePublished]")?.attr("content").orEmpty()
+
+            val opinion = when {
+                review.selectFirst("div.opinion.positive") != null -> OpinionType.POSITIVE
+                review.selectFirst("div.opinion.negative") != null -> OpinionType.NEGATIVE
+                review.selectFirst("div.opinion.neutral") != null -> OpinionType.NEUTRAL
+                else -> OpinionType.UNKNOWN
+            }
+
+            val scoreClass = review.selectFirst("div.stars.score")?.attr("class").orEmpty()
+            val animeScore = Regex("score-(\\d+)").find(scoreClass)?.groupValues?.get(1)?.toIntOrNull()
+
+            val watchStatus = review.selectFirst("div.status-name")?.attr("data-text")?.takeIf(String::isNotBlank)
+
+            val votesFor = review.selectFirst("span.votes-for")?.text().orEmpty()
+            val votesAgainst = review.selectFirst("span.votes-against")?.text().orEmpty()
+
+            Review(
+                id = id,
+                userId = userId,
+                userNickname = nickname,
+                userAvatar = avatarUrl,
+                date = convertDate(date),
+                body = HtmlParser.parseComment(body),
+                opinion = opinion,
+                animeScore = animeScore,
+                watchStatus = watchStatus,
+                votesFor = votesFor,
+                votesAgainst = votesAgainst
+            )
+        }
+
+    fun parseReviewsNextPage(postloader: String?): Int? {
+        if (postloader.isNullOrBlank()) return null
+
+        val nextLink = Ksoup.parse(postloader).selectFirst("a.next")?.attr("href") ?: return null
+        return nextLink.substringAfterLast("page/").substringBefore(".").toIntOrNull()
+    }
+
     fun getOngoingSeason(): String {
         val currentDate = LocalDate.now()
 
@@ -368,7 +419,7 @@ object Formatter {
     fun getWatchStatus(status: String?, type: LinkedType) = if (status == null) Res.string.text_unknown
     else when (type) {
         LinkedType.ANIME -> Enum.safeValueOf<WatchStatus>(status).titleAnime
-        LinkedType.MANGA -> Enum.safeValueOf<WatchStatus>(status).titleManga
+        LinkedType.MANGA -> Enum.safeValueOf<WatchStatus>(status).titleManga ?: Res.string.text_unknown
         else -> Res.string.text_unknown
     }
 }
