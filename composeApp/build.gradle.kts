@@ -134,7 +134,7 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.8"
+                packageVersion = "0.6.9"
 
                 appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
 

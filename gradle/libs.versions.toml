@@ -1,23 +1,23 @@
 [versions]
 # Android
 activity = "1.13.0"
-compose-bom = "2026.04.01"
+compose-bom = "2026.05.00"
 core-ktx = "1.18.0"
 media3 = "1.10.0"
 
 # Compose Multiplatform / JetBrains
 compose-adaptive = "1.3.0-alpha07"
-compose-lifecycle = "2.11.0-alpha03"
+compose-lifecycle = "2.11.0-beta01"
 compose-material3 = "1.11.0-alpha07"
-compose-multiplatform = "1.11.0-beta03"
+compose-multiplatform = "1.11.0-rc01"
 compose-navigation = "2.9.2"
-compose-navigation-event = "1.1.0-beta01"
+compose-navigation-event = "1.1.0-rc01"
 compose-navigation-suite = "1.9.0"
-compose-paging = "3.4.2"
+compose-paging = "3.5.0"
 
 # Kotlin
 kotlin = "2.3.21"
-kotlinx-coroutines = "1.10.2"
+kotlinx-coroutines = "1.11.0"
 kotlinx-serialization-json = "1.11.0"
 
 # Network
@@ -36,7 +36,7 @@ ksoup = "0.2.6"
 zoomable = "2.11.1"
 
 # Build
-gradle = "9.2.0"
+gradle = "9.2.1"
 
 [libraries]
 # AndroidX
