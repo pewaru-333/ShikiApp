@@ -1,9 +1,8 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.shared.ui.templates
 
-import androidx.compose.foundation.layout.Arrangement.SpaceBetween
-import androidx.compose.foundation.layout.Arrangement.spacedBy
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -13,12 +12,13 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -27,11 +27,12 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment.Companion.CenterVertically
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.util.fastForEachIndexed
 import org.application.shikiapp.shared.events.RateEvent
 import org.application.shikiapp.shared.models.states.NewRateState
 import org.application.shikiapp.shared.utils.enums.LinkedType
@@ -81,7 +82,7 @@ fun DialogEditRate(
         )
     },
     title = {
-        Row(Modifier.fillMaxWidth(), SpaceBetween, CenterVertically) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
             Text(stringResource(if (isExists) Res.string.text_change else Res.string.text_rate))
             if (isExists) {
                 IconButton(
@@ -102,11 +103,12 @@ fun DialogEditRate(
 
 @Composable
 fun RateFieldsAll(state: NewRateState, type: LinkedType, onEvent: (RateEvent) -> Unit) =
-    Column(Modifier.verticalScroll(rememberScrollState()), spacedBy(16.dp)) {
+    Column(Modifier.verticalScroll(rememberScrollState()), Arrangement.spacedBy(16.dp)) {
         RateDropMenu(
             items = WatchStatus.entries,
             title = state.statusName,
             label = Res.string.text_status,
+            selected = { state.statusName == type.getWatchStatusTitle(it) },
             itemTitle = { stringResource(type.getWatchStatusTitle(it)) },
             onEvent = { onEvent(RateEvent.SetStatus(it, type)) }
         )
@@ -130,6 +132,7 @@ fun RateFieldsAll(state: NewRateState, type: LinkedType, onEvent: (RateEvent) ->
             items = Score.entries,
             title = state.score?.title,
             label = Res.string.text_score,
+            selected = { state.score == it },
             itemTitle = { stringResource(it.title) },
             onEvent = { onEvent(RateEvent.SetScore(it)) }
         )
@@ -152,16 +155,17 @@ fun RateFieldsAll(state: NewRateState, type: LinkedType, onEvent: (RateEvent) ->
 @Composable
 fun <T : Enum<T>> RateDropMenu(
     items: EnumEntries<T>,
+    selected: (T) -> Boolean,
     title: StringResource?,
     label: StringResource,
     itemTitle: @Composable (T) -> String,
     onEvent: (T) -> Unit
 ) {
-    var flag by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     ExposedDropdownMenuBox(
-        expanded = flag,
-        onExpandedChange = { flag = it }
+        expanded = expanded,
+        onExpandedChange = { expanded = it }
     ) {
         OutlinedTextField(
             value = stringResource(title ?: Res.string.blank),
@@ -169,28 +173,26 @@ fun <T : Enum<T>> RateDropMenu(
             label = { Text(stringResource(label)) },
             readOnly = true,
             singleLine = true,
-            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
-            colors = ExposedDropdownMenuDefaults.textFieldColors(),
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
             modifier = Modifier
                 .fillMaxWidth()
                 .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
         )
         ExposedDropdownMenu(
-            expanded = flag,
-            onDismissRequest = { flag = false }
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            containerColor = MenuDefaults.groupStandardContainerColor,
+            shape = MenuDefaults.standaloneGroupShape,
         ) {
-            items.forEach {
+            items.fastForEachIndexed { index, item ->
                 DropdownMenuItem(
+                    selected = selected(item),
+                    shapes = MenuDefaults.itemShape(index, items.size),
                     contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                    text = {
-                        Text(
-                            text = itemTitle(it),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
-                    },
+                    text = { Text(itemTitle(item)) },
                     onClick = {
-                        onEvent(it)
-                        flag = false
+                        onEvent(item)
+                        expanded = false
                     }
                 )
             }

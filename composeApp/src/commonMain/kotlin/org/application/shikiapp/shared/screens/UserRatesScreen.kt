@@ -37,7 +37,9 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
@@ -52,6 +54,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryScrollableTabRow
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
+import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -67,10 +70,11 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.application.shikiapp.shared.models.states.SortingState
+import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.states.UserRateState
 import org.application.shikiapp.shared.models.states.UserRateUiEvent
 import org.application.shikiapp.shared.models.states.rememberRateState
@@ -85,7 +89,6 @@ import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.ScaffoldSearchBar
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.enums.LinkedType
-import org.application.shikiapp.shared.utils.enums.OrderDirection
 import org.application.shikiapp.shared.utils.enums.OrderRates
 import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.application.shikiapp.shared.utils.enums.WindowSize
@@ -106,8 +109,6 @@ import shikiapp.composeapp.generated.resources.text_rate_chapters
 import shikiapp.composeapp.generated.resources.text_to_profile
 import shikiapp.composeapp.generated.resources.vector_add
 import shikiapp.composeapp.generated.resources.vector_anime
-import shikiapp.composeapp.generated.resources.vector_arrow_down
-import shikiapp.composeapp.generated.resources.vector_arrow_up
 import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
 import shikiapp.composeapp.generated.resources.vector_manga
 import shikiapp.composeapp.generated.resources.vector_no_profile
@@ -120,10 +121,14 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 
     val model = viewModel(::UserRateViewModel)
     val response by model.response.collectAsStateWithLifecycle()
-    val orderState by model.orderState.collectAsStateWithLifecycle()
+    val ratesState by model.ratesState.collectAsStateWithLifecycle()
 
     val scope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(pageCount = WatchStatus.entries::size)
+    val pagerState = rememberPagerState(
+        initialPage = Preferences.userRatesStartWatchStatus.ordinal,
+        pageCount = WatchStatus.entries::size
+    )
+
     val listStates = WatchStatus.entries.map { rememberLazyListState() }
     val gridStates = WatchStatus.entries.map { rememberLazyGridState() }
 
@@ -132,19 +137,24 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     val newRate by model.newRate.collectAsStateWithLifecycle()
 
     val type by model.type.collectAsStateWithLifecycle()
-    val search by model.search.collectAsStateWithLifecycle()
-
-    LaunchedEffect(type) {
-        pagerState.requestScrollToPage(0)
-    }
 
     LaunchedEffect(Unit) {
-        snapshotFlow { orderState }
+        snapshotFlow { type }
             .pairwise()
             .collectLatest { (old, new) ->
                 if (new != old) {
-                    listStates[pagerState.currentPage].requestScrollToItem(0)
-                    gridStates[pagerState.currentPage].requestScrollToItem(0)
+                    pagerState.requestScrollToPage(Preferences.userRatesStartWatchStatus.ordinal)
+                }
+            }
+    }
+
+    LaunchedEffect(Unit) {
+        snapshotFlow { rates }
+            .pairwise()
+            .collectLatest { (old, new) ->
+                if (new != old) {
+                    listStates.forEach { it.requestScrollToItem(0) }
+                    gridStates.forEach { it.requestScrollToItem(0) }
                 }
             }
     }
@@ -170,69 +180,85 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
         RatesResponse.Unlogged -> UnloggedScreen(onNavigate)
         RatesResponse.Error -> ErrorScreen(model::loadRates, if (!model.editable) onBack else null)
         is RatesResponse.Success, RatesResponse.Loading, RatesResponse.NoAccess -> {
-            ScaffoldSearchBar(
-                search = search,
-                onSearch = model::setSearch,
-                navigationIcon = { if (!model.editable) NavigationIcon(onBack) },
-                actions = {
-                    if (model.editable) {
-                        FilledIconToggleButton(
-                            checked = type == LinkedType.ANIME,
-                            onCheckedChange = { model.setLinkedType(LinkedType.ANIME) },
-                            content = { VectorIcon(Res.drawable.vector_anime) }
-                        )
-                        FilledIconToggleButton(
-                            checked = type == LinkedType.MANGA,
-                            onCheckedChange = { model.setLinkedType(LinkedType.MANGA) },
-                            content = { VectorIcon(Res.drawable.vector_manga) }
-                        )
-                    }
-                }
-            ) {
-                when (response) {
-                    is RatesResponse.Loading -> LoadingScreen()
-                    is RatesResponse.NoAccess -> Box(Modifier.fillMaxSize(), Alignment.Center) {
-                        Text(stringResource(Res.string.text_profile_closed))
-                    }
-
-                    else -> Column {
-                        PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
-                            WatchStatus.entries.forEach { status ->
-                                Tab(
-                                    selected = pagerState.targetPage == status.ordinal,
-                                    onClick = { scope.launch { pagerState.animateScrollToPage(status.ordinal) } },
-                                    text = { Text(stringResource(type.getWatchStatusTitle(status))) }
-                                )
-                            }
-                        }
-
-                        LazyRow(
-                            contentPadding = PaddingValues(horizontal = 16.dp),
-                            horizontalArrangement = Arrangement.spacedBy(8.dp)
-                        ) {
-                            items(OrderRates.entries, OrderRates::name) { order ->
-                                SortChip(
-                                    order = order,
-                                    state = orderState,
-                                    type = type,
-                                    onClick = { model.onSortChanged(order) }
-                                )
-                            }
-                        }
-
-                        HorizontalPager(pagerState) { page ->
-                            UserRateList(
-                                rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
-                                listState = listStates[page],
-                                gridState = gridStates[page],
-                                type = type,
-                                getRate = model::getRate,
-                                editable = model.editable,
-                                windowSize = windowSize,
-                                rateState = rateState,
-                                increment = model::increment,
-                                onNavigate = onNavigate
+            PullToRefreshBox(ratesState.isRefreshing, model::reload, Modifier.fillMaxSize()) {
+                ScaffoldSearchBar(
+                    search = ratesState.search,
+                    onSearch = model::setSearch,
+                    showSearchField = response is RatesResponse.Success,
+                    navigationIcon = { if (!model.editable) NavigationIcon(onBack) },
+                    actions = {
+                        if (model.editable && response is RatesResponse.Success) {
+                            FilledIconToggleButton(
+                                checked = type == LinkedType.ANIME,
+                                onCheckedChange = { model.setLinkedType(LinkedType.ANIME) },
+                                content = { VectorIcon(Res.drawable.vector_anime) }
                             )
+                            FilledIconToggleButton(
+                                checked = type == LinkedType.MANGA,
+                                onCheckedChange = { model.setLinkedType(LinkedType.MANGA) },
+                                content = { VectorIcon(Res.drawable.vector_manga) }
+                            )
+                        }
+                    }
+                ) {
+                    when (response) {
+                        is RatesResponse.Loading -> LoadingScreen()
+                        is RatesResponse.NoAccess -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+                            Text(stringResource(Res.string.text_profile_closed))
+                        }
+
+                        else -> Column {
+                            PrimaryScrollableTabRow(pagerState.currentPage, edgePadding = 8.dp) {
+                                WatchStatus.entries.fastForEach { status ->
+                                    Tab(
+                                        selected = pagerState.targetPage == status.ordinal,
+                                        onClick = { scope.launch { pagerState.animateScrollToPage(status.ordinal) } },
+                                        text = { Text(stringResource(type.getWatchStatusTitle(status))) }
+                                    )
+                                }
+                            }
+
+                            LazyRow(
+                                contentPadding = PaddingValues(horizontal = 16.dp),
+                                horizontalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(OrderRates.entries, OrderRates::name) { order ->
+                                    val isSelected = ratesState.order == order
+
+                                    FilterChip(
+                                        selected = isSelected,
+                                        onClick = { model.onSortChanged(order) },
+                                        label = {
+                                            Text(
+                                                text = stringResource(
+                                                    resource = if (type == LinkedType.ANIME) order.title
+                                                    else order.titleManga ?: order.title
+                                                )
+                                            )
+                                        },
+                                        leadingIcon = {
+                                            if (isSelected) {
+                                                VectorIcon(ratesState.direction.icon)
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+
+                            HorizontalPager(pagerState, Modifier.weight(1f)) { page ->
+                                UserRateList(
+                                    rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
+                                    listState = listStates[page],
+                                    gridState = gridStates[page],
+                                    type = type,
+                                    getRate = model::getRate,
+                                    editable = model.editable,
+                                    windowSize = windowSize,
+                                    rateState = rateState,
+                                    increment = model::increment,
+                                    onNavigate = onNavigate
+                                )
+                            }
                         }
                     }
                 }
@@ -240,7 +266,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
         }
     }
 
-    if (model.showEditDialog) {
+    if (ratesState.showDialog) {
         DialogEditRate(
             state = newRate,
             type = type,
@@ -442,7 +468,12 @@ private fun UserRateList(
     increment: (Long) -> Unit,
     onNavigate: (Screen) -> Unit
 ) = when {
-    rates.isEmpty() -> Box(Modifier.fillMaxSize(), Alignment.Center) {
+    rates.isEmpty() -> Box(
+        contentAlignment = Alignment.Center,
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+    ) {
         Text(
             text = stringResource(Res.string.text_empty),
             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -503,28 +534,3 @@ private fun UserRateList(
         }
     }
 }
-
-@Composable
-private fun SortChip(order: OrderRates, state: SortingState, type: LinkedType, onClick: () -> Unit) =
-    FilterChip(
-        onClick = onClick,
-        selected = state.order == order,
-        label = {
-            Text(
-                text = stringResource(
-                    if (type == LinkedType.ANIME) order.title
-                    else order.titleManga ?: order.title
-                )
-            )
-        },
-        leadingIcon = {
-            if (state.order == order) {
-                VectorIcon(
-                    resId = when (state.direction) {
-                        OrderDirection.ASCENDING -> Res.drawable.vector_arrow_up
-                        OrderDirection.DESCENDING -> Res.drawable.vector_arrow_down
-                    }
-                )
-            }
-        }
-    )

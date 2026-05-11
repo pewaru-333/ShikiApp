@@ -1,8 +1,5 @@
 package org.application.shikiapp.shared.models.viewModels
 
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
@@ -19,6 +16,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -39,8 +37,8 @@ import org.application.shikiapp.shared.events.RateEvent.SetVolumes
 import org.application.shikiapp.shared.models.data.BaseRate
 import org.application.shikiapp.shared.models.data.NewRate
 import org.application.shikiapp.shared.models.states.NewRateState
-import org.application.shikiapp.shared.models.states.SortingState
 import org.application.shikiapp.shared.models.states.UserRateUiEvent
+import org.application.shikiapp.shared.models.states.UserRatesState
 import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
@@ -64,34 +62,36 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         )
     }.getOrNull()
 
-    private val _type = MutableStateFlow(args?.type ?: LinkedType.ANIME)
-    val type = _type.asStateFlow()
+    private val _type = MutableStateFlow(args?.type ?: Preferences.userRatesStartType)
+    val type = _type.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), _type.value)
 
     val editable = args?.editable ?: false
     val userId = if (editable) Preferences.userId else args?.id?.toLongOrNull()
 
     private val _response = MutableStateFlow<RatesResponse>(RatesResponse.Loading)
-    val response = _response.asStateFlow()
+    val response = _response
         .onStart { loadRates() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), RatesResponse.Loading)
 
-    private val _orderState = MutableStateFlow(SortingState())
-    val orderState = _orderState.asStateFlow()
+    private val _ratesState = MutableStateFlow(UserRatesState())
+    val ratesState = _ratesState.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UserRatesState())
 
     private val _newRate = MutableStateFlow(NewRateState())
     val newRate = _newRate.asStateFlow()
-
-    private val _search = MutableStateFlow(BLANK)
-    val search = _search.asStateFlow()
 
     private val _rateUiEvent = Channel<UserRateUiEvent>()
     val rateUiEvent = _rateUiEvent.receiveAsFlow()
 
     @OptIn(ExperimentalCoroutinesApi::class)
-    val rates = combine(_response, _orderState, _search) { response, state, search ->
+    val rates = combine(
+        flow = _response,
+        flow2 = _ratesState.distinctUntilChanged { old, new ->
+            old.search == new.search && old.order == new.order && old.direction == new.direction
+        }
+    ) { response, state ->
         if (response !is RatesResponse.Success) return@combine emptyMap()
 
-        val noSearch = search.isBlank()
+        val noSearch = state.search.isBlank()
 
         val typeComparator = when (state.order) {
             OrderRates.TITLE -> compareBy(UserRate::title)
@@ -108,15 +108,12 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
 
         response.rates
-            .filter { noSearch || it.title.contains(search, ignoreCase = true) }
+            .filter { noSearch || it.title.contains(state.search, ignoreCase = true) }
             .groupBy { Enum.safeValueOf<WatchStatus>(it.status) }
             .mapValues { (_, value) -> value.sortedWith(orderComparator) }
     }
         .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), emptyMap())
-
-    var showEditDialog by mutableStateOf(false)
-        private set
 
     fun loadRates(type: LinkedType = _type.value) {
         if (userId == null) return
@@ -177,36 +174,37 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun onSortChanged(orderType: OrderRates) {
-        _orderState.update {
-            if (orderType == it.order) {
-                if (it.direction == OrderDirection.ASCENDING) {
-                    it.copy(direction = OrderDirection.DESCENDING)
-                } else {
-                    it.copy(direction = OrderDirection.ASCENDING)
-                }
-            } else {
-                SortingState(orderType, OrderDirection.ASCENDING)
-            }
+    fun onSortChanged(orderType: OrderRates) = _ratesState.update {
+        if (orderType == it.order) {
+            it.copy(
+                direction = if (it.direction == OrderDirection.ASCENDING) OrderDirection.DESCENDING
+                else OrderDirection.ASCENDING
+            )
+        } else {
+            it.copy(
+                order = orderType,
+                direction = OrderDirection.ASCENDING
+            )
         }
     }
 
-    fun toggleDialog() {
-        showEditDialog = !showEditDialog
-    }
-
-    fun setSearch(text: String) {
-        _search.value = text
-    }
+    fun toggleDialog() = _ratesState.update { it.copy(showDialog = !it.showDialog) }
+    fun setSearch(text: String) = _ratesState.update { it.copy(search = text) }
 
     fun setLinkedType(type: LinkedType) {
         _type.update { type }
-        _search.value = BLANK
+        _ratesState.update { it.copy(search = BLANK) }
 
+        reload(type)
+    }
+
+    fun reload(type: LinkedType = _type.value) {
         viewModelScope.launch {
+            _ratesState.update { it.copy(isRefreshing = true) }
             _response.emit(RatesResponse.Loading)
 
             loadRates(type)
+            _ratesState.update { it.copy(isRefreshing = false) }
         }
     }
 
@@ -220,7 +218,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         onEvent(SetRewatches(rate.rewatches.takeIf { it > 0 }?.toString()))
         onEvent(SetText(rate.text))
 
-        showEditDialog = true
+        _ratesState.update { it.copy(showDialog = true) }
     }
 
     fun create(id: String, targetType: LinkedType, reload: () -> Unit) {
@@ -255,7 +253,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             val currentState =  _response.value as? RatesResponse.Success ?: return@launch
 
             _rateUiEvent.send(UserRateUiEvent.UpdateStart(rateId.toLong()))
-            showEditDialog = false
+            _ratesState.update { it.copy(showDialog = false) }
 
             try {
                 val request = with(_newRate.value) {
@@ -334,7 +332,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     fun delete(rateId: String) {
         viewModelScope.launch {
             _rateUiEvent.send(UserRateUiEvent.DeleteStart(rateId.toLong()))
-            showEditDialog = false
+            _ratesState.update { it.copy(showDialog = false) }
 
             try {
                 val request = Network.rates.delete(rateId.toLong())
@@ -416,9 +414,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             )
         }
 
-        is SetScore -> _newRate.update {
-            it.copy(score = event.score)
-        }
+        is SetScore -> _newRate.update { it.copy(score = event.score) }
 
         is SetChapters -> _newRate.update { it.copy(chapters = event.chapters) }
 
