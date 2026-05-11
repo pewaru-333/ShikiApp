@@ -2,18 +2,21 @@ package org.application.shikiapp.shared.utils
 
 // =========================================== Strings ============================================
 
-
 const val PREF_APP_CACHE = "app_cache"
 const val PREF_APP_LANGUAGE = "app_language"
 const val PREF_APP_THEME = "app_theme"
 const val PREF_CATALOG_LIST_VIEW = "catalog_list_view"
+const val PREF_COLOR_PALETTE = "app_colors_palette"
 const val PREF_DEEP_LINK_SETTINGS = "deeplink_settings"
 const val PREF_DYNAMIC_COLORS = "dynamic_colors"
 const val PREF_EPISODE_AUTO_ADD = "auto_increment_episode"
+const val PREF_GROUP_APP_LISTS = "app_lists_behaviour"
 const val PREF_GROUP_APP_SYSTEM = "app_system"
 const val PREF_GROUP_APP_VIEW = "app_view"
 const val PREF_HAS_AGREED_TO_WATCH = "agreed_to_watch"
 const val PREF_START_PAGE = "start_page"
+const val PREF_USER_RATES_START_TYPE = "user_rates_start_type"
+const val PREF_USER_RATES_START_WATCH_STATUS = "user_rates_start_watch_status"
 
 const val ACCESS_TOKEN = "access_token"
 const val REFRESH_TOKEN = "refresh_token"
