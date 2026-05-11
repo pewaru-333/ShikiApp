@@ -71,7 +71,7 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationT
 fun org.application.shikiapp.shared.models.data.BasicContent.toContent() = Content(
     id = id.toString(),
     kind = Enum.safeValueOf<Kind>(kind),
-    poster = image.original,
+    poster = Formatter.replaceMissingAnimePoster(image.original, id),
     score = score?.let(Formatter::convertScore),
     season = Formatter.getSeason(airedOn, kind),
     status = Enum.safeValueOf<Status>(status),
