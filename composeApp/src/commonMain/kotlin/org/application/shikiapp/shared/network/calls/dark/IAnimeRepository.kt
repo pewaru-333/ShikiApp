@@ -11,6 +11,7 @@ import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.AnimeT
 import org.application.shikiapp.shared.models.ui.Comment
+import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.models.ui.mappers.dark.AnimeMapper
 import org.application.shikiapp.shared.network.calls.repository.AnimeRepository
 import org.application.shikiapp.shared.utils.extensions.cachedQueryFlow
@@ -35,7 +36,8 @@ class IAnimeRepository(private val apollo: ApolloClient) : AnimeRepository {
         franchise: Franchise,
         similar: List<AnimeBasic>,
         favoured: Boolean,
-        comments: Flow<PagingData<Comment>>
+        comments: Flow<PagingData<Comment>>,
+        reviews: Flow<PagingData<Review>>
     ): Anime {
         val darkRaw = raw as DarkShikiAnimeT
         return AnimeMapper.create(
@@ -44,7 +46,8 @@ class IAnimeRepository(private val apollo: ApolloClient) : AnimeRepository {
             franchise = franchise,
             similar = similar,
             favoured = favoured,
-            comments = comments
+            comments = comments,
+            reviews = reviews
         )
     }
 }
