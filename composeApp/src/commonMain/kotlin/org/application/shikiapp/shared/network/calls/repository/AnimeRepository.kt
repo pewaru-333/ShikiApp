@@ -7,6 +7,7 @@ import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.AnimeT
 import org.application.shikiapp.shared.models.ui.Comment
+import org.application.shikiapp.shared.models.ui.Review
 
 interface AnimeRepository {
     fun getAnimeRawData(id: String): Flow<AnimeT>
@@ -16,6 +17,7 @@ interface AnimeRepository {
         franchise: Franchise,
         similar: List<AnimeBasic>,
         favoured: Boolean,
-        comments: Flow<PagingData<Comment>>
+        comments: Flow<PagingData<Comment>>,
+        reviews: Flow<PagingData<Review>>
     ): Anime
 }

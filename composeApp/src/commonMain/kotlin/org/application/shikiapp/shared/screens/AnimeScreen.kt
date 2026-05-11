@@ -42,6 +42,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.paging.compose.collectAsLazyPagingItems
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.AnimeState
 import org.application.shikiapp.shared.models.states.BaseDialogState
@@ -70,6 +71,7 @@ import org.application.shikiapp.shared.ui.templates.MediaGridItemDefaults
 import org.application.shikiapp.shared.ui.templates.ParagraphTitle
 import org.application.shikiapp.shared.ui.templates.ProfilesFull
 import org.application.shikiapp.shared.ui.templates.RelatedFull
+import org.application.shikiapp.shared.ui.templates.ReviewsFull
 import org.application.shikiapp.shared.ui.templates.ScaffoldContent
 import org.application.shikiapp.shared.ui.templates.SimilarFull
 import org.application.shikiapp.shared.ui.templates.Statistics
@@ -80,6 +82,7 @@ import org.application.shikiapp.shared.ui.templates.genres
 import org.application.shikiapp.shared.ui.templates.info
 import org.application.shikiapp.shared.ui.templates.profiles
 import org.application.shikiapp.shared.ui.templates.related
+import org.application.shikiapp.shared.ui.templates.reviews
 import org.application.shikiapp.shared.ui.templates.summary
 import org.application.shikiapp.shared.ui.templates.title
 import org.application.shikiapp.shared.utils.enums.LinkedType
@@ -147,9 +150,12 @@ private fun AnimeView(
     val rate = anime.userRate.getValue()
     val newRate by rateModel.newRate.collectAsStateWithLifecycle()
 
+    val reviews = anime.reviews.collectAsLazyPagingItems()
+
     val authorsState = rememberLazyListState()
     val charactersState = rememberLazyListState()
     val similarState = rememberLazyListState()
+    val reviewsState = rememberLazyListState()
     val screenshotsState = rememberLazyGridState()
 
     LaunchedEffect(Unit) {
@@ -194,6 +200,15 @@ private fun AnimeView(
         )
 
         description(anime.description)
+
+        if (reviews.itemCount > 0) {
+            reviews(
+                reviews = reviews,
+                onNavigate = onNavigate,
+                onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Reviews)) }
+            )
+        }
+
         related(
             list = anime.related,
             onShow = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Related)) },
@@ -243,6 +258,14 @@ private fun AnimeView(
         listState = similarState,
         isVisible = state.dialogState is BaseDialogState.Media.Similar,
         onNavigate = { onNavigate(Screen.Anime(it)) },
+        onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
+    )
+
+    ReviewsFull(
+        reviews = reviews,
+        listState = reviewsState,
+        isVisible = state.dialogState is BaseDialogState.Anime.Reviews,
+        onNavigate = onNavigate,
         onHide = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
     )
 

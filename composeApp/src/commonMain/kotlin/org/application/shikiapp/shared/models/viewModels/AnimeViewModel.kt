@@ -1,17 +1,28 @@
 package org.application.shikiapp.shared.models.viewModels
 
 import androidx.lifecycle.SavedStateHandle
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import androidx.paging.Pager
+import androidx.paging.PagingConfig
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.AnimeState
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.AnimeT
+import org.application.shikiapp.shared.models.ui.Review
+import org.application.shikiapp.shared.network.calls.dark.DarkShikiAnimeT
+import org.application.shikiapp.shared.network.calls.shiki.ShikiAnimeT
 import org.application.shikiapp.shared.network.client.Network
+import org.application.shikiapp.shared.network.paging.ReviewsPaging
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
+import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.navigation.Screen
@@ -19,6 +30,8 @@ import org.application.shikiapp.shared.utils.navigation.Screen
 class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeT, Anime, AnimeState>() {
     override val contentId = saved.toRoute<Screen.Anime>()
         .id.filter(Char::isDigit)
+
+    private var reviewsFlow: Flow<PagingData<Review>>? = null
 
     override fun initState() = AnimeState()
 
@@ -35,12 +48,28 @@ class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeT, An
 
         setCommentParams(data.topicId, CommentableType.ANIME)
 
+        val reviews = reviewsFlow ?: Pager(
+            config = PagingConfig(pageSize = 15),
+            pagingSourceFactory = {
+                ReviewsPaging(
+                    animeId = when (data) {
+                        is ShikiAnimeT -> data.main.url
+                        is DarkShikiAnimeT -> data.main.url
+                        else -> BLANK
+                    }
+                )
+            }
+        ).flow.cachedIn(viewModelScope).also {
+            reviewsFlow = it
+        }
+
         return Network.animeRepository.mapToAnime(
             raw = data,
             franchise = franchise,
             similar = similar,
             favoured = favoured,
-            comments = comments
+            comments = comments,
+            reviews = reviews
         )
     }
 
