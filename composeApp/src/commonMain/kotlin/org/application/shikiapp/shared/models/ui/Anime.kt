@@ -39,6 +39,7 @@ data class Anime(
     val rating: StringResource,
     val related: List<Related>,
     val releasedOn: String,
+    val reviews: Flow<PagingData<Review>>,
     val score: String,
     val screenshots: List<String>,
     val similar: List<Content>,

@@ -11,6 +11,7 @@ import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.Related
+import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.Studio
 import org.application.shikiapp.shared.models.ui.UserRate
@@ -45,6 +46,7 @@ object AnimeMapper {
         franchise: Franchise,
         similar: List<AnimeBasic>,
         comments: Flow<PagingData<Comment>>,
+        reviews: Flow<PagingData<Review>>,
         favoured: Boolean,
     ): Anime {
         val video = main.videos
@@ -111,10 +113,11 @@ object AnimeMapper {
             personMain = extra.personRoles.orEmpty()
                 .filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
-            poster = main.poster?.originalUrl.orEmpty(),
+            poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
             related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
             releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
+            reviews = reviews,
             score = main.score.let(Formatter::convertScore),
             screenshots = main.screenshots.map(AnimeMainQuery.Data.Anime.Screenshot::originalUrl),
             similar = similar.map(AnimeBasic::toContent),

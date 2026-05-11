@@ -20,6 +20,7 @@ import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.ExternalLink
 import org.application.shikiapp.shared.models.ui.Related
+import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.Studio
 import org.application.shikiapp.shared.models.ui.UserRate
@@ -53,6 +54,7 @@ object AnimeMapper {
         franchise: Franchise,
         similar: List<AnimeBasic>,
         comments: Flow<PagingData<Comment>>,
+        reviews: Flow<PagingData<Review>>,
         favoured: Boolean,
     ): Anime {
         val video = main.videos
@@ -125,6 +127,7 @@ object AnimeMapper {
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
             related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
             releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
+            reviews = reviews,
             score = main.score.let(Formatter::convertScore),
             screenshots = main.screenshots.map(AnimeMainQuery.Data.Anime.Screenshot::originalUrl),
             similar = similar.map(AnimeBasic::toContent),
@@ -194,7 +197,7 @@ object AnimeMapper {
 fun BasicInfo.toBasicContent() = BasicContent(
     id = id.toString(),
     title = russian.orEmpty().ifEmpty(::name),
-    poster = image.original
+    poster = Formatter.replaceMissingAnimePoster(image.original, id)
 )
 
 fun Link.mapper() = ExternalLink(
@@ -216,7 +219,7 @@ fun PersonRole.toContent() = Content(
 fun RelatedFragment.mapper() = Related(
     id = anime?.id ?: manga?.id.orEmpty(),
     title = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name.orEmpty(),
-    poster = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl.orEmpty(),
+    poster = Formatter.replaceMissingAnimePoster(anime?.poster?.originalUrl ?: manga?.poster?.originalUrl, anime?.id ?: manga?.id),
     kind = Enum.safeValueOf<Kind>(anime?.kind?.rawValue ?: manga?.kind?.rawValue),
     status = Enum.safeValueOf<Status>(anime?.status?.rawValue ?: manga?.status?.rawValue),
     season = Formatter.getSeason(anime?.airedOn?.date ?: manga?.airedOn?.date, anime?.kind?.rawValue ?: manga?.kind?.rawValue),
@@ -231,14 +234,14 @@ fun AnimeListQuery.Data.Anime.mapper() = Content(
     kind = Enum.safeValueOf<Kind>(kind?.rawValue),
     status = Enum.safeValueOf<Status>(status?.rawValue),
     season = Formatter.getSeason(season ?: airedOn?.date, kind?.rawValue),
-    poster = poster?.mainUrl.orEmpty(),
+    poster = Formatter.replaceMissingAnimePoster(poster?.mainUrl, id),
     score = score?.let(Formatter::convertScore)
 )
 
 fun AnimeAiringQuery.Data.Anime.mapper() = Content(
     id = id,
     title = russian.orEmpty().ifEmpty(::name),
-    poster = poster?.originalUrl.orEmpty(),
+    poster = Formatter.replaceMissingAnimePoster(poster?.mainUrl, id),
     kind = Kind.TV,
     season = ResourceText.StaticString(BLANK),
     score = score?.let(Formatter::convertScore),
@@ -248,7 +251,7 @@ fun AnimeAiringQuery.Data.Anime.mapper() = Content(
 fun AnimeRandomQuery.Data.Anime.mapper() = Content(
     id = id,
     title = russian.orEmpty().ifEmpty(::name),
-    poster = poster?.originalUrl.orEmpty(),
+    poster = Formatter.replaceMissingAnimePoster(poster?.mainUrl, id),
     kind = Kind.TV,
     season = ResourceText.StaticString(BLANK),
     score = score?.let(Formatter::convertScore),
