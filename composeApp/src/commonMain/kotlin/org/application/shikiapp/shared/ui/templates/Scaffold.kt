@@ -52,6 +52,7 @@ fun ScaffoldSearchBar(
     actions: @Composable (RowScope.() -> Unit)? = null,
     menuRow: @Composable (() -> Unit)? = null,
     floatingActionButton: (@Composable BoxScope.() -> Unit)? = null,
+    showSearchField: Boolean = true,
     content: @Composable () -> Unit,
 ) {
     val searchState = rememberSearchBarState()
@@ -77,18 +78,20 @@ fun ScaffoldSearchBar(
                 navigationIcon = navigationIcon,
                 actions = actions,
                 inputField = {
-                    SearchBarDefaults.InputField(
-                        textFieldState = textFieldState,
-                        searchBarState = searchState,
-                        onSearch = onSearch,
-                        leadingIcon = { VectorIcon(Res.drawable.vector_search) },
-                        placeholder = { Text(stringResource(Res.string.text_search)) },
-                        trailingIcon = {
-                            if (search.isNotEmpty()) {
-                                IconButton(onClear) { VectorIcon(Res.drawable.vector_close) }
+                    if (showSearchField) {
+                        SearchBarDefaults.InputField(
+                            textFieldState = textFieldState,
+                            searchBarState = searchState,
+                            onSearch = onSearch,
+                            leadingIcon = { VectorIcon(Res.drawable.vector_search) },
+                            placeholder = { Text(stringResource(Res.string.text_search)) },
+                            trailingIcon = {
+                                if (search.isNotEmpty()) {
+                                    IconButton(onClear) { VectorIcon(Res.drawable.vector_close) }
+                                }
                             }
-                        }
-                    )
+                        )
+                    }
                 }
             )
 
@@ -109,7 +112,7 @@ fun ScaffoldSearchBar(
 @Composable
 private fun InteractiveAppBarWithSearch(
     state: SearchBarState,
-    inputField: @Composable () -> Unit,
+    inputField: (@Composable () -> Unit)?,
     modifier: Modifier = Modifier,
     navigationIcon: @Composable (() -> Unit)? = null,
     actions: @Composable (RowScope.() -> Unit)? = null,
@@ -132,16 +135,18 @@ private fun InteractiveAppBarWithSearch(
                 }
             }
 
-            Box(Modifier.weight(1f)) {
-                InteractiveSearchBar(
-                    state = state,
-                    inputField = inputField,
-                    shape = shape,
-                    modifier = Modifier
-                        .align(Alignment.Center)
-                        .widthIn(360.dp, 720.dp)
-                        .fillMaxWidth()
-                )
+            inputField?.let {
+                Box(Modifier.weight(1f)) {
+                    InteractiveSearchBar(
+                        state = state,
+                        inputField = it,
+                        shape = shape,
+                        modifier = Modifier
+                            .align(Alignment.Center)
+                            .widthIn(360.dp, 720.dp)
+                            .fillMaxWidth()
+                    )
+                }
             }
 
             actions?.let {
