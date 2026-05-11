@@ -13,15 +13,21 @@ import org.application.shikiapp.shared.utils.PREF_APP_CACHE
 import org.application.shikiapp.shared.utils.PREF_APP_LANGUAGE
 import org.application.shikiapp.shared.utils.PREF_APP_THEME
 import org.application.shikiapp.shared.utils.PREF_CATALOG_LIST_VIEW
+import org.application.shikiapp.shared.utils.PREF_COLOR_PALETTE
 import org.application.shikiapp.shared.utils.PREF_DYNAMIC_COLORS
 import org.application.shikiapp.shared.utils.PREF_EPISODE_AUTO_ADD
 import org.application.shikiapp.shared.utils.PREF_HAS_AGREED_TO_WATCH
 import org.application.shikiapp.shared.utils.PREF_START_PAGE
+import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_TYPE
+import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_WATCH_STATUS
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
 import org.application.shikiapp.shared.utils.USER_ID
+import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ListView
 import org.application.shikiapp.shared.utils.enums.Menu
+import org.application.shikiapp.shared.utils.enums.Palette
 import org.application.shikiapp.shared.utils.enums.Theme
+import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.application.shikiapp.shared.utils.extensions.edit
 import org.application.shikiapp.shared.utils.extensions.getEnum
 import org.application.shikiapp.shared.utils.extensions.getEnumStateFlow
@@ -46,6 +52,20 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
     val theme = app.getEnumStateFlow(PREF_APP_THEME, Theme.SYSTEM, scope)
 
     val dynamicColors = app.getStateFlow(PREF_DYNAMIC_COLORS, false, scope)
+
+    val colorPaletteFlow = app.getEnumStateFlow(PREF_COLOR_PALETTE, Palette.SAKURA, scope)
+
+    val userRatesStartType: LinkedType
+        get() = app.getEnum(PREF_USER_RATES_START_TYPE, LinkedType.ANIME)
+
+    val userRatesStartWatchStatus: WatchStatus
+        get() = app.getEnum(PREF_USER_RATES_START_WATCH_STATUS, WatchStatus.PLANNED)
+
+    val userRatesStartTypeFlow =
+        app.getEnumStateFlow(PREF_USER_RATES_START_TYPE, LinkedType.ANIME, scope)
+
+    val userRatesStartWatchStatusFlow =
+        app.getEnumStateFlow(PREF_USER_RATES_START_WATCH_STATUS, WatchStatus.PLANNED, scope)
 
     val language: String
         get() = app.getString(PREF_APP_LANGUAGE, "ru")
@@ -93,6 +113,22 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
 
     fun setTheme(theme: Theme) = app.edit {
         putEnum(PREF_APP_THEME, theme)
+    }
+
+    fun setDynamicColors(enabled: Boolean) = app.edit {
+        putBoolean(PREF_DYNAMIC_COLORS, enabled)
+    }
+
+    fun setPalette(palette: Palette) = app.edit {
+        putEnum(PREF_COLOR_PALETTE, palette)
+    }
+
+    fun setUserRatesStartType(type: LinkedType) = app.edit {
+        putEnum(PREF_USER_RATES_START_TYPE, type)
+    }
+
+    fun setUserRatesStartWatchStatus(status: WatchStatus) = app.edit {
+        putEnum(PREF_USER_RATES_START_WATCH_STATUS, status)
     }
 
     fun setLanguage(locale: String) = app.edit {
