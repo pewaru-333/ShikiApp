@@ -86,6 +86,9 @@ import androidx.compose.ui.util.fastForEach
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import androidx.paging.LoadState
+import androidx.paging.compose.LazyPagingItems
+import androidx.paging.compose.itemKey
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
@@ -95,6 +98,7 @@ import org.application.shikiapp.shared.models.ui.History
 import org.application.shikiapp.shared.models.ui.Label
 import org.application.shikiapp.shared.models.ui.Publisher
 import org.application.shikiapp.shared.models.ui.Related
+import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.models.ui.Score
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.Studio
@@ -141,6 +145,7 @@ import shikiapp.composeapp.generated.resources.text_publisher
 import shikiapp.composeapp.generated.resources.text_rate_chapters
 import shikiapp.composeapp.generated.resources.text_rating
 import shikiapp.composeapp.generated.resources.text_related
+import shikiapp.composeapp.generated.resources.text_reviews
 import shikiapp.composeapp.generated.resources.text_score
 import shikiapp.composeapp.generated.resources.text_show_all_s
 import shikiapp.composeapp.generated.resources.text_show_all_u
@@ -787,6 +792,75 @@ fun RelatedFull(
 }
 
 @Composable
+fun Reviews(reviews: LazyPagingItems<Review>, onShowAll: () -> Unit, onNavigate: (Screen) -> Unit) =
+    Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+            ParagraphTitle(stringResource(Res.string.text_reviews))
+            TextButton(onShowAll) { Text(stringResource(Res.string.text_show_all_u)) }
+        }
+
+        LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            items(minOf(reviews.itemCount, 5)) { index ->
+                reviews[index]?.let { review ->
+                    ReviewCard(
+                        review = review,
+                        modifier = Modifier.size(320.dp, 240.dp),
+                        onNavigate = { onNavigate(Screen.User(it)) }
+                    )
+                }
+            }
+        }
+    }
+
+@Composable
+fun ReviewsFull(
+    reviews: LazyPagingItems<Review>,
+    listState: LazyListState,
+    isVisible: Boolean,
+    onNavigate: (Screen) -> Unit,
+    onHide: () -> Unit
+) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_reviews), onHide) { values ->
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(values)
+    ) {
+        LazyColumn(
+            state = listState,
+            contentPadding = PaddingValues(16.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.fillMaxSize()
+        ) {
+            items(reviews.itemCount, reviews.itemKey(Review::id)) { index ->
+                reviews[index]?.let { review ->
+                    ReviewCard(
+                        review = review,
+                        modifier = Modifier.fillMaxWidth(),
+                        onNavigate = { onNavigate(Screen.User(it)) }
+                    )
+                }
+            }
+
+            when (reviews.loadState.append) {
+                is LoadState.Loading -> item { LoadingScreen() }
+                is LoadState.Error -> item { ErrorScreen(reviews::retry) }
+                else -> Unit
+            }
+        }
+
+        if (reviews.loadState.refresh is LoadState.Loading && reviews.itemCount == 0) {
+            LoadingScreen(Modifier.background(MaterialTheme.colorScheme.surface))
+        } else if (reviews.loadState.refresh is LoadState.Error && reviews.itemCount == 0) {
+            ErrorScreen(reviews::retry)
+        } else if (reviews.itemCount == 0 && reviews.loadState.refresh !is LoadState.Loading) {
+            Box(Modifier.fillMaxSize(), Alignment.Center) {
+                Text(stringResource(Res.string.text_empty))
+            }
+        }
+    }
+}
+
+@Composable
 fun ScoreInfo(score: String) = Column {
     Text(
         text = stringResource(Res.string.text_score),
@@ -1277,6 +1351,15 @@ fun LazyListScope.profiles(
         }
     }
 }
+
+fun LazyListScope.reviews(reviews: LazyPagingItems<Review>, onShow: () -> Unit, onNavigate: (Screen) -> Unit) =
+    item {
+        Reviews(
+            reviews = reviews,
+            onShowAll = onShow,
+            onNavigate = onNavigate
+        )
+    }
 
 fun LazyListScope.about(
     title: StringResource,

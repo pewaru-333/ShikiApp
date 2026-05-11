@@ -23,8 +23,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.TextAutoSize
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -43,12 +45,16 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.utils.enums.Kind
+import org.application.shikiapp.shared.utils.enums.OpinionType
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.colors
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.vector_star
+import shikiapp.composeapp.generated.resources.vector_thumb_down
+import shikiapp.composeapp.generated.resources.vector_thumb_up
 
 data class MediaGridItemTitleConfig(
     val style: TextStyle,
@@ -172,6 +178,120 @@ fun RelatedCard(title: String, poster: String, relationText: String, onClick: ()
             )
         }
     )
+
+@Composable
+fun ReviewCard(
+    review: Review,
+    modifier: Modifier = Modifier,
+    colors: OpinionType.ReviewCardColors = review.opinion.getCardColors(),
+    onNavigate: (Long) -> Unit
+) = OutlinedCard(
+    modifier = modifier.fillMaxWidth(),
+    colors = CardDefaults.outlinedCardColors(colors.containerColor),
+    border = BorderStroke(1.dp, colors.borderColor)
+) {
+    Column(Modifier.padding(16.dp, 12.dp)) {
+        Row(
+            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(MaterialTheme.shapes.small)
+                .clickable { onNavigate(review.userId) }
+                .padding(vertical = 4.dp)
+        ) {
+            CircleContentImage(review.userAvatar, Modifier.size(40.dp))
+
+            Column(Modifier.weight(1f)) {
+                Text(
+                    text = review.userNickname,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.titleMedium
+                )
+                Text(
+                    text = review.date,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
+            Surface(
+                color = colors.badgeContainerColor,
+                shape = MaterialTheme.shapes.extraSmall
+            ) {
+                Text(
+                    text = stringResource(review.opinion.title),
+                    color = colors.badgeContentColor,
+                    modifier = Modifier.padding(6.dp, 2.dp),
+                    style = MaterialTheme.typography.labelSmall
+                )
+            }
+        }
+
+        Spacer(Modifier.height(8.dp))
+
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp), Alignment.CenterVertically) {
+            review.animeScore?.let { score ->
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    VectorIcon(Res.drawable.vector_star, Modifier.size(18.dp), Color(0xFFFFC319))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = score.toString(),
+                        style = MaterialTheme.typography.bodyLarge.copy(
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    )
+                }
+            }
+
+            review.watchStatus?.let { status ->
+                Surface(
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    shape = MaterialTheme.shapes.extraSmall
+                ) {
+                    Text(
+                        text = status,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(6.dp, 2.dp),
+                        style = MaterialTheme.typography.labelSmall
+                    )
+                }
+            }
+
+            Spacer(Modifier.weight(1f))
+
+            if (review.votesFor.isNotBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    VectorIcon(Res.drawable.vector_thumb_up, Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = review.votesFor,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+
+            if (review.votesAgainst.isNotBlank()) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    VectorIcon(Res.drawable.vector_thumb_down, Modifier.size(14.dp))
+                    Spacer(Modifier.width(4.dp))
+                    Text(
+                        text = review.votesAgainst,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                }
+            }
+        }
+
+        Spacer(Modifier.height(12.dp))
+
+        HtmlContent(review.body)
+    }
+}
 
 @Composable
 fun MediaListItem(
