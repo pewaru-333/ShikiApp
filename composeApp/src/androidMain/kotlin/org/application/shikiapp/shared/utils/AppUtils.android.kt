@@ -2,7 +2,11 @@ package org.application.shikiapp.shared.utils
 
 import android.Manifest
 import android.app.LocaleManager
+import android.app.UiModeManager
+import android.content.Context
 import android.content.pm.ActivityInfo
+import android.content.res.Configuration
+import android.graphics.Color
 import android.os.Build
 import android.os.LocaleList
 import androidx.activity.ComponentActivity
@@ -21,7 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
@@ -59,7 +62,7 @@ actual fun fromHtml(text: String?) =
         htmlString = Formatter.localizeNames(text),
         linkStyles = TextLinkStyles(
             style = SpanStyle(
-                color = Color(0xFF33BBFF),
+                color = androidx.compose.ui.graphics.Color(0xFF33BBFF),
                 textDecoration = TextDecoration.Underline,
                 platformStyle = PlatformSpanStyle.Default
             )
@@ -162,29 +165,25 @@ actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean) =
 @Composable
 actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
     val activity = LocalActivity.current as? ComponentActivity ?: return
-    val orientation = LocalConfiguration.current.orientation
 
-    DisposableEffect(darkTheme, isAmoled, orientation) {
-        activity.enableEdgeToEdge(
-            statusBarStyle = SystemBarStyle.auto(
-                lightScrim = android.graphics.Color.TRANSPARENT,
-                darkScrim = android.graphics.Color.TRANSPARENT,
-                detectDarkMode = { darkTheme }
-            ),
-            navigationBarStyle = SystemBarStyle.auto(
-                lightScrim = android.graphics.Color.argb(0xe6, 0xFF, 0xFF, 0xFF),
-                darkScrim = if (isAmoled) {
-                    android.graphics.Color.TRANSPARENT
-                } else {
-                    android.graphics.Color.argb(0x80, 0x1b, 0x1b, 0x1b)
-                },
-                detectDarkMode = { darkTheme }
-            )
-        )
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            activity.window.isNavigationBarContrastEnforced = false
+    DisposableEffect(darkTheme, isAmoled) {
+        val scrim = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+            if (darkTheme) {
+                if (isAmoled) Color.TRANSPARENT
+                else Color.argb(0x80, 0x1b, 0x1b, 0x1b)
+            } else {
+                Color.argb(0xe6, 0xFF, 0xFF, 0xFF)
+            }
+        } else {
+            Color.TRANSPARENT
         }
+
+        activity.enableEdgeToEdge(
+            statusBarStyle = if (darkTheme) SystemBarStyle.dark(Color.TRANSPARENT)
+            else SystemBarStyle.light(Color.TRANSPARENT, Color.TRANSPARENT),
+            navigationBarStyle = if (darkTheme) SystemBarStyle.dark(scrim)
+            else SystemBarStyle.light(scrim, scrim)
+        )
 
         onDispose { }
     }
@@ -223,6 +222,17 @@ actual fun HideSystemBars() {
         onDispose {
             insetsController.show(WindowInsetsCompat.Type.systemBars())
         }
+    }
+}
+
+@Composable
+fun isTV(): Boolean {
+    val context = LocalContext.current
+
+    return remember(context) {
+        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+
+        uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
     }
 }
 
