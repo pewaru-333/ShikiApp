@@ -17,11 +17,11 @@ enum class LinkedType(val title: StringResource) {
     },
     MANGA(Res.string.text_manga) {
         override fun navigateTo(contentId: String) = Screen.Manga(contentId)
-        override fun getWatchStatusTitle(status: WatchStatus) = status.titleManga
+        override fun getWatchStatusTitle(status: WatchStatus) = status.titleManga ?: status.titleAnime
     },
     RANOBE(Res.string.text_ranobe) {
         override fun navigateTo(contentId: String) = Screen.Manga(contentId)
-        override fun getWatchStatusTitle(status: WatchStatus) = status.titleManga
+        override fun getWatchStatusTitle(status: WatchStatus) = status.titleManga ?: status.titleAnime
     },
     PERSON(Res.string.blank) {
         override fun navigateTo(contentId: String) = Screen.Person(contentId.toLong())
@@ -32,6 +32,9 @@ enum class LinkedType(val title: StringResource) {
         override fun getWatchStatusTitle(status: WatchStatus) = Res.string.blank
     };
 
+    companion object {
+        val userRatesType = listOf(ANIME, MANGA)
+    }
 
     abstract fun getWatchStatusTitle(status: WatchStatus): StringResource
     abstract fun navigateTo(contentId: String): Screen
