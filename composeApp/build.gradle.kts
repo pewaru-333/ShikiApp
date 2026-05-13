@@ -118,28 +118,27 @@ compose {
                 isEnabled.set(false)
             }
 
-            jvmArgs += listOfNotNull(
-                "-Xms512m",
-                "-Xmx2048m",
-
-                "-XX:+UseZGC",
-                "-XX:+ZGenerational",
-                "-XX:+UseStringDeduplication",
-                "-XX:+TieredCompilation",
-                "-Xshare:auto",
-
-                "-Dskiko.vsync.enabled=true",
-                "-Dskiko.fps.limit=120"
-            )
-
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.9"
+                packageVersion = "0.6.10"
 
                 appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
 
                 targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 
+                jvmArgs += listOfNotNull(
+                    "-Xms512m",
+                    "-Xmx2048m",
+
+                    "-XX:+UseZGC",
+                    "-XX:+ZGenerational",
+                    "-XX:+UseStringDeduplication",
+                    "-XX:+TieredCompilation",
+                    "-Xshare:auto",
+
+                    "-Dskiko.vsync.enabled=true",
+                    "-Dskiko.fps.limit=120"
+                )
                 modules(
                     "java.logging",
                     "java.net.http",

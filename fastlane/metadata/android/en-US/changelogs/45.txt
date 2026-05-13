@@ -1,4 +1,0 @@
-— Added reviews on the anime page.
-— Added remote control in the player on Android TV (not tested).
-— Added a color palette to select the theme of the application.
-— Added settings for the start pages in the user's list.
