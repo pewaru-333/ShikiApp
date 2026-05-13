@@ -2,7 +2,6 @@ package org.application.shikiapp.shared.models.ui.list
 
 import androidx.paging.LoadState
 import androidx.paging.compose.LazyPagingItems
-import androidx.paging.compose.itemKey
 
 enum class ContentViewType {
     LIST_ITEM,
@@ -26,8 +25,12 @@ data class ContentSource<out T>(
 fun <T : Any> LazyPagingItems<T>.asSource(key: ((T) -> Any)? = null): ContentSource<T> =
     ContentSource(
         itemCount = itemCount,
-        itemProvider = { this[it] },
-        itemKey = key?.let { itemKey(it) },
+        itemProvider = { index -> if (index < itemSnapshotList.size) this[index] else null },
+        itemKey = key?.let { k ->
+            { index ->
+                if (index < itemSnapshotList.size) itemSnapshotList[index]?.let(k) ?: index else index
+            }
+        },
         isLoadingRefresh = loadState.refresh is LoadState.Loading,
         isLoadingAppend = loadState.append is LoadState.Loading,
         isError = loadState.refresh is LoadState.Error || loadState.append is LoadState.Error,
