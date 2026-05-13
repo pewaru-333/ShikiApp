@@ -474,8 +474,8 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                     }
                 ) {
                     VectorIcon(
-                        resId = if (maxLines == 8) Res.drawable.vector_keyboard_arrow_down
-                        else Res.drawable.vector_keyboard_arrow_up
+                        resId = if (maxLines == 8) Res.drawable.vector_keyboard_arrow_up
+                        else Res.drawable.vector_keyboard_arrow_down
                     )
                 }
             }
@@ -503,8 +503,8 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     VectorIcon(
                         modifier = Modifier.size(20.dp),
-                        resId = if (isVisible) Res.drawable.vector_keyboard_arrow_down
-                        else Res.drawable.vector_keyboard_arrow_up
+                        resId = if (isVisible) Res.drawable.vector_keyboard_arrow_up
+                        else Res.drawable.vector_keyboard_arrow_down
                     )
 
                     Spacer(Modifier.width(8.dp))
