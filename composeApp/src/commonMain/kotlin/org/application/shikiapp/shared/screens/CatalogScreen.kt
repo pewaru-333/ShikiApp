@@ -1,4 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalFlexBoxApi::class
+)
 
 package org.application.shikiapp.shared.screens
 
@@ -15,7 +17,10 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.ExperimentalFlexBoxApi
+import androidx.compose.foundation.layout.FlexBox
+import androidx.compose.foundation.layout.FlexDirection
+import androidx.compose.foundation.layout.FlexWrap
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -59,6 +64,7 @@ import androidx.compose.material3.Label
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
 import androidx.compose.material3.NavigationDrawerItemDefaults
@@ -90,6 +96,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
+import androidx.compose.ui.util.fastForEachIndexed
 import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
@@ -119,6 +126,7 @@ import org.application.shikiapp.shared.ui.templates.ContentList
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.ScaffoldSearchBar
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.CatalogItem
 import org.application.shikiapp.shared.utils.enums.Duration
 import org.application.shikiapp.shared.utils.enums.Kind
@@ -153,7 +161,6 @@ import shikiapp.composeapp.generated.resources.text_season
 import shikiapp.composeapp.generated.resources.text_sorting
 import shikiapp.composeapp.generated.resources.text_start_year
 import shikiapp.composeapp.generated.resources.text_status
-import shikiapp.composeapp.generated.resources.text_unknown
 import shikiapp.composeapp.generated.resources.vector_filter
 import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_down
 import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_up
@@ -355,21 +362,41 @@ private fun DialogFilters(
                 )
             }
             item {
-                Status(
-                    type = type,
+                val filteredStatuses = remember(key1 = type) {
+                    Status.entries.filter { type in it.types }
+                }
+
+                AnimatedColumn(
+                    label = Res.string.text_status,
                     isExpanded = ExpandedFilters.Status in state.expandedFilters,
                     onExpandedChange = { onExpandedChange(ExpandedFilters.Status) },
-                    selected = { it in filters.status },
-                    onClick = { onFilterEvent(SetStatus(it)) }
+                    content = {
+                        FlexBoxRow(
+                            entries = filteredStatuses,
+                            selected = { it.name.lowercase() in filters.status },
+                            onClick = { onFilterEvent(SetStatus(it.name.lowercase())) },
+                            getLabel = { ResourceText.StringResource(it.getTitle(type)) }
+                        )
+                    }
                 )
             }
             item {
-                Kind(
-                    type = type,
+                val linkedKinds = remember(type) {
+                    Kind.entries.filter { it.linkedType == type }
+                }
+
+                AnimatedColumn(
+                    label = Res.string.text_kind,
                     isExpanded = ExpandedFilters.Kind in state.expandedFilters,
                     onExpandedChange = { onExpandedChange(ExpandedFilters.Kind) },
-                    selected = { it in filters.kind },
-                    onClick = { onFilterEvent(FilterEvent.SetKind(it)) }
+                    content = {
+                        FlexBoxRow(
+                            entries = linkedKinds,
+                            getLabel = { ResourceText.StringResource(it.title) },
+                            selected = { it.name.lowercase() in filters.kind },
+                            onClick = { onFilterEvent(FilterEvent.SetKind(it.name.lowercase())) }
+                        )
+                    }
                 )
             }
             item {
@@ -393,30 +420,50 @@ private fun DialogFilters(
 
             if (type == LinkedType.ANIME) {
                 item {
-                    Duration(
+                    AnimatedColumn(
+                        label = Res.string.text_episode_duration,
                         isExpanded = ExpandedFilters.Duration in state.expandedFilters,
                         onExpandedChange = { onExpandedChange(ExpandedFilters.Duration) },
-                        selected = { it in filters.duration },
-                        onClick = { onFilterEvent(SetDuration(it)) }
+                        content = {
+                            FlexBoxRow(
+                                entries = Duration.entries,
+                                getLabel = { ResourceText.StringResource(it.title) },
+                                selected = { it.name.lowercase() in filters.duration },
+                                onClick = { onFilterEvent(SetDuration(it.name.lowercase())) }
+                            )
+                        }
                     )
                 }
                 item {
-                    Rating(
+                    AnimatedColumn(
+                        label = Res.string.text_rating,
                         isExpanded = ExpandedFilters.Rating in state.expandedFilters,
                         onExpandedChange = { onExpandedChange(ExpandedFilters.Rating) },
-                        selected = { it in filters.rating },
-                        onClick = { onFilterEvent(SetRating(it)) }
+                        content = {
+                            FlexBoxRow(
+                                entries = Rating.entries,
+                                getLabel = { ResourceText.StringResource(it.title) },
+                                selected = { it.name.lowercase() in filters.rating },
+                                onClick = { onFilterEvent(SetRating(it.name.lowercase())) }
+                            )
+                        }
                     )
                 }
             }
 
             item {
-                Genres(
-                    genres = genres,
+                AnimatedColumn(
+                    label = Res.string.text_genres,
                     isExpanded = ExpandedFilters.Genres in state.expandedFilters,
                     onExpandedChange = { onExpandedChange(ExpandedFilters.Genres) },
-                    selected = { it in filters.genres },
-                    onClick = { onFilterEvent(SetGenre(it)) }
+                    content = {
+                        FlexBoxRow(
+                            entries = genres,
+                            getLabel = { ResourceText.StaticString(it.russian) },
+                            selected = { it.id in filters.genres },
+                            onClick = { onFilterEvent(SetGenre(it.id)) }
+                        )
+                    }
                 )
             }
         }
@@ -542,7 +589,7 @@ private fun DialogFiltersP(
 
 @Composable
 private fun Sorting(order: Order, onClick: (Order) -> Unit) {
-    var flag by remember { mutableStateOf(false) }
+    var expanded by remember { mutableStateOf(false) }
 
     Column {
         ListItem(
@@ -557,8 +604,8 @@ private fun Sorting(order: Order, onClick: (Order) -> Unit) {
                 .padding(bottom = 16.dp)
         ) {
             ExposedDropdownMenuBox(
-                expanded = flag,
-                onExpandedChange = { flag = it },
+                expanded = expanded,
+                onExpandedChange = { expanded = it },
                 modifier = Modifier.padding(top = 8.dp)
             ) {
                 OutlinedTextField(
@@ -566,88 +613,30 @@ private fun Sorting(order: Order, onClick: (Order) -> Unit) {
                     onValueChange = {},
                     readOnly = true,
                     singleLine = true,
-                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(flag) },
-                    colors = ExposedDropdownMenuDefaults.textFieldColors(),
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
                     modifier = Modifier
-                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                         .fillMaxWidth()
+                        .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
                 )
                 ExposedDropdownMenu(
-                    expanded = flag,
-                    onDismissRequest = { flag = false }
+                    expanded = expanded,
+                    onDismissRequest = { expanded = false },
+                    containerColor = MenuDefaults.groupStandardContainerColor,
+                    shape = MenuDefaults.standaloneGroupShape,
                 ) {
-                    Order.entries.forEach { entry ->
+                    Order.entries.fastForEachIndexed { index, entry ->
                         DropdownMenuItem(
-                            onClick = { onClick(entry); flag = false },
+                            selected = order == entry,
+                            shapes = MenuDefaults.itemShape(index, Order.entries.size),
                             contentPadding = ExposedDropdownMenuDefaults.ItemContentPadding,
-                            text = {
-                                Text(
-                                    text = stringResource(entry.title),
-                                    style = MaterialTheme.typography.bodyLarge
-                                )
+                            text = { Text(stringResource(entry.title)) },
+                            onClick = {
+                                onClick(entry)
+                                expanded = false
                             }
                         )
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-private fun Status(
-    type: LinkedType?,
-    isExpanded: Boolean,
-    onExpandedChange: () -> Unit,
-    selected: (String) -> Boolean,
-    onClick: (String) -> Unit
-) {
-    val filteredStatuses = remember(type) {
-        Status.entries.filter { type in it.types }
-    }
-
-    AnimatedColumn(Res.string.text_status, isExpanded, onExpandedChange) {
-        FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
-            filteredStatuses.forEach { entry ->
-                FilterChip(
-                    modifier = Modifier.height(36.dp),
-                    selected = selected(entry.name.lowercase()),
-                    onClick = { onClick(entry.name.lowercase()) },
-                    label = {
-                        Text(
-                            text = stringResource(
-                                resource = if (type == LinkedType.ANIME) entry.animeTitle ?: Res.string.text_unknown
-                                else entry.mangaTitle
-                            )
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun Kind(
-    type: LinkedType?,
-    isExpanded: Boolean,
-    onExpandedChange: () -> Unit,
-    selected: (String) -> Boolean,
-    onClick: (String) -> Unit
-) {
-    val linkedKinds = remember(type) {
-        Kind.entries.filter { it.linkedType == type }
-    }
-
-    AnimatedColumn(Res.string.text_kind, isExpanded, onExpandedChange) {
-        FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
-            linkedKinds.forEach {
-                FilterChip(
-                    modifier = Modifier.height(36.dp),
-                    selected = selected(it.name.lowercase()),
-                    onClick = { onClick(it.name.lowercase()) },
-                    label = { Text(stringResource(it.title)) }
-                )
             }
         }
     }
@@ -775,62 +764,29 @@ private fun Score(
 }
 
 @Composable
-private fun Duration(
-    isExpanded: Boolean,
-    onExpandedChange: () -> Unit,
-    selected: (String) -> Boolean,
-    onClick: (String) -> Unit
-) = AnimatedColumn(Res.string.text_episode_duration, isExpanded, onExpandedChange) {
-    FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
-        Duration.entries.forEach { entry ->
-            FilterChip(
-                modifier = Modifier.height(36.dp),
-                selected = selected(entry.name.lowercase()),
-                onClick = { onClick(entry.name.lowercase()) },
-                label = { Text(stringResource(entry.title)) }
-            )
-        }
-    }
-}
-
-@Composable
-private fun Rating(
-    isExpanded: Boolean,
-    onExpandedChange: () -> Unit,
-    selected: (String) -> Boolean,
-    onClick: (String) -> Unit
-) = AnimatedColumn(Res.string.text_rating, isExpanded, onExpandedChange) {
-    FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
-        Rating.entries.forEach {
-            FilterChip(
-                modifier = Modifier.height(36.dp),
-                selected = selected(it.name.lowercase()),
-                onClick = { onClick(it.name.lowercase()) },
-                label = { Text(stringResource(it.title)) })
-        }
-    }
-}
-
-@Composable
-private fun Genres(
-    genres: List<Genres>,
-    isExpanded: Boolean,
-    onExpandedChange: () -> Unit,
-    selected: (String) -> Boolean,
-    onClick: (String) -> Unit
-) = AnimatedColumn(Res.string.text_genres, isExpanded, onExpandedChange) {
-    FlowRow(Modifier, Arrangement.spacedBy(8.dp), Arrangement.spacedBy(12.dp)) {
-        genres.fastForEach { genre ->
-            key(genre.id) {
+private fun <T> FlexBoxRow(
+    entries: List<T>,
+    getLabel: (T) -> ResourceText,
+    selected: (T) -> Boolean,
+    onClick: (T) -> Unit
+) {
+    FlexBox(
+        config = {
+            direction(FlexDirection.Row)
+            wrap(FlexWrap.Wrap)
+            gap(8.dp, 12.dp)
+        },
+        content = {
+            entries.fastForEach {
                 FilterChip(
                     modifier = Modifier.height(36.dp),
-                    selected = selected(genre.id),
-                    onClick = { onClick(genre.id) },
-                    label = { Text(genre.russian) }
+                    selected = selected(it),
+                    onClick = { onClick(it) },
+                    label = { Text(getLabel(it).asComposableString()) }
                 )
             }
         }
-    }
+    )
 }
 
 @Composable
