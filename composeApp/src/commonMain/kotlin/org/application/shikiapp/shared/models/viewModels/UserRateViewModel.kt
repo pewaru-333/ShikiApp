@@ -418,16 +418,14 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
         is SetChapters -> _newRate.update { it.copy(chapters = event.chapters) }
 
-        is SetEpisodes -> event.episodes.let { episodes ->
-            if (episodes != null && episodes.isDigitsOnly())
-                _newRate.update { it.copy(episodes = episodes) }
+        is SetEpisodes -> _newRate.update {
+            it.copy(episodes = event.episodes?.takeIf(String::isDigitsOnly))
         }
 
         is SetVolumes -> _newRate.update { it.copy(volumes = event.volumes) }
 
-        is SetRewatches -> event.rewatches.let { rewatches ->
-            if (rewatches != null && rewatches.isDigitsOnly())
-                _newRate.update { it.copy(rewatches = rewatches) }
+        is SetRewatches -> _newRate.update {
+            it.copy(rewatches = event.rewatches?.takeIf(String::isDigitsOnly))
         }
 
         is SetText -> _newRate.update { it.copy(text = event.text.orEmpty()) }
