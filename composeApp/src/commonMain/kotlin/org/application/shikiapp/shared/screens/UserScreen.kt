@@ -526,7 +526,7 @@ private fun Content(
     val navigate = remember(targetMenu) {
         { id: String, kind: Kind? ->
             val screen = when (targetMenu) {
-                BaseDialogState.User.Menu.FRIENDS -> Screen.Person(id.toLong())
+                BaseDialogState.User.Menu.FRIENDS -> Screen.User(id.toLong())
                 BaseDialogState.User.Menu.CLUBS -> Screen.Club(id.toLong())
                 BaseDialogState.User.Menu.HISTORY -> kind?.linkedType?.navigateTo(id)
                 else -> null
