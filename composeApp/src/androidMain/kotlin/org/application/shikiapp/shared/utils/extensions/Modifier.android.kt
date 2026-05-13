@@ -66,6 +66,7 @@ actual fun Modifier.playerKeyEvents(playerState: VideoPlayerState): Modifier = c
                     if (playerState.controls.isControlsVisible) false
                     else {
                         playerState.togglePlayPause()
+                        playerState.controls.showControls()
                         true
                     }
                 }
