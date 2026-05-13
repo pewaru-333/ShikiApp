@@ -91,12 +91,10 @@ object HtmlParser {
                     }
 
                     node.hasClass("b-spoiler_block") -> {
-                        val titleSpan = node.selectFirst("span")
+                        val titleSpan = node.children().firstOrNull { it.tagName() == "span" }
                         val title = titleSpan?.text()?.trim() ?: "Спойлер"
+                        val contentNodes = node.childNodes().filter { it != titleSpan }
 
-                        titleSpan?.remove()
-
-                        val contentNodes = node.selectFirst("div")?.childNodes() ?: node.childNodes()
                         contentList.add(CommentContent.SpoilerContent(title, parseNodes(contentNodes)))
                     }
 
@@ -189,6 +187,34 @@ object HtmlParser {
                                     AnimatedAsyncImage(node.attr("abs:src"), Modifier.fillMaxSize())
                                 }
                             }
+
+                            node.hasClass("b-spoiler_inline") || (node.hasClass("b-spoiler") && node.hasClass("unprocessed")) -> {
+                                val id = "spoiler_${smileyCounter++}"
+                                val isUnprocessed = node.hasClass("unprocessed")
+
+                                if (isUnprocessed) {
+                                    val labelText = node.selectFirst("label")?.text()?.trim() ?: "Спойлер"
+                                    val labelStart = length
+                                    append(labelText)
+                                    addStringAnnotation("spoiler_label", id, labelStart, length)
+
+                                    val contentNodes = node.selectFirst(".inner")?.childNodes() ?: node.childNodes()
+                                    val contentStart = length
+                                    val (childText, childInlineContent) = stringFromNodes(contentNodes)
+
+                                    append(childText)
+                                    inlineContentMap.putAll(childInlineContent)
+                                    addStringAnnotation("spoiler_content", id, contentStart, length)
+                                } else {
+                                    val contentStart = length
+                                    val (childText, childInlineContent) = stringFromNodes(node.childNodes())
+
+                                    append(childText)
+                                    inlineContentMap.putAll(childInlineContent)
+                                    addStringAnnotation("spoiler_inline", id, contentStart, length)
+                                }
+                            }
+
                             else -> {
                                 if (node.tagName() == "br") {
                                     append("\n")
@@ -232,6 +258,7 @@ object HtmlParser {
                     node.hasClass("b-quote-v2") ||
                     node.tagName() == "blockquote" ||
                     node.hasClass("b-spoiler_block") ||
+                    (node.hasClass("b-spoiler") && !node.hasClass("unprocessed")) ||
                     node.hasClass("b-image") ||
                     node.hasClass("b-video") ||
                     node.hasClass("ban") ||
@@ -240,6 +267,7 @@ object HtmlParser {
 
     private fun isBlockContainer(node: Node): Boolean {
         if (node !is Element) return false
+        if (node.hasClass("b-spoiler") && node.hasClass("unprocessed")) return false
 
         return when (node.tagName()) {
             "div", "p", "center", "h1", "h2", "h3", "h4", "h5", "h6", "pre" -> true

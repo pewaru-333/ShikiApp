@@ -50,7 +50,12 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalUriHandler
+import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.LinkAnnotation
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -109,8 +114,109 @@ private fun RenderContent(
 ) {
     when (content) {
         is CommentContent.TextContent -> {
+            var opened by remember { mutableStateOf(setOf<String>()) }
+
+            val visualString = remember(content.text, opened) {
+                val builder = AnnotatedString.Builder()
+                val structuralAnnotations = content.text.getStringAnnotations(0, content.text.length)
+                    .filter { it.tag == "spoiler_label" || it.tag == "spoiler_content" }
+                    .sortedBy { it.start }
+
+                var currentIndex = 0
+                for (ann in structuralAnnotations) {
+                    if (ann.start < currentIndex) continue
+                    if (ann.start > currentIndex) {
+                        builder.append(content.text.subSequence(currentIndex, ann.start))
+                    }
+
+                    val isRevealed = ann.item in opened
+                    if (ann.tag == "spoiler_label" && !isRevealed) {
+                        builder.append(content.text.subSequence(ann.start, ann.end))
+                    } else if (ann.tag == "spoiler_content" && isRevealed) {
+                        builder.append(content.text.subSequence(ann.start, ann.end))
+                    }
+
+                    currentIndex = ann.end
+                }
+
+                if (currentIndex < content.text.length) {
+                    builder.append(content.text.subSequence(currentIndex, content.text.length))
+                }
+
+                val beforeString = builder.toAnnotatedString()
+                val finalBuilder = AnnotatedString.Builder(beforeString)
+
+                val openStyle = SpanStyle(
+                    background = Color.Gray.copy(alpha = 0.2f),
+                    textDecoration = TextDecoration.None,
+                    color = Color.Unspecified
+                )
+
+                val closedInlineStyle = SpanStyle(
+                    background = Color.Gray,
+                    color = Color.Transparent,
+                    textDecoration = TextDecoration.None
+                )
+
+                val closedLabelStyle = SpanStyle(
+                    textDecoration = TextDecoration.Underline,
+                    color = Color(0xFF33BBFF),
+                    background = Color.Transparent
+                )
+
+                beforeString.getStringAnnotations("spoiler_inline", 0, beforeString.length).forEach { ann ->
+                    val isRevealed = ann.item in opened
+                    val style = if (isRevealed) openStyle else closedInlineStyle
+
+                    finalBuilder.addStyle(style, ann.start, ann.end)
+                    finalBuilder.addLink(
+                        start = ann.start,
+                        end = ann.end,
+                        clickable = LinkAnnotation.Clickable(
+                            tag = ann.item,
+                            styles = TextLinkStyles(style = style),
+                            linkInteractionListener = {
+                                opened = if (isRevealed) opened - ann.item else opened + ann.item
+                            }
+                        )
+                    )
+                }
+
+                beforeString.getStringAnnotations("spoiler_label", 0, beforeString.length).forEach { ann ->
+                    if (ann.item !in opened) {
+                        finalBuilder.addStyle(closedLabelStyle, ann.start, ann.end)
+                        finalBuilder.addLink(
+                            start = ann.start,
+                            end = ann.end,
+                            clickable = LinkAnnotation.Clickable(
+                                tag = ann.item,
+                                styles = TextLinkStyles(style = closedLabelStyle),
+                                linkInteractionListener = { opened = opened + ann.item }
+                            )
+                        )
+                    }
+                }
+
+                beforeString.getStringAnnotations("spoiler_content", 0, beforeString.length).forEach { ann ->
+                    if (ann.item in opened) {
+                        finalBuilder.addStyle(openStyle, ann.start, ann.end)
+                        finalBuilder.addLink(
+                            start = ann.start,
+                            end = ann.end,
+                            clickable = LinkAnnotation.Clickable(
+                                tag = ann.item,
+                                styles = TextLinkStyles(style = openStyle),
+                                linkInteractionListener = { opened = opened - ann.item }
+                            )
+                        )
+                    }
+                }
+
+                finalBuilder.toAnnotatedString()
+            }
+
             Text(
-                text = content.text,
+                text = visualString,
                 style = MaterialTheme.typography.bodyLarge,
                 inlineContent = content.inlineContent,
                 modifier = Modifier.padding(vertical = 4.dp),
