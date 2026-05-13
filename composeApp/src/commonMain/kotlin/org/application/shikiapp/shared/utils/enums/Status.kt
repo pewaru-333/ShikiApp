@@ -46,9 +46,10 @@ enum class Status(
         mangaTitle = Res.string.status_paused_discontinued
     );
 
-    fun getTitle(kind: Kind) =
-        if (kind.linkedType == LinkedType.ANIME) animeTitle ?: Res.string.text_unknown
-        else mangaTitle
+    fun getTitle(kind: Kind) = getTitle(kind.linkedType)
+
+    fun getTitle(type: LinkedType?) = if (type == LinkedType.ANIME) animeTitle ?: Res.string.text_unknown
+    else mangaTitle
 }
 
 data class StatusColors(
