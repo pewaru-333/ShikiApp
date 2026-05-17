@@ -28,6 +28,7 @@ fun BaseRate.mapper(): UserRate {
         poster = if (manga?.image?.original != null) manga.image.original
         else Formatter.replaceMissingAnimePoster(anime?.image?.original, contentId),
         rewatches = rewatches,
+        rewatchExists = rewatches > 0,
         score = score,
         scoreString = score.let { if (it != 0) it else '-' }.toString(),
         status = status,

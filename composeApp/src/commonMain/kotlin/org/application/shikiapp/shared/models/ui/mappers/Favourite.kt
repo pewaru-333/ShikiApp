@@ -18,7 +18,7 @@ fun Favourites.toBasicContentMap() = mapOf(
         value.map {
             BasicContent(
                 id = it.id.toString(),
-                title = it.russian?.takeUnless(String::isBlank) ?: it.name,
+                title = it.russian?.takeIf(String::isNotBlank) ?: it.name,
                 poster = it.image.replace("x64", "x96")
             )
         }

@@ -19,10 +19,12 @@ import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.Kind
+import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
 import org.application.shikiapp.shared.utils.fromHtml
 import org.application.shikiapp.shared.utils.ui.Formatter
+import java.util.EnumMap
 
 object CharacterMapper {
     suspend fun create(
@@ -44,7 +46,7 @@ object CharacterMapper {
             manga = character.mangas.map(MangaBasic::toContent),
             poster = image.orEmpty(),
             relatedList = relatedList,
-            relatedMap = relatedList.groupBy(Related::linkedType).toSortedMap(),
+            relatedMap = relatedList.groupByTo(EnumMap(LinkedType::class.java), Related::linkedType),
             russian = character.russian,
             seyu = character.seyu.map(BasicInfo::toBasicContent),
             url = "${ApiRoutes.workingBaseUrl}${character.url}"
@@ -57,7 +59,7 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationT
 
     return Related(
         id = id.toString(),
-        title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
+        title = russian?.takeIf(String::isNotEmpty) ?: name,
         poster = Formatter.replaceMissingAnimePoster(image.original, id),
         kind = kindEnum,
         status = Enum.safeValueOf<Status>(status),
@@ -75,25 +77,25 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toContent() = Conte
     score = score?.let(Formatter::convertScore),
     season = Formatter.getSeason(airedOn, kind),
     status = Enum.safeValueOf<Status>(status),
-    title = russian.orEmpty().ifEmpty(::name)
+    title = russian?.takeIf(String::isNotEmpty) ?: name
 )
 
 fun CharacterRole.toBasicContent() = BasicContent(
     id = character.id,
-    title = character.russian.orEmpty().ifEmpty(character::name),
+    title = character.russian?.takeIf(String::isNotEmpty) ?: character.name,
     poster = character.poster?.originalUrl.orEmpty()
 )
 
 fun CharacterListQuery.Data.Character.mapper() = BasicContent(
     id = id,
-    title = russian.orEmpty().ifEmpty(::name),
+    title = russian?.takeIf(String::isNotEmpty) ?: name,
     poster = poster?.mainUrl.orEmpty(),
 )
 
 fun PagingData<BasicInfo>.toContent() = map {
     BasicContent(
         id = it.id.toString(),
-        title = it.russian.orEmpty().ifEmpty(it::name),
+        title = it.russian?.takeIf(String::isNotEmpty) ?: it.name,
         poster = it.image.original
     )
 }
