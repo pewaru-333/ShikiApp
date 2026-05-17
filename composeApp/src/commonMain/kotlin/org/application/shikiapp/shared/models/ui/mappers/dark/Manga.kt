@@ -8,6 +8,7 @@ import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum.light_nove
 import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum.novel
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.data.MangaBasic
+import org.application.shikiapp.shared.models.ui.Genre
 import org.application.shikiapp.shared.models.ui.Manga
 import org.application.shikiapp.shared.models.ui.Publisher
 import org.application.shikiapp.shared.models.ui.Statistics
@@ -53,7 +54,7 @@ object MangaMapper {
         chronology = extra.chronology.orEmpty().map {
             Content(
                 id = it.id,
-                title = it.russian.orEmpty().ifEmpty(it::name),
+                title = it.russian?.takeIf(String::isNotEmpty) ?: it.name,
                 poster = it.poster?.mainUrl.orEmpty(),
                 kind = Enum.safeValueOf<Kind>(it.kind?.rawValue),
                 status = Enum.safeValueOf<Status>(it.status?.rawValue),
@@ -66,7 +67,7 @@ object MangaMapper {
         favoured = AsyncData.Success(favoured),
         franchise = main.franchise.orEmpty(),
         franchiseList = franchise.toMappedList(),
-        genres = main.genres?.map(MangaMainQuery.Data.Manga.Genre::russian),
+        genres = main.genres?.map { Genre(it.id, it.russian) },
         id = main.id,
         isOngoing = Status.ONGOING.safeEquals(main.status?.rawValue),
         kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
@@ -76,7 +77,7 @@ object MangaMapper {
         licenseName = main.licenseNameRu.orEmpty(),
         licensors = main.licensors.orEmpty(),
         links = main.externalLinks.orEmpty()
-            .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS.keys }
+            .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS }
             .map(MangaMainQuery.Data.Manga.ExternalLink::mapper),
         personAll = extra.personRoles.orEmpty()
             .map(MangaExtraQuery.Data.Manga.PersonRole::toContent),
@@ -138,6 +139,7 @@ object MangaMapper {
                     volumes = it.volumes,
                     chapters = it.chapters,
                     rewatches = it.rewatches,
+                    rewatchExists = it.rewatches > 0,
                     fullChapters = BLANK,
                     createdAt = OffsetDateTime.now(),
                     updatedAt = OffsetDateTime.now()

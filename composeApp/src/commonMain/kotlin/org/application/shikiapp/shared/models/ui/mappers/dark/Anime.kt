@@ -10,6 +10,7 @@ import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.Comment
+import org.application.shikiapp.shared.models.ui.Genre
 import org.application.shikiapp.shared.models.ui.Related
 import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.models.ui.Statistics
@@ -71,7 +72,7 @@ object AnimeMapper {
             chronology = extra.chronology.orEmpty().map {
                 Content(
                     id = it.id,
-                    title = it.russian.orEmpty().ifEmpty(it::name),
+                    title = it.russian?.takeIf(String::isNotEmpty) ?: it.name,
                     poster = it.poster?.mainUrl.orEmpty(),
                     kind = Enum.safeValueOf<Kind>(it.kind?.rawValue),
                     status = Enum.safeValueOf<Status>(it.status?.rawValue),
@@ -98,13 +99,13 @@ object AnimeMapper {
             favoured = AsyncData.Success(favoured),
             franchise = main.franchise.orEmpty(),
             franchiseList = franchise.toMappedList(),
-            genres = main.genres?.map(AnimeMainQuery.Data.Anime.Genre::russian),
+            genres = main.genres?.map { Genre(it.id, it.russian) },
             id = main.id,
             kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
             licenseName = main.licenseNameRu.orEmpty(),
             licensors = main.licensors.orEmpty(),
             links = main.externalLinks.orEmpty()
-                .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS.keys }
+                .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS }
                 .map(AnimeMainQuery.Data.Anime.ExternalLink::mapper),
             nextEpisodeAt = Formatter.getNextEpisode(main.nextEpisodeAt),
             origin = Enum.safeValueOf<Origin>(main.origin?.rawValue).title,
@@ -167,6 +168,7 @@ object AnimeMapper {
                         volumes = it.volumes,
                         chapters = it.chapters,
                         rewatches = it.rewatches,
+                        rewatchExists = it.rewatches > 0,
                         fullChapters = BLANK,
                         createdAt = OffsetDateTime.now(),
                         updatedAt = OffsetDateTime.now()
@@ -186,7 +188,7 @@ object AnimeMapper {
 
 fun PersonRole.toContent() = Content(
     id = person.id,
-    title = person.russian.orEmpty().ifEmpty(person::name),
+    title = person.russian?.takeIf(String::isNotEmpty) ?: person.name,
     poster = person.poster?.originalUrl.orEmpty(),
     kind = Kind.SPECIAL,
     season = ResourceText.StaticString(rolesRu.joinToString()),
