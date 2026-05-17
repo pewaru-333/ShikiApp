@@ -6,7 +6,7 @@
 
 ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/pewaru-333/ShikiApp/total?style=plastic&label=%D0%97%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8)
 
-Неофициальное мобильное приложение для сайта shikimori.one
+Неофициальное мобильное приложение для сайта shikimori.io
 
 </div>
 
