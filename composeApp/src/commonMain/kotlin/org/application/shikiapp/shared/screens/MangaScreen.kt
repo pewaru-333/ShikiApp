@@ -123,7 +123,14 @@ private fun MangaView(
             onOpenFullscreenPoster = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Poster)) }
         )
 
-        genres(manga.genres)
+        genres(manga.genres) {
+            onNavigate(
+                Screen.Catalog(
+                    genre = it,
+                    linkedType = manga.kindEnum.linkedType
+                )
+            )
+        }
         summary(
             similar = manga.similar,
             publisher = manga.publisher,

@@ -189,7 +189,14 @@ private fun AnimeView(
             onOpenFullscreenPoster = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Poster)) }
         )
 
-        genres(anime.genres)
+        genres(anime.genres) {
+            onNavigate(
+                Screen.Catalog(
+                    genre = it,
+                    linkedType = LinkedType.ANIME
+                )
+            )
+        }
         summary(
             similar = anime.similar,
             studio = anime.studio,

@@ -63,6 +63,18 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     val state = _state
         .onStart {
             if (args != Screen.Catalog()) {
+                args.genre?.let { genre ->
+                    pick(
+                        menu = when (args.linkedType) {
+                            LinkedType.ANIME -> CatalogItem.ANIME
+                            LinkedType.MANGA -> CatalogItem.MANGA
+                            LinkedType.RANOBE -> CatalogItem.RANOBE
+                            else -> CatalogItem.CHARACTERS
+                        }
+                    )
+                    onEvent(FilterEvent.SetGenre((genre)))
+                }
+
                 args.studio?.let { studio ->
                     onEvent(FilterEvent.SetStudio(studio))
                 }
