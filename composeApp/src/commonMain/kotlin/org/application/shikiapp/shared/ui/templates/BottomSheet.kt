@@ -27,6 +27,7 @@ import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.ExternalLink
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.extensions.toClipEntry
+import org.application.shikiapp.shared.utils.ui.rememberLinkHandler
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_copy_link
@@ -96,7 +97,7 @@ fun BottomSheet(
 
 @Composable
 fun LinksSheet(list: List<ExternalLink>, onHide: () -> Unit) {
-    val handler = LocalUriHandler.current
+    val handler = rememberLinkHandler()
 
     ModalBottomSheet(
         onDismissRequest = onHide,
@@ -105,12 +106,12 @@ fun LinksSheet(list: List<ExternalLink>, onHide: () -> Unit) {
         LazyColumn {
             items(list, ExternalLink::url) {
                 ListItem(
-                    modifier = Modifier.clickable { handler.openUri(it.url.toString()) },
+                    modifier = Modifier.clickable { handler.onOpenLink(it.url.toString()) },
                     headlineContent = { Text(it.title) },
                     leadingContent = {
                         AnimatedAsyncImage(
                             model = "https://www.google.com/s2/favicons?domain=${it.url.host}&sz=128",
-                            modifier = Modifier.size(24.dp),
+                            modifier = Modifier.size(24.dp)
                         )
                     },
                     colors = ListItemDefaults.colors(
