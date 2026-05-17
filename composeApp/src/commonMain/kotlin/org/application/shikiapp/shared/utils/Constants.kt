@@ -14,6 +14,7 @@ const val PREF_GROUP_APP_LISTS = "app_lists_behaviour"
 const val PREF_GROUP_APP_SYSTEM = "app_system"
 const val PREF_GROUP_APP_VIEW = "app_view"
 const val PREF_HAS_AGREED_TO_WATCH = "agreed_to_watch"
+const val PREF_SHOW_USER_RATES_LIST_TAB_SIZE = "show_user_rates_list_tab_size"
 const val PREF_START_PAGE = "start_page"
 const val PREF_USER_RATES_START_TYPE = "user_rates_start_type"
 const val PREF_USER_RATES_START_WATCH_STATUS = "user_rates_start_watch_status"
@@ -27,11 +28,10 @@ const val USER_ID = "user_id"
 
 const val BLANK = ""
 
-// =========================================== Lists ==============================================
+// ======================================== Collections ============================================
 val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
-val ROLES_RUSSIAN = listOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
+val ROLES_RUSSIAN = setOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
 
-// =========================================== Maps ===============================================
 val EXTERNAL_LINK_KINDS = mapOf(
     "official_site" to "Официальный сайт",
     "wikipedia" to "Википедия",

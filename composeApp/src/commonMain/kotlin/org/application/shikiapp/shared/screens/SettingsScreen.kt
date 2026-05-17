@@ -51,6 +51,7 @@ import shikiapp.composeapp.generated.resources.preference_language
 import shikiapp.composeapp.generated.resources.preference_list_view
 import shikiapp.composeapp.generated.resources.preference_start_page
 import shikiapp.composeapp.generated.resources.preference_theme
+import shikiapp.composeapp.generated.resources.preference_user_rates_list_size_show
 import shikiapp.composeapp.generated.resources.preference_user_rates_start_status
 import shikiapp.composeapp.generated.resources.preference_user_rates_start_type
 import shikiapp.composeapp.generated.resources.text_palette
@@ -62,6 +63,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     val startPage by Preferences.startPageFlow.collectAsStateWithLifecycle()
     val listView by Preferences.listViewFlow.collectAsStateWithLifecycle()
     val isAutoAdd by Preferences.episodeAutoAddFlow.collectAsStateWithLifecycle()
+    val showUserRatesListSize by Preferences.showUserRateListSizeFlow.collectAsStateWithLifecycle()
     val userRatesWatchType by Preferences.userRatesStartTypeFlow.collectAsStateWithLifecycle()
     val userRatesWatchStatus by Preferences.userRatesStartWatchStatusFlow.collectAsStateWithLifecycle()
     val cache by Preferences.cacheFlow.collectAsStateWithLifecycle()
@@ -179,6 +181,14 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                                 }
                             )
                         }
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        value = showUserRatesListSize,
+                        onValueChange = Preferences::setShowUserRatesListSize,
+                        title = { Text(stringResource(Res.string.preference_user_rates_list_size_show)) }
                     )
                 }
 

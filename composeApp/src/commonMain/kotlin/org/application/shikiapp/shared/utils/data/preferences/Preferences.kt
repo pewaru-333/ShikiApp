@@ -17,6 +17,7 @@ import org.application.shikiapp.shared.utils.PREF_COLOR_PALETTE
 import org.application.shikiapp.shared.utils.PREF_DYNAMIC_COLORS
 import org.application.shikiapp.shared.utils.PREF_EPISODE_AUTO_ADD
 import org.application.shikiapp.shared.utils.PREF_HAS_AGREED_TO_WATCH
+import org.application.shikiapp.shared.utils.PREF_SHOW_USER_RATES_LIST_TAB_SIZE
 import org.application.shikiapp.shared.utils.PREF_START_PAGE
 import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_TYPE
 import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_WATCH_STATUS
@@ -55,11 +56,16 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
 
     val colorPaletteFlow = app.getEnumStateFlow(PREF_COLOR_PALETTE, Palette.SAKURA, scope)
 
+    val showUserRateListSize: Boolean
+        get() = app.getBoolean(PREF_SHOW_USER_RATES_LIST_TAB_SIZE, false)
+
     val userRatesStartType: LinkedType
         get() = app.getEnum(PREF_USER_RATES_START_TYPE, LinkedType.ANIME)
 
     val userRatesStartWatchStatus: WatchStatus
         get() = app.getEnum(PREF_USER_RATES_START_WATCH_STATUS, WatchStatus.PLANNED)
+
+    val showUserRateListSizeFlow = app.getStateFlow(PREF_SHOW_USER_RATES_LIST_TAB_SIZE, false, scope)
 
     val userRatesStartTypeFlow =
         app.getEnumStateFlow(PREF_USER_RATES_START_TYPE, LinkedType.ANIME, scope)
@@ -129,6 +135,10 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
 
     fun setUserRatesStartWatchStatus(status: WatchStatus) = app.edit {
         putEnum(PREF_USER_RATES_START_WATCH_STATUS, status)
+    }
+
+    fun setShowUserRatesListSize(show: Boolean) = app.edit {
+        putBoolean(PREF_SHOW_USER_RATES_LIST_TAB_SIZE, show)
     }
 
     fun setLanguage(locale: String) = app.edit {
