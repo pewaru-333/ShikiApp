@@ -19,6 +19,7 @@ data class UserRate(
     val kindString: StringResource,
     val poster: String,
     val rewatches: Int,
+    val rewatchExists: Boolean,
     val score: Int,
     val scoreString: String,
     val status: String,

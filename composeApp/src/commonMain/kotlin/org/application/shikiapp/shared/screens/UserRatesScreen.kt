@@ -106,6 +106,8 @@ import shikiapp.composeapp.generated.resources.text_error
 import shikiapp.composeapp.generated.resources.text_login_to_modify_lists
 import shikiapp.composeapp.generated.resources.text_profile_closed
 import shikiapp.composeapp.generated.resources.text_rate_chapters
+import shikiapp.composeapp.generated.resources.text_rereading_format
+import shikiapp.composeapp.generated.resources.text_rewatches_format
 import shikiapp.composeapp.generated.resources.text_to_profile
 import shikiapp.composeapp.generated.resources.vector_add
 import shikiapp.composeapp.generated.resources.vector_anime
@@ -149,10 +151,12 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
     }
 
     LaunchedEffect(Unit) {
-        snapshotFlow { rates }
+        snapshotFlow { ratesState }
             .pairwise()
             .collectLatest { (old, new) ->
                 if (new != old) {
+                    if (new.showDialog != old.showDialog) return@collectLatest
+
                     listStates.forEach { it.requestScrollToItem(0) }
                     gridStates.forEach { it.requestScrollToItem(0) }
                 }
@@ -213,7 +217,19 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                                     Tab(
                                         selected = pagerState.targetPage == status.ordinal,
                                         onClick = { scope.launch { pagerState.animateScrollToPage(status.ordinal) } },
-                                        text = { Text(stringResource(type.getWatchStatusTitle(status))) }
+                                        text = {
+                                            Text(
+                                                text = buildString {
+                                                    append(stringResource(type.getWatchStatusTitle(status)))
+
+                                                    if (Preferences.showUserRateListSize) {
+                                                        rates[status]?.let {
+                                                            append(" (${it.size})")
+                                                        }
+                                                    }
+                                                }
+                                            )
+                                        }
                                     )
                                 }
                             }
@@ -318,12 +334,19 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
     val progressValue = maximum?.let { if (it > 0) current.toFloat() / it else 0f }
 
     Column {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+        Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
             Text(
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 text = stringResource(if (type == LinkedType.ANIME) Res.string.text_episodes else Res.string.text_rate_chapters),
                 style = MaterialTheme.typography.bodySmall
             )
+
+            Spacer(Modifier.weight(1f))
+
             Text(
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
                 text = progressText,
                 style = MaterialTheme.typography.bodySmall.copy(
                     fontWeight = FontWeight.Bold
@@ -334,16 +357,14 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
         Spacer(Modifier.height(4.dp))
 
         Row(Modifier, Arrangement.spacedBy(8.dp), Alignment.CenterVertically) {
-            if (progressValue != null) {
-                LinearProgressIndicator(
-                    progress = { progressValue.coerceIn(0f, 1f) },
-                    drawStopIndicator = {},
-                    modifier = Modifier
-                        .weight(1f)
-                        .height(8.dp)
-                        .clip(CircleShape)
-                )
-            }
+            LinearProgressIndicator(
+                progress = { progressValue?.coerceIn(0f, 1f) ?: 0.05f },
+                drawStopIndicator = {},
+                modifier = Modifier
+                    .weight(1f)
+                    .height(8.dp)
+                    .clip(CircleShape)
+            )
 
             if (editable && WatchStatus.WATCHING.name.equals(rate.status, true)) {
                 AnimatedContent(isIncrementing) {
@@ -418,6 +439,26 @@ private fun UserRateCard(
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             )
+
+            Spacer(Modifier.height(4.dp))
+
+            if (rate.rewatchExists) {
+                Text(
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis,
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = MaterialTheme.colorScheme.primary,
+                        fontWeight = FontWeight.W500
+                    ),
+                    text = stringResource(
+                        formatArgs = arrayOf(rate.rewatches),
+                        resource = when (rate.kindEnum.linkedType) {
+                            LinkedType.ANIME -> Res.string.text_rewatches_format
+                            else -> Res.string.text_rereading_format
+                        }
+                    )
+                )
+            }
 
             Spacer(Modifier.height(8.dp))
 
