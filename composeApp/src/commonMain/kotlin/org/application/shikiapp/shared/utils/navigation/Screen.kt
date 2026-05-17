@@ -10,6 +10,7 @@ sealed interface Screen {
         val studio: String? = null,
         val publisher: String? = null,
         val linkedType: LinkedType? = null,
+        val genre: String? = null,
         val showOngoing: Boolean? = null
     ) : Screen
 
