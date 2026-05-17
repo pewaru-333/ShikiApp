@@ -37,7 +37,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
-import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
@@ -61,8 +60,10 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.Label
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.PlainTooltip
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SliderDefaults
@@ -86,6 +87,7 @@ import androidx.compose.ui.graphics.luminance
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.keepScreenOn
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -504,6 +506,7 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
             modifier = Modifier
                 .fillMaxSize()
                 .background(Color.Black)
+                .keepScreenOn()
                 .focusRequester(focusRequester)
                 .focusable()
                 .pointerHoverIcon(if (playerState.controls.isControlsVisible) PointerIcon.Default else invisiblePointer)
@@ -754,24 +757,22 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
             onValueChangeFinished = playerState.controls::onSliderActionFinished,
             modifier = Modifier.weight(1f),
             thumb = { sliderState ->
-                Box(contentAlignment = Alignment.Center) {
-                    if (sliderState.isDragging)
-                        Text(
-                            text = Formatter.formatTime(playerState.controls.sliderValue * playerState.totalTime),
-                            color = Color.White,
-                            style = MaterialTheme.typography.labelMedium,
+                Label(
+                    interactionSource = playerState.controls.sliderInteractionSource,
+                    isPersistent = sliderState.isDragging,
+                    label = {
+                        PlainTooltip {
+                            Text(Formatter.formatTime(playerState.controls.sliderValue * playerState.totalTime))
+                        }
+                    },
+                    content = {
+                        Box(
                             modifier = Modifier
-                                .offset(y = (-32).dp)
-                                .background(Color.Black.copy(alpha = 0.8f), MaterialTheme.shapes.small)
-                                .padding(8.dp, 4.dp)
+                                .size(16.dp)
+                                .background(Color.White, CircleShape)
                         )
-
-                    Box(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .background(Color.White, CircleShape)
-                    )
-                }
+                    }
+                )
             },
             track = { sliderState ->
                 Box(Modifier.fillMaxWidth(), Alignment.CenterStart) {
@@ -910,12 +911,19 @@ private fun GestureEvents(playerState: VideoPlayerState) =
                     onDragCancel = { playerState.controls.isVolumeDragging = false },
                     onDragEnd = { playerState.controls.isVolumeDragging = false },
                     onDragStart = { offset ->
-                        if (offset.x >= (size.width * 0.7f)) {
+                        val isRightPart = offset.x >= (size.width * 0.7f)
+                        val isSafeFromTop = offset.y > (size.height * 0.15f)
+                        val isSafeFromBottom = offset.y < (size.height * 0.85f)
+
+                        if (isRightPart && isSafeFromTop && isSafeFromBottom) {
                             playerState.controls.isVolumeDragging = true
                         }
                     },
-                    onVerticalDrag = { _, dragAmount ->
-                        playerState.setVolume((playerState.volume - dragAmount / 400f))
+                    onVerticalDrag = { change, dragAmount ->
+                        if (playerState.controls.isVolumeDragging) {
+                            change.consume()
+                            playerState.setVolume((playerState.volume - dragAmount / 400f))
+                        }
                     }
                 )
             }
