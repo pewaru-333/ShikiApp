@@ -416,10 +416,5 @@ object Formatter {
     fun setScore(status: Set<String>, score: Float) = if (Status.ANONS.name.lowercase() in status) null
     else score.toInt()
 
-    fun getWatchStatus(status: String?, type: LinkedType) = if (status == null) Res.string.text_unknown
-    else when (type) {
-        LinkedType.ANIME -> Enum.safeValueOf<WatchStatus>(status).titleAnime
-        LinkedType.MANGA -> Enum.safeValueOf<WatchStatus>(status).titleManga ?: Res.string.text_unknown
-        else -> Res.string.text_unknown
-    }
+    fun getWatchStatus(status: String, type: LinkedType) = type.getWatchStatusTitle(Enum.safeValueOf<WatchStatus>(status))
 }
