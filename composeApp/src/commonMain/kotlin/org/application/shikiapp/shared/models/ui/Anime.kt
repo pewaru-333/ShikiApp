@@ -25,7 +25,7 @@ data class Anime(
     val favoured: AsyncData<Boolean>,
     val franchise: String,
     val franchiseList: List<Pair<RelationKind, List<Franchise>>>,
-    val genres: List<String>?,
+    val genres: List<Genre>?,
     val id: String,
     val kind: StringResource,
     val licenseName: String,
