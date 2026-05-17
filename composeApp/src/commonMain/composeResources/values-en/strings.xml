@@ -219,6 +219,9 @@
     <string name="text_rereadings">Rereads</string>
     <string name="text_rewatches">Rewatches</string>
 
+    <string name="text_rereading_format">Rereads: %1$d</string>
+    <string name="text_rewatches_format">Rewatches: %1$d</string>
+
     <!-- Пользователь -->
     <string name="text_about_me">About me</string>
     <string name="text_anime_list">Anime list</string>
@@ -275,6 +278,7 @@
 
     <string name="preference_user_rates_start_type">Start type in user rates</string>
     <string name="preference_user_rates_start_status">Start watch status in user rates</string>
+    <string name="preference_user_rates_list_size_show">Show user list size on every tab</string>
 
     <string name="preference_cache_size">Cache size</string>
     <string name="preference_cache_size_mb">%1$d MB</string>

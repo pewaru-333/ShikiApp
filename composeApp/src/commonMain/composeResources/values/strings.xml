@@ -219,6 +219,9 @@
     <string name="text_rereadings">Повторных чтений</string>
     <string name="text_rewatches">Повторных просмотров</string>
 
+    <string name="text_rereading_format">Повторных чтений: %1$d</string>
+    <string name="text_rewatches_format">Повторных просмотров: %1$d</string>
+
     <!-- Пользователь -->
     <string name="text_about_me">Обо мне</string>
     <string name="text_anime_list">Список аниме</string>
@@ -275,6 +278,7 @@
 
     <string name="preference_user_rates_start_type">Стартовая вкладка в списке оценок</string>
     <string name="preference_user_rates_start_status">Стартовый статус просмотра в списке оценок</string>
+    <string name="preference_user_rates_list_size_show">Отображать размер на каждой вкладке в списке оценок</string>
 
     <string name="preference_cache_size">Размер кэша</string>
     <string name="preference_cache_size_mb">%1$d МБ</string>
