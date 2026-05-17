@@ -1,0 +1,4 @@
+— Added navigation to the catalog with a filter when clicking on the genre on the anime/manga/ranobe page.
+— Added a setting for displaying the size of the user's rating list (for each category).
+— Now, when actively watching videos in the player, the screen no longer fades out. Also, when the system status bar is opened, the sound no longer disappears.
+— Fixed an error that caused the manga reading status to be displayed incorrectly on the user's page.

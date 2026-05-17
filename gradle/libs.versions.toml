@@ -22,7 +22,7 @@ kotlinx-serialization-json = "1.11.0"
 
 # Network
 apollo-api = "4.4.3"
-ktor = "3.4.3"
+ktor = "3.5.0"
 
 # Video (desktop)
 vlcj = "4.12.1"
