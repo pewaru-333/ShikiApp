@@ -94,6 +94,7 @@ import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.Franchise
+import org.application.shikiapp.shared.models.ui.Genre
 import org.application.shikiapp.shared.models.ui.History
 import org.application.shikiapp.shared.models.ui.Label
 import org.application.shikiapp.shared.models.ui.Publisher
@@ -1202,13 +1203,13 @@ fun LazyListScope.info(
     }
 }
 
-fun LazyListScope.genres(genres: List<String>?) = genres?.let { list ->
+fun LazyListScope.genres(genres: List<Genre>?, onClick: (String) -> Unit) = genres?.let { list ->
     item {
         LazyRow(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             items(list) {
                 SuggestionChip(
-                    onClick = {},
-                    label = { Text(it) }
+                    onClick = { onClick(it.id) },
+                    label = { Text(it.russian) }
                 )
             }
         }
