@@ -300,6 +300,7 @@
     <string name="video_source_kodik">Кодик</string>
     <string name="video_source_collapse">Collaps</string>
     <string name="video_source_videohub">ВидеоХаб</string>
+    <string name="video_source_animelib">AnimeLib</string>
 
     <!-- Другое -->
     <string name="blank" />
@@ -333,6 +334,8 @@
 
     <string name="text_minutes_short">мин.</string>
 
+    <string name="text_quality_adaptive">Адаптивное</string>
+
     <string name="text_image">изображение</string>
     <string name="text_quote">цитата</string>
     <string name="text_spoiler_l">спойлер</string>
@@ -343,6 +346,7 @@
     <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
     <string name="text_login_to_modify_lists">Для работы со списками необходимо осуществить вход в приложение</string>
+    <string name="text_login_to_animelib">Для просмотра аниме из AnimeLib необходимо авторизоваться</string>
 
     <string name="text_app_links_support">Поддержка ссылок</string>
     <string name="text_app_links_domain_status">Состояние доменов</string>
@@ -356,6 +360,7 @@
     <string name="text_sure_to_delete_comment">Вы действительно хотите удалить данный комментарий?</string>
 
     <string name="text_sure_to_logout">Вы действительно хотите выйти из профиля?</string>
+    <string name="text_sure_to_logout_animelib">Вы действительно хотите выйти из аккаунта AnimeLib?</string>
 
     <string name="text_successfully_joined_club">Вы вступили в клуб!</string>
     <string name="text_unsuccessfully_joined_club">Ошибка вступления в клуб!</string>

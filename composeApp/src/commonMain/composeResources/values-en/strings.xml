@@ -300,6 +300,7 @@
     <string name="video_source_kodik">Kodik</string>
     <string name="video_source_collapse">Collaps</string>
     <string name="video_source_videohub">VideoHub</string>
+    <string name="video_source_animelib">AnimeLib</string>
 
     <!-- Другое -->
     <string name="blank" />
@@ -333,6 +334,8 @@
 
     <string name="text_minutes_short">min.</string>
 
+    <string name="text_quality_adaptive">Adaptive</string>
+
     <string name="text_image">image</string>
     <string name="text_quote">quote</string>
     <string name="text_spoiler_l">spoiler</string>
@@ -343,6 +346,7 @@
     <string name="text_add_app_links">To enable login, add supported links in the settings</string>
     <string name="text_forward_to_browser">You will be redirected to the login page in your browser</string>
     <string name="text_login_to_modify_lists">To manage your lists, you need to log in</string>
+    <string name="text_login_to_animelib">To use AnimeLib source, you need to log in</string>
 
     <string name="text_app_links_support">App links support</string>
     <string name="text_app_links_domain_status">Domain status</string>
@@ -354,6 +358,7 @@
     <string name="text_sure_to_delete_all_notifications">Are you sure you want to clear the current list of notifications?</string>
 
     <string name="text_sure_to_logout">Are you sure you want to log out?</string>
+    <string name="text_sure_to_logout_animelib">Are you sure you want to log out from AnimeLib account?</string>
 
     <string name="text_successfully_joined_club">Successfully joined the club!</string>
     <string name="text_unsuccessfully_joined_club">Failed to join the club!</string>
