@@ -8,12 +8,15 @@ import androidx.compose.runtime.Stable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
 import kotlinx.coroutines.delay
+import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
 
@@ -93,13 +96,13 @@ class VideoPlayerState {
 
             is PlayerEvent.OnAutoQualityChanged -> Unit
             is PlayerEvent.ChangeQuality -> {
-                controls.expandedQuality = false
+                controls.hideQuality()
                 currentQuality = event.quality
                 seekTrigger = currentTime
             }
 
             is PlayerEvent.SelectEpisode -> {
-                controls.expandedEpisodes = false
+                controls.hideEpisodes()
 
                 url = null
                 seekTrigger = null
@@ -186,7 +189,7 @@ class VideoPlayerState {
     }
 
     fun showSubtitles(index: Int) {
-        controls.expandedSubtitles = false
+        controls.hideSubtitles()
 
         if (index == 0) {
             selectedSubtitlesTrack = null
@@ -215,50 +218,85 @@ class VideoPlayerState {
 
     @Stable
     inner class Controls {
+        internal val utils = VideoPlayerUtils()
+        internal val speedLabels = speedList.map { "${it}x" }
+
         val sliderInteractionSource = MutableInteractionSource()
-        val speedLabels = speedList.map { "${it}x" }
+        val pointerHoverIcon: PointerIcon
+            get() = if (isControlsVisible) PointerIcon.Default else utils.pointerIcon
+
+        val isControlsFocusable: Boolean
+            get() = if (utils.isTV) !isControlsVisible else true
 
         var isControlsVisible by mutableStateOf(false)
             private set
 
         var expandedEpisodes by mutableStateOf(false)
-            internal set
+            private set
         var expandedQuality by mutableStateOf(false)
-            internal set
+            private set
         var expandedSubtitles by mutableStateOf(false)
-            internal set
+            private set
 
         var isVolumeDragging by mutableStateOf(false)
-            internal set
+            private set
         var isSliderDragging by mutableStateOf(false)
-            internal set
+            private set
 
         var speedLabel by mutableStateOf(speedLabels[1])
-            internal set
+            private set
         var sliderValue by mutableFloatStateOf(0f)
-            internal set
+            private set
+        var interactionMillis by mutableLongStateOf(0L)
+            private set
 
         fun showControls() {
-            isControlsVisible = !isControlsVisible
+            isControlsVisible = true
         }
 
         fun toggleControls() {
             isControlsVisible = !isControlsVisible
+
+            if (!isControlsVisible) hideControls()
         }
 
         fun toggleQuality() {
             expandedQuality = !expandedQuality
         }
 
+        fun hideQuality() {
+            expandedQuality = false
+        }
+
+        fun toggleEpisodes() {
+            expandedEpisodes = !expandedEpisodes
+        }
+
+        fun hideEpisodes() {
+            expandedEpisodes = false
+        }
+
         fun toggleSubtitles() {
             expandedSubtitles = !expandedSubtitles
+        }
+
+        fun hideSubtitles() {
+            expandedSubtitles = false
+        }
+
+        fun showVolume() {
+            isVolumeDragging = true
+        }
+
+        fun hideVolume() {
+            isVolumeDragging = false
         }
 
         fun setSpeedLabel(newSpeed: Float) {
             speedLabel = speedLabels[speedList.indexOf(newSpeed)]
         }
 
-        fun setSliderValue(percent: Float) {
+        fun onSetSliderValue(percent: Float) {
             sliderValue = percent
         }
 
@@ -267,6 +305,10 @@ class VideoPlayerState {
 
             seekTrigger = target
             currentTime = target
+        }
+
+        fun refreshInteractionMillis() {
+            interactionMillis = System.currentTimeMillis()
         }
 
         internal fun hideControls() {
@@ -292,9 +334,28 @@ class VideoPlayerState {
                 }
             }
 
-            LaunchedEffect(isControlsVisible, isPlaying, isSliderDragging, isVolumeDragging, expandedEpisodes) {
+            LaunchedEffect(interactionMillis) {
+                if (!isControlsVisible) {
+                    showControls()
+                }
+            }
+
+            LaunchedEffect(volume) {
+                if (isVolumeDragging) {
+                    delay(2000L)
+                    isVolumeDragging = false
+                }
+            }
+
+            LaunchedEffect(expandedQuality, expandedSubtitles) {
+                if (expandedQuality || expandedSubtitles) {
+                    refreshInteractionMillis()
+                }
+            }
+
+            LaunchedEffect(isControlsVisible, isPlaying, isSliderDragging, isVolumeDragging, expandedEpisodes, interactionMillis) {
                 if (isControlsVisible && isPlaying && !isSliderDragging && !isVolumeDragging && !expandedEpisodes) {
-                    delay(3000L)
+                    delay(utils.visibilityDelay)
                     hideControls()
                 }
             }
@@ -332,3 +393,12 @@ fun rememberVideoPlayerState(onEvent: (PlayerEvent) -> Unit): VideoPlayerState {
 
 @Composable
 expect fun VideoPlayer(state: VideoPlayerState, modifier: Modifier = Modifier)
+
+expect class VideoPlayerUtils(context: PlatformContext) {
+    constructor()
+
+    val isTV: Boolean
+    val showPlayPause: Boolean
+    val visibilityDelay: Long
+    val pointerIcon: PointerIcon
+}

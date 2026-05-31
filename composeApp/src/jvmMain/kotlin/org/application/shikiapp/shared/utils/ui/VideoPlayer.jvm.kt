@@ -12,11 +12,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.toComposeImageBitmap
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import org.application.shikiapp.shared.di.DesktopContext
+import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.BLANK
 import org.jetbrains.skia.ColorAlphaType
 import org.jetbrains.skia.ColorType
@@ -35,6 +38,9 @@ import uk.co.caprica.vlcj.player.embedded.videosurface.callback.RenderCallback
 import uk.co.caprica.vlcj.player.embedded.videosurface.callback.format.RV32BufferFormat
 import uk.co.caprica.vlcj.subs.Spus
 import uk.co.caprica.vlcj.subs.parser.SrtParser
+import java.awt.Point
+import java.awt.Toolkit
+import java.awt.image.BufferedImage
 import java.io.Reader
 import java.io.StringReader
 import java.net.URI
@@ -352,5 +358,22 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
             modifier = Modifier.fillMaxSize(),
             contentScale = if (state.isZoomed) ContentScale.Crop else ContentScale.Fit
         )
+    }
+}
+
+actual class VideoPlayerUtils actual constructor(context: PlatformContext) {
+    actual constructor() : this(DesktopContext())
+
+    actual val isTV = false
+    actual val showPlayPause = false
+    actual val visibilityDelay = 3000L
+    actual val pointerIcon by lazy {
+        val cursor = Toolkit.getDefaultToolkit().createCustomCursor(
+            /* cursor = */ BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB),
+            /* hotSpot = */ Point(0,0),
+            /* name = */ BLANK
+        )
+
+        PointerIcon(cursor)
     }
 }

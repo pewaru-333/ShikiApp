@@ -1,11 +1,16 @@
 package org.application.shikiapp.shared.utils.ui
 
+import android.app.UiModeManager
 import android.content.Context
+import android.content.pm.PackageManager
+import android.content.res.Configuration
+import android.webkit.MimeTypeMap
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
@@ -26,6 +31,7 @@ import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.ui.compose.ContentFrame
 import kotlinx.coroutines.delay
+import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.utils.BLANK
 
 @UnstableApi
@@ -100,8 +106,16 @@ class VideoPlayerController(private val context: Context, private val state: Vid
             .setAllowCrossProtocolRedirects(true)
 
         val subtitleConfigs = state.subtitles.map { subtitleTrack ->
+            val mimeType = when (MimeTypeMap.getFileExtensionFromUrl(subtitleTrack.url)) {
+                "srt" -> MimeTypes.APPLICATION_SUBRIP
+                "vtt" -> MimeTypes.TEXT_VTT
+                "ttml", "xml" -> MimeTypes.APPLICATION_TTML
+                "ssa", "ass" -> MimeTypes.TEXT_SSA
+                else -> MimeTypes.TEXT_UNKNOWN
+            }
+
             MediaItem.SubtitleConfiguration.Builder(subtitleTrack.url.toUri())
-                .setMimeType(MimeTypes.TEXT_VTT)
+                .setMimeType(mimeType)
                 .setLabel(subtitleTrack.name)
                 .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
                 .build()
@@ -250,4 +264,20 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         modifier = modifier,
         contentScale = if (state.isZoomed) ContentScale.FillBounds else ContentScale.Fit
     )
+}
+
+actual class VideoPlayerUtils actual constructor(private val context: Context) {
+    actual constructor() : this(AppContext.app.context)
+
+    actual val isTV: Boolean
+        get() {
+            val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+
+            return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION ||
+                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+        }
+
+    actual val showPlayPause = true
+    actual val visibilityDelay = if (isTV) 6000L else 3000L
+    actual val pointerIcon = PointerIcon.Default
 }
