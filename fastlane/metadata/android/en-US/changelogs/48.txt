@@ -1,0 +1,3 @@
+— Added a new source for watching anime (AnimeLib, account required).
+— In the Android TV player, the selected buttons are now highlighted in a different color. Fixed other errors when using the remote control.
+— Fixed a bug that caused it to be deleted immediately when opening a user's score.

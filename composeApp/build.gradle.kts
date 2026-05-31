@@ -15,7 +15,7 @@ apollo {
         schemaFiles.from(file("src/commonMain/graphql/shikiapp/schema.graphqls"))
         packageName.set("org.application.shikiapp.generated.shikiapp")
         codegenModels.set("responseBased")
-        warnOnDeprecatedUsages = true
+        issueSeverity("DeprecatedUsage", "ignore")
         generateApolloMetadata = false
         generateOptionalOperationVariables = false
     }
@@ -25,7 +25,7 @@ apollo {
         schemaFiles.from("src/commonMain/graphql/darkshiki/schema.graphqls")
         packageName.set("org.application.shikiapp.generated.darkshiki")
         codegenModels.set("responseBased")
-        warnOnDeprecatedUsages = true
+        issueSeverity("DeprecatedUsage", "ignore")
         generateApolloMetadata = false
         generateOptionalOperationVariables = false
     }
@@ -120,7 +120,7 @@ compose {
 
             nativeDistributions {
                 packageName = "ShikiApp"
-                packageVersion = "0.6.11"
+                packageVersion = "0.7.0"
 
                 appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
 
