@@ -1,5 +1,6 @@
 package org.application.shikiapp.shared.models.ui
 
+import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.VideoSource
 
 data class EpisodeModel(
@@ -16,15 +17,18 @@ data class SubtitleTrack(
 
 data class VideoVoice(
     val id: Int,
-    val title: String,
+    val title: ResourceText,
     val hasDubbers: Boolean,
     val hasSubtitles: Boolean,
     val episodes: List<EpisodeModel>,
-    val quality: String?,
+    val quality: ResourceText?,
     val lastEpisode: Int
 ) {
     val episodesCount: Int
         get() = episodes.size
+
+    val hasEpisodes: Boolean
+        get() = episodesCount > 0
 }
 
 data class VideoSourceData(
