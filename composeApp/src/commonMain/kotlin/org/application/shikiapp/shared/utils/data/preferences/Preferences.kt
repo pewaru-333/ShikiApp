@@ -2,10 +2,13 @@ package org.application.shikiapp.shared.utils.data.preferences
 
 import androidx.compose.runtime.Composable
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
 import me.zhanghai.compose.preference.Preferences
 import org.application.shikiapp.shared.models.data.Token
 import org.application.shikiapp.shared.utils.ACCESS_TOKEN
+import org.application.shikiapp.shared.utils.ACCESS_TOKEN_LIB
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.CREATED_AT
 import org.application.shikiapp.shared.utils.EXPIRES_IN
@@ -22,6 +25,7 @@ import org.application.shikiapp.shared.utils.PREF_START_PAGE
 import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_TYPE
 import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_WATCH_STATUS
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
+import org.application.shikiapp.shared.utils.REFRESH_TOKEN_LIB
 import org.application.shikiapp.shared.utils.USER_ID
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ListView
@@ -32,6 +36,7 @@ import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.application.shikiapp.shared.utils.extensions.edit
 import org.application.shikiapp.shared.utils.extensions.getEnum
 import org.application.shikiapp.shared.utils.extensions.getEnumStateFlow
+import org.application.shikiapp.shared.utils.extensions.getFlow
 import org.application.shikiapp.shared.utils.extensions.getStateFlow
 
 class Preferences(private val app: IPreferences, private val auth: IPreferences, scope: CoroutineScope) {
@@ -105,6 +110,32 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
             )
         }
 
+    val libToken: Token?
+        get() {
+            val accessToken = auth.getString(ACCESS_TOKEN_LIB, BLANK)
+            val refreshToken = auth.getString(REFRESH_TOKEN_LIB, BLANK)
+
+            if (accessToken.isBlank() || refreshToken.isBlank())
+                return null
+
+            return Token(
+                accessToken = accessToken,
+                refreshToken = refreshToken
+            )
+        }
+
+    val libTokenFlow: Flow<Token?>
+        get() = combine(auth.getFlow(ACCESS_TOKEN_LIB, BLANK), auth.getFlow(REFRESH_TOKEN_LIB, BLANK)) { accessToken, refreshToken ->
+            if (accessToken.isBlank() || refreshToken.isBlank()) {
+                null
+            } else {
+                Token(
+                    accessToken = accessToken,
+                    refreshToken = refreshToken
+                )
+            }
+        }
+
     fun setStartPage(page: Menu) = app.edit {
         putEnum(PREF_START_PAGE, page)
     }
@@ -154,6 +185,11 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
         putString(REFRESH_TOKEN, token.refreshToken)
         putLong(EXPIRES_IN, token.expiresIn)
         putLong(CREATED_AT, token.createdAt)
+    }
+
+    fun saveTokenLib(accessToken: String, refreshToken: String) = auth.edit {
+        putString(ACCESS_TOKEN_LIB, accessToken)
+        putString(REFRESH_TOKEN_LIB, refreshToken)
     }
 
     fun setUserId(userId: Long) = auth.edit {
