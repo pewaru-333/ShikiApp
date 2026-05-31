@@ -3,7 +3,6 @@ package org.application.shikiapp.shared.utils
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
-import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -25,6 +24,7 @@ import coil3.request.crossfade
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
+import okio.ByteString.Companion.encodeUtf8
 import okio.Path
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
@@ -37,6 +37,7 @@ import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
+import java.net.URI
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -66,6 +67,25 @@ fun sharedImageLoader(
             .build()
     }
     .build()
+
+fun generateRandomString(length: Int = 40): String {
+    val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
+    return String(CharArray(length) { allowedChars.random() })
+}
+
+fun generateCodeChallenge(verifier: String) = verifier.encodeUtf8()
+    .sha256()
+    .base64Url()
+    .trimEnd('=')
+
+fun extractCodeFromUrl(url: String): String? {
+    val query = URI(url).query ?: return null
+
+    return query.splitToSequence('&')
+        .map { it.split('=', limit = 2) }
+        .firstOrNull { it.size == 2 && it[0] == "code" }
+        ?.get(1)
+}
 
 inline fun <reified T> serializableNavType(
     serializer: KSerializer<T>,
@@ -114,9 +134,6 @@ val basicJson = Json {
     isLenient = true
     ignoreUnknownKeys = true
 }
-
-expect val showVideoControls: Boolean
-expect val invisiblePointer: PointerIcon
 
 expect object AppLocale {
     val current: String @Composable get

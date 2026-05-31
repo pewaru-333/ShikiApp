@@ -2,10 +2,7 @@ package org.application.shikiapp.shared.utils
 
 import android.Manifest
 import android.app.LocaleManager
-import android.app.UiModeManager
-import android.content.Context
 import android.content.pm.ActivityInfo
-import android.content.res.Configuration
 import android.graphics.Color
 import android.os.Build
 import android.os.LocaleList
@@ -25,7 +22,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
@@ -224,17 +220,3 @@ actual fun HideSystemBars() {
         }
     }
 }
-
-@Composable
-fun isTV(): Boolean {
-    val context = LocalContext.current
-
-    return remember(context) {
-        val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
-
-        uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION
-    }
-}
-
-actual val invisiblePointer = PointerIcon.Default
-actual val showVideoControls = true
