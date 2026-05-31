@@ -18,6 +18,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
+import androidx.compose.foundation.interaction.MutableInteractionSource
+import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
@@ -27,7 +29,6 @@ import androidx.compose.foundation.layout.ExperimentalFlexBoxApi
 import androidx.compose.foundation.layout.FlexAlignItems
 import androidx.compose.foundation.layout.FlexBox
 import androidx.compose.foundation.layout.FlexWrap
-import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -36,12 +37,9 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.requiredSize
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -49,17 +47,17 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.FilterChipDefaults
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.Label
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.MaterialTheme
@@ -72,19 +70,24 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
-import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
@@ -99,18 +102,27 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.models.states.WatchState
+import org.application.shikiapp.shared.models.states.episodes
+import org.application.shikiapp.shared.models.states.isLib
+import org.application.shikiapp.shared.models.states.showIconLogout
+import org.application.shikiapp.shared.models.states.voices
 import org.application.shikiapp.shared.models.ui.EpisodeModel
+import org.application.shikiapp.shared.models.ui.SubtitleTrack
 import org.application.shikiapp.shared.models.ui.VideoSourceData
 import org.application.shikiapp.shared.models.ui.VideoVoice
 import org.application.shikiapp.shared.models.viewModels.WatchViewModel
+import org.application.shikiapp.shared.network.client.AnimeLibAuth
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.shared.ui.templates.IconVideoControl
 import org.application.shikiapp.shared.ui.templates.LoadingScreen
+import org.application.shikiapp.shared.ui.templates.MenuPlayerDefaults
+import org.application.shikiapp.shared.ui.templates.MenuPlayerItems
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
-import org.application.shikiapp.shared.ui.templates.TextLabelVideo
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.HideSystemBars
 import org.application.shikiapp.shared.utils.LockScreenOrientation
@@ -120,13 +132,15 @@ import org.application.shikiapp.shared.utils.enums.VideoSource
 import org.application.shikiapp.shared.utils.extensions.playerFocusRequest
 import org.application.shikiapp.shared.utils.extensions.playerKeyEvents
 import org.application.shikiapp.shared.utils.extensions.playerMouseEvents
-import org.application.shikiapp.shared.utils.invisiblePointer
-import org.application.shikiapp.shared.utils.showVideoControls
+import org.application.shikiapp.shared.utils.extractCodeFromUrl
+import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.ui.Formatter
 import org.application.shikiapp.shared.utils.ui.VideoPlayer
 import org.application.shikiapp.shared.utils.ui.VideoPlayerState
+import org.application.shikiapp.shared.utils.ui.rememberLinkHandler
 import org.application.shikiapp.shared.utils.ui.rememberVideoPlayerState
 import org.application.shikiapp.shared.utils.viewModel
+import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -138,12 +152,16 @@ import shikiapp.composeapp.generated.resources.text_empty
 import shikiapp.composeapp.generated.resources.text_episode_holder
 import shikiapp.composeapp.generated.resources.text_episodes
 import shikiapp.composeapp.generated.resources.text_explain_before_watch
+import shikiapp.composeapp.generated.resources.text_login
+import shikiapp.composeapp.generated.resources.text_login_to_animelib
 import shikiapp.composeapp.generated.resources.text_pay_attention
+import shikiapp.composeapp.generated.resources.text_sure_to_logout_animelib
 import shikiapp.composeapp.generated.resources.text_video_sources
 import shikiapp.composeapp.generated.resources.text_video_subtitles
 import shikiapp.composeapp.generated.resources.text_video_voice
 import shikiapp.composeapp.generated.resources.vector_arrow_back
 import shikiapp.composeapp.generated.resources.vector_close
+import shikiapp.composeapp.generated.resources.vector_exit_app
 import shikiapp.composeapp.generated.resources.vector_fullscreen
 import shikiapp.composeapp.generated.resources.vector_fullscreen_exit
 import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
@@ -168,8 +186,12 @@ fun WatchScreen(onBack: () -> Unit) {
     val lazyStateEpisodes = rememberLazyListState()
 
     val currentStep = when {
-        state.currentVoice != null -> PickerStep.EPISODES
-        state.currentSource != null -> PickerStep.VOICES
+        state.isLib && state.episodeVoices != null -> PickerStep.VOICES
+        state.isLib && state.currentSource != null -> PickerStep.EPISODES
+
+        !state.isLib && state.currentVoice != null -> PickerStep.EPISODES
+        !state.isLib && state.currentSource != null -> PickerStep.VOICES
+
         else -> PickerStep.SOURCES
     }
 
@@ -178,6 +200,7 @@ fun WatchScreen(onBack: () -> Unit) {
         onBackCompleted = {
             when {
                 state.isWatching -> model.stopWatching()
+                state.episodeVoices != null -> model.clearEpisodeVoices()
                 state.currentVoice != null -> model.clearVoice()
                 state.currentSource != null -> model.clearSource()
                 else -> onBack()
@@ -211,16 +234,24 @@ fun WatchScreen(onBack: () -> Unit) {
                             text = when (currentStep) {
                                 PickerStep.SOURCES -> stringResource(Res.string.text_video_sources)
                                 PickerStep.VOICES -> state.currentSource?.type?.title?.let { stringResource(it) }.orEmpty()
-                                PickerStep.EPISODES -> state.currentVoice?.title.orEmpty()
+                                PickerStep.EPISODES -> state.currentVoice?.title?.asComposableString() ?: state.currentSource?.type?.title?.let { stringResource(it) }.orEmpty()
                             }
                         )
                     },
                     navigationIcon = {
                         NavigationIcon {
-                            when (currentStep) {
-                                PickerStep.EPISODES -> model.clearVoice()
-                                PickerStep.VOICES -> model.clearSource()
-                                PickerStep.SOURCES -> onBack()
+                            when {
+                                state.episodeVoices != null -> model.clearEpisodeVoices()
+                                state.currentVoice != null -> model.clearVoice()
+                                state.currentSource != null -> model.clearSource()
+                                else -> onBack()
+                            }
+                        }
+                    },
+                    actions = {
+                        if (state.showIconLogout) {
+                            IconButton(model::toggleLogoutDialog) {
+                                VectorIcon(Res.drawable.vector_exit_app)
                             }
                         }
                     }
@@ -239,7 +270,7 @@ fun WatchScreen(onBack: () -> Unit) {
                     lazyEpisodes = lazyStateEpisodes,
                     onSelectSource = model::selectSource,
                     onSelectVoice = model::selectVoice,
-                    onLoadVideo = model::loadVideo
+                    onSelectEpisode = model::selectEpisode
                 )
             }
         }
@@ -249,6 +280,10 @@ fun WatchScreen(onBack: () -> Unit) {
             onEvent = model::onEvent,
             onBack = model::stopWatching
         )
+    }
+
+    if (state.showLogoutDialog) {
+        DialogLogout(model::logout, model::toggleLogoutDialog)
     }
 }
 
@@ -262,24 +297,34 @@ private fun VideoPicker(
     lazyEpisodes: LazyListState,
     onSelectSource: (VideoSource) -> Unit,
     onSelectVoice: (Int) -> Unit,
-    onLoadVideo: (EpisodeModel) -> Unit
-) = AnimatedContent(
-    targetState = currentStep,
-    modifier = modifier,
-    transitionSpec = {
-        if (targetState.ordinal > initialState.ordinal) {
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left) togetherWith
-                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left)
-        } else {
-            slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right) togetherWith
-                    slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right)
+    onSelectEpisode: (EpisodeModel) -> Unit
+) {
+    val libToken by Preferences.libTokenFlow.collectAsStateWithLifecycle(Preferences.libToken)
+
+    AnimatedContent(
+        targetState = currentStep,
+        modifier = modifier,
+        transitionSpec = {
+            if (targetState.ordinal > initialState.ordinal) {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Left) togetherWith
+                        slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Left)
+            } else {
+                slideIntoContainer(AnimatedContentTransitionScope.SlideDirection.Right) togetherWith
+                        slideOutOfContainer(AnimatedContentTransitionScope.SlideDirection.Right)
+            }
         }
-    }
-) { step ->
-    when (step) {
-        PickerStep.SOURCES -> Sources(state.sources, lazySources, onSelectSource)
-        PickerStep.VOICES -> state.currentSource?.voices?.let { Voices(it, lazyVoices, onSelectVoice) }
-        PickerStep.EPISODES -> state.currentVoice?.let { Episodes(it, lazyEpisodes, onLoadVideo) }
+    ) { step ->
+        when (step) {
+            PickerStep.SOURCES -> Sources(state.sources, lazySources, onSelectSource)
+            PickerStep.VOICES -> Voices(state.voices, state.isEpisodesLoading, lazyVoices, onSelectVoice)
+            PickerStep.EPISODES -> {
+                if (state.currentSource?.type == VideoSource.ANIMELIB && libToken == null) {
+                    AnimeLibAuth()
+                } else {
+                    Episodes(state.episodes, lazyEpisodes, onSelectEpisode)
+                }
+            }
+        }
     }
 }
 
@@ -327,6 +372,7 @@ private fun Sources(
 @Composable
 private fun Voices(
     voices: List<VideoVoice>,
+    isLoading: Boolean,
     listState: LazyListState,
     onSelectVoice: (Int) -> Unit,
     dividerColor: Color = MaterialTheme.colorScheme.surfaceVariant
@@ -363,7 +409,7 @@ private fun Voices(
                     trailingContent = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
                     headlineContent = {
                         Text(
-                            text = item.title,
+                            text = item.title.asComposableString(),
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                             style = MaterialTheme.typography.titleMedium
@@ -394,15 +440,17 @@ private fun Voices(
                                 )
                             }
 
-                            LocalChip(
-                                text = pluralStringResource(Res.plurals.plural_count_episodes, item.episodesCount, item.episodesCount),
-                                color = epContainer,
-                                contentColor = epContent
-                            )
+                            if (item.hasEpisodes) {
+                                LocalChip(
+                                    text = pluralStringResource(Res.plurals.plural_count_episodes, item.episodesCount, item.episodesCount),
+                                    color = epContainer,
+                                    contentColor = epContent
+                                )
+                            }
 
                             item.quality?.let {
                                 LocalChip(
-                                    text = it,
+                                    text = it.asComposableString(),
                                     color = MaterialTheme.colorScheme.secondaryContainer,
                                     contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                                 )
@@ -423,6 +471,10 @@ private fun Voices(
                 )
             }
         }
+    } else if (isLoading) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            CircularProgressIndicator()
+        }
     } else {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Text(stringResource(Res.string.text_empty))
@@ -431,9 +483,9 @@ private fun Voices(
 }
 
 @Composable
-private fun Episodes(voice: VideoVoice, listState: LazyListState, onLoadVideo: (EpisodeModel) -> Unit) =
+private fun Episodes(episodes: List<EpisodeModel>, listState: LazyListState, onLoadVideo: (EpisodeModel) -> Unit) =
     LazyColumn(Modifier.fillMaxSize(), listState) {
-        items(voice.episodes, { Pair(it.number, it.link) }) {
+        items(episodes, { Pair(it.number, it.link) }) {
             ListItem(
                 modifier = Modifier.clickable { onLoadVideo(it) },
                 headlineContent = { Text(stringResource(Res.string.text_episode_holder, it.number)) },
@@ -456,21 +508,26 @@ private fun Episodes(voice: VideoVoice, listState: LazyListState, onLoadVideo: (
 @Composable
 private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: () -> Unit) {
     val playerState = rememberVideoPlayerState(onEvent)
-    val focusRequester = remember(::FocusRequester)
+
+    val rootFocusRequester = remember(::FocusRequester)
+    val playButtonFocusRequester = remember(::FocusRequester)
+    val episodeListFocusRequester = remember(::FocusRequester)
 
     playerState.controls.AutoQualityListener()
     playerState.controls.QualityListener(state.qualityList)
     playerState.controls.ControlsVisibilityListener()
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
-
-    LaunchedEffect(playerState.controls.isControlsVisible) {
-        if (!playerState.controls.isControlsVisible) {
-            focusRequester.requestFocus()
+    NavigationBackHandler(
+        state = rememberNavigationEventState(NavigationEventInfo.None),
+        onBackCompleted = {
+            when {
+                playerState.controls.expandedEpisodes -> playerState.controls.hideEpisodes()
+                playerState.controls.expandedQuality -> playerState.controls.hideQuality()
+                playerState.controls.expandedSubtitles -> playerState.controls.hideSubtitles()
+                else -> onBack()
+            }
         }
-    }
+    )
 
     LaunchedEffect(state.videoUrl) {
         state.videoUrl?.let {
@@ -498,6 +555,20 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
         }
     }
 
+    LaunchedEffect(playerState.controls.isControlsVisible, playerState.controls.expandedEpisodes) {
+        if (playerState.controls.expandedEpisodes) {
+            episodeListFocusRequester.requestFocus()
+        } else {
+            if (playerState.controls.isControlsVisible) {
+                if (playerState.controls.utils.showPlayPause) {
+                    playButtonFocusRequester.requestFocus()
+                }
+            } else {
+                rootFocusRequester.requestFocus()
+            }
+        }
+    }
+
     if (state.currentVoice != null) {
         LockScreenOrientation(ScreenOrientation.LANDSCAPE)
         HideSystemBars()
@@ -507,16 +578,16 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
                 .fillMaxSize()
                 .background(Color.Black)
                 .keepScreenOn()
-                .focusRequester(focusRequester)
-                .focusable()
-                .pointerHoverIcon(if (playerState.controls.isControlsVisible) PointerIcon.Default else invisiblePointer)
+                .focusRequester(rootFocusRequester)
+                .focusable(playerState.controls.isControlsFocusable)
+                .pointerHoverIcon(playerState.controls.pointerHoverIcon)
                 .playerKeyEvents(playerState)
                 .playerMouseEvents(playerState)
-                .playerFocusRequest(focusRequester::requestFocus)
+                .playerFocusRequest(rootFocusRequester::requestFocus)
         ) {
             VideoPlayer(playerState, Modifier.fillMaxSize())
 
-            if (showVideoControls) {
+            if (playerState.controls.utils.showPlayPause) {
                 GestureEvents(playerState)
             }
 
@@ -528,7 +599,7 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
                 content = { CircularProgressIndicator(Modifier.size(64.dp), Color.White, 4.dp) }
             )
 
-            VideoControls(state, playerState, onBack)
+            VideoControls(state, playerState, playButtonFocusRequester, onBack)
 
             VolumeScale(playerState)
 
@@ -537,10 +608,12 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
             }
 
             EpisodeList(
-                currentVoice = state.currentVoice,
+                episodesCount = state.currentVoice.episodesCount,
                 currentEpisode = state.currentEpisode ?: 0,
-                controls = playerState.controls,
-                onSelect = { playerState.onEvent(PlayerEvent.SelectEpisode(it)) }
+                isVisible = playerState.controls.expandedEpisodes,
+                focusRequester = episodeListFocusRequester,
+                onSelect = { playerState.onEvent(PlayerEvent.SelectEpisode(it)) },
+                onHide = { playerState.controls.hideEpisodes() }
             )
         }
     }
@@ -568,27 +641,29 @@ private fun BoxScope.Cues(cues: List<CharSequence>) =
     }
 
 @Composable
-fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState) =
+fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState, focusRequester: FocusRequester) =
     Row(Modifier.align(Alignment.Center), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
         IconVideoControl(
             resId = Res.drawable.vector_ten_seconds_left,
+            onClick = { playerState.seekTo(playerState.currentTime - 10f) },
             modifier = Modifier.size(50.dp),
             modifierI = Modifier.padding(8.dp),
-            onClick = { playerState.seekTo(playerState.currentTime - 10f) },
         )
 
         IconVideoControl(
             resId = if (playerState.isPlaying) Res.drawable.vector_pause else Res.drawable.vector_play,
-            modifier = Modifier.size(64.dp),
-            modifierI = Modifier.padding(4.dp),
             onClick = { playerState.togglePlayPause() },
+            modifierI = Modifier.padding(4.dp),
+            modifier = Modifier
+                .size(64.dp)
+                .focusRequester(focusRequester)
         )
 
         IconVideoControl(
             resId = Res.drawable.vector_ten_seconds_right,
+            onClick = { playerState.seekTo(playerState.currentTime + 10f) },
             modifier = Modifier.size(50.dp),
             modifierI = Modifier.padding(8.dp),
-            onClick = { playerState.seekTo(playerState.currentTime + 10f) },
         )
     }
 
@@ -644,20 +719,25 @@ private fun BoxScope.VolumeScale(playerState: VideoPlayerState) =
 
 @Composable
 private fun BoxScope.EpisodeList(
-    currentVoice: VideoVoice,
+    episodesCount: Int,
     currentEpisode: Int,
-    controls: VideoPlayerState.Controls,
+    isVisible: Boolean,
+    focusRequester: FocusRequester,
+    onHide: () -> Unit,
     onSelect: (Int) -> Unit,
 ) = AnimatedVisibility(
-    visible = controls.expandedEpisodes,
+    visible = isVisible,
     modifier = Modifier.align(Alignment.CenterEnd),
     enter = slideInHorizontally { it },
     exit = slideOutHorizontally { it }
 ) {
     val gridState = rememberLazyGridState()
 
-    LaunchedEffect(controls.expandedEpisodes) {
-        if (controls.expandedEpisodes) {
+    val focusRequesterFirst = remember(::FocusRequester)
+    val focusRequesterLast = remember(::FocusRequester)
+
+    LaunchedEffect(isVisible) {
+        if (isVisible) {
             gridState.scrollToItem((currentEpisode - 1).coerceAtLeast(0))
         }
     }
@@ -667,6 +747,8 @@ private fun BoxScope.EpisodeList(
             .fillMaxHeight()
             .width(300.dp)
             .background(Color.Black.copy(alpha = 0.85f))
+            .focusable()
+            .focusRequester(focusRequester)
             .pointerInput(Unit) { detectTapGestures() }
     ) {
         Column(
@@ -681,14 +763,10 @@ private fun BoxScope.EpisodeList(
                     color = Color.White,
                     style = MaterialTheme.typography.titleLarge
                 )
-                IconButton(
-                    onClick = { controls.expandedEpisodes = false },
-                    content = {
-                        VectorIcon(
-                            resId = Res.drawable.vector_close,
-                            tint = Color.White
-                        )
-                    }
+                ButtonFocused(
+                    content = Res.drawable.vector_close,
+                    onClick = onHide,
+                    modifier = Modifier.focusProperties { left = FocusRequester.Cancel }
                 )
             }
 
@@ -698,13 +776,37 @@ private fun BoxScope.EpisodeList(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
-                items(currentVoice.episodesCount) { index ->
+                val containerColor = Color.White.copy(alpha = 0.1f)
+                val labelColor = Color.White.copy(alpha = 0.8f)
+
+                items(episodesCount) { index ->
                     val episode = index + 1
                     val isCurrent = currentEpisode == episode
+                    val isFirst = index == 0
+                    val isLast = index == episodesCount - 1
+
+                    val interactionSource = remember(::MutableInteractionSource)
+                    val isFocused by interactionSource.collectIsFocusedAsState()
 
                     FilterChip(
                         selected = isCurrent,
                         onClick = { onSelect(episode) },
+                        interactionSource = interactionSource,
+                        modifier = Modifier
+                            .focusProperties {
+                                left = FocusRequester.Cancel
+
+                                if (isFirst) up = focusRequesterLast
+                                if (isLast) down = focusRequesterFirst
+                            }
+                            .then(
+                                other = when {
+                                    isFirst -> Modifier.focusRequester(focusRequesterFirst)
+                                    isLast -> Modifier.focusRequester(focusRequesterLast)
+                                    isCurrent -> Modifier.focusRequester(focusRequester)
+                                    else -> Modifier
+                                }
+                            ),
                         label = {
                             Text(
                                 text = episode.toString(),
@@ -715,11 +817,10 @@ private fun BoxScope.EpisodeList(
                             )
                         },
                         colors = FilterChipDefaults.filterChipColors(
-                            containerColor = Color.White.copy(alpha = 0.1f),
-                            labelColor = Color.White.copy(alpha = 0.8f),
+                            containerColor = if (isFocused) labelColor else containerColor,
+                            labelColor = if (isFocused) MaterialTheme.colorScheme.onSurface else labelColor,
                             selectedContainerColor = MaterialTheme.colorScheme.primary,
-                            selectedLabelColor = Color.White,
-                            selectedLeadingIconColor = Color.White
+                            selectedLabelColor = Color.White
                         ),
                         border = FilterChipDefaults.filterChipBorder(
                             enabled = true,
@@ -750,10 +851,14 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
             style = MaterialTheme.typography.bodyMedium
         )
 
+        val isFocused by playerState.controls.sliderInteractionSource.collectIsFocusedAsState()
+        val thumbColor = if (isFocused) MaterialTheme.colorScheme.primary else Color.White
+        val thumbSize = if (isFocused) 20.dp else 16.dp
+
         Slider(
             value = playerState.controls.sliderValue,
             interactionSource = playerState.controls.sliderInteractionSource,
-            onValueChange = playerState.controls::setSliderValue,
+            onValueChange = playerState.controls::onSetSliderValue,
             onValueChangeFinished = playerState.controls::onSliderActionFinished,
             modifier = Modifier.weight(1f),
             thumb = { sliderState ->
@@ -768,8 +873,8 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
                     content = {
                         Box(
                             modifier = Modifier
-                                .size(16.dp)
-                                .background(Color.White, CircleShape)
+                                .size(thumbSize)
+                                .background(thumbColor, CircleShape)
                         )
                     }
                 )
@@ -805,18 +910,17 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
             style = MaterialTheme.typography.bodyMedium
         )
 
-        IconButton(playerState::toggleZoom, Modifier.size(32.dp)) {
-            VectorIcon(
-                modifier = Modifier.fillMaxSize(),
-                tint = Color.White,
-                resId = if (playerState.isZoomed) Res.drawable.vector_fullscreen_exit
+        if (!playerState.controls.utils.isTV) {
+            ButtonFocused(
+                onClick = playerState::toggleZoom,
+                content = if (playerState.isZoomed) Res.drawable.vector_fullscreen_exit
                 else Res.drawable.vector_fullscreen
             )
         }
     }
 
 @Composable
-private fun VideoControls(state: WatchState, playerState: VideoPlayerState, onBack: () -> Unit) =
+private fun VideoControls(state: WatchState, playerState: VideoPlayerState, focusRequester: FocusRequester, onBack: () -> Unit) =
     AnimatedVisibility(
         visible = playerState.controls.isControlsVisible || playerState.isVideoEnded,
         modifier = Modifier.fillMaxSize(),
@@ -837,18 +941,13 @@ private fun VideoControls(state: WatchState, playerState: VideoPlayerState, onBa
                     .align(Alignment.TopCenter)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    IconButton(onBack) {
-                        VectorIcon(
-                            resId = Res.drawable.vector_arrow_back,
-                            tint = Color.White
-                        )
-                    }
+                    ButtonFocused(Res.drawable.vector_arrow_back, onClick = onBack)
 
                     Spacer(Modifier.width(8.dp))
 
                     state.currentVoice?.let {
                         Text(
-                            text = it.title,
+                            text = it.title.asComposableString(),
                             style = MaterialTheme.typography.titleLarge.copy(
                                 color = Color.White,
                                 fontWeight = FontWeight.Bold
@@ -858,12 +957,7 @@ private fun VideoControls(state: WatchState, playerState: VideoPlayerState, onBa
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    TextButton(playerState::toggleSpeed) {
-                        Text(
-                            text = playerState.controls.speedLabel,
-                            color = Color.White
-                        )
-                    }
+                    ButtonFocused(playerState.controls.speedLabel, onClick = playerState::toggleSpeed)
 
                     Quality(state, playerState)
 
@@ -873,22 +967,14 @@ private fun VideoControls(state: WatchState, playerState: VideoPlayerState, onBa
 
                     state.currentVoice?.let {
                         if (it.episodesCount > 1) {
-                            IconButton(
-                                onClick = { playerState.controls.expandedEpisodes = true },
-                                content = {
-                                    VectorIcon(
-                                        resId = Res.drawable.vector_list,
-                                        tint = Color.White
-                                    )
-                                }
-                            )
+                            ButtonFocused(Res.drawable.vector_list, onClick = playerState.controls::toggleEpisodes)
                         }
                     }
                 }
             }
 
-            if (showVideoControls && !playerState.isVideoEnded) {
-                SeekPlayPauseSeek(playerState)
+            if (playerState.controls.utils.showPlayPause && !playerState.isVideoEnded) {
+                SeekPlayPauseSeek(playerState, focusRequester)
             }
 
             TimeCurrentSliderTimeTotal(playerState)
@@ -908,15 +994,15 @@ private fun GestureEvents(playerState: VideoPlayerState) =
             }
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
-                    onDragCancel = { playerState.controls.isVolumeDragging = false },
-                    onDragEnd = { playerState.controls.isVolumeDragging = false },
+                    onDragCancel = { playerState.controls.hideVolume() },
+                    onDragEnd = { playerState.controls.hideVolume() },
                     onDragStart = { offset ->
                         val isRightPart = offset.x >= (size.width * 0.7f)
                         val isSafeFromTop = offset.y > (size.height * 0.15f)
                         val isSafeFromBottom = offset.y < (size.height * 0.85f)
 
                         if (isRightPart && isSafeFromTop && isSafeFromBottom) {
-                            playerState.controls.isVolumeDragging = true
+                            playerState.controls.showVolume()
                         }
                     },
                     onVerticalDrag = { change, dragAmount ->
@@ -931,79 +1017,120 @@ private fun GestureEvents(playerState: VideoPlayerState) =
 
 @Composable
 private fun Quality(state: WatchState, playerState: VideoPlayerState) = BoxWithConstraints {
-    val scrollState = rememberScrollState()
-
     state.currentQuality?.let { quality ->
-        TextButton(playerState.controls::toggleQuality) {
-            Text(
-                text = "${quality}p",
-                color = Color.White
-            )
-        }
+        ButtonFocused("${quality}p", onClick = playerState.controls::toggleQuality)
     }
 
-    AnimatedVisibility(
-        visible = playerState.controls.expandedQuality,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .requiredSize(0.dp)
-            .wrapContentSize(Alignment.TopCenter, true)
-    ) {
-        Column(
-            modifier = Modifier
-                .width(IntrinsicSize.Max)
-                .heightIn(max = maxHeight / 2)
-                .background(Color.Black.copy(alpha = 0.85f), MaterialTheme.shapes.medium)
-                .verticalScroll(scrollState)
-                .padding(vertical = 8.dp)
-        ) {
-            state.qualityList.fastForEach { quality ->
-                TextLabelVideo(
-                    text = "${quality}p",
-                    isSelected = quality == state.currentQuality,
-                    onClick = { playerState.onEvent(PlayerEvent.ChangeQuality(quality)) }
-                )
-            }
-        }
-    }
+    MenuPlayerItems(
+        items = state.qualityList,
+        expanded = playerState.controls.expandedQuality,
+        onItemClick = { _, item -> playerState.onEvent(PlayerEvent.ChangeQuality(item)) },
+        itemSelected = { _, item -> playerState.currentQuality == item },
+        itemLabel = { "${it}p" },
+        modifier = Modifier.width(80.dp),
+        maxHeight = maxHeight / 2
+    )
 }
 
 @Composable
 private fun Subtitles(state: WatchState, playerState: VideoPlayerState) = BoxWithConstraints {
-    val scrollState = rememberScrollState()
+    ButtonFocused(
+        content = Res.drawable.vector_subtitles,
+        onClick = playerState.controls::toggleSubtitles,
+        tint = if (playerState.selectedSubtitlesTrack == null) Color.White
+        else MaterialTheme.colorScheme.primary
+    )
 
-    IconButton(playerState.controls::toggleSubtitles) {
-        VectorIcon(
-            resId = Res.drawable.vector_subtitles,
-            tint = if (playerState.selectedSubtitlesTrack == null) Color.White
-            else MaterialTheme.colorScheme.primary
+    MenuPlayerItems(
+        items = state.subtitles,
+        expanded = playerState.controls.expandedSubtitles,
+        onItemClick = { index, _ -> playerState.showSubtitles(index) },
+        itemSelected = { index, item -> index == 0 && playerState.selectedSubtitlesTrack == null || item.name == playerState.selectedSubtitlesTrack },
+        itemLabel = SubtitleTrack::name,
+        modifier = Modifier.width(140.dp),
+        maxHeight = maxHeight / 2,
+        menuTextDefaults = MenuPlayerDefaults.MenuItemText(
+            maxLines = 2,
+            softWrap = true
+        )
+    )
+}
+
+@Composable
+private fun ButtonFocused(content: Any, modifier: Modifier = Modifier, tint: Color = Color.White, onClick: () -> Unit) {
+    val interactionSource = remember(::MutableInteractionSource)
+    val isFocused by interactionSource.collectIsFocusedAsState()
+
+    val containerColor = if (isFocused) MaterialTheme.colorScheme.primary else Color.Transparent
+    val contentColor = if (isFocused) MaterialTheme.colorScheme.onPrimary else Color.White
+
+    when (content) {
+        is DrawableResource -> IconButton(
+            onClick = onClick,
+            modifier = modifier,
+            interactionSource = interactionSource,
+            colors = IconButtonDefaults.iconButtonColors(containerColor, contentColor),
+            content = { VectorIcon(content, tint = if (isFocused) Color.White else tint) }
+        )
+
+        is String -> TextButton(
+            onClick = onClick,
+            modifier = modifier,
+            interactionSource = interactionSource,
+            colors = ButtonDefaults.textButtonColors(containerColor, contentColor),
+            content = { Text(content) }
         )
     }
+}
 
-    AnimatedVisibility(
-        visible = playerState.controls.expandedSubtitles,
-        enter = fadeIn(),
-        exit = fadeOut(),
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .requiredSize(0.dp)
-            .wrapContentSize(Alignment.TopCenter, true)
-    ) {
-        Column(
-            modifier = Modifier
-                .width(180.dp)
-                .heightIn(max = maxHeight / 2)
-                .background(Color.Black.copy(alpha = 0.85f), MaterialTheme.shapes.medium)
-                .verticalScroll(scrollState)
-                .padding(vertical = 8.dp)
-        ) {
-            state.subtitles.forEachIndexed { index, subtitle ->
-                TextLabelVideo(
-                    text = subtitle.name,
-                    isSelected = index == 0 && playerState.selectedSubtitlesTrack == null || subtitle.name == playerState.selectedSubtitlesTrack,
-                    onClick = { playerState.showSubtitles(index) }
+@Composable
+private fun AnimeLibAuth() {
+    val scope = rememberCoroutineScope()
+    val uriHandler = rememberLinkHandler()
+
+    var isLogging by rememberSaveable { mutableStateOf(false) }
+
+    DisposableEffect(Unit) {
+        val mainListener = ExternalUriHandler.listener
+
+        ExternalUriHandler.listener = { uri ->
+            if (uri.startsWith(ApiRoutes.REDIRECT_URI_LIB)) {
+                extractCodeFromUrl(uri)?.let { code ->
+                    isLogging = true
+
+                    scope.launch {
+                        try {
+                            AnimeLibAuth.getToken(code)
+                        } finally {
+                            isLogging = false
+                        }
+                    }
+                }
+            }
+        }
+
+        onDispose { ExternalUriHandler.listener = mainListener }
+    }
+
+    if (isLogging) {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            CircularProgressIndicator()
+        }
+    } else {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            Column(Modifier.width(240.dp), Arrangement.spacedBy(8.dp, Alignment.CenterVertically), Alignment.CenterHorizontally) {
+                Button(
+                    onClick = { uriHandler.onOpenLink(ApiRoutes.authUriLib) },
+                    content = {
+                        Text(stringResource(Res.string.text_login))
+                        VectorIcon(Res.drawable.vector_keyboard_arrow_right)
+                    }
+                )
+
+                Text(
+                    text = stringResource(Res.string.text_login_to_animelib),
+                    textAlign = TextAlign.Center,
+                    style = MaterialTheme.typography.bodySmall
                 )
             }
         }
@@ -1017,4 +1144,12 @@ private fun DialogAccept(onConfirm: () -> Unit, onDismiss: () -> Unit) = AlertDi
     text = { Text(stringResource(Res.string.text_explain_before_watch)) },
     dismissButton = { TextButton(onDismiss) { Text(stringResource(Res.string.text_dismiss)) } },
     confirmButton = { Button(onConfirm) { Text(stringResource(Res.string.text_confirm)) } }
+)
+
+@Composable
+private fun DialogLogout(onConfirm: () -> Unit, onDismiss: () -> Unit) = AlertDialog(
+    onDismissRequest = onDismiss,
+    text = { Text(stringResource(Res.string.text_sure_to_logout_animelib)) },
+    dismissButton = { TextButton(onDismiss) { Text(stringResource(Res.string.text_dismiss)) } },
+    confirmButton = { TextButton(onConfirm) { Text(stringResource(Res.string.text_confirm)) } }
 )
