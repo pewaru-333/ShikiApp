@@ -16,7 +16,6 @@ import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.material3.ExposedDropdownMenuBox
 import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.OutlinedTextField
@@ -29,6 +28,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -39,7 +41,6 @@ import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Score
 import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.jetbrains.compose.resources.StringResource
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.blank
@@ -68,38 +69,57 @@ fun DialogEditRate(
     onUpdate: (String) -> Unit = {},
     onDelete: (String) -> Unit = {},
     onDismiss: () -> Unit = {}
-) = AlertDialog(
-    onDismissRequest = onDismiss,
-    dismissButton = { TextButton(onDismiss) { Text(stringResource(Res.string.text_dismiss)) } },
-    confirmButton = {
-        TextButton(
-            content = { Text(stringResource(Res.string.text_save)) },
-            enabled = !state.status.isNullOrEmpty(),
-            onClick = {
-                if (isExists) onUpdate(state.id)
-                else onCreate(type)
+) {
+    val focusRequester = remember(::FocusRequester)
+    var requestedFocus by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        dismissButton = {
+            TextButton(
+                content = { Text(stringResource(Res.string.text_dismiss)) },
+                onClick = onDismiss,
+                modifier = Modifier
+                    .focusRequester(focusRequester)
+                    .onGloballyPositioned {
+                        if (!requestedFocus) {
+                            focusRequester.requestFocus()
+                            requestedFocus = true
+                        }
+                    }
+            )
+        },
+        confirmButton = {
+            TextButton(
+                content = { Text(stringResource(Res.string.text_save)) },
+                enabled = !state.status.isNullOrEmpty(),
+                onClick = {
+                    if (isExists) onUpdate(state.id)
+                    else onCreate(type)
+                }
+            )
+        },
+        title = {
+            Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
+                Text(stringResource(if (isExists) Res.string.text_change else Res.string.text_rate))
+
+                if (isExists) {
+                    IconButton(
+                        onClick = { onDelete(state.id) },
+                        content = { VectorIcon(Res.drawable.vector_trash) }
+                    )
+                }
             }
-        )
-    },
-    title = {
-        Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            Text(stringResource(if (isExists) Res.string.text_change else Res.string.text_rate))
-            if (isExists) {
-                IconButton(
-                    onClick = { onDelete(state.id) },
-                    content = { Icon(painterResource(Res.drawable.vector_trash), null) }
-                )
-            }
+        },
+        text = {
+            RateFieldsAll(
+                state = state,
+                type = type,
+                onEvent = onEvent
+            )
         }
-    },
-    text = {
-        RateFieldsAll(
-            state = state,
-            type = type,
-            onEvent = onEvent
-        )
-    }
-)
+    )
+}
 
 @Composable
 fun RateFieldsAll(state: NewRateState, type: LinkedType, onEvent: (RateEvent) -> Unit) =
