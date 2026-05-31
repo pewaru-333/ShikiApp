@@ -35,9 +35,9 @@
         tools:targetApi="36">
         <activity
             android:name=".MainActivity"
-            android:configChanges="locale|layoutDirection|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden"
+            android:configChanges="locale|layoutDirection|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden|navigation"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -62,6 +62,15 @@
                     android:pathSuffix="${authSuffix}"
                     android:scheme="${authScheme}" />
             </intent-filter>
+
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="ru.libapp.oauth" android:host="type" android:path="/callback" />
+            </intent-filter>
+
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
 
