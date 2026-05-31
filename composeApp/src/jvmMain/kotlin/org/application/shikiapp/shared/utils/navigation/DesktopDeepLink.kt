@@ -12,8 +12,8 @@ import java.net.Socket
 object DesktopDeepLink {
 
     private const val PORT = 47632
-    private const val SCHEME = "app"
     private const val DESKTOP_FILE_NAME = "shikiapp-deeplink"
+    private val SCHEMES = listOf("app", "ru.libapp.oauth")
 
     fun registerUriSchemeIfNeeded() {
         val system = System.getProperty("os.name").orEmpty().lowercase()
@@ -23,32 +23,34 @@ object DesktopDeepLink {
     }
 
     private fun registerWindows() {
-        val checkResult = runCommand("reg", "query", "HKCU\\SOFTWARE\\Classes\\$SCHEME", "/ve")
-        if (checkResult != null && checkResult.contains("URL:")) return
+        for (scheme in SCHEMES) {
+            val checkResult = runCommand("reg", "query", "HKCU\\SOFTWARE\\Classes\\$scheme", "/ve")
+            if (checkResult != null && checkResult.contains("URL:")) continue
 
-        val exePath = resolveExePath() ?: return
+            val exePath = resolveExePath() ?: return
 
-        // Стандарт
-        runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$SCHEME", "/ve", "/d", "URL:ShikiApp", "/f")
-        runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$SCHEME", "/v", "URL Protocol", "/d", "", "/f")
-        runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$SCHEME\\DefaultIcon", "/ve", "/d", "\"$exePath\",1", "/f")
+            // Стандарт
+            runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme", "/ve", "/d", "URL:ShikiApp", "/f")
+            runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme", "/v", "URL Protocol", "/d", "", "/f")
+            runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme\\DefaultIcon", "/ve", "/d", "\"$exePath\",1", "/f")
 
-        // Без cmd путь не добавляется в реестр
-        val commandKey = "HKCU\\SOFTWARE\\Classes\\$SCHEME\\shell\\open\\command"
-        val commandValue = "\\\"$exePath\\\" \\\"%1\\\""
+            // Без cmd путь не добавляется в реестр
+            val commandKey = "HKCU\\SOFTWARE\\Classes\\$scheme\\shell\\open\\command"
+            val commandValue = "\\\"$exePath\\\" \\\"%1\\\""
 
-        runCommand("cmd.exe", "/c", "reg add \"$commandKey\" /ve /d \"$commandValue\" /f")
+            runCommand("cmd.exe", "/c", "reg add \"$commandKey\" /ve /d \"$commandValue\" /f")
+        }
     }
 
     private fun registerLinux() {
         val appsDir = File(System.getProperty("user.home"), ".local/share/applications")
         val desktopFile = File(appsDir, "$DESKTOP_FILE_NAME.desktop")
 
-        if (desktopFile.exists()) return
-
         val exePath = resolveExePath() ?: return
 
         appsDir.mkdirs()
+
+        val mimeTypes = SCHEMES.joinToString(";") { "x-scheme-handler/$it" } + ";"
 
         desktopFile.writeText(
             """
@@ -57,13 +59,16 @@ object DesktopDeepLink {
             Name=ShikiApp
             Exec="$exePath" %u
             Terminal=false
-            MimeType=x-scheme-handler/$SCHEME;
+            MimeType=$mimeTypes
             NoDisplay=true
             """.trimIndent()
         )
 
         runCommand("update-desktop-database", appsDir.absolutePath)
-        runCommand("xdg-mime", "default", "$DESKTOP_FILE_NAME.desktop", "x-scheme-handler/$SCHEME")
+
+        for (scheme in SCHEMES) {
+            runCommand("xdg-mime", "default", "$DESKTOP_FILE_NAME.desktop", "x-scheme-handler/$scheme")
+        }
     }
 
     fun tryForwardToRunningInstance(uri: String) = try {
