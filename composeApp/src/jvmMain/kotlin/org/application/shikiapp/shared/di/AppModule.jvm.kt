@@ -10,7 +10,7 @@ import org.application.shikiapp.shared.utils.data.preferences.PreferencesDesktop
 actual abstract class PlatformContext
 
 class DesktopContext : PlatformContext()
-actual class AppModuleInitializer actual constructor(context: PlatformContext, private val appConfig: AppConfig) : AppModule {
+actual class AppModuleInitializer actual constructor(override val context: PlatformContext, private val appConfig: AppConfig) : AppModule {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     val preferencesDesktop = PreferencesDesktop()
 

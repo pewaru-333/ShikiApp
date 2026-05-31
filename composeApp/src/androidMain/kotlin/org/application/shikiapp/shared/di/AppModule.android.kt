@@ -12,7 +12,7 @@ import org.application.shikiapp.shared.utils.data.preferences.PreferencesAndroid
 
 actual typealias PlatformContext = Context
 
-actual class AppModuleInitializer actual constructor(context: Context, private val appConfig: AppConfig) : AppModule {
+actual class AppModuleInitializer actual constructor(override val context: Context, private val appConfig: AppConfig) : AppModule {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override val config: AppConfig

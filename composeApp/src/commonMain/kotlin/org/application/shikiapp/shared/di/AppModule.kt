@@ -4,6 +4,7 @@ import org.application.shikiapp.shared.AppConfig
 import org.application.shikiapp.shared.utils.data.preferences.Preferences
 
 interface AppModule {
+    val context: PlatformContext
     val config: AppConfig
     val preferences: Preferences
 }
