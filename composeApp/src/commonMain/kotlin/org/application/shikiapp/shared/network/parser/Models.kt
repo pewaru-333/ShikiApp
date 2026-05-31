@@ -26,6 +26,10 @@ data class KodikResultItem(
     val id: String,
     @SerialName("imdb_id")
     val imdbId: String,
+    @SerialName("title_orig")
+    val titleOrig: String,
+    @SerialName("other_title")
+    val otherTitle: String,
     val link: String,
     val translation: KodikTranslation,
     @SerialName("last_season")
@@ -138,4 +142,93 @@ data class CvhSources(
     val mpegLowUrl: String? = null,
     val mpegLowestUrl: String? = null,
     val mpegTinyUrl: String? = null
+)
+
+// ================================================================================================
+@Serializable
+data class AnimeLibSearchResult(
+    val data: List<AnimeLibResultItem>
+)
+
+@Serializable
+data class AnimeLibSearchResultItem(
+    val data: AnimeLibResultItem
+)
+
+@Serializable
+data class AnimeLibEpisodesList(
+    val data: List<AnimeLibEpisodeResultItem>
+)
+
+@Serializable
+data class AnimeLibTeamItem(
+    val id: Long,
+    val name: String
+)
+
+@Serializable
+data class AnimeLibResultItem(
+    val id: Long,
+    @SerialName("slug_url")
+    val slugUrl: String,
+    @SerialName("shikimori_href")
+    val shikimoriHref: String,
+    val teams: List<AnimeLibTeamItem> = emptyList()
+)
+
+@Serializable
+data class AnimeLibEpisodeResultItem(
+    val id: Long,
+    val name: String?,
+    val number: String,
+    @SerialName("item_number")
+    val itemNumber: Int
+)
+
+@Serializable
+data class AnimeLibEpisodeDetailResponse(
+    val data: AnimeLibEpisodeDetail
+)
+
+@Serializable
+data class AnimeLibEpisodeDetail(
+    val id: Long,
+    val players: List<AnimeLibPlayer> = emptyList()
+)
+
+@Serializable
+data class AnimeLibTranslationType(
+    val id: Int,
+    val label: String
+)
+
+@Serializable
+data class AnimeLibPlayer(
+    val id: Long,
+    val player: String,
+    val video: AnimeLibVideo? = null,
+    val team: AnimeLibTeamItem? = null,
+    @SerialName("translation_type")
+    val translationType: AnimeLibTranslationType? = null,
+    val subtitles: List<AnimeLibSubtitle> = emptyList()
+)
+
+@Serializable
+data class AnimeLibVideo(
+    val id: Long,
+    val quality: List<AnimeLibVideoQuality> = emptyList()
+)
+
+@Serializable
+data class AnimeLibVideoQuality(
+    val href: String,
+    val quality: Int
+)
+
+@Serializable
+data class AnimeLibSubtitle(
+    val id: Long,
+    val format: String,
+    val name: String,
+    val src: String
 )
