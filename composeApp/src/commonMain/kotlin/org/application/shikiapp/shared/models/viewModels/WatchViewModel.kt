@@ -22,13 +22,17 @@ import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.models.data.NewRate
 import org.application.shikiapp.shared.models.data.UserRate
 import org.application.shikiapp.shared.models.states.WatchState
+import org.application.shikiapp.shared.models.states.isLib
 import org.application.shikiapp.shared.models.ui.EpisodeModel
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
 import org.application.shikiapp.shared.models.ui.VideoSourceData
 import org.application.shikiapp.shared.models.ui.VideoVoice
+import org.application.shikiapp.shared.models.ui.mappers.toEpisodeVoices
 import org.application.shikiapp.shared.models.ui.mappers.toVideoVoice
 import org.application.shikiapp.shared.models.ui.mappers.toVideoVoices
+import org.application.shikiapp.shared.network.client.AnimeLibAuth
 import org.application.shikiapp.shared.network.client.Network
+import org.application.shikiapp.shared.network.parser.AnimeLibParser
 import org.application.shikiapp.shared.network.parser.CollapsParser
 import org.application.shikiapp.shared.network.parser.CvhParser
 import org.application.shikiapp.shared.network.parser.KodikParser
@@ -49,12 +53,11 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     private var watchedSeconds = 0
     private var markedAsWatched = false
 
-    fun selectSource(type: VideoSource) {
-        _state.update {
-            it.copy(
-                currentSource = it.sources.find { source -> source.type == type }
-            )
-        }
+    fun selectSource(type: VideoSource) = _state.update {
+        it.copy(
+            isEpisodesLoading = false,
+            currentSource = it.sources.find { source -> source.type == type }
+        )
     }
 
     fun clearSource() {
@@ -70,10 +73,14 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun selectVoice(id: Int) = _state.update {
-        it.copy(
-            currentVoice = it.currentSource?.voices?.find { voice -> voice.id == id }
-        )
+    fun selectVoice(id: Int) {
+        if (currentState.isLib) {
+            loadAnimeLibVideo(id)
+        } else {
+            _state.update { state ->
+                state.copy(currentVoice = state.currentSource?.voices?.find { it.id == id })
+            }
+        }
     }
 
     fun clearVoice() = _state.update {
@@ -120,7 +127,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun loadVideo(episode: EpisodeModel) {
+    private fun loadVideo(episode: EpisodeModel) {
         resetWatchTracking()
 
         _state.update {
@@ -137,6 +144,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                     VideoSource.KODIK -> KodikParser.getInstance()
                     VideoSource.COLLAPS -> CollapsParser.getInstance()
                     VideoSource.CVH -> CvhParser.getInstance()
+                    VideoSource.ANIMELIB -> AnimeLibParser.getInstance()
                     null -> return@launch
                 }
 
@@ -180,6 +188,11 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                 currentEpisode = null,
                 videoUrl = null,
                 audioTrackIndex = null,
+                subtitles = emptyList(),
+                qualityList = emptyList(),
+                fallbackUrls = emptyList(),
+                currentVoice = if (currentState.currentSource?.type == VideoSource.ANIMELIB) null
+                else currentState.currentVoice
             )
         }
     }
@@ -194,6 +207,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                 val kodik = KodikParser.getInstance()
                 val collaps = CollapsParser.getInstance()
                 val cvh = CvhParser.getInstance()
+                val animeLib = AnimeLibParser.getInstance()
 
                 val kodikResult = kodik.searchById(contentId)
                 if (kodikResult.isEmpty()) {
@@ -203,7 +217,14 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
                 val firstItem = kodikResult.first()
                 val imdbId = firstItem.imdbId
+                val titleOrig = "${firstItem.titleOrig}/${firstItem.otherTitle}"
                 val targetSeason = firstItem.lastSeason ?: 1
+
+                launch {
+                    if (!AnimeLibAuth.validateToken()) {
+                        AnimeLibAuth.refreshToken()
+                    }
+                }
 
                 val sources = supervisorScope {
                     val collapsDef = async {
@@ -231,7 +252,16 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                             ?.let { VideoSourceData(VideoSource.CVH, it) }
                     }
 
-                    listOf(collapsDef, kodikDef, cvhDef).mapNotNull { deferred ->
+                    val libDef = async {
+                        animeLib.searchByTitle(contentId, titleOrig)?.let { anime ->
+                            animeLib.searchById(anime.id.toString())
+                                .toVideoVoices(anime.teams)
+                                .takeIf { it.isNotEmpty() }
+                                ?.let { VideoSourceData(VideoSource.ANIMELIB, it) }
+                        }
+                    }
+
+                    listOf(collapsDef, kodikDef, cvhDef, libDef).mapNotNull { deferred ->
                         runCatching { deferred.await() }.getOrNull()
                     }
                 }
@@ -248,15 +278,80 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    private fun selectEpisode(number: Int) = currentState.currentVoice?.let { voice ->
-        voice.episodes.find { it.number == number }?.let(::loadVideo)
+    private fun loadAnimeLibVoices(episode: EpisodeModel) {
+        _state.update {
+            it.copy(
+                isEpisodesLoading = true,
+                selectedAnimelibEpisode = episode,
+                episodeVoices = emptyList()
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                val detailResponse = AnimeLibParser.getInstance()
+                    .getEpisodeDetails(episode.link)
+                    .toEpisodeVoices(episode.number)
+                    .sortedWith(voiceComparator)
+
+                _state.update {
+                    it.copy(
+                        isEpisodesLoading = false,
+                        episodeVoices = detailResponse
+                    )
+                }
+            } catch (_: Exception) {
+                _state.update {
+                    it.copy(
+                        isEpisodesLoading = false,
+                        episodeVoices = null
+                    )
+                }
+            }
+        }
+    }
+
+    private fun loadAnimeLibVideo(teamId: Int) {
+        val episode = currentState.selectedAnimelibEpisode ?: return
+        val voice = currentState.episodeVoices?.find { it.id == teamId }
+
+        _state.update { it.copy(currentVoice = voice) }
+
+        val videoEpisode = episode.copy(link = "${episode.link},$teamId")
+
+        loadVideo(videoEpisode)
+    }
+
+    fun clearEpisodeVoices() = _state.update {
+        it.copy(
+            episodeVoices = null,
+            selectedAnimelibEpisode = null
+        )
+    }
+
+    fun selectEpisode(episode: EpisodeModel) {
+        if (currentState.isLib) loadAnimeLibVoices(episode)
+        else loadVideo(episode)
+    }
+
+    private fun selectEpisode(number: Int) {
+        val voice = currentState.currentVoice ?: return
+        val episode = voice.episodes.find { it.number == number } ?: return
+
+        selectEpisode(episode)
     }
 
     private fun changeQuality(newQuality: Int) {
         val selectedSource = currentState.currentSource ?: return
         val selectedVoice = currentState.currentVoice ?: return
-        val episodeNumber = currentState.currentEpisode ?: return
-        val episode = selectedVoice.episodes.find { it.number == episodeNumber } ?: return
+        val episode = if (selectedSource.type == VideoSource.ANIMELIB) {
+            currentState.selectedAnimelibEpisode
+        } else {
+            currentState.currentEpisode?.let { number ->
+                selectedVoice.episodes.find { it.number == number }
+            }
+        } ?: return
+
 
         _state.update { it.copy(currentQuality = newQuality) }
 
@@ -269,9 +364,16 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                 val parser = when (selectedSource.type) {
                     VideoSource.KODIK -> KodikParser.getInstance()
                     VideoSource.CVH -> CvhParser.getInstance()
+                    VideoSource.ANIMELIB -> AnimeLibParser.getInstance()
                 }
 
-                val result = parser.getPlaylistLink(episode.link, newQuality)
+                val parseUrl = if (selectedSource.type == VideoSource.ANIMELIB) {
+                    "${episode.link},${selectedVoice.id}"
+                } else {
+                    episode.link
+                }
+
+                val result = parser.getPlaylistLink(parseUrl, newQuality)
 
                 _state.update {
                     it.copy(
@@ -286,6 +388,23 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
             } catch (_: Exception) {
                 stopWatching()
             }
+        }
+    }
+
+    fun toggleLogoutDialog() = _state.update { it.copy(showLogoutDialog = !it.showLogoutDialog) }
+
+    fun logout() {
+        Preferences.saveTokenLib(BLANK, BLANK)
+
+        _state.update {
+            it.copy(
+                showLogoutDialog = false,
+                currentSource = null,
+                currentVoice = null,
+                currentEpisode = null,
+                episodeVoices = null,
+                selectedAnimelibEpisode = null
+            )
         }
     }
 
