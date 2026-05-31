@@ -2,10 +2,17 @@ package org.application.shikiapp.shared.models.ui.mappers
 
 import org.application.shikiapp.shared.models.ui.EpisodeModel
 import org.application.shikiapp.shared.models.ui.VideoVoice
+import org.application.shikiapp.shared.network.parser.AnimeLibEpisodeDetailResponse
+import org.application.shikiapp.shared.network.parser.AnimeLibEpisodesList
+import org.application.shikiapp.shared.network.parser.AnimeLibTeamItem
 import org.application.shikiapp.shared.network.parser.CollapsTitleDetails
 import org.application.shikiapp.shared.network.parser.CvhPlaylistResponse
 import org.application.shikiapp.shared.network.parser.CvhSources
 import org.application.shikiapp.shared.network.parser.KodikResultItem
+import org.application.shikiapp.shared.utils.ResourceText
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.origin_original
+import shikiapp.composeapp.generated.resources.text_quality_adaptive
 
 fun KodikResultItem.toVideoVoice(): VideoVoice {
     val mappedEpisodes = mutableListOf<EpisodeModel>()
@@ -37,12 +44,14 @@ fun KodikResultItem.toVideoVoice(): VideoVoice {
 
     return VideoVoice(
         id = translation.id,
-        title = translation.title,
+        title = ResourceText.StaticString(translation.title),
         hasSubtitles = translation.type == "subtitles",
         hasDubbers = translation.type == "voice",
         episodes = mappedEpisodes,
         lastEpisode = lastEpisode ?: episodesCount ?: 1,
-        quality = quality?.trim()?.takeIf { it.isNotBlank() && it != "Неизвестно" }
+        quality = quality?.trim()
+            ?.takeIf { it.isNotBlank() && it != "Неизвестно" }
+            ?.let { ResourceText.StaticString(it) }
     )
 }
 
@@ -58,11 +67,11 @@ fun CollapsTitleDetails.toVideoVoices(targetSeason: Int): List<VideoVoice> {
 
             VideoVoice(
                 id = index,
-                title = voiceName,
+                title = ResourceText.StaticString(voiceName),
                 hasSubtitles = !subtitle.isNullOrEmpty(),
                 hasDubbers = true,
                 episodes = listOf(movieEpisode),
-                quality = quality,
+                quality = quality?.let { ResourceText.StaticString(it) },
                 lastEpisode = 1
             )
         }
@@ -88,11 +97,11 @@ fun CollapsTitleDetails.toVideoVoices(targetSeason: Int): List<VideoVoice> {
 
         VideoVoice(
             id = index,
-            title = voiceName,
+            title = ResourceText.StaticString(voiceName),
             hasDubbers = true,
             hasSubtitles = season.episodes.any { !it.subtitle.isNullOrEmpty() },
             episodes = availableEpisodes,
-            quality = quality,
+            quality = quality?.let { ResourceText.StaticString(it) },
             lastEpisode = availableEpisodes.maxOfOrNull(EpisodeModel::number) ?: 0
         )
     }
@@ -119,14 +128,95 @@ fun CvhPlaylistResponse.toVideoVoices(targetSeason: Int): List<VideoVoice> {
 
         VideoVoice(
             id = index,
-            title = studio.ifBlank { "Оригинал" },
+            title = if (studio.isNotBlank()) ResourceText.StaticString(studio)
+            else ResourceText.StringResource(Res.string.origin_original),
             hasDubbers = studio.isNotEmpty(),
             hasSubtitles = isSubtitles,
             episodes = mappedEpisodes,
-            quality = "Высокое",
+            quality = ResourceText.StringResource(Res.string.text_quality_adaptive),
             lastEpisode = mappedEpisodes.lastOrNull()?.number ?: 0
         )
     }
+}
+
+fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<VideoVoice> {
+    if (data.isEmpty()) return emptyList()
+
+    val mappedEpisodes = data
+        .asSequence()
+        .map {
+            EpisodeModel(
+                number = it.number.toIntOrNull() ?: it.itemNumber,
+                link = it.id.toString()
+            )
+        }
+        .distinctBy { it.number }
+        .sortedBy { it.number }
+        .toList()
+
+    return buildList(maxOf(1, teams.size)) {
+        add(
+            VideoVoice(
+                id = 0,
+                title = ResourceText.StaticString("AnimeLib"),
+                hasDubbers = true,
+                hasSubtitles = false,
+                episodes = mappedEpisodes,
+                quality = ResourceText.StringResource(Res.string.text_quality_adaptive),
+                lastEpisode = mappedEpisodes.lastOrNull()?.number ?: 0
+            )
+        )
+
+        for (i in 1 until teams.size) {
+            add(
+                VideoVoice(
+                    id = i,
+                    title = ResourceText.StaticString(teams[i].name),
+                    hasDubbers = true,
+                    hasSubtitles = false,
+                    episodes = emptyList(),
+                    quality = null,
+                    lastEpisode = 0
+                )
+            )
+        }
+    }
+}
+
+fun AnimeLibEpisodeDetailResponse.toEpisodeVoices(episodeNumber: Int): List<VideoVoice> {
+    return data.players
+        .filter { it.player.equals("Animelib", ignoreCase = true) }
+        .mapIndexed { index, player ->
+            val isSubtitles = player.translationType?.label?.contains("Субтитры", ignoreCase = true) == true
+            val teamName = player.team?.let { ResourceText.StaticString(it.name) }
+                ?: player.translationType?.let { ResourceText.StaticString(it.label) }
+                ?: ResourceText.StringResource(Res.string.origin_original)
+
+            val quality = player.video?.quality
+                ?.maxOfOrNull { it.quality }
+                ?.let {
+                    ResourceText.StaticString(
+                        value = when (it) {
+                            2160 -> "4K"
+                            1440 -> "2K"
+                            1080 -> "Full HD"
+                            720 -> "HD"
+                            else -> "${it}p"
+                        }
+                    )
+                }
+                ?: ResourceText.StringResource(Res.string.text_quality_adaptive)
+
+            VideoVoice(
+                id = player.team?.id?.toInt() ?: index,
+                title = teamName,
+                hasDubbers = !isSubtitles,
+                hasSubtitles = isSubtitles,
+                episodes = emptyList(),
+                quality = quality,
+                lastEpisode = episodeNumber
+            )
+        }
 }
 
 fun CvhSources.getQualityMap() = buildMap {
