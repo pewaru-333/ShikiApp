@@ -36,7 +36,11 @@ fun App(navigator: NavHostController = rememberNavController()) {
     DisposableEffect(Unit) {
         ExternalUriHandler.listener = { uri ->
             scope.launch {
-                navigator.navigate(NavUri(uri))
+                try {
+                    navigator.navigate(NavUri(uri))
+                } catch (_: Exception) {
+
+                }
             }
         }
 
