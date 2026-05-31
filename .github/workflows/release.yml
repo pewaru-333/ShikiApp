@@ -71,7 +71,7 @@ jobs:
           distribution: 'temurin'
 
       - name: 'Setup Gradle'
-        uses: gradle/actions/setup-gradle@v5
+        uses: gradle/actions/setup-gradle@v6
 
       - name: 'Grant execution permission to Gradle Wrapper'
         run: chmod +x gradlew
@@ -134,7 +134,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
 
       - name: 'Build Windows Portable Zip'
         run: ./gradlew :composeApp:packageZipDistributable
@@ -155,7 +155,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
 
-      - uses: gradle/actions/setup-gradle@v5
+      - uses: gradle/actions/setup-gradle@v6
       - run: chmod +x gradlew
 
       - name: 'Build Linux files'
@@ -167,7 +167,7 @@ jobs:
           tar -czvf ShikiApp-linux-portable.tar.gz ShikiApp/
 
       - name: 'Upload Linux Portable as artifact'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: linux-portable
           path: composeApp/build/compose/binaries/main-release/app/ShikiApp-linux-portable.tar.gz
@@ -185,22 +185,22 @@ jobs:
           fetch-depth: 0
 
       - name: 'Download ShikiApp APK'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ShikiApp-apk
 
       - name: 'Download DarkShiki APK'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: DarkShiki-apk
 
       - name: 'Download Windows Zip'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: windows-zip
 
       - name: 'Download Linux Tar'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: linux-portable
 
@@ -212,7 +212,7 @@ jobs:
           git push origin ${{ needs.get-version.outputs.version_name }}
 
       - name: 'Create GitHub release'
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.get-version.outputs.version_name }}
           body: ${{ needs.prepare-changelog.outputs.release_body }}
