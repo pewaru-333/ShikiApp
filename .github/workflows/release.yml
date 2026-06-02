@@ -42,7 +42,9 @@ jobs:
           fetch-depth: 0
 
       - name: 'Setup Python'
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
 
       - name: 'Generate changelog'
         id: generate_changelog
@@ -137,13 +139,13 @@ jobs:
       - uses: gradle/actions/setup-gradle@v6
 
       - name: 'Build Windows Portable Zip'
-        run: ./gradlew :composeApp:packageZipDistributable
+        run: ./gradlew :desktopApp:packageZipDistributable
 
       - name: 'Upload Windows Zip as artifact'
         uses: actions/upload-artifact@v7
         with:
           name: windows-zip
-          path: composeApp/build/distributions/*-portable.zip
+          path: composeApp/build/distributions/*-windows-portable.zip
 
   build-linux:
     runs-on: ubuntu-latest
