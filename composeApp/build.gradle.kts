@@ -1,4 +1,3 @@
-import org.jetbrains.compose.desktop.application.dsl.TargetFormat
 
 plugins {
     alias(libs.plugins.androidMultiplatformKotlinLibrary)
@@ -46,7 +45,16 @@ kotlin {
 
     compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
 
+    applyDefaultHierarchyTemplate()
+
     jvm()
+
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        target.binaries.framework {
+            baseName = "ComposeApp"
+            isStatic = true
+        }
+    }
 
     sourceSets {
         commonMain {
@@ -91,7 +99,15 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.activity.compose)
 
+                implementation(libs.ktor.client.okhttp)
+
                 implementation(libs.bundles.media3)
+            }
+        }
+
+        iosMain {
+            dependencies {
+                implementation(libs.ktor.client.darwin)
             }
         }
 
@@ -101,6 +117,8 @@ kotlin {
 
                 implementation(libs.kotlinx.coroutines.swing)
 
+                implementation(libs.ktor.client.okhttp)
+
                 // Video player libraries
                 implementation(libs.vlcj)
                 implementation(libs.vlcj.subs)
@@ -109,82 +127,8 @@ kotlin {
     }
 }
 
-compose {
-    desktop {
-        application {
-            mainClass = "MainKt"
-
-            buildTypes.release.proguard {
-                isEnabled.set(false)
-            }
-
-            nativeDistributions {
-                packageName = "ShikiApp"
-                packageVersion = "0.7.0"
-
-                appResourcesRootDir.set(project.layout.projectDirectory.dir("resources"))
-
-                targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
-
-                jvmArgs += listOfNotNull(
-                    "-Xms512m",
-                    "-Xmx2048m",
-
-                    "-XX:+UseZGC",
-                    "-XX:+ZGenerational",
-                    "-XX:+UseStringDeduplication",
-                    "-XX:+TieredCompilation",
-                    "-Xshare:auto",
-
-                    "-Dskiko.vsync.enabled=true",
-                    "-Dskiko.fps.limit=120"
-                )
-                modules(
-                    "java.logging",
-                    "java.net.http",
-                    "jdk.crypto.cryptoki",
-                    "jdk.crypto.ec",
-                    "jdk.localedata",
-                    "jdk.unsupported"
-                )
-
-                windows {
-                    iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.ico"))
-                }
-
-                linux {
-                    iconFile.set(project.file("src/commonMain/composeResources/drawable/icon.png"))
-                }
-            }
-        }
-    }
-}
-
-tasks.register<Zip>("packageZipDistributable") {
-    group = "compose desktop"
-    description = "Create .zip archive"
-
-    dependsOn("createReleaseDistributable")
-
-    val appName = "ShikiApp"
-    val buildDir = layout.buildDirectory.get().asFile
-
-    val appImageDir = file("$buildDir/compose/binaries/main-release/app/$appName")
-    from(appImageDir) {
-        into(appName)
-    }
-
-    val resourcesDir = project.layout.projectDirectory.dir("resources").asFile
-    from(resourcesDir) {
-        into("$appName/app/resources")
-    }
-
-    destinationDirectory.set(file("$buildDir/distributions"))
-    archiveFileName.set("$appName-portable.zip")
-
-    doLast {
-        println("Archive is ready at: ${destinationDirectory.get()}/${archiveFileName.get()}")
-    }
+compose.resources {
+    publicResClass = true
 }
 
 val generateLanguagesList by tasks.registering {

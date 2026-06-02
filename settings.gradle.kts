@@ -22,5 +22,7 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "ShikiApp"
-include(":androidApp")
 include(":composeApp")
+include(":androidApp")
+include(":desktopApp")
+include(":iosApp")

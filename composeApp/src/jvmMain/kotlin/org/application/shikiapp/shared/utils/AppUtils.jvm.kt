@@ -79,18 +79,17 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
 }
 
 fun initVlc() {
-    val resourcesDir = System.getProperty("compose.application.resources.dir")
-    val isDevEnvironment = resourcesDir == null
-    val archFolder = Platform.RESOURCE_PREFIX
+    val platform = Platform.RESOURCE_PREFIX
+    val resourcesDir = System.getProperty("compose.application.resources.dir")?.let(::File)
 
-    val vlcPath = if (isDevEnvironment) {
-        val userDir = System.getProperty("user.dir")
-        val baseDir = if (userDir.endsWith("composeApp")) File(userDir)
-        else File(userDir, "composeApp")
-
-        File(baseDir, "resources/vlc/$archFolder").absolutePath
+    val vlcPath = if (resourcesDir != null && resourcesDir.exists() && File(resourcesDir, platform).exists()) {
+        File(resourcesDir, platform).absolutePath
     } else {
-        File("$resourcesDir/vlc/$archFolder").absolutePath
+        val userDir = System.getProperty("user.dir")
+        val baseDir = if (userDir.endsWith("desktopApp")) File(userDir)
+        else File(userDir, "desktopApp")
+
+        File(baseDir, "files/vlc/$platform").absolutePath
     }
 
     val vlcDirectory = File(vlcPath)
