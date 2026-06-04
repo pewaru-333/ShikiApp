@@ -5,7 +5,7 @@ import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
 import org.application.shikiapp.shared.utils.ui.Formatter
-import java.time.OffsetDateTime
+import kotlin.time.Instant
 
 
 fun BaseRate.mapper(): UserRate {
@@ -17,7 +17,7 @@ fun BaseRate.mapper(): UserRate {
     return UserRate(
         chapters = chapters ?: 0,
         contentId = contentId.toString(),
-        createdAt = OffsetDateTime.parse(createdAt),
+        createdAt = Instant.parse(createdAt),
         episodes = episodes ?: 0,
         episodesSorting = anime?.episodes ?: manga?.chapters ?: 0,
         fullChapters = Formatter.getFullEpisodes(manga?.chapters, manga?.status),
@@ -34,7 +34,7 @@ fun BaseRate.mapper(): UserRate {
         status = status,
         text = text,
         title = if (ruTitle.isNullOrEmpty()) title.orEmpty() else ruTitle,
-        updatedAt = OffsetDateTime.parse(updatedAt),
+        updatedAt = Instant.parse(updatedAt),
         volumes = volumes ?: 0
     )
 }

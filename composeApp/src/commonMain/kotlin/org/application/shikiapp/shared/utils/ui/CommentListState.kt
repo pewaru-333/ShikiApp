@@ -18,11 +18,12 @@ import androidx.paging.compose.LazyPagingItems
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.collectLatest
-import kotlinx.coroutines.flow.filter
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import org.application.shikiapp.shared.models.ui.Comment
+import kotlin.time.Clock
 
 class CommentListState(
     val comments: LazyPagingItems<Comment>,
@@ -47,11 +48,11 @@ class CommentListState(
                     focusRequester.requestFocus()
 
                     snapshotFlow { comments.loadState.refresh }
-                        .filter { it is LoadState.Loading }
+                        .filterIsInstance<LoadState.Loading>()
                         .firstOrNull()
 
                     snapshotFlow { comments.loadState.refresh }
-                        .filter { it is LoadState.NotLoading }
+                        .filterIsInstance<LoadState.NotLoading>()
                         .firstOrNull()
 
                     yield()
@@ -60,7 +61,7 @@ class CommentListState(
                         listState.animateScrollToItem(0)
                     }
                 } else {
-                    errorTrigger = System.currentTimeMillis()
+                    errorTrigger = Clock.System.now().toEpochMilliseconds()
                 }
             }
         }

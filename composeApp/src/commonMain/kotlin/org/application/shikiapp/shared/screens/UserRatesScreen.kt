@@ -263,7 +263,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 
                             HorizontalPager(pagerState, Modifier.weight(1f)) { page ->
                                 UserRateList(
-                                    rates = rates.getOrDefault(WatchStatus.entries[page], emptyList()),
+                                    rates = rates[WatchStatus.entries[page]] ?: emptyList(),
                                     listState = listStates[page],
                                     gridState = gridStates[page],
                                     type = type,

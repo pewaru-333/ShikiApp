@@ -7,6 +7,8 @@ import io.ktor.client.statement.HttpResponse
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 // https://github.com/brudaswen/ktor-client-throttle
 interface HttpRequestThrottler {
@@ -27,7 +29,7 @@ class AppThrottler(
 
         do {
             waitTime = mutex.withLock {
-                val now = System.currentTimeMillis()
+                val now = Clock.System.now().toEpochMilliseconds()
 
                 timestamps.removeAll { now - it > 60_000 }
 
@@ -47,7 +49,7 @@ class AppThrottler(
             }
 
             if (waitTime > 0) {
-                delay(waitTime)
+                delay(waitTime.milliseconds)
             }
         } while (waitTime > 0)
     }

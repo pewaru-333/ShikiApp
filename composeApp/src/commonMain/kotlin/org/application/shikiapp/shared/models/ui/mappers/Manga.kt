@@ -33,7 +33,7 @@ import org.application.shikiapp.shared.utils.ui.Formatter
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_manga
 import shikiapp.composeapp.generated.resources.text_ranobe
-import java.time.OffsetDateTime
+import kotlin.time.Clock
 
 object MangaMapper {
     fun create(
@@ -135,8 +135,8 @@ object MangaMapper {
                     rewatches = it.rewatches,
                     rewatchExists = it.rewatches > 0,
                     fullChapters = BLANK,
-                    createdAt = OffsetDateTime.now(),
-                    updatedAt = OffsetDateTime.now()
+                    createdAt = Clock.System.now(),
+                    updatedAt = Clock.System.now()
                 )
             }
         ),

@@ -89,6 +89,7 @@ kotlin {
                 implementation(libs.coil.compose)
                 implementation(libs.coil.network.ktor)
                 implementation(libs.icu4j)
+                implementation(libs.kotlinx.datetime)
                 implementation(libs.ksoup)
                 implementation(libs.material.preferences)
                 implementation(libs.zoomable)

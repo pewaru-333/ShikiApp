@@ -37,7 +37,7 @@ import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
-import java.net.URI
+import kotlin.jvm.JvmSuppressWildcards
 import kotlin.reflect.KType
 import kotlin.reflect.typeOf
 
@@ -70,7 +70,7 @@ fun sharedImageLoader(
 
 fun generateRandomString(length: Int = 40): String {
     val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    return String(CharArray(length) { allowedChars.random() })
+    return CharArray(length) { allowedChars.random() }.concatToString()
 }
 
 fun generateCodeChallenge(verifier: String) = verifier.encodeUtf8()
@@ -79,8 +79,10 @@ fun generateCodeChallenge(verifier: String) = verifier.encodeUtf8()
     .trimEnd('=')
 
 fun extractCodeFromUrl(url: String): String? {
-    val query = URI(url).query ?: return null
+    val query = url.substringAfter('?', BLANK)
+        .substringBefore('#')
 
+    if (query.isEmpty()) return null
     return query.splitToSequence('&')
         .map { it.split('=', limit = 2) }
         .firstOrNull { it.size == 2 && it[0] == "code" }
@@ -145,6 +147,8 @@ expect object AppLocale {
 expect fun fromHtml(text: String?): AnnotatedString
 
 expect fun getDefaultLocale(context: PlatformContext): String
+
+expect fun formatRelativeDays(daysAgo: Int): String
 
 expect fun isDynamicColorAvailable(): Boolean
 

@@ -49,8 +49,8 @@ import org.application.shikiapp.shared.utils.extensions.toggle
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.serializableNavType
 import org.application.shikiapp.shared.utils.ui.Formatter
-import java.util.concurrent.ConcurrentHashMap
 import kotlin.reflect.typeOf
+import kotlin.time.Duration.Companion.milliseconds
 
 class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
     private val args = saved.toRoute<Screen.Catalog>(
@@ -92,7 +92,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
         .stateIn(viewModelScope, SharingStarted.Lazily, CatalogState())
 
     private val _filters = MutableStateFlow(CatalogItem.entries.associateWith { FiltersState() })
-    private val _flowCache = ConcurrentHashMap<CatalogItem, Flow<PagingData<BasicContent>>>()
+    private val _flowCache = mutableMapOf<CatalogItem, Flow<PagingData<BasicContent>>>()
 
     val currentFilters = combine(_state, _filters) { state, map ->
         map[state.menu] ?: FiltersState()
@@ -121,7 +121,7 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
         _filters
             .map { it[menu] ?: FiltersState() }
             .distinctUntilChanged()
-            .debounce(350L)
+            .debounce(350L.milliseconds)
             .flatMapLatest { filters -> createPagingFlow(menu, filters) }
             .cachedIn(viewModelScope)
     }

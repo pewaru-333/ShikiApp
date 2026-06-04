@@ -4,6 +4,7 @@ import android.Manifest
 import android.app.LocaleManager
 import android.content.pm.ActivityInfo
 import android.graphics.Color
+import android.icu.text.RelativeDateTimeFormatter
 import android.os.Build
 import android.os.LocaleList
 import androidx.activity.ComponentActivity
@@ -218,5 +219,14 @@ actual fun HideSystemBars() {
         onDispose {
             insetsController.show(WindowInsetsCompat.Type.systemBars())
         }
+    }
+}
+
+actual fun formatRelativeDays(daysAgo: Int): String {
+    val formatter = RelativeDateTimeFormatter.getInstance()
+    return when (daysAgo) {
+        0 -> formatter.format(RelativeDateTimeFormatter.Direction.THIS, RelativeDateTimeFormatter.AbsoluteUnit.DAY)
+        1 -> formatter.format(RelativeDateTimeFormatter.Direction.LAST, RelativeDateTimeFormatter.AbsoluteUnit.DAY)
+        else -> formatter.format(daysAgo.toDouble(), RelativeDateTimeFormatter.Direction.LAST, RelativeDateTimeFormatter.RelativeUnit.DAYS)
     }
 }

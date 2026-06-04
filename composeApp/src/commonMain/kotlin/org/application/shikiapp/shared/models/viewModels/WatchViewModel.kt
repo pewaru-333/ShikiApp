@@ -40,6 +40,7 @@ import org.application.shikiapp.shared.network.parser.KodikResultItem
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.VideoSource
 import org.application.shikiapp.shared.utils.navigation.Screen
+import kotlin.time.Duration.Companion.milliseconds
 
 class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     private val contentId = saved.toRoute<Screen.Watch>().contentId
@@ -413,7 +414,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
         countTimeJob = viewModelScope.launch {
             while (isActive) {
-                delay(1000L)
+                delay(1000.milliseconds)
                 watchedSeconds++
 
                 if (watchedSeconds >= 30) {

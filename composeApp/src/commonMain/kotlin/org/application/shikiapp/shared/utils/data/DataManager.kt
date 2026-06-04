@@ -4,6 +4,7 @@ import io.ktor.client.request.prepareGet
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.HttpStatusCode
 import org.application.shikiapp.shared.network.client.Network
+import kotlin.time.Clock
 
 class DataManager(private val manager: IDataManager) {
     suspend fun downloadImage(url: String): Boolean {
@@ -16,7 +17,7 @@ class DataManager(private val manager: IDataManager) {
                 val name = response.call.request.url.segments
                     .lastOrNull()
                     ?.takeIf(String::isNotBlank)
-                    ?: "img_${System.currentTimeMillis()}.jpg"
+                    ?: "img_${Clock.System.now().toEpochMilliseconds()}.jpg"
 
                 manager.saveImage(response.readRawBytes(), name) { path = it }
             }

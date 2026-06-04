@@ -34,7 +34,7 @@ import org.application.shikiapp.shared.utils.enums.Menu
 import org.application.shikiapp.shared.utils.enums.Palette
 import org.application.shikiapp.shared.utils.enums.Theme
 import org.application.shikiapp.shared.utils.enums.WatchStatus
-import org.application.shikiapp.shared.utils.extensions.getLocalizedName
+import org.application.shikiapp.shared.utils.extensions.getLocaleLocalizedName
 import org.application.shikiapp.shared.utils.isDynamicColorAvailable
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
@@ -56,7 +56,6 @@ import shikiapp.composeapp.generated.resources.preference_user_rates_start_statu
 import shikiapp.composeapp.generated.resources.preference_user_rates_start_type
 import shikiapp.composeapp.generated.resources.text_palette
 import shikiapp.composeapp.generated.resources.text_settings
-import java.util.Locale
 
 @Composable
 fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
@@ -215,8 +214,8 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                         onValueChange = Preferences::setLanguage,
                         values = AppLanguages.list,
                         title = { Text(stringResource(Res.string.preference_language)) },
-                        summary = { Text(Locale.forLanguageTag(locale).getLocalizedName()) },
-                        valueToText = { AnnotatedString(Locale.forLanguageTag(it).getLocalizedName()) }
+                        summary = { Text(locale.getLocaleLocalizedName()) },
+                        valueToText = { AnnotatedString(locale.getLocaleLocalizedName()) }
                     )
                 }
 

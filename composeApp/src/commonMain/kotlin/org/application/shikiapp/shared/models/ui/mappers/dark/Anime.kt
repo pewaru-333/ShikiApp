@@ -38,7 +38,7 @@ import org.application.shikiapp.shared.utils.ui.Formatter
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_minutes_short
 import shikiapp.composeapp.generated.resources.text_unknown
-import java.time.OffsetDateTime
+import kotlin.time.Clock
 
 object AnimeMapper {
     fun create(
@@ -170,8 +170,8 @@ object AnimeMapper {
                         rewatches = it.rewatches,
                         rewatchExists = it.rewatches > 0,
                         fullChapters = BLANK,
-                        createdAt = OffsetDateTime.now(),
-                        updatedAt = OffsetDateTime.now()
+                        createdAt = Clock.System.now(),
+                        updatedAt = Clock.System.now()
                     )
                 }
             ),

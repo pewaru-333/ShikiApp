@@ -1,80 +1,56 @@
 package org.application.shikiapp.shared.utils.ui
 
-import androidx.compose.ui.text.intl.Locale
 import com.fleeksoft.ksoup.Ksoup
-import com.ibm.icu.text.RelativeDateTimeFormatter
-import com.ibm.icu.util.ULocale
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.daysUntil
+import kotlinx.datetime.toLocalDateTime
+import kotlinx.datetime.todayIn
+import kotlinx.datetime.yearsUntil
 import org.application.shikiapp.shared.models.data.Date
 import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ResourceText
+import org.application.shikiapp.shared.utils.enums.DateStyle
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.OpinionType
 import org.application.shikiapp.shared.utils.enums.Season
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.WatchStatus
+import org.application.shikiapp.shared.utils.extensions.format
 import org.application.shikiapp.shared.utils.extensions.safeEquals
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
+import org.application.shikiapp.shared.utils.formatRelativeDays
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.blank
 import shikiapp.composeapp.generated.resources.plural_years_old
 import shikiapp.composeapp.generated.resources.text_unknown
 import shikiapp.composeapp.generated.resources.text_year_in
-import java.text.NumberFormat
-import java.time.Instant
-import java.time.LocalDate
-import java.time.MonthDay
-import java.time.OffsetDateTime
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-import java.time.format.FormatStyle
-import java.time.temporal.ChronoUnit
+import kotlin.time.Clock
+import kotlin.time.Instant
 
 object Formatter {
-    private val zoneId = ZoneId.systemDefault()
-
-    private val scoreFormatter by lazy {
-        NumberFormat.getNumberInstance(java.util.Locale.forLanguageTag(Locale.current.toLanguageTag())).apply {
-            minimumFractionDigits = 2
-            maximumFractionDigits = 2
-        }
-    }
-
     fun convertDate(
-        from: Long = OffsetDateTime.now().toInstant().toEpochMilli(),
-        now: Long = System.currentTimeMillis()
+        fromMillis: Long = Clock.System.now().toEpochMilliseconds(),
+        nowMillis: Long = Clock.System.now().toEpochMilliseconds()
     ): String {
-        val fromDate = Instant.ofEpochMilli(from).atZone(zoneId).toLocalDate()
-        val nowDate = Instant.ofEpochMilli(now).atZone(zoneId).toLocalDate()
-        val diffDays = ChronoUnit.DAYS.between(fromDate, nowDate)
+        val timeZone = TimeZone.currentSystemDefault()
 
-        if (diffDays !in 0L..7L) {
-            return fromDate.format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
-        }
+        val fromDate = Instant.fromEpochMilliseconds(fromMillis).toLocalDateTime(timeZone).date
+        val nowDate = Instant.fromEpochMilliseconds(nowMillis).toLocalDateTime(timeZone).date
 
-        val formatter = RelativeDateTimeFormatter.getInstance(ULocale.getDefault())
-        return when (diffDays) {
-            0L -> formatter.format(
-                RelativeDateTimeFormatter.Direction.THIS,
-                RelativeDateTimeFormatter.AbsoluteUnit.DAY
-            )
+        val diffDays = fromDate.daysUntil(nowDate)
 
-            1L -> formatter.format(
-                RelativeDateTimeFormatter.Direction.LAST,
-                RelativeDateTimeFormatter.AbsoluteUnit.DAY
-            )
-
-            else -> formatter.format(
-                diffDays.toDouble(),
-                RelativeDateTimeFormatter.Direction.LAST,
-                RelativeDateTimeFormatter.RelativeUnit.DAYS
-            )
+        return if (diffDays !in 0..7) {
+            fromDate.format(DateStyle.MEDIUM)
+        } else {
+            formatRelativeDays(diffDays)
         }
     }
 
@@ -82,15 +58,19 @@ object Formatter {
         date !is String -> BLANK
 
         offset -> {
-            val millis = OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-                .toInstant()
-                .toEpochMilli()
-
-            convertDate(millis)
+            try {
+                convertDate(Instant.parse(date).toEpochMilliseconds())
+            } catch (_: Exception) {
+                BLANK
+            }
         }
 
         else -> {
-            LocalDate.parse(date).format(DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM))
+            try {
+                LocalDate.parse(date).format(DateStyle.MEDIUM)
+            } catch (_: Exception) {
+                BLANK
+            }
         }
     }
 
@@ -102,17 +82,17 @@ object Formatter {
 
         val age = run {
             val bYear = birthday.year ?: return@run null
-            val dYear = actualDeathday?.year ?: LocalDate.now().year
+            val dYear = actualDeathday?.year ?: Clock.System.todayIn(TimeZone.currentSystemDefault()).year
 
             if (birthday.day != null && birthday.month != null) {
-                val bDate = LocalDate.of(bYear, birthday.month, birthday.day)
+                val bDate = LocalDate(bYear, birthday.month, birthday.day)
                 val dDate = if (actualDeathday?.day != null && actualDeathday.month != null) {
-                    LocalDate.of(dYear, actualDeathday.month, actualDeathday.day)
+                    LocalDate(dYear, actualDeathday.month, actualDeathday.day)
                 } else {
-                    if (actualDeathday == null) LocalDate.now() else null
+                    if (actualDeathday == null) Clock.System.todayIn(TimeZone.currentSystemDefault()) else null
                 }
 
-                dDate?.let { ChronoUnit.YEARS.between(bDate, it).toInt() } ?: (dYear - bYear)
+                dDate?.let { bDate.yearsUntil(it) } ?: (dYear - bYear)
             } else {
                 dYear - bYear
             }
@@ -124,16 +104,13 @@ object Formatter {
             val (day, month, year) = date
             val baseString = when {
                 day != null && month != null && year != null -> {
-                    val formatter = DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG)
-                    val formatted = LocalDate.of(year, month, day).format(formatter)
+                    val formatted = LocalDate(year, month, day).format(DateStyle.LONG)
 
                     ResourceText.StaticString(formatted)
                 }
 
                 day != null && month != null -> {
-                    val locale = Locale.current.toLanguageTag()
-                    val pattern = DateTimeFormatter.ofPattern("d MMMM", java.util.Locale.forLanguageTag(locale))
-                    val formatted = MonthDay.of(month, day).format(pattern)
+                    val formatted = LocalDate(2000, month, day).format("d MMMM") // 2000 - високосный - хак для работы
 
                     ResourceText.StaticString(formatted)
                 }
@@ -385,7 +362,7 @@ object Formatter {
     }
 
     fun getOngoingSeason(): String {
-        val currentDate = LocalDate.now()
+        val currentDate = Clock.System.todayIn(TimeZone.currentSystemDefault())
 
         val currentSeason = Season.entries.first { currentDate.month in it.months }
         val previousSeason = Season.entries.getOrNull(currentSeason.ordinal - 1) ?: Season.AUTUMN
@@ -400,16 +377,24 @@ object Formatter {
         return "${currentSeasonName}_$currentYear,${previousSeasonName}_$previousYear"
     }
 
-    fun getNextEpisode(date: Any?): String = if (date !is String) BLANK
-    else OffsetDateTime.parse(date, DateTimeFormatter.ISO_OFFSET_DATE_TIME)
-        .format(DateTimeFormatter.ofPattern("d MMMM, H:mm"))
+    fun getNextEpisode(date: Any?): String = when (date) {
+        is String -> try {
+            Instant.parse(date)
+                .toLocalDateTime(TimeZone.currentSystemDefault())
+                .format("d MMMM, H:mm")
+        } catch (_: Exception) {
+            BLANK
+        }
+
+        else -> BLANK
+    }
 
     fun getFullEpisodes(full: Int? = 0, status: String? = Status.ONGOING.name.lowercase()) =
         if (Status.ONGOING.safeEquals(status) && full == 0) "?" else full.toString()
 
     fun convertScore(score: Any?): String = when (score) {
         is String -> score.replace(".", ",")
-        is Double -> scoreFormatter.format(score)
+        is Double -> score.format()
         else -> BLANK
     }
 

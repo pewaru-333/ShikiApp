@@ -12,6 +12,7 @@ import org.application.shikiapp.shared.models.ui.mappers.getQualityMap
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
+import kotlin.concurrent.Volatile
 
 class CvhParser private constructor(client: HttpClient) : BaseParser(client) {
     companion object {

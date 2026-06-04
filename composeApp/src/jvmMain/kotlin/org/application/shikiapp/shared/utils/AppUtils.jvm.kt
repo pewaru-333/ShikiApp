@@ -19,6 +19,7 @@ import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
+import com.ibm.icu.text.RelativeDateTimeFormatter
 import com.sun.jna.Platform
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
@@ -64,8 +65,8 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
                     node.childNodes().forEach { parseNode(it, builder) }
                 }
                 "br" -> builder.append("\n")
-                "p" -> {
-                    builder.append("\n")
+                "p", "div" -> {
+                    if (builder.length > 0) builder.append("\n")
                     node.childNodes().forEach { parseNode(it, builder) }
                     builder.append("\n")
                 }
@@ -171,3 +172,13 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) = Unit
 
 @Composable
 actual fun HideSystemBars() = Unit
+
+actual fun formatRelativeDays(daysAgo: Int): String {
+    val formatter = RelativeDateTimeFormatter.getInstance()
+
+    return when (daysAgo) {
+        0 -> formatter.format(RelativeDateTimeFormatter.Direction.THIS, RelativeDateTimeFormatter.AbsoluteUnit.DAY)
+        1 -> formatter.format(RelativeDateTimeFormatter.Direction.LAST, RelativeDateTimeFormatter.AbsoluteUnit.DAY)
+        else -> formatter.format(daysAgo.toDouble(), RelativeDateTimeFormatter.Direction.LAST, RelativeDateTimeFormatter.RelativeUnit.DAYS)
+    }
+}

@@ -1,5 +1,8 @@
 package org.application.shikiapp.shared.models.data
 
+import kotlinx.datetime.LocalDate
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.atStartOfDayIn
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -15,8 +18,6 @@ import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
-import java.time.LocalDate
-import java.time.ZoneOffset
 
 @Serializable
 data class Franchise(
@@ -63,10 +64,9 @@ object NodeDateSerializer : KSerializer<Long> {
                 val day = element["day"]?.jsonPrimitive?.intOrNull ?: 1
 
                 try {
-                    LocalDate.of(year, month, day)
-                        .atStartOfDay()
-                        .toInstant(ZoneOffset.UTC)
-                        .toEpochMilli()
+                    LocalDate(year, month, day)
+                        .atStartOfDayIn(TimeZone.UTC)
+                        .toEpochMilliseconds()
                 } catch (_: Exception) {
                     0L
                 }

@@ -19,12 +19,10 @@ import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.Kind
-import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
 import org.application.shikiapp.shared.utils.fromHtml
 import org.application.shikiapp.shared.utils.ui.Formatter
-import java.util.EnumMap
 
 object CharacterMapper {
     suspend fun create(
@@ -46,7 +44,7 @@ object CharacterMapper {
             manga = character.mangas.map(MangaBasic::toContent),
             poster = image.orEmpty(),
             relatedList = relatedList,
-            relatedMap = relatedList.groupByTo(EnumMap(LinkedType::class.java), Related::linkedType),
+            relatedMap = relatedList.groupBy(Related::linkedType),
             russian = character.russian,
             seyu = character.seyu.map(BasicInfo::toBasicContent),
             url = "${ApiRoutes.workingBaseUrl}${character.url}"

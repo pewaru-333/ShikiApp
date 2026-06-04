@@ -12,6 +12,7 @@ import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.basicJson
+import kotlin.concurrent.Volatile
 
 class CollapsParser private constructor(client: HttpClient) : BaseParser(client) {
 

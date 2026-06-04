@@ -3,13 +3,13 @@ package org.application.shikiapp.shared.models.ui
 import androidx.compose.runtime.Immutable
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.jetbrains.compose.resources.StringResource
-import java.time.OffsetDateTime
+import kotlin.time.Instant
 
 @Immutable
 data class UserRate(
     val chapters: Int,
     val contentId: String,
-    val createdAt: OffsetDateTime,
+    val createdAt: Instant,
     val episodes: Int,
     val episodesSorting: Int,
     val fullChapters: String,
@@ -25,6 +25,6 @@ data class UserRate(
     val status: String,
     val text: String?,
     val title: String,
-    val updatedAt: OffsetDateTime,
+    val updatedAt: Instant,
     val volumes: Int
 )

@@ -4,6 +4,7 @@ import io.ktor.client.HttpClient
 import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.utils.BLANK
 import kotlin.io.encoding.Base64
+import kotlin.jvm.JvmStatic
 
 abstract class BaseParser(protected val client: HttpClient) {
     abstract val token: String

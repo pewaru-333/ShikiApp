@@ -19,6 +19,8 @@ import kotlinx.coroutines.delay
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
+import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
 class VideoPlayerState {
@@ -308,7 +310,7 @@ class VideoPlayerState {
         }
 
         fun refreshInteractionMillis() {
-            interactionMillis = System.currentTimeMillis()
+            interactionMillis = Clock.System.now().toEpochMilliseconds()
         }
 
         internal fun hideControls() {
@@ -342,7 +344,7 @@ class VideoPlayerState {
 
             LaunchedEffect(volume) {
                 if (isVolumeDragging) {
-                    delay(2000L)
+                    delay(2000.milliseconds)
                     isVolumeDragging = false
                 }
             }
@@ -355,7 +357,7 @@ class VideoPlayerState {
 
             LaunchedEffect(isControlsVisible, isPlaying, isSliderDragging, isVolumeDragging, expandedEpisodes, interactionMillis) {
                 if (isControlsVisible && isPlaying && !isSliderDragging && !isVolumeDragging && !expandedEpisodes) {
-                    delay(utils.visibilityDelay)
+                    delay(utils.visibilityDelay.milliseconds)
                     hideControls()
                 }
             }

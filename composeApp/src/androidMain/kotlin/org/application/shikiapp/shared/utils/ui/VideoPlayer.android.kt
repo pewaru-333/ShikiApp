@@ -33,6 +33,7 @@ import androidx.media3.ui.compose.ContentFrame
 import kotlinx.coroutines.delay
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.utils.BLANK
+import kotlin.time.Duration.Companion.milliseconds
 
 @UnstableApi
 class VideoPlayerController(private val context: Context, private val state: VideoPlayerState) {
@@ -242,7 +243,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
                 state.updateBuffer(exoPlayer.bufferedPercentage / 100f)
             }
 
-            delay(500L)
+            delay(500.milliseconds)
         }
     }
 

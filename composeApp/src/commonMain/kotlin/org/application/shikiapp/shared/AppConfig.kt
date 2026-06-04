@@ -13,8 +13,8 @@ data class AppConfig(
 ) {
     companion object {
         private val ShikiApp = AppConfig(
-            baseUrl = "https://shikimori.one",
-            urlMirrors = listOf("https://shikimori.io", "https://shiki.one"),
+            baseUrl = "https://shikimori.io",
+            urlMirrors = listOf("https://shikimori.one", "https://shiki.one"),
             userAgent = "ShikiApp",
             clientId = "C0IlIBQYqt9VHjuoayfbBG9ulhBH9XWuTOxSX_6oE6g",
             clientSecret = "0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM",

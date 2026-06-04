@@ -14,9 +14,7 @@ import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.enums.LinkedKind
-import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.ui.Formatter
-import java.util.EnumMap
 
 suspend fun Person.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dispatchers.Default) {
     val works = works.orEmpty().mapNotNull {
@@ -44,7 +42,7 @@ suspend fun Person.mapper(comments: Flow<PagingData<Comment>>) = withContext(Dis
             else -> LinkedKind.PERSON.name.lowercase()
         },
         relatedList = works,
-        relatedMap = works.groupByTo(EnumMap(LinkedType::class.java), Related::linkedType),
+        relatedMap = works.groupBy(Related::linkedType),
         russian = russian,
         url = "${ApiRoutes.workingBaseUrl}$url",
         website = website

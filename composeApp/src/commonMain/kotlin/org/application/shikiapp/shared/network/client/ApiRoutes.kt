@@ -6,6 +6,7 @@ import org.application.shikiapp.shared.network.parser.AnimeLibParser
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.generateCodeChallenge
 import org.application.shikiapp.shared.utils.generateRandomString
+import kotlin.concurrent.Volatile
 
 object ApiRoutes {
     @Volatile

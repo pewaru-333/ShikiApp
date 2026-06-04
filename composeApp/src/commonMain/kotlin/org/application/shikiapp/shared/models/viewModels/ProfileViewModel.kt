@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import io.ktor.client.plugins.auth.clearAuthTokens
 import io.ktor.http.HttpStatusCode
+import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -16,7 +17,6 @@ import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.LoginResponse
 import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.navigation.Screen.Login
-import java.net.UnknownHostException
 
 class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
     private val mutex = Mutex()
@@ -57,7 +57,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                 mailManager.getUnreadMessages()
             } catch (e: Exception) {
                 when (e) {
-                    is UnknownHostException -> emit(LoginResponse.NetworkError)
+                    is UnresolvedAddressException -> emit(LoginResponse.NetworkError)
                     else -> emit(LoginResponse.NotLogged)
                 }
             }

@@ -14,6 +14,7 @@ import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
+import kotlin.concurrent.Volatile
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -111,7 +112,7 @@ class KodikParser private constructor(override val token: String, client: HttpCl
         val iframeUrl = if (parseUrl.startsWith("//")) "https:$parseUrl" else parseUrl
         val playerHtml = client.get(iframeUrl).bodyAsText()
 
-        val urlParamsMatch = Regex("""urlParams\s*=\s*['"]?(\{.*?\})['"]?\s*;""", RegexOption.DOT_MATCHES_ALL)
+        val urlParamsMatch = Regex("""(?s)urlParams\s*=\s*['"]?(\{.*?\})['"]?\s*;""")
             .find(playerHtml)?.groupValues?.get(1)
 
         val urlParamsJsonString = urlParamsMatch ?: run {
