@@ -215,7 +215,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                         values = AppLanguages.list,
                         title = { Text(stringResource(Res.string.preference_language)) },
                         summary = { Text(locale.getLocaleLocalizedName()) },
-                        valueToText = { AnnotatedString(locale.getLocaleLocalizedName()) }
+                        valueToText = { AnnotatedString(it.getLocaleLocalizedName()) }
                     )
                 }
 
