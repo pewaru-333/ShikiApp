@@ -21,6 +21,9 @@ import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
+import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.useContents
+import kotlinx.coroutines.runBlocking
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerIos
@@ -31,6 +34,8 @@ import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
+import org.jetbrains.compose.resources.getString
+import platform.CoreGraphics.CGRectMake
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDateComponents
 import platform.Foundation.NSLocale
@@ -45,8 +50,11 @@ import platform.Foundation.languageCode
 import platform.Foundation.localeIdentifier
 import platform.Foundation.preferredLanguages
 import platform.Foundation.setValue
+import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIApplication
+import platform.UIKit.UIColor
 import platform.UIKit.UIDevice
+import platform.UIKit.UIFont
 import platform.UIKit.UIInterfaceOrientationLandscapeRight
 import platform.UIKit.UIInterfaceOrientationMask
 import platform.UIKit.UIInterfaceOrientationMaskAll
@@ -54,14 +62,21 @@ import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIInterfaceOrientationPortrait
 import platform.UIKit.UIInterfaceOrientationUnknown
+import platform.UIKit.UILabel
 import platform.UIKit.UISceneActivationStateForegroundActive
+import platform.UIKit.UIScreen
 import platform.UIKit.UIStatusBarStyleDarkContent
 import platform.UIKit.UIStatusBarStyleLightContent
+import platform.UIKit.UIView
+import platform.UIKit.UIViewAnimationOptionCurveEaseOut
 import platform.UIKit.UIViewController
+import platform.UIKit.UIWindow
 import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.UIKit.attemptRotationToDeviceOrientation
 import platform.UIKit.setStatusBarStyle
+import platform.darwin.dispatch_async
+import platform.darwin.dispatch_get_main_queue
 
 actual fun fromHtml(text: String?) = buildAnnotatedString {
     Ksoup.parse(text.orEmpty()).body().childNodes().forEach { parseNode(it, this) }
@@ -167,11 +182,64 @@ actual fun rememberVerifiedDomain() = remember {
     }
 }
 
+@OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun rememberToastState() = remember {
     object : IToast {
-        override fun onShow(resource: StringResource) = Unit
-        override fun onShow(text: String) = Unit
+        override fun onShow(resource: StringResource) {
+            val message = runBlocking { getString(resource) }
+            showToast(message)
+        }
+
+        override fun onShow(text: String) {
+            showToast(text)
+        }
+
+        private fun showToast(message: String) {
+            dispatch_async(dispatch_get_main_queue()) {
+                val window = UIApplication.sharedApplication.windows
+                    .firstOrNull { (it as UIWindow).isKeyWindow() } as? UIWindow
+                    ?: return@dispatch_async
+
+                val width = UIScreen.mainScreen.bounds.useContents { size.width }
+                val height = UIScreen.mainScreen.bounds.useContents { size.height }
+
+                val toastLabel = UILabel(
+                    frame = CGRectMake(
+                        x = (width - 250.0) / 2,
+                        y = height - 120.0,
+                        width = 250.0,
+                        height = 50.0
+                    )
+                ).apply {
+                    backgroundColor = UIColor.blackColor.colorWithAlphaComponent(0.8)
+                    textColor = UIColor.whiteColor
+                    textAlignment = NSTextAlignmentCenter
+                    font = UIFont.systemFontOfSize(15.0)
+                    text = message
+                    alpha = 0.0
+                    layer.cornerRadius = 10.0
+                    clipsToBounds = true
+                    numberOfLines = 0
+                }
+
+                window.addSubview(toastLabel)
+
+                UIView.animateWithDuration(
+                    duration = 0.3,
+                    animations = { toastLabel.alpha = 1.0 },
+                    completion = {
+                        UIView.animateWithDuration(
+                            duration = 0.3,
+                            delay = 2.0,
+                            options = UIViewAnimationOptionCurveEaseOut,
+                            animations = { toastLabel.alpha = 0.0 },
+                            completion = { toastLabel.removeFromSuperview() }
+                        )
+                    }
+                )
+            }
+        }
     }
 }
 

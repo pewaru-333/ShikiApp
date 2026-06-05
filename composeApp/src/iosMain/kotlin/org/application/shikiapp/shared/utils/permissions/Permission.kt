@@ -42,8 +42,14 @@ class Permission(private val delegate: PermissionDelegate) : PermissionState {
 
     override fun openSettings() {
         val url = NSURL(string = UIApplicationOpenSettingsURLString)
-        if (UIApplication.sharedApplication.canOpenURL(url)) {
-            UIApplication.sharedApplication.openURL(url)
+        val application = UIApplication.sharedApplication
+
+        if (application.canOpenURL(url)) {
+            application.openURL(
+                url = url,
+                options = emptyMap<Any?, Any>(),
+                completionHandler = null
+            )
         }
     }
 }
