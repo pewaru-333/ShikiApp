@@ -31,11 +31,15 @@ import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
+import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDateComponents
 import platform.Foundation.NSLocale
 import platform.Foundation.NSRelativeDateTimeFormatter
 import platform.Foundation.NSRelativeDateTimeFormatterStyleNamed
+import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSUserDefaults
+import platform.Foundation.NSUserDomainMask
 import platform.Foundation.currentLocale
 import platform.Foundation.localeIdentifier
 import platform.Foundation.preferredLanguages
@@ -99,6 +103,11 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
             }
         }
     }
+}
+
+fun getCacheDirectory(): String {
+    val paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true)
+    return paths.firstOrNull() as? String ?: NSTemporaryDirectory()
 }
 
 actual fun getDefaultLocale(context: PlatformContext): String {
