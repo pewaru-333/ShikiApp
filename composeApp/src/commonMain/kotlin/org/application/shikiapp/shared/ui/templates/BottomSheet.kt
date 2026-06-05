@@ -46,8 +46,7 @@ fun BottomSheet(
     canShowLinks: Boolean = false,
     onEvent: (ContentDetailEvent) -> Unit
 ) = ModalBottomSheet(
-    onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
-    contentWindowInsets = { WindowInsets.systemBars }
+    onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
 ) {
     val scope = rememberCoroutineScope()
     val clipboard = LocalClipboard.current
@@ -99,10 +98,7 @@ fun BottomSheet(
 fun LinksSheet(list: List<ExternalLink>, onHide: () -> Unit) {
     val handler = rememberLinkHandler()
 
-    ModalBottomSheet(
-        onDismissRequest = onHide,
-        contentWindowInsets = { WindowInsets.systemBars }
-    ) {
+    ModalBottomSheet(onHide) {
         LazyColumn {
             items(list, ExternalLink::url) {
                 ListItem(

@@ -6,7 +6,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.viewinterop.UIKitInteropProperties
 import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.readValue
@@ -18,8 +17,10 @@ import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
 import platform.AVFoundation.AVPlayerItem
+import platform.AVFoundation.AVPlayerItemStatusReadyToPlay
 import platform.AVFoundation.AVPlayerLayer
 import platform.AVFoundation.AVPlayerTimeControlStatusPlaying
+import platform.AVFoundation.AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
 import platform.AVFoundation.AVURLAsset
 import platform.AVFoundation.CMTimeRangeValue
 import platform.AVFoundation.currentItem
@@ -37,10 +38,14 @@ import platform.CoreGraphics.CGRectZero
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMakeWithSeconds
 import platform.CoreMedia.kCMTimeZero
+import platform.Foundation.NSNotificationCenter
 import platform.Foundation.NSURL
 import platform.Foundation.NSValue
-import platform.QuartzCore.CALayer
+import platform.UIKit.UIApplicationDidEnterBackgroundNotification
+import platform.UIKit.UIApplicationWillResignActiveNotification
+import platform.UIKit.UIColor
 import platform.UIKit.UIView
+import platform.UIKit.UIViewMeta
 import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalForeignApi::class)
@@ -92,6 +97,11 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
     LaunchedEffect(player) {
         while (true) {
             player.currentItem?.let { currentItem ->
+                val isReady = currentItem.status == AVPlayerItemStatusReadyToPlay
+                val isWaiting = player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
+
+                state.isLoading = !isReady || isWaiting
+
                 val currentTime = CMTimeGetSeconds(player.currentTime())
                 val totalDuration = CMTimeGetSeconds(currentItem.duration)
 
@@ -118,8 +128,33 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         }
     }
 
-    DisposableEffect(Unit) {
+    DisposableEffect(player) {
+        val center = NSNotificationCenter.defaultCenter
+
+        val resignObserver = center.addObserverForName(
+            name = UIApplicationWillResignActiveNotification,
+            `object` = null,
+            queue = null,
+            usingBlock = {
+                player.pause()
+                state.pause()
+            }
+        )
+
+        val backgroundObserver = center.addObserverForName(
+            name = UIApplicationDidEnterBackgroundNotification,
+            `object` = null,
+            queue = null,
+            usingBlock = {
+                player.pause()
+                state.pause()
+            }
+        )
+
         onDispose {
+            center.removeObserver(resignObserver)
+            center.removeObserver(backgroundObserver)
+
             player.pause()
             player.replaceCurrentItemWithPlayerItem(null)
         }
@@ -127,42 +162,39 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
 
     UIKitView(
         modifier = modifier,
-        properties = UIKitInteropProperties(
-            isInteractive = true,
-            isNativeAccessibilityEnabled = true
-        ),
+        onRelease = { it.player = null },
         factory = {
-            val view = PlayerUIView().apply {
-                clipsToBounds = true
-            }
-
-            val playerLayer = AVPlayerLayer().apply {
+            PlayerUIView().apply {
                 this.player = player
-                videoGravity = if (state.isZoomed) AVLayerVideoGravityResizeAspectFill
-                else AVLayerVideoGravityResizeAspect
+                backgroundColor = UIColor.blackColor
             }
-
-            view.layer.addSublayer(playerLayer)
-            view
         },
         update = { view ->
-            val layer = view.layer.sublayers?.firstOrNull { it is AVPlayerLayer } as? AVPlayerLayer
+            view.player = player
 
-            layer?.videoGravity = (if (state.isZoomed) AVLayerVideoGravityResizeAspectFill
-            else AVLayerVideoGravityResizeAspect)
+            view.videoGravity = if (state.isZoomed) AVLayerVideoGravityResizeAspectFill
+            else AVLayerVideoGravityResizeAspect
         }
     )
 }
 
 @OptIn(ExperimentalForeignApi::class)
 private class PlayerUIView : UIView(CGRectZero.readValue()) {
-    override fun layoutSubviews() {
-        super.layoutSubviews()
-
-        layer.sublayers?.forEach {
-            (it as? CALayer)?.frame = bounds
-        }
+    companion object : UIViewMeta() {
+        override fun layerClass() = AVPlayerLayer
     }
+
+    var player: AVPlayer?
+        get() = (layer as? AVPlayerLayer)?.player
+        set(value) {
+            (layer as? AVPlayerLayer)?.player = value
+        }
+
+    var videoGravity: String?
+        get() = (layer as? AVPlayerLayer)?.videoGravity
+        set(value) {
+            (layer as? AVPlayerLayer)?.videoGravity = value
+        }
 }
 
 actual class VideoPlayerUtils actual constructor(context: PlatformContext) {

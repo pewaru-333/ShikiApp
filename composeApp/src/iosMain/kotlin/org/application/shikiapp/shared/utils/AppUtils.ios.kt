@@ -41,6 +41,7 @@ import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.currentLocale
+import platform.Foundation.languageCode
 import platform.Foundation.localeIdentifier
 import platform.Foundation.preferredLanguages
 import platform.Foundation.setValue
@@ -53,11 +54,13 @@ import platform.UIKit.UIInterfaceOrientationMaskLandscape
 import platform.UIKit.UIInterfaceOrientationMaskPortrait
 import platform.UIKit.UIInterfaceOrientationPortrait
 import platform.UIKit.UIInterfaceOrientationUnknown
+import platform.UIKit.UISceneActivationStateForegroundActive
 import platform.UIKit.UIStatusBarStyleDarkContent
 import platform.UIKit.UIStatusBarStyleLightContent
-import platform.UIKit.UIWindow
+import platform.UIKit.UIViewController
+import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
-import platform.UIKit.setNeedsUpdateOfSupportedInterfaceOrientations
+import platform.UIKit.attemptRotationToDeviceOrientation
 import platform.UIKit.setStatusBarStyle
 
 actual fun fromHtml(text: String?) = buildAnnotatedString {
@@ -126,6 +129,11 @@ private val defaultLocale = NSLocale.preferredLanguages.first() as String
 private val LocalAppLocale = staticCompositionLocalOf { defaultLocale }
 
 actual object AppLocale {
+
+    fun getLocale() = NSUserDefaults.standardUserDefaults.stringArrayForKey(LANG_KEY)
+        ?.firstOrNull() as? String
+        ?: NSLocale.currentLocale.languageCode
+
     actual val current: String
         @Composable get() = LocalAppLocale.current
 
@@ -208,18 +216,16 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) {
 }
 
 private fun forceOrientationUpdate(mask: UIInterfaceOrientationMask) {
-    val window = UIApplication.sharedApplication.windows.firstOrNull {
-        (it as UIWindow).isKeyWindow()
-    } as? UIWindow ?: return
-
-    val windowScene = window.windowScene
+    val window = UIApplication.sharedApplication.connectedScenes.firstNotNullOfOrNull { scene ->
+        (scene as? UIWindowScene)?.takeIf { it.activationState == UISceneActivationStateForegroundActive }
+    }
 
     if (UIDevice.currentDevice.systemVersion.substringBefore('.').toInt() >= 16) {
-        if (windowScene != null) {
+        if (window != null) {
             val preferences = UIWindowSceneGeometryPreferencesIOS(mask)
-            windowScene.requestGeometryUpdateWithPreferences(
+            window.requestGeometryUpdateWithPreferences(
                 geometryPreferences = preferences,
-                errorHandler = null
+                errorHandler = { }
             )
         }
     } else {
@@ -232,7 +238,7 @@ private fun forceOrientationUpdate(mask: UIInterfaceOrientationMask) {
         UIDevice.currentDevice.setValue(orientation, "orientation")
     }
 
-    window.rootViewController?.setNeedsUpdateOfSupportedInterfaceOrientations()
+    UIViewController.attemptRotationToDeviceOrientation()
 }
 
 object SystemBarsManager {

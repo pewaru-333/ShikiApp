@@ -1,6 +1,5 @@
 package org.application.shikiapp.shared.utils.navigation
 
-import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
@@ -14,7 +13,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
@@ -124,7 +122,7 @@ fun Navigation(navigator: NavHostController) {
 
 @Composable
 private fun AppNavHost(navigator: NavHostController) =
-    NavHost(navigator, Preferences.startPage.route, Modifier.systemBarsPadding()) {
+    NavHost(navigator, Preferences.startPage.route) {
         // Bottom menu items //
         composable<Screen.Catalog>(
             typeMap = linkedTypeMap,

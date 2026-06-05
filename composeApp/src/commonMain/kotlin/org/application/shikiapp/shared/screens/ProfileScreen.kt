@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -123,7 +124,11 @@ private fun LoginScreen(onClick: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val domainHelper = rememberVerifiedDomain()
 
-    Box(Modifier.fillMaxSize()) {
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
         IconButtonSettings(onClick)
 
         if (domainHelper.isVerified) {
@@ -175,22 +180,32 @@ private fun LoginScreen(onClick: () -> Unit) {
 }
 
 @Composable
-private fun LoadingScreen(onClick: () -> Unit) = Box(Modifier.fillMaxSize()) {
-    IconButtonSettings(onClick)
+private fun LoadingScreen(onClick: () -> Unit) =
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
+        IconButtonSettings(onClick)
 
-    CircularProgressIndicator(Modifier.align(Alignment.Center))
-}
+        CircularProgressIndicator(Modifier.align(Alignment.Center))
+    }
 
 @Composable
-private fun ErrorScreen(onReload: () -> Unit, onClick: () -> Unit) = Box(Modifier.fillMaxSize()) {
-    IconButtonSettings(onClick)
+private fun ErrorScreen(onReload: () -> Unit, onClick: () -> Unit) =
+    Box(
+        modifier = Modifier
+            .fillMaxSize()
+            .safeDrawingPadding()
+    ) {
+        IconButtonSettings(onClick)
 
-    FilledTonalButton(
-        onClick = onReload,
-        modifier = Modifier.align(Alignment.Center),
-        content = { Text(stringResource(Res.string.text_repeat_the_loading)) }
-    )
-}
+        FilledTonalButton(
+            onClick = onReload,
+            modifier = Modifier.align(Alignment.Center),
+            content = { Text(stringResource(Res.string.text_repeat_the_loading)) }
+        )
+    }
 
 @Composable
 private fun BoxScope.IconButtonSettings(onClick: () -> Unit) = IconButton(

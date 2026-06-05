@@ -3,6 +3,7 @@ package org.application.shikiapp.shared.utils.extensions
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.LocalDateTime
 import kotlinx.datetime.number
+import org.application.shikiapp.shared.utils.AppLocale
 import org.application.shikiapp.shared.utils.enums.DateStyle
 import platform.Foundation.NSCalendar
 import platform.Foundation.NSDateComponents
@@ -11,10 +12,12 @@ import platform.Foundation.NSDateFormatterFullStyle
 import platform.Foundation.NSDateFormatterLongStyle
 import platform.Foundation.NSDateFormatterMediumStyle
 import platform.Foundation.NSDateFormatterShortStyle
+import platform.Foundation.NSLocale
 
 actual fun LocalDate.format(pattern: String): String {
     val formatter = NSDateFormatter().apply {
         dateFormat = pattern
+        locale = NSLocale(AppLocale.getLocale())
     }
 
     val components = NSDateComponents().apply {
@@ -30,6 +33,7 @@ actual fun LocalDate.format(pattern: String): String {
 
 actual fun LocalDate.format(style: DateStyle): String {
     val formatter = NSDateFormatter().apply {
+        locale = NSLocale(AppLocale.getLocale())
         dateStyle = when (style) {
             DateStyle.SHORT -> NSDateFormatterShortStyle
             DateStyle.MEDIUM -> NSDateFormatterMediumStyle
@@ -51,6 +55,7 @@ actual fun LocalDate.format(style: DateStyle): String {
 
 actual fun LocalDateTime.format(pattern: String): String {
     val formatter = NSDateFormatter().apply {
+        locale = NSLocale(AppLocale.getLocale())
         dateFormat = pattern
     }
 

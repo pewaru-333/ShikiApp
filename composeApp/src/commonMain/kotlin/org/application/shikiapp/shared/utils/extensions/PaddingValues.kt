@@ -12,14 +12,14 @@ fun PaddingValues.toContent() = PaddingValues(
     start = 8.dp,
     top = calculateTopPadding(),
     end = 8.dp,
-    bottom = 8.dp
+    bottom = calculateBottomPadding()
 )
 
 fun PaddingValues.toContentLarge() = PaddingValues(
     start = 16.dp,
-    top = calculateTopPadding() + 8.dp,
+    top = calculateTopPadding(),
     end = 16.dp,
-    bottom = 32.dp
+    bottom = calculateBottomPadding()
 )
 
 @Composable
