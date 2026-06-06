@@ -145,7 +145,7 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: windows-zip
-          path: composeApp/build/distributions/*-windows-portable.zip
+          path: desktopApp/build/distributions/*-windows-portable.zip
 
   build-linux:
     runs-on: ubuntu-latest
@@ -161,18 +161,18 @@ jobs:
       - run: chmod +x gradlew
 
       - name: 'Build Linux files'
-        run: ./gradlew :composeApp:createReleaseDistributable
+        run: ./gradlew :desktopApp:createReleaseDistributable
 
       - name: 'Package Portable Linux Build'
         run: |
-          cd composeApp/build/compose/binaries/main-release/app
+          cd desktopApp/build/compose/binaries/main-release/app
           tar -czvf ShikiApp-linux-portable.tar.gz ShikiApp/
 
       - name: 'Upload Linux Portable as artifact'
         uses: actions/upload-artifact@v7
         with:
           name: linux-portable
-          path: composeApp/build/compose/binaries/main-release/app/ShikiApp-linux-portable.tar.gz
+          path: desktopApp/build/compose/binaries/main-release/app/ShikiApp-linux-portable.tar.gz
 
   create-release:
     runs-on: ubuntu-latest
