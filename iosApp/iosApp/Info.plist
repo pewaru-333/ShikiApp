@@ -1,8 +1,44 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
-<dict>
-	<key>CADisableMinimumFrameDurationOnPhone</key>
-	<true/>
-</dict>
+    <dict>
+        <key>CADisableMinimumFrameDurationOnPhone</key>
+        <true/>
+        
+        <key>CFBundleURLTypes</key>
+        <array>
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>${AUTH_SCHEME}</string>
+                </array>
+            </dict>
+            
+            <dict>
+                <key>CFBundleTypeRole</key>
+                <string>Editor</string>
+                <key>CFBundleURLSchemes</key>
+                <array>
+                    <string>ru.libapp.oauth</string>
+                </array>
+            </dict>
+        </array>
+        
+        <key>USER_AGENT</key>
+        <string>${APP_USER_AGENT}</string>
+        
+        <key>AUTH_HOST</key>
+        <string>${AUTH_HOST}</string>
+        
+        <key>BASE_URL</key>
+        <string>${BASE_URL}</string>
+        
+        <key>CFBundleDisplayName</key>
+        <string>${APP_DISPLAY_NAME}</string>
+        
+        <key>CFBundleName</key>
+        <string>${APP_DISPLAY_NAME}</string>
+    </dict>
 </plist>
