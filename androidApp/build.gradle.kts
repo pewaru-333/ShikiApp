@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 37
-        versionCode = 48
-        versionName = "alpha-0.7.0"
+        versionCode = 49
+        versionName = "alpha-0.7.1"
 
         buildFeatures {
             buildConfig = true
@@ -27,8 +27,8 @@ android {
             manifestPlaceholders["authScheme"] = "app"
             manifestPlaceholders["authHost"] = "login"
             manifestPlaceholders["authSuffix"] = ""
-            manifestPlaceholders["base"] = "shikimori.one"
-            manifestPlaceholders["mirrorOne"] = "shikimori.io"
+            manifestPlaceholders["base"] = "shikimori.io"
+            manifestPlaceholders["mirrorOne"] = "shikimori.one"
             manifestPlaceholders["mirrorTwo"] = "shiki.one"
 
             buildConfigField("String", "USER_AGENT", "\"ShikiApp\"")
@@ -42,7 +42,7 @@ android {
             manifestPlaceholders["authHost"] = "auth"
             manifestPlaceholders["authSuffix"] = "login"
             manifestPlaceholders["base"] = "shikimori.rip"
-            manifestPlaceholders["mirrorOne"] = "shikimori.fi"
+            manifestPlaceholders["mirrorOne"] = "shikimori.moe"
             manifestPlaceholders["mirrorTwo"] = "shikimori.net"
 
             buildConfigField("String", "USER_AGENT", "\"DarkShiki\"")

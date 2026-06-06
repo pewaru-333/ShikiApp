@@ -27,7 +27,7 @@ compose.desktop {
 
         nativeDistributions {
             packageName = "ShikiApp"
-            packageVersion = "0.7.0"
+            packageVersion = "0.7.1"
 
             appResourcesRootDir.set(project.layout.projectDirectory.dir("files"))
 
