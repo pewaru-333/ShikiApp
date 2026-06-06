@@ -36,6 +36,7 @@ import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import platform.CoreGraphics.CGRectMake
+import platform.Foundation.NSBundle
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDateComponents
 import platform.Foundation.NSLocale
@@ -127,6 +128,9 @@ fun getCacheDirectory(): String {
     val paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true)
     return paths.firstOrNull() as? String ?: NSTemporaryDirectory()
 }
+
+fun getUserAgentValue(key: String) =
+    NSBundle.mainBundle.objectForInfoDictionaryKey(key) as String? ?: "ShikiApp"
 
 actual fun getDefaultLocale(context: PlatformContext): String {
     val languageTag = NSLocale.preferredLanguages.firstOrNull() as? String

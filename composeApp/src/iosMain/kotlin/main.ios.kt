@@ -8,13 +8,14 @@ import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.di.AppModuleInitializer
 import org.application.shikiapp.shared.di.AppleContext
 import org.application.shikiapp.shared.utils.getCacheDirectory
+import org.application.shikiapp.shared.utils.getUserAgentValue
 import org.application.shikiapp.shared.utils.sharedImageLoader
 
 @Suppress("unused")
 fun MainViewController() = ComposeUIViewController(
     configure = { onFocusBehavior = OnFocusBehavior.DoNothing },
     content = {
-        val config = AppConfig.createFlavorConfig("DarkShiki")
+        val config = AppConfig.createFlavorConfig(getUserAgentValue("USER_AGENT"))
         AppContext.init(AppModuleInitializer(AppleContext(), config))
 
         setSingletonImageLoaderFactory { context ->
