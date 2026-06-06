@@ -235,7 +235,7 @@ fun AnimeListQuery.Data.Anime.mapper() = Content(
     title = russian.orEmpty().ifEmpty(::name),
     kind = Enum.safeValueOf<Kind>(kind?.rawValue),
     status = Enum.safeValueOf<Status>(status?.rawValue),
-    season = Formatter.getSeason(season ?: airedOn?.date, kind?.rawValue),
+    season = Formatter.getSeason(airedOn?.date ?: season, kind?.rawValue),
     poster = Formatter.replaceMissingAnimePoster(poster?.mainUrl, id),
     score = score?.let(Formatter::convertScore)
 )
