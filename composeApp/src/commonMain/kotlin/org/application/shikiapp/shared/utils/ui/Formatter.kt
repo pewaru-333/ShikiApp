@@ -2,8 +2,6 @@ package org.application.shikiapp.shared.utils.ui
 
 import com.fleeksoft.ksoup.Ksoup
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.async
-import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.TimeZone
@@ -197,75 +195,66 @@ object Formatter {
 
         }
 
+        val ytRegex = "img\\.youtube\\.com(?:%2F|/)vi(?:%2F|/)([a-zA-Z0-9_-]+)".toRegex()
         val body = Ksoup.parse(text, ApiRoutes.workingBaseUrl)
 
-        val (videos, images) = coroutineScope {
-            val videos = async {
-                val extractedVideos = body.select(".b-video").mapNotNullTo(ArrayList()) { element ->
-                    val videoUrl = element.select("a").attr("href").toHttps()
-                    val previewUrl = element.select("img").attr("src").toHttps()
-                    if (videoUrl.isNotEmpty()) CommentContent.VideoContent(previewUrl, videoUrl, "YouTube") else null
-                }
+        val videos = body.select(".b-video").mapNotNullTo(ArrayList()) { element ->
+            val videoUrl = element.select("a").attr("href").toHttps()
+            val previewUrl = element.select("img").attr("src").toHttps()
+            if (videoUrl.isNotEmpty()) CommentContent.VideoContent(previewUrl, videoUrl, "YouTube") else null
+        }
 
-                if (extractedVideos.isNotEmpty()) return@async extractedVideos
+        if (videos.isEmpty()) {
+            body.select(".b-image").forEach { element ->
+                val imageUrl = element.attr("abs:href").ifEmpty { element.selectFirst("img")?.attr("abs:src") }.orEmpty()
+                val match = ytRegex.find(imageUrl)
 
-                val ytRegex = "img\\.youtube\\.com(?:%2F|/)vi(?:%2F|/)([a-zA-Z0-9_-]+)".toRegex()
-                body.select(".b-image").forEach { element ->
-                    val imageUrl = element.attr("abs:href").ifEmpty { element.selectFirst("img")?.attr("abs:src") }.orEmpty()
-                    val match = ytRegex.find(imageUrl)
-                    if (match != null) {
-                        val videoId = match.groupValues[1]
-                        val fullVideoUrl = "https://youtu.be/$videoId"
-
-                        if (extractedVideos.none { it.videoUrl == fullVideoUrl }) {
-                            extractedVideos.add(
-                                CommentContent.VideoContent(
-                                    previewUrl = imageUrl,
-                                    videoUrl = fullVideoUrl,
-                                    source = "YouTube"
-                                )
+                if (match != null) {
+                    val fullVideoUrl = "https://youtu.be/${match.groupValues[1]}"
+                    if (videos.none { it.videoUrl == fullVideoUrl }) {
+                        videos.add(
+                            CommentContent.VideoContent(
+                                previewUrl = imageUrl,
+                                videoUrl = fullVideoUrl,
+                                source = "YouTube"
                             )
-                        }
+                        )
                     }
                 }
-
-                extractedVideos
             }
-
-            val images = async {
-                body.select("a[href*=/original/], img[src*=/original/], a[href*=%2Foriginal%2F], img[src*=%2Foriginal%2F]")
-                    .map { it.attr("href").ifEmpty { it.attr("src") } }
-                    .distinct()
-                    .toMutableList()
-            }
-
-            Pair(videos.await(), images.await())
         }
 
-        val poster: CommentContent? = when {
+        val images = body.select("a[href*=/original/], img[src*=/original/], a[href*=%2Foriginal%2F], img[src*=%2Foriginal%2F]")
+            .mapNotNullTo(LinkedHashSet()) { element ->
+                element.attr("href")
+                    .ifEmpty { element.attr("src") }
+                    .takeIf(String::isNotEmpty)
+            }.toList()
+
+        val poster: CommentContent?
+        val finalVideos: List<CommentContent.VideoContent>
+        val finalImages: List<String>
+
+        when {
             videos.isNotEmpty() -> {
-                val video = videos[0]
-                videos.remove(video)
-
-                video
+                poster = videos.first()
+                finalVideos = videos.drop(1)
+                finalImages = images
             }
-
             images.isNotEmpty() -> {
-                val image = images[0]
-                images.remove(image)
-
-                CommentContent.ImageContent(
-                    previewUrl = image,
-                    fullUrl = image,
-                    width = 0f,
-                    height = 0f
-                )
+                val image = images.first()
+                poster = CommentContent.ImageContent(image, image, 0f, 0f)
+                finalVideos = emptyList()
+                finalImages = images.drop(1)
             }
-
-            else -> null
+            else -> {
+                poster = null
+                finalVideos = emptyList()
+                finalImages = emptyList()
+            }
         }
 
-        return@withContext Triple(images, videos, poster)
+        Triple(finalImages, finalVideos, poster)
     }
 
     fun replaceMissingAnimePoster(poster: String?, id: Any?) = poster?.takeIf { it.isNotBlank() && "missing" !in it }
