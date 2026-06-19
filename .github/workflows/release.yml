@@ -103,8 +103,8 @@ jobs:
           name: ShikiApp-apk
           path: ShikiApp.apk
 
-      # ================= DarkShiki =================
-      - name: 'Sign DarkShiki'
+      # ================= ShikiRip =================
+      - name: 'Sign ShikiRip'
         id: sign_dark
         uses: ilharp/sign-android-release@v2
         with:
@@ -114,16 +114,16 @@ jobs:
           keyStorePassword: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           keyPassword: ${{ secrets.ANDROID_KEY_PASSWORD }}
 
-      - name: 'Rename signed DarkShiki .apk'
+      - name: 'Rename signed ShikiRip .apk'
         run: |
           SIGNED_APK_FILE=$(find ${{ steps.sign_dark.outputs.signedFile }} -name '*.apk' | head -n 1)
-          mv "$SIGNED_APK_FILE" "DarkShiki.apk"
+          mv "$SIGNED_APK_FILE" "ShikiRip.apk"
 
-      - name: 'Upload DarkShiki APK as artifact'
+      - name: 'Upload ShikiRip APK as artifact'
         uses: actions/upload-artifact@v7
         with:
-          name: DarkShiki-apk
-          path: DarkShiki.apk
+          name: ShikiRip-apk
+          path: ShikiRip.apk
 
   build-windows:
     runs-on: windows-latest
@@ -133,8 +133,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: '25'
+          distribution: 'zulu'
 
       - uses: gradle/actions/setup-gradle@v6
 
@@ -154,8 +154,8 @@ jobs:
       - uses: actions/checkout@v6
       - uses: actions/setup-java@v5
         with:
-          java-version: '21'
-          distribution: 'temurin'
+          java-version: '25'
+          distribution: 'zulu'
 
       - uses: gradle/actions/setup-gradle@v6
       - run: chmod +x gradlew
@@ -191,10 +191,10 @@ jobs:
         with:
           name: ShikiApp-apk
 
-      - name: 'Download DarkShiki APK'
+      - name: 'Download ShikiRip APK'
         uses: actions/download-artifact@v8
         with:
-          name: DarkShiki-apk
+          name: ShikiRip-apk
 
       - name: 'Download Windows Zip'
         uses: actions/download-artifact@v8
@@ -220,6 +220,6 @@ jobs:
           body: ${{ needs.prepare-changelog.outputs.release_body }}
           files: |
             ShikiApp.apk
-            DarkShiki.apk
+            ShikiRip.apk
             *-portable.zip
             *-portable.tar.gz
