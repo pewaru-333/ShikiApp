@@ -118,7 +118,7 @@ data class CvhPlaylistResponse(
 @Serializable
 data class CvhPlaylistItem(
     val vkId: String,
-    val voiceStudio: String,
+    val voiceStudio: String? = null,
     val voiceType: String? = null,
     val season: Int = 1,
     val episode: Int = 1
