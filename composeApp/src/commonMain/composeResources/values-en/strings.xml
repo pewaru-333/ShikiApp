@@ -60,7 +60,6 @@
     <string name="text_updates">Updates</string>
     <string name="text_updates_anime">Anime updates</string>
     <string name="text_users">Users</string>
-    <string name="text_voices">Voiceovers</string>
     <string name="text_voices_one">Voice actors</string>
 
     <string name="text_video">Videos</string>
@@ -310,7 +309,6 @@
     <string name="text_error">Error!</string>
     <string name="text_error_comment_create">Error while creating comment!</string>
     <string name="text_error_loading">Loading error!</string>
-    <string name="text_link">Link</string>
     <string name="text_loading">Loading</string>
     <string name="text_login">Login</string>
     <string name="text_no_messages">No messages</string>
@@ -323,9 +321,9 @@
     <string name="text_to_settings">Go to settings</string>
     <string name="text_try_again">Try again</string>
     <string name="text_turned_off">Turned off</string>
+    <string name="text_turned_off_short">Off</string>
     <string name="text_turned_on">Turned on</string>
     <string name="text_unknown">Unknown</string>
-    <string name="text_verified">Verified</string>
     <string name="text_year_in">in %1$d</string>
 
     <string name="text_video_sources">Sources</string>
