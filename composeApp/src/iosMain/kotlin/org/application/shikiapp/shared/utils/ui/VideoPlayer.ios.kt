@@ -13,6 +13,7 @@ import kotlinx.cinterop.useContents
 import kotlinx.coroutines.delay
 import org.application.shikiapp.shared.di.AppleContext
 import org.application.shikiapp.shared.di.PlatformContext
+import org.application.shikiapp.shared.utils.ui.subtitles.ComposeSubtitleLayer
 import platform.AVFoundation.AVLayerVideoGravityResizeAspect
 import platform.AVFoundation.AVLayerVideoGravityResizeAspectFill
 import platform.AVFoundation.AVPlayer
@@ -47,11 +48,12 @@ import platform.UIKit.UIColor
 import platform.UIKit.UIView
 import platform.UIKit.UIViewMeta
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @OptIn(ExperimentalForeignApi::class)
 @Composable
 actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
-    val player = remember { AVPlayer() }
+    val player = remember(::AVPlayer)
 
     LaunchedEffect(state.url) {
         val currentUrl = state.url ?: return@LaunchedEffect
@@ -69,6 +71,26 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
 
         if (state.isPlaying) {
             player.play()
+        }
+    }
+
+    LaunchedEffect(state.url) {
+        if (state.url == null) return@LaunchedEffect
+
+        delay(10.seconds)
+
+        if (!state.isPlaying) return@LaunchedEffect
+
+        val isPlaying = player.timeControlStatus == AVPlayerTimeControlStatusPlaying
+
+        val currentTime = CMTimeGetSeconds(player.currentTime())
+        val hasStarted = !currentTime.isNaN() && currentTime > 0.1
+
+        if (!isPlaying && !hasStarted) {
+            player.pause()
+            player.replaceCurrentItemWithPlayerItem(null)
+
+            state.playNext()
         }
     }
 
@@ -94,7 +116,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         }
     }
 
-    LaunchedEffect(player) {
+    LaunchedEffect(player, state.url) {
         while (true) {
             player.currentItem?.let { currentItem ->
                 val isReady = currentItem.status == AVPlayerItemStatusReadyToPlay
@@ -124,7 +146,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
                 }
             }
 
-            delay(500.milliseconds)
+            delay(100.milliseconds)
         }
     }
 
@@ -176,6 +198,15 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
             else AVLayerVideoGravityResizeAspect
         }
     )
+
+    if (state.selectedSubtitlesTrack != null) {
+        val track = state.subtitles.find { it.name == state.selectedSubtitlesTrack }
+
+        ComposeSubtitleLayer(
+            currentTimeMs = (state.currentTime * 1000f).toLong(),
+            subtitleTrack = track
+        )
+    }
 }
 
 @OptIn(ExperimentalForeignApi::class)
