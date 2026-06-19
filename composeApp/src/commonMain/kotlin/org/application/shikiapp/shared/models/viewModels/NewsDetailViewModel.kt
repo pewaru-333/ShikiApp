@@ -3,7 +3,6 @@ package org.application.shikiapp.shared.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
@@ -28,10 +27,10 @@ class NewsDetailViewModel(saved: SavedStateHandle) : ContentDetailViewModel<News
             }
 
             try {
-                val news = async { Network.topics.getTopic(contentId) }
+                val news = Network.topics.getTopic(contentId)
                 setCommentParams(contentId, CommentableType.TOPIC)
 
-                emit(Response.Success(news.await().mapper(comments)))
+                emit(Response.Success(news.mapper(comments)))
             } catch (e: Exception) {
                 emit(Response.Error(e))
             }
