@@ -13,6 +13,8 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -29,6 +31,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
@@ -36,6 +39,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -88,12 +93,18 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
 import androidx.compose.ui.util.fastForEachIndexed
@@ -205,15 +216,8 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
                     FilterChip(
                         selected = state.menu == item,
                         onClick = { model.pick(item) },
-                        label = {
-                            Text(
-                                text = stringResource(item.title),
-                                style = MaterialTheme.typography.labelLarge
-                            )
-                        },
-                        leadingIcon = {
-                            VectorIcon(item.icon, Modifier.size(18.dp))
-                        }
+                        label = { Text(stringResource(item.title)) },
+                        leadingIcon = { VectorIcon(item.icon, Modifier.size(18.dp)) }
                     )
                 }
             }
@@ -362,7 +366,7 @@ private fun DialogFilters(
                 )
             }
             item {
-                val filteredStatuses = remember(key1 = type) {
+                val filteredStatuses = remember(type) {
                     Status.entries.filter { type in it.types }
                 }
 
@@ -657,52 +661,86 @@ private fun Season(
         text: String,
         onValueChange: (String) -> Unit,
         modifier: Modifier = Modifier,
-        label: StringResource
+        label: StringResource,
+        imeAction: ImeAction
     ) {
         val textFieldState = rememberTextFieldState(text)
+        val focusRequester = remember(::FocusRequester)
+        var isFocused by remember { mutableStateOf(false) }
 
         LaunchedEffect(textFieldState) {
             snapshotFlow { textFieldState.text.toString() }.collectLatest(onValueChange)
         }
 
         LaunchedEffect(text) {
-            if (text.isEmpty()) {
+            if (text.isEmpty() && textFieldState.text.isNotEmpty()) {
                 textFieldState.clearText()
             }
         }
 
-        OutlinedTextField(
+        BasicTextField(
             state = textFieldState,
-            modifier = modifier,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             lineLimits = TextFieldLineLimits.SingleLine,
-            label = {
-                Text(
-                    text = stringResource(label),
-                    maxLines = 1
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            textStyle = MaterialTheme.typography.bodyLarge.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            ),
+            keyboardOptions = KeyboardOptions(
+                keyboardType = KeyboardType.Number,
+                imeAction = imeAction
+            ),
+            modifier = modifier
+                .focusRequester(focusRequester)
+                .onFocusChanged { isFocused = it.isFocused }
+                .background(
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    shape = RoundedCornerShape(12.dp)
                 )
-            },
+                .border(
+                    width = 1.dp,
+                    color = if (isFocused) MaterialTheme.colorScheme.primary else Color.Transparent,
+                    shape = RoundedCornerShape(12.dp)
+                )
+                .padding(16.dp, 12.dp),
             inputTransformation = InputTransformation.maxLength(4).then {
                 if (!asCharSequence().isDigitsOnly()) {
                     revertAllChanges()
+                }
+            },
+            decorator = { innerTextField ->
+                Box(contentAlignment = Alignment.Center) {
+                    if (textFieldState.text.isEmpty()) {
+                        Text(
+                            maxLines = 1,
+                            text = stringResource(label),
+                            overflow = TextOverflow.Ellipsis,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f)
+                        )
+                    }
+
+                    innerTextField()
                 }
             }
         )
     }
 
     AnimatedColumn(Res.string.text_season, isExpanded, onExpandedChange) {
-        Column(Modifier, Arrangement.spacedBy(8.dp)) {
+        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp)) {
                 LocalTextField(
                     text = seasonYS,
                     onValueChange = { onEvent(SetSeason.SetStartYear(it)) },
                     modifier = Modifier.weight(1f),
+                    imeAction = ImeAction.Next,
                     label = Res.string.text_start_year
                 )
                 LocalTextField(
                     text = seasonYF,
                     onValueChange = { onEvent(SetSeason.SetFinalYear(it)) },
                     modifier = Modifier.weight(1f),
+                    imeAction = ImeAction.Done,
                     label = Res.string.text_end_year
                 )
             }
@@ -731,35 +769,40 @@ private fun Score(
     val interactionSource = remember(::MutableInteractionSource)
 
     AnimatedColumn(Res.string.text_score, isExpanded, onExpandedChange) {
-        Column {
-            Slider(
-                value = score,
-                onValueChange = onValueChange,
-                steps = 8,
-                valueRange = 1f..10f,
-                interactionSource = interactionSource,
-                thumb = {
-                    Label(
-                        interactionSource = interactionSource,
-                        label = {
-                            PlainTooltip(Modifier.sizeIn(maxWidth = 30.dp)) {
+        Slider(
+            value = score,
+            onValueChange = onValueChange,
+            steps = 8,
+            valueRange = 1f..10f,
+            interactionSource = interactionSource,
+            thumb = { sliderState ->
+                Label(
+                    interactionSource = interactionSource,
+                    isPersistent = sliderState.isDragging,
+                    label = {
+                        PlainTooltip(
+                            modifier = Modifier
+                                .sizeIn(45.dp, 25.dp, 45.dp, 25.dp)
+                                .wrapContentWidth(),
+                            content = {
                                 Text(
                                     text = score.toInt().toString(),
                                     modifier = Modifier.fillMaxWidth(),
                                     textAlign = TextAlign.Center
                                 )
                             }
-                        }
-                    ) {
+                        )
+                    },
+                    content = {
                         VectorIcon(
                             resId = Res.drawable.vector_star,
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                             tint = Color(0xFFFFC319)
                         )
                     }
-                }
-            )
-        }
+                )
+            }
+        )
     }
 }
 
