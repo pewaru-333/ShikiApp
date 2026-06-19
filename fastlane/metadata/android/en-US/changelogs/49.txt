@@ -1,2 +1,0 @@
-— Added an iOS version.
-— Fixed a bug that sometimes anime seasons info wasn't displayed.
