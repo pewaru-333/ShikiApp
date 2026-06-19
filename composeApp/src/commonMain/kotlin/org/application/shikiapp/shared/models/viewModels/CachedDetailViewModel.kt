@@ -9,34 +9,26 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.transform
-import kotlinx.coroutines.flow.update
 import org.application.shikiapp.shared.models.states.BaseState
 import org.application.shikiapp.shared.network.response.Response
 
 abstract class CachedDetailViewModel<T, D, S : BaseState<S>> : ContentDetailViewModel<D, S>() {
-    private val _trigger = MutableStateFlow(false)
+    private val trigger = MutableStateFlow<Response<D, Nothing>?>(null)
 
-    override val response = combine(_response, _trigger) { response, trigger ->
-        getSourceFlow(contentId)
-            .transform { data ->
-                emit(
-                    value = if (trigger) response
-                    else Response.Success(transformData(data))
-                )
-                _trigger.update { false }
-            }
-            .catch { e -> emit(Response.Error(e)) }
-            .flowOn(Dispatchers.Default)
+    override val response = trigger.flatMapLatest { trigger ->
+        if (trigger != null) flowOf(trigger)
+        else getSourceFlow(contentId).map { Response.Success(transformData(it)) }
     }
-        .flatMapLatest { it }
+        .catch { e -> emit(Response.Error(e)) }
+        .flowOn(Dispatchers.Default)
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Response.Loading)
 
-    override fun loadData() = _trigger.update { true }
+    override fun loadData() = Unit
 
     protected abstract fun getSourceFlow(id: Any): Flow<T>
     protected abstract suspend fun transformData(data: T): D

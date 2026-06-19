@@ -1,8 +1,6 @@
 package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.api.Query
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.shikiapp.AnimeAiringQuery
 import org.application.shikiapp.generated.shikiapp.AnimeGenresQuery
 import org.application.shikiapp.generated.shikiapp.AnimeListQuery
@@ -19,6 +17,7 @@ import org.application.shikiapp.shared.utils.enums.Order
 import org.application.shikiapp.shared.utils.extensions.getRandomTrending
 import org.application.shikiapp.shared.utils.extensions.mapToResult
 import org.application.shikiapp.shared.utils.ui.Formatter
+import kotlin.coroutines.cancellation.CancellationException
 
 object GraphQL {
 
@@ -137,16 +136,15 @@ object GraphQL {
         )
     )
 
-    private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) =
-        try {
-            val response = Network.apollo.query(query)
-                .execute()
-                .dataAssertNoErrors
+    private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) = try {
+        val response = Network.apollo.query(query)
+            .execute()
+            .dataAssertNoErrors
 
-            withContext(Dispatchers.Default) {
-                response.let(mapper)
-            }
-        } catch (_: Exception) {
-            emptyList()
-        }
+        mapper(response)
+    } catch (e: Exception) {
+        if (e is CancellationException) throw e
+
+        emptyList()
+    }
 }

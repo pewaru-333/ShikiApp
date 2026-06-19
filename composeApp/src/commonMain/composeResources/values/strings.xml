@@ -60,7 +60,6 @@
     <string name="text_updates">Обновления</string>
     <string name="text_updates_anime">Обновления аниме</string>
     <string name="text_users">Пользователи</string>
-    <string name="text_voices">Озвучки</string>
     <string name="text_voices_one">Озвучка</string>
 
     <string name="text_video">Видео</string>
@@ -310,7 +309,6 @@
     <string name="text_error">Ошибка!</string>
     <string name="text_error_comment_create">Ошибка отправки комментария!</string>
     <string name="text_error_loading">Ошибка загрузки!</string>
-    <string name="text_link">Ссылка</string>
     <string name="text_loading">Загрузка</string>
     <string name="text_login">Вход</string>
     <string name="text_no_messages">Нет сообщений</string>
@@ -323,9 +321,9 @@
     <string name="text_to_settings">В настройки</string>
     <string name="text_try_again">Повторить</string>
     <string name="text_turned_off">Выключено</string>
+    <string name="text_turned_off_short">Выкл.</string>
     <string name="text_turned_on">Включено</string>
     <string name="text_unknown">Неизвестно</string>
-    <string name="text_verified">Верифицировано</string>
     <string name="text_year_in">в %1$d году</string>
 
     <string name="text_video_sources">Источники</string>

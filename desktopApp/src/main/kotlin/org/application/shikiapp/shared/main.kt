@@ -5,11 +5,7 @@ package org.application.shikiapp.shared
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -48,20 +44,8 @@ fun main(args: Array<String>) {
         val app = AppModuleInitializer(DesktopContext(), AppConfig.createDesktopConfig())
         AppContext.init(app)
 
-        val windowState = rememberWindowState()
-        var isFullscreen by rememberSaveable { mutableStateOf(false) }
-
-        val fullscreenHandler = remember(isFullscreen) {
-            FullscreenHandler(
-                isFullscreen = isFullscreen,
-                toggle = { isFullscreen = !isFullscreen }
-            )
-        }
-
-        LaunchedEffect(isFullscreen) {
-            windowState.placement = if (isFullscreen) WindowPlacement.Fullscreen
-            else WindowPlacement.Floating
-        }
+        val windowState = rememberWindowState(WindowPlacement.Maximized)
+        val fullscreenHandler = remember(windowState) { FullscreenHandler(windowState) }
 
         setSingletonImageLoaderFactory { context ->
             sharedImageLoader(

@@ -5,17 +5,23 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.webkit.MimeTypeMap
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
+import androidx.media3.common.AudioAttributes
 import androidx.media3.common.C
 import androidx.media3.common.MediaItem
 import androidx.media3.common.MimeTypes
@@ -27,19 +33,49 @@ import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.datasource.DefaultHttpDataSource
+import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
+import androidx.media3.extractor.DefaultExtractorsFactory
 import androidx.media3.ui.compose.ContentFrame
+import io.github.peerless2012.ass.media.AssHandler
+import io.github.peerless2012.ass.media.kt.withAssMkvSupport
+import io.github.peerless2012.ass.media.kt.withAssSupport
+import io.github.peerless2012.ass.media.parser.AssSubtitleParserFactory
+import io.github.peerless2012.ass.media.type.AssRenderType
+import io.github.peerless2012.ass.media.widget.AssSubtitleView
 import kotlinx.coroutines.delay
+import org.application.shikiapp.shared.SubtitleView
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.utils.BLANK
 import kotlin.time.Duration.Companion.milliseconds
 
 @UnstableApi
 class VideoPlayerController(private val context: Context, private val state: VideoPlayerState) {
-    val exoPlayer = ExoPlayer.Builder(context.applicationContext).build().apply {
-        addListener(PlayerEventListener())
-    }
+    val assHandler = AssHandler(AssRenderType.EFFECTS_OPEN_GL)
+    private val assParserFactory = AssSubtitleParserFactory(assHandler)
+    private val extractorsFactory = DefaultExtractorsFactory().withAssMkvSupport(assParserFactory, assHandler)
+    private val mediaSourceFactory = DefaultMediaSourceFactory(context, extractorsFactory).setSubtitleParserFactory(assParserFactory)
+    private val renderersFactory = DefaultRenderersFactory(context).withAssSupport(assHandler)
+
+    private val audioAttributes = AudioAttributes.Builder()
+        .setUsage(C.USAGE_MEDIA)
+        .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
+        .build()
+
+    val exoPlayer = ExoPlayer.Builder(context.applicationContext)
+        .setAudioAttributes(audioAttributes, true)
+        .setMediaSourceFactory(mediaSourceFactory)
+        .setRenderersFactory(renderersFactory)
+        .setHandleAudioBecomingNoisy(true)
+        .build()
+        .apply {
+            addListener(PlayerEventListener())
+            assHandler.init(this)
+        }
+
+    var cues by mutableStateOf<List<Cue>>(emptyList())
+        private set
 
     private inner class PlayerEventListener : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
@@ -57,7 +93,7 @@ class VideoPlayerController(private val context: Context, private val state: Vid
         }
 
         override fun onCues(cueGroup: CueGroup) {
-            state.currentCues = cueGroup.cues.mapNotNull(Cue::text)
+            cues = cueGroup.cues
         }
 
         override fun onTracksChanged(tracks: Tracks) {
@@ -67,28 +103,34 @@ class VideoPlayerController(private val context: Context, private val state: Vid
             }
 
             if (isAdaptive == true) {
-                val qualities = tracks.groups
-                    .asSequence()
-                    .filter { it.type == C.TRACK_TYPE_VIDEO }
-                    .flatMap { group -> (0 until group.length).map { group.getTrackFormat(it).height } }
-                    .filter { it > 0 }
-                    .distinct()
-                    .sortedDescending()
-                    .toList()
+                val qualities = HashSet<Int>()
+                for (group in tracks.groups) {
+                    if (group.type == C.TRACK_TYPE_VIDEO) {
+                        for (i in 0 until group.length) {
+                            val height = group.getTrackFormat(i).height
+                            if (height > 0) {
+                                qualities.add(height)
+                            }
+                        }
+                    }
+                }
 
                 if (qualities.isNotEmpty()) {
-                    state.qualityList = qualities
+                    state.qualityList = qualities.sortedDescending()
                 }
             }
 
-            val quality = tracks.groups
-                .asSequence()
-                .filter { it.type == C.TRACK_TYPE_VIDEO }
-                .firstNotNullOfOrNull { group ->
-                    (0 until group.length)
-                        .firstOrNull { group.isTrackSelected(it) }
-                        ?.let { group.getTrackFormat(it).height }
+            var quality: Int? = null
+            search@ for (group in tracks.groups) {
+                if (group.type == C.TRACK_TYPE_VIDEO) {
+                    for (i in 0 until group.length) {
+                        if (group.isTrackSelected(i)) {
+                            quality = group.getTrackFormat(i).height
+                            break@search
+                        }
+                    }
                 }
+            }
 
             if (quality != null && state.currentQuality != quality) {
                 state.currentQuality = quality
@@ -98,24 +140,23 @@ class VideoPlayerController(private val context: Context, private val state: Vid
         }
     }
 
-    internal fun loadVideo() {
-        val currentUrl = state.url ?: return
-
+    internal fun loadVideo(url: String) {
         val dataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent(state.headers.getOrDefault("User-Agent", BLANK))
             .setDefaultRequestProperties(state.headers)
             .setAllowCrossProtocolRedirects(true)
 
-        val subtitleConfigs = state.subtitles.map { subtitleTrack ->
+        val subtitleConfigs = state.subtitles.mapIndexed { index, subtitleTrack ->
             val mimeType = when (MimeTypeMap.getFileExtensionFromUrl(subtitleTrack.url)) {
-                "srt" -> MimeTypes.APPLICATION_SUBRIP
                 "vtt" -> MimeTypes.TEXT_VTT
-                "ttml", "xml" -> MimeTypes.APPLICATION_TTML
                 "ssa", "ass" -> MimeTypes.TEXT_SSA
+                "srt" -> MimeTypes.APPLICATION_SUBRIP
+                "ttml", "xml" -> MimeTypes.APPLICATION_TTML
                 else -> MimeTypes.TEXT_UNKNOWN
             }
 
             MediaItem.SubtitleConfiguration.Builder(subtitleTrack.url.toUri())
+                .setId((index + 1024).toString())
                 .setMimeType(mimeType)
                 .setLabel(subtitleTrack.name)
                 .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
@@ -123,12 +164,13 @@ class VideoPlayerController(private val context: Context, private val state: Vid
         }
 
         val mediaItem = MediaItem.Builder()
-            .setUri(currentUrl)
+            .setUri(url)
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
 
-        val mediaSource = DefaultMediaSourceFactory(context)
+        val mediaSource = DefaultMediaSourceFactory(context, extractorsFactory)
             .setDataSourceFactory(dataSourceFactory)
+            .setSubtitleParserFactory(assParserFactory)
             .createMediaSource(mediaItem)
 
         exoPlayer.setMediaSource(mediaSource)
@@ -137,31 +179,37 @@ class VideoPlayerController(private val context: Context, private val state: Vid
     }
 
     internal fun setQuality(quality: Int) {
-        exoPlayer.currentTracks.groups
-            .asSequence()
-            .filter { it.type == C.TRACK_TYPE_VIDEO }
-            .firstNotNullOfOrNull { group ->
-                (0 until group.length)
-                    .firstOrNull { i -> group.getTrackFormat(i).height == quality }
-                    ?.let { index -> TrackSelectionOverride(group.mediaTrackGroup, index) }
+        for (group in exoPlayer.currentTracks.groups) {
+            if (group.type == C.TRACK_TYPE_VIDEO) {
+                for (i in 0 until group.length) {
+                    if (group.getTrackFormat(i).height == quality) {
+                        exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
+                            .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, i))
+                            .build()
+
+                        return
+                    }
+                }
             }
-            ?.let { override ->
-                exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
-                    .setOverrideForType(override)
-                    .build()
-            }
+        }
     }
 
     internal fun setAudioTrack(audioTrackIndex: Int) {
-        exoPlayer.currentTracks.groups
-            .asSequence()
-            .filter { it.type == C.TRACK_TYPE_AUDIO }
-            .elementAtOrNull(audioTrackIndex)
-            ?.let { group ->
-                exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
-                    .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
-                    .build()
+        var index = 0
+
+        for (group in exoPlayer.currentTracks.groups) {
+            if (group.type == C.TRACK_TYPE_AUDIO) {
+                if (index == audioTrackIndex) {
+                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
+                        .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
+                        .build()
+
+                    return
+                }
+
+                index++
             }
+        }
     }
 
     internal fun setSubtitleTrack() {
@@ -171,7 +219,7 @@ class VideoPlayerController(private val context: Context, private val state: Vid
 
         if (state.selectedSubtitlesTrack != null) {
             exoPlayer.currentTracks.groups
-                .firstOrNull { it.type == C.TRACK_TYPE_TEXT && it.getTrackFormat(0).label == state.selectedSubtitlesTrack }
+                .find { it.type == C.TRACK_TYPE_TEXT && it.getTrackFormat(0).label == state.selectedSubtitlesTrack }
                 ?.let { builder.setOverrideForType(TrackSelectionOverride(it.mediaTrackGroup, 0)) }
         }
 
@@ -188,7 +236,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
     val exoPlayer = controller.exoPlayer
 
     LaunchedEffect(state.url) {
-        controller.loadVideo()
+        state.url?.let(controller::loadVideo)
     }
 
     LaunchedEffect(state.currentQuality, state.tracksRevision) {
@@ -264,6 +312,19 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         player = exoPlayer,
         modifier = modifier,
         contentScale = if (state.isZoomed) ContentScale.FillBounds else ContentScale.Fit
+    )
+
+    AndroidView(
+        modifier = Modifier.fillMaxSize(),
+        update = { it.setCues(controller.cues) },
+        factory = { context ->
+            SubtitleView(context).apply {
+                addView(AssSubtitleView(context, controller.assHandler))
+                setViewType(SubtitleView.VIEW_TYPE_WEB)
+                setUserDefaultStyle()
+                setUserDefaultTextSize()
+            }
+        }
     )
 }
 

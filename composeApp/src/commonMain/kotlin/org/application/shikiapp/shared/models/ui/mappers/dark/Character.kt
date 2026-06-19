@@ -5,6 +5,6 @@ import org.application.shikiapp.shared.models.ui.list.BasicContent
 
 fun CharacterRole.toBasicContent() = BasicContent(
     id = character.id,
-    title = character.russian?.takeIf(String::isNotEmpty) ?: character.name,
+    title = character.russian.takeUnless(String?::isNullOrEmpty) ?: character.name,
     poster = character.poster?.originalUrl.orEmpty()
 )

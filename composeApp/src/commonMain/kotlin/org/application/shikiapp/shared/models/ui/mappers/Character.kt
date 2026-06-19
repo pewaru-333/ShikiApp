@@ -1,10 +1,7 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
 import androidx.paging.PagingData
-import androidx.paging.map
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.shikiapp.CharacterListQuery
 import org.application.shikiapp.generated.shikiapp.fragment.CharacterRole
 import org.application.shikiapp.shared.models.data.AnimeBasic
@@ -25,15 +22,13 @@ import org.application.shikiapp.shared.utils.fromHtml
 import org.application.shikiapp.shared.utils.ui.Formatter
 
 object CharacterMapper {
-    suspend fun create(
-        character: Character,
-        image: String?,
-        comments: Flow<PagingData<Comment>>
-    ) = withContext(Dispatchers.Default) {
-        val relatedList = character.animes.map(AnimeBasic::toRelated) +
-                character.mangas.map(MangaBasic::toRelated)
+    fun create(character: Character, image: String?, comments: Flow<PagingData<Comment>>): org.application.shikiapp.shared.models.ui.Character {
+        val relatedList = ArrayList<Related>(character.animes.size + character.mangas.size).apply {
+            character.animes.mapTo(this, AnimeBasic::toRelated)
+            character.mangas.mapTo(this, MangaBasic::toRelated)
+        }
 
-        org.application.shikiapp.shared.models.ui.Character(
+        return org.application.shikiapp.shared.models.ui.Character(
             altName = character.altName,
             anime = character.animes.map(AnimeBasic::toContent),
             comments = comments,
@@ -57,7 +52,7 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationT
 
     return Related(
         id = id.toString(),
-        title = russian?.takeIf(String::isNotEmpty) ?: name,
+        title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
         poster = Formatter.replaceMissingAnimePoster(image.original, id),
         kind = kindEnum,
         status = Enum.safeValueOf<Status>(status),
@@ -75,25 +70,17 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toContent() = Conte
     score = score?.let(Formatter::convertScore),
     season = Formatter.getSeason(airedOn, kind),
     status = Enum.safeValueOf<Status>(status),
-    title = russian?.takeIf(String::isNotEmpty) ?: name
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name
 )
 
 fun CharacterRole.toBasicContent() = BasicContent(
     id = character.id,
-    title = character.russian?.takeIf(String::isNotEmpty) ?: character.name,
+    title = character.russian.takeUnless(String?::isNullOrEmpty) ?: character.name,
     poster = character.poster?.originalUrl.orEmpty()
 )
 
 fun CharacterListQuery.Data.Character.mapper() = BasicContent(
     id = id,
-    title = russian?.takeIf(String::isNotEmpty) ?: name,
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
     poster = poster?.mainUrl.orEmpty(),
 )
-
-fun PagingData<BasicInfo>.toContent() = map {
-    BasicContent(
-        id = it.id.toString(),
-        title = it.russian?.takeIf(String::isNotEmpty) ?: it.name,
-        poster = it.image.original
-    )
-}

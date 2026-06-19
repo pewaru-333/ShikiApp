@@ -14,7 +14,6 @@ import androidx.paging.map
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -24,14 +23,12 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.data.ClubBasic
@@ -85,9 +82,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                 Network.user.getFriends(userId, page, params.loadSize)
             }
         }
-    ).flow
-        .cachedIn(viewModelScope)
-        .retryWhen { _, attempt -> attempt <= 5 }
+    ).flow.cachedIn(viewModelScope)
 
     protected val history = Pager(
         config = PagingConfig(
@@ -96,16 +91,11 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         ),
         pagingSourceFactory = {
             CommonPaging(History::id) { page, params ->
-                val history = Network.user.getHistory(userId, page, params.loadSize)
-
-                withContext(Dispatchers.Default) {
-                    history.map(org.application.shikiapp.shared.models.data.History::mapper)
-                }
+                Network.user.getHistory(userId, page, params.loadSize)
+                    .map(org.application.shikiapp.shared.models.data.History::mapper)
             }
         }
-    ).flow
-        .cachedIn(viewModelScope)
-        .retryWhen { _, attempt -> attempt <= 5 }
+    ).flow.cachedIn(viewModelScope)
 
     protected val user: Deferred<org.application.shikiapp.shared.models.data.User>
         get() = viewModelScope.async { Network.user.getUser(userId) }
@@ -202,13 +192,13 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             else Pager(
                 config = PagingConfig(pageSize = 30, enablePlaceholders = false),
                 pagingSourceFactory = {
-                    CommonPaging(FullMessage::id) { page, params ->
+                    CommonPaging(Dialog::id) { page, params ->
                         Network.profile.getUserDialog(state.userId, page, params.loadSize)
+                            .map(FullMessage::toDialogMessage)
                     }
                 }
             ).flow
                 .onStart { _newMessages.emit(emptyList()) }
-                .map { list -> list.map(FullMessage::toDialogMessage) }
                 .cachedIn(viewModelScope)
                 .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
         }
@@ -217,22 +207,21 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         val news = Pager(
             config = PagingConfig(pageSize = 15, enablePlaceholders = false),
             pagingSourceFactory = {
-                CommonPaging(FullMessage::id) { page, params ->
+                CommonPaging(Message::id) { page, params ->
                     Network.profile.getMessages(Preferences.userId, MessageType.NEWS, page, params.loadSize)
+                        .map(FullMessage::toNewsMessage)
                 }.also { _newsPagingSource = it }
             }
         ).flow
-            .map { list -> list.map(FullMessage::toNewsMessage) }
             .cachedIn(viewModelScope)
             .combine(_updatingNotificationMap) { pagingData, map ->
+                if (map.isEmpty()) return@combine pagingData
+
                 pagingData.map { message ->
-                    if (map.contains(message.id)) {
-                        when (val data = map.getValue(message.id)) {
-                            is NotificationUpdateType.MarkingRead -> message.copy(read = data.state)
-                            is NotificationUpdateType.Deleting -> message.copy(isDeleting = data.state)
-                        }
-                    } else {
-                        message
+                    when (val data = map[message.id]) {
+                        is NotificationUpdateType.MarkingRead -> message.copy(read = data.state)
+                        is NotificationUpdateType.Deleting -> message.copy(isDeleting = data.state)
+                        null -> message
                     }
                 }.filter { it.isDeleting.getValue() != true }
             }
@@ -242,14 +231,16 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         val notifications = Pager(
             config = PagingConfig(pageSize = 15, enablePlaceholders = false),
             pagingSourceFactory = {
-                CommonPaging(FullMessage::id) { page, params ->
+                CommonPaging(Message::id) { page, params ->
                     Network.profile.getMessages(Preferences.userId, MessageType.NOTIFICATIONS, page, params.loadSize)
+                        .map(FullMessage::toNewsMessage)
                 }.also { _notificationsPagingSource = it }
             }
         ).flow
-            .map { list -> list.map(FullMessage::toNewsMessage) }
             .cachedIn(viewModelScope)
             .combine(_updatingNotificationMap) { pagingData, map ->
+                if (map.isEmpty()) return@combine pagingData
+
                 pagingData.map { message ->
                     when (val data = map[message.id]) {
                         is NotificationUpdateType.MarkingRead -> message.copy(read = data.state)

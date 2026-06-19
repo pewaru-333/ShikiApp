@@ -152,13 +152,9 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                 val result = parser.getPlaylistLink(episode.link)
                 val qualityList = result.qualityList.sortedDescending()
                 val subtitles = if (result.subtitles.isEmpty()) emptyList()
-                else {
-                    val noSubtitles = SubtitleTrack(
-                        name = "Выкл",
-                        url = BLANK
-                    )
-
-                    listOf(noSubtitles) + result.subtitles
+                else buildList {
+                    add(SubtitleTrack.off())
+                    addAll(result.subtitles)
                 }
 
                 _state.update {

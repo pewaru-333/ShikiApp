@@ -3,14 +3,9 @@ package org.application.shikiapp.shared.models.viewModels
 import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.models.data.Topic
 import org.application.shikiapp.shared.models.ui.AnimeCalendar
@@ -21,7 +16,6 @@ import org.application.shikiapp.shared.network.client.GraphQL
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.paging.CommonPaging
 import org.application.shikiapp.shared.network.response.Response
-import org.application.shikiapp.shared.utils.extensions.distinctBy
 
 class CalendarViewModel : BaseViewModel<AnimeCalendar, Unit, Unit>() {
     override val contentId = Any()
@@ -44,15 +38,15 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, Unit, Unit>() {
                     val random = async { GraphQL.getRandom() }
                     val schedule = async { Network.content.getCalendar().toSchedule() }
 
-                    Triple(trending, random, schedule)
+                    Triple(trending.await(), random.await(), schedule.await())
                 }
 
                 emit(
                     state = Response.Success(
                         data = AnimeCalendar(
-                            trending = trending.await(),
-                            random = random.await(),
-                            schedule = schedule.await(),
+                            trending = trending,
+                            random = random,
+                            schedule = schedule,
                             updates = topicsUpdates
                         )
                     )
@@ -74,14 +68,10 @@ class CalendarViewModel : BaseViewModel<AnimeCalendar, Unit, Unit>() {
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging(Topic::id) { page, params ->
+            CommonPaging(Content::id) { page, params ->
                 Network.topics.getTopicsUpdates(page, params.loadSize)
+                    .map(Topic::toAnimeContent)
             }
         }
-    ).flow
-        .map(PagingData<Topic>::toAnimeContent)
-        .distinctBy(Content::id)
-        .flowOn(Dispatchers.Default)
-        .cachedIn(viewModelScope)
-        .retryWhen { _, attempt -> attempt <= 3 }
+    ).flow.cachedIn(viewModelScope)
 }

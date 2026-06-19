@@ -36,6 +36,7 @@ kotlin {
         minSdk = 26
         compileSdk = 37
 
+        withJava()
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
@@ -103,6 +104,7 @@ kotlin {
                 implementation(libs.ktor.client.okhttp)
 
                 implementation(libs.bundles.media3)
+                implementation(libs.libass) // Subtitles (.ass)
             }
         }
 
@@ -120,9 +122,8 @@ kotlin {
 
                 implementation(libs.ktor.client.okhttp)
 
-                // Video player libraries
+                // Video player
                 implementation(libs.vlcj)
-                implementation(libs.vlcj.subs)
             }
         }
     }

@@ -1,9 +1,13 @@
 package org.application.shikiapp.shared.utils
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import org.jetbrains.compose.resources.getPluralString
 import org.jetbrains.compose.resources.getString
+import org.jetbrains.compose.resources.pluralStringResource
+import org.jetbrains.compose.resources.stringResource
 
+@Immutable
 sealed interface ResourceText : Comparable<ResourceText> {
     val defaultValue: String
 
@@ -23,6 +27,21 @@ sealed interface ResourceText : Comparable<ResourceText> {
     ) : ResourceText {
         override fun compareTo(other: ResourceText) = -1
         override val defaultValue = BLANK
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other == null || this::class != other::class) return false
+
+            other as StringResource
+            if (resourceId != other.resourceId) return false
+            return args.contentDeepEquals(other.args)
+        }
+
+        override fun hashCode(): Int {
+            var result = resourceId.hashCode()
+            result = 31 * result + args.contentDeepHashCode()
+            return result
+        }
     }
 
     class PluralStringResource(
@@ -32,34 +51,99 @@ sealed interface ResourceText : Comparable<ResourceText> {
     ) : ResourceText {
         override fun compareTo(other: ResourceText) = -1
         override val defaultValue = BLANK
+
+        override fun equals(other: Any?): Boolean {
+            if (this === other) return true
+            if (other == null || this::class != other::class) return false
+
+            other as PluralStringResource
+            if (resourceId != other.resourceId) return false
+            if (count != other.count) return false
+
+            return args.contentDeepEquals(other.args)
+        }
+
+        override fun hashCode(): Int {
+            var result = resourceId.hashCode()
+            result = 31 * result + count
+            result = 31 * result + args.contentDeepHashCode()
+
+            return result
+        }
     }
 
     @Composable
     fun asComposableString(): String = when (this) {
         is StaticString -> value
 
-        is MultiString -> value.map { (it as? ResourceText)?.asComposableString() ?: it }.joinToString(BLANK)
+        is MultiString -> buildString {
+            for (item in value) {
+                when (item) {
+                    is ResourceText -> append(item.asComposableString())
+                    else -> append(item)
+                }
+            }
+        }
 
-        is StringResource -> org.jetbrains.compose.resources.stringResource(
-            resourceId,
-            *args.map { (it as? ResourceText)?.asComposableString() ?: it }.toTypedArray()
-        )
+        is StringResource -> if (args.isEmpty()) stringResource(resourceId)
+        else {
+            val argsArray = Array(args.size) { index ->
+                when (val arg = args[index]) {
+                    is ResourceText -> arg.asComposableString()
+                    else -> arg
+                }
+            }
 
-        is PluralStringResource -> org.jetbrains.compose.resources.pluralStringResource(resourceId, count, *args)
+            stringResource(resourceId, *argsArray)
+        }
+
+        is PluralStringResource -> if (args.isEmpty()) pluralStringResource(resourceId, count)
+        else {
+            val argsArray = Array(args.size) { index ->
+                when (val arg = args[index]) {
+                    is ResourceText -> arg.asComposableString()
+                    else -> arg
+                }
+            }
+
+            pluralStringResource(resourceId, count, *argsArray)
+        }
     }
 
-    suspend fun asString() : String = when (this) {
+    suspend fun asString(): String = when (this) {
         is StaticString -> value
 
-        is MultiString -> value.map {
-            (it as? ResourceText)?.asString() ?: it
-        }.joinToString(BLANK)
+        is MultiString -> buildString {
+            for (item in value) {
+                when (item) {
+                    is ResourceText -> append(item.asString())
+                    else -> append(item)
+                }
+            }
+        }
 
-        is StringResource -> getString(
-            resourceId,
-            *args.map { (it as? ResourceText)?.asString() ?: it }.toTypedArray()
-        )
+        is StringResource -> if (args.isEmpty()) getString(resourceId)
+        else {
+            val argsArray = Array(args.size) { index ->
+                when (val arg = args[index]) {
+                    is ResourceText -> arg.asString()
+                    else -> arg
+                }
+            }
 
-        is PluralStringResource -> getPluralString(resourceId, count, *args)
+            getString(resourceId, *argsArray)
+        }
+
+        is PluralStringResource -> if (args.isEmpty()) getPluralString(resourceId, count)
+        else {
+            val argsArray = Array(args.size) { index ->
+                when (val arg = args[index]) {
+                    is ResourceText -> arg.asString()
+                    else -> arg
+                }
+            }
+
+            getPluralString(resourceId, count, *argsArray)
+        }
     }
 }

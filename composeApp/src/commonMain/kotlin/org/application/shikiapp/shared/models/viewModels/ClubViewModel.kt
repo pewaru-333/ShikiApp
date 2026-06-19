@@ -7,10 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
-import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.map
-import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -20,19 +17,19 @@ import kotlinx.coroutines.flow.emptyFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.BasicInfo
-import org.application.shikiapp.shared.models.data.ClubBasic
 import org.application.shikiapp.shared.models.data.ClubImages
 import org.application.shikiapp.shared.models.data.MangaBasic
 import org.application.shikiapp.shared.models.data.UserBasic
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.ClubState
 import org.application.shikiapp.shared.models.ui.Club
+import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.mappers.mapper
+import org.application.shikiapp.shared.models.ui.mappers.toBasicContent
 import org.application.shikiapp.shared.models.ui.mappers.toContent
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.paging.CommonPaging
@@ -52,123 +49,109 @@ class ClubViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Club, Club
     private val _joinChannel = Channel<ResourceText>()
     val joinChannel = _joinChannel.receiveAsFlow()
 
-    val members by lazy {
+    private val members by lazy {
         Pager(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging(UserBasic::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getMembers(contentId, page, params.loadSize)
+                        .map(UserBasic::toContent)
                 }
             }
-        ).flow
-            .map { it.map(UserBasic::toContent) }
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
-    val characters by lazy {
+    private val characters by lazy {
         Pager(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging(BasicInfo::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getCharacters(contentId, page, params.loadSize)
+                        .map(BasicInfo::toBasicContent)
                 }
             }
-        ).flow
-            .map(PagingData<BasicInfo>::toContent)
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
-    val animes by lazy {
+    private val animes by lazy {
         Pager(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging(AnimeBasic::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getAnime(contentId, page, params.loadSize)
+                        .map(AnimeBasic::toBasicContent)
                 }
             }
-        ).flow
-            .map(PagingData<AnimeBasic>::toContent)
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
-    val manga by lazy {
+    private val manga by lazy {
         Pager(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging(MangaBasic::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getManga(contentId, page, params.loadSize)
+                        .map(MangaBasic::toBasicContent)
                 }
             }
-        ).flow
-            .map(PagingData<MangaBasic>::toContent)
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
-    val ranobe by lazy {
+    private val ranobe by lazy {
         Pager(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging(MangaBasic::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getRanobe(contentId, page, params.loadSize)
+                        .map(MangaBasic::toBasicContent)
                 }
             }
-        ).flow
-            .map(PagingData<MangaBasic>::toContent)
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
-    val clubs by lazy {
+    private val clubs by lazy {
         Pager(
             config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging<ClubBasic>(ClubBasic::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getClubClubs(contentId, page, params.loadSize)
+                        .map(org.application.shikiapp.shared.models.data.Club::toContent)
                 }
             }
-        ).flow
-            .map(PagingData<ClubBasic>::toContent)
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
-    val images by lazy {
+    private val images by lazy {
         Pager(
-            PagingConfig(
+            config = PagingConfig(
                 pageSize = 10,
                 enablePlaceholders = false
             ),
             pagingSourceFactory = {
-                CommonPaging(ClubImages::id) { page, params ->
+                CommonPaging(BasicContent::id) { page, params ->
                     Network.clubs.getImages(contentId, page, params.loadSize)
+                        .map(ClubImages::toContent)
                 }
             }
-        ).flow
-            .map { it.map(ClubImages::toContent) }
-            .cachedIn(viewModelScope)
-            .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+        ).flow.cachedIn(viewModelScope)
     }
 
     val content = state
@@ -207,20 +190,7 @@ class ClubViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Club, Club
                     )
                 }
 
-                emit(
-                    Response.Success(
-                        clubLoaded.mapper(
-                            images = images,
-                            members = members,
-                            animes = animes,
-                            mangas = manga,
-                            ranobe = ranobe,
-                            characters = characters,
-                            clubs = clubs,
-                            comments = comments
-                        )
-                    )
-                )
+                emit(Response.Success(clubLoaded.mapper(comments)))
             } catch (e: Exception) {
                 emit(Response.Error(e))
             }

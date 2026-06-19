@@ -14,8 +14,12 @@ class ReviewsPaging(private val animeId: String) : PagingSource<Int, Review>() {
 
         val response = Network.anime.getReviews(animeId, page)
 
-        val reviews = withContext(Dispatchers.Default) { Formatter.parseReviews(response) }
-        val nextPage = withContext(Dispatchers.Default) { Formatter.parseReviewsNextPage(response.postloader) }
+        val (reviews, nextPage) = withContext(Dispatchers.Default) {
+            val parsedReviews = Formatter.parseReviews(response)
+            val parsedNextPage = Formatter.parseReviewsNextPage(response.postloader)
+
+            Pair(parsedReviews, parsedNextPage)
+        }
 
         LoadResult.Page(
             data = reviews,

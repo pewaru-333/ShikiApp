@@ -11,7 +11,6 @@ import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.PagingSource.LoadParams
 import androidx.paging.cachedIn
-import io.ktor.client.plugins.ClientRequestException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
@@ -24,7 +23,6 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.builtins.nullable
@@ -166,9 +164,6 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
             }
         }
     ).flow
-        .retryWhen { cause, attempt ->
-            cause is ClientRequestException && attempt < 3
-        }
 
     private suspend fun fetchData(item: CatalogItem, query: FiltersState, page: Int, params: LoadParams<Int>) = when (item) {
         CatalogItem.ANIME -> GraphQL.getAnimeList(

@@ -15,7 +15,7 @@ fun History.mapper(): org.application.shikiapp.shared.models.ui.History {
     return org.application.shikiapp.shared.models.ui.History(
         id = id.toString(),
         contentId = targetId?.toString(),
-        title = target?.russian?.takeIf(String::isNotEmpty) ?: target?.name.orEmpty(),
+        title = target?.russian.takeUnless(String?::isNullOrEmpty) ?: target?.name.orEmpty(),
         description = fromHtml(description),
         date = Formatter.convertDate(createdAt),
         kind = kind,

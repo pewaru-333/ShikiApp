@@ -58,8 +58,6 @@ class VideoPlayerState {
         internal set
     var selectedSubtitlesTrack by mutableStateOf<String?>(null)
         internal set
-    var currentCues by mutableStateOf<List<CharSequence>>(emptyList())
-        internal set
 
     // Масштабирование
     var isZoomed by mutableStateOf(false)
@@ -139,7 +137,6 @@ class VideoPlayerState {
         isVideoEnded = false
 
         selectedSubtitlesTrack = null
-        currentCues = emptyList()
 
         currentQuality = null
         qualityList = emptyList()
@@ -193,12 +190,7 @@ class VideoPlayerState {
     fun showSubtitles(index: Int) {
         controls.hideSubtitles()
 
-        if (index == 0) {
-            selectedSubtitlesTrack = null
-            currentCues = emptyList()
-        } else {
-            selectedSubtitlesTrack = subtitles.getOrNull(index)?.name
-        }
+        selectedSubtitlesTrack = if (index == 0) null else subtitles.getOrNull(index)?.name
     }
 
     fun toggleFullscreen() {

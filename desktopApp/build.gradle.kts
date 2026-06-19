@@ -27,7 +27,7 @@ compose.desktop {
 
         nativeDistributions {
             packageName = "ShikiApp"
-            packageVersion = "0.7.1"
+            packageVersion = "0.7.2"
 
             appResourcesRootDir.set(project.layout.projectDirectory.dir("files"))
 
@@ -38,10 +38,13 @@ compose.desktop {
                 "-Xmx2048m",
 
                 "-XX:+UseZGC",
-                "-XX:+ZGenerational",
                 "-XX:+UseStringDeduplication",
+                "-XX:+UseCompactObjectHeaders",
                 "-XX:+TieredCompilation",
                 "-Xshare:auto",
+
+                "--enable-native-access=ALL-UNNAMED",
+                "-Dfile.encoding=UTF-8",
 
                 "-Dskiko.vsync.enabled=true",
                 "-Dskiko.fps.limit=120"
