@@ -97,7 +97,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.util.fastForEach
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
@@ -603,10 +602,6 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
 
             VolumeScale(playerState)
 
-            if (playerState.currentCues.isNotEmpty()) {
-                Cues(playerState.currentCues)
-            }
-
             EpisodeList(
                 episodesCount = state.currentVoice.episodesCount,
                 currentEpisode = state.currentEpisode ?: 0,
@@ -618,27 +613,6 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
         }
     }
 }
-
-@Composable
-private fun BoxScope.Cues(cues: List<CharSequence>) =
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier
-            .align(Alignment.BottomCenter)
-            .padding(24.dp)
-    ) {
-        cues.fastForEach { text ->
-            Text(
-                text = text.toString(),
-                color = Color.White,
-                textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
-                    .background(Color.Black.copy(alpha = 0.6f), MaterialTheme.shapes.extraSmall)
-                    .padding(12.dp, 4.dp)
-            )
-        }
-    }
 
 @Composable
 fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState, focusRequester: FocusRequester) =
