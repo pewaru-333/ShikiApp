@@ -23,6 +23,7 @@ import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import kotlinx.cinterop.ExperimentalForeignApi
+import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
@@ -42,6 +43,7 @@ import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import platform.CoreGraphics.CGRectMake
+import platform.CoreGraphics.CGRectZero
 import platform.Foundation.NSBundle
 import platform.Foundation.NSCachesDirectory
 import platform.Foundation.NSDateComponents
@@ -91,6 +93,8 @@ import platform.WebKit.WKNavigationAction
 import platform.WebKit.WKNavigationActionPolicy
 import platform.WebKit.WKNavigationDelegateProtocol
 import platform.WebKit.WKWebView
+import platform.WebKit.WKWebViewConfiguration
+import platform.WebKit.WKWebsiteDataStore
 import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
@@ -367,7 +371,13 @@ actual fun formatRelativeDays(daysAgo: Int): String {
 }
 
 private class AuthWebViewController : UIViewController(null, null) {
-    private val webView = WKWebView()
+    @OptIn(ExperimentalForeignApi::class)
+    private val webView = WKWebView(
+        frame = CGRectZero.readValue(),
+        configuration = WKWebViewConfiguration().apply {
+            websiteDataStore = WKWebsiteDataStore.nonPersistentDataStore()
+        }
+    )
 
     private val delegate = object : NSObject(), WKNavigationDelegateProtocol {
         override fun webView(
