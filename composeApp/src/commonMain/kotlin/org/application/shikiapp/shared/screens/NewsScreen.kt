@@ -26,9 +26,12 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -55,15 +58,30 @@ fun NewsScreen(onNavigate: (Screen) -> Unit) {
     val newsViewModel = viewModel { NewsViewModel() }
     val list = newsViewModel.newsList.collectAsLazyPagingItems()
 
-    val isRefreshing by remember {
-        derivedStateOf { list.loadState.refresh is LoadState.Loading }
-    }
-
     val isCompact = rememberWindowSize().isCompact
 
-    PullToRefreshBox(isRefreshing, list::refresh, Modifier.safeDrawingPadding()) {
+    var isManual by remember { mutableStateOf(false) }
+    val isInitial by remember {
+        derivedStateOf {
+            list.loadState.refresh is LoadState.Loading && list.itemCount == 0
+        }
+    }
+    val onRefresh = remember {
+        {
+            isManual = true
+            list.refresh()
+        }
+    }
+
+    LaunchedEffect(list.loadState.refresh) {
+        if (list.loadState.refresh !is LoadState.Loading) {
+            isManual = false
+        }
+    }
+
+    PullToRefreshBox(isManual, onRefresh, Modifier.safeDrawingPadding()) {
         when {
-            isRefreshing && list.itemCount == 0 -> {
+            isInitial -> {
                 if (isCompact) {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
