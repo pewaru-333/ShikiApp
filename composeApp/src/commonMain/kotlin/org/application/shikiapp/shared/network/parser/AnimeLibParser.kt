@@ -77,7 +77,7 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
 
         val subtitleTracks = targetPlayer.subtitles.mapIndexedNotNull { index, sub ->
             when (val format = sub.format.lowercase()) {
-                "vtt", "ass", "ssa" -> SubtitleTrack(
+                "vtt", "srt", "ass", "ssa" -> SubtitleTrack(
                     name = "${format.uppercase()} ${index + 1}",
                     url = sub.src
                 )
