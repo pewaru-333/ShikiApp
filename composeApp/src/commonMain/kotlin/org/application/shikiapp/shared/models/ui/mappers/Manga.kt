@@ -1,7 +1,6 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
 import androidx.paging.PagingData
-import androidx.paging.map
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.shikiapp.MangaExtraQuery
 import org.application.shikiapp.generated.shikiapp.MangaListQuery
@@ -15,14 +14,12 @@ import org.application.shikiapp.shared.models.ui.Manga
 import org.application.shikiapp.shared.models.ui.Publisher
 import org.application.shikiapp.shared.models.ui.Statistics
 import org.application.shikiapp.shared.models.ui.UserRate
-import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.EXTERNAL_LINK_KINDS
 import org.application.shikiapp.shared.utils.ROLES_RUSSIAN
 import org.application.shikiapp.shared.utils.ResourceText
-import org.application.shikiapp.shared.utils.ResourceText.StringResource
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Status
@@ -49,12 +46,11 @@ object MangaMapper {
         charactersAll = extra.characterRoles.orEmpty()
             .map(MangaExtraQuery.Data.Manga.CharacterRole::toBasicContent),
         charactersMain = extra.characterRoles.orEmpty()
-            .filter { it.rolesRu.contains("Main") }
-            .map(MangaExtraQuery.Data.Manga.CharacterRole::toBasicContent),
+            .mapNotNull { if (it.rolesRu.contains("Main")) it.toBasicContent() else null },
         chronology = extra.chronology.orEmpty().map {
             Content(
                 id = it.id,
-                title = it.russian?.takeIf(String::isNotEmpty) ?: it.name,
+                title = it.russian.takeUnless(String?::isNullOrEmpty) ?: it.name,
                 poster = it.poster?.mainUrl.orEmpty(),
                 kind = Enum.safeValueOf<Kind>(it.kind?.rawValue),
                 status = Enum.safeValueOf<Status>(it.status?.rawValue),
@@ -72,17 +68,18 @@ object MangaMapper {
         isOngoing = Status.ONGOING.safeEquals(main.status?.rawValue),
         kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
         kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
-        kindTitle = if (main.kind in listOf(light_novel, novel)) Res.string.text_ranobe else Res.string.text_manga,
+        kindTitle = when (main.kind) {
+            light_novel, novel -> Res.string.text_ranobe
+            else -> Res.string.text_manga
+        },
         licenseName = main.licenseNameRu.orEmpty(),
         licensors = main.licensors.orEmpty(),
         links = main.externalLinks.orEmpty()
-            .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS }
-            .map(MangaMainQuery.Data.Manga.ExternalLink::mapper),
+            .mapNotNull { if (it.kind.rawValue in EXTERNAL_LINK_KINDS) it.mapper() else null },
         personAll = extra.personRoles.orEmpty()
             .map(MangaExtraQuery.Data.Manga.PersonRole::toContent),
         personMain = extra.personRoles.orEmpty()
-            .filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }
-            .map(MangaExtraQuery.Data.Manga.PersonRole::toContent),
+            .mapNotNull { role -> if (role.rolesRu.any { it in ROLES_RUSSIAN }) role.toContent() else null },
         poster = main.poster?.originalUrl.orEmpty(),
         publisher = main.publishers.firstOrNull()?.let {
             Publisher(
@@ -96,20 +93,20 @@ object MangaMapper {
         similar = similar.map(MangaBasic::toContent),
         stats = Pair(
             first = extra.scoresStats?.let { scores ->
-                Statistics(
-                    sum = scores.sumOf(MangaExtraQuery.Data.Manga.ScoresStat::count),
-                    scores = scores.filter { it.count > 0 }.associate {
-                        ResourceText.StaticString(it.score.toString()) to it.count.toString()
-                    }
+                val (sum, map) = scores.toStatistics(
+                    countSelector = MangaExtraQuery.Data.Manga.ScoresStat::count,
+                    keySelector = { ResourceText.StaticString(it.score.toString()) }
                 )
+
+                Statistics(sum, map)
             },
             second = extra.statusesStats?.let { statuses ->
-                Statistics(
-                    sum = statuses.sumOf(MangaExtraQuery.Data.Manga.StatusesStat::count),
-                    scores = statuses.filter { it.count > 0 }.associate {
-                        StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.MANGA)) to it.count.toString()
-                    }
+                val (sum, map) = statuses.toStatistics(
+                    countSelector = MangaExtraQuery.Data.Manga.StatusesStat::count,
+                    keySelector = { ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.MANGA)) }
                 )
+
+                Statistics(sum, map)
             }
         ),
         status = Enum.safeValueOf<Status>(main.status?.rawValue).mangaTitle,
@@ -152,7 +149,5 @@ fun MangaListQuery.Data.Manga.mapper() = Content(
     score = score?.let(Formatter::convertScore),
     season = Formatter.getSeason(airedOn?.date, kind?.rawValue),
     status = Enum.safeValueOf<Status>(status?.rawValue),
-    title = russian.orEmpty().ifEmpty(::name),
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name
 )
-
-fun PagingData<MangaBasic>.toContent(): PagingData<BasicContent> = map(MangaBasic::toContent)

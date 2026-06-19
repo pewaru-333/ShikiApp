@@ -112,26 +112,17 @@ fun CvhPlaylistResponse.toVideoVoices(targetSeason: Int): List<VideoVoice> {
     if (seasonItems.isEmpty()) return emptyList()
 
     return seasonItems.groupBy { it.voiceStudio }.entries.mapIndexed { index, (studio, episodes) ->
-        val isSubtitles = studio.contains("субтитры", ignoreCase = true) ||
-                studio.contains("sub", ignoreCase = true) ||
-                episodes.any {
-                    it.voiceType?.contains("субтитры", ignoreCase = true) == true ||
-                            it.voiceType.isNullOrEmpty() && it.voiceStudio.isEmpty()
-                }
-
         val mappedEpisodes = episodes
-            .asSequence()
             .map { EpisodeModel(number = it.episode, link = it.vkId) }
             .distinctBy { it.number }
             .sortedBy { it.number }
-            .toList()
 
         VideoVoice(
             id = index,
-            title = if (studio.isNotBlank()) ResourceText.StaticString(studio)
+            title = if (!studio.isNullOrBlank()) ResourceText.StaticString(studio)
             else ResourceText.StringResource(Res.string.origin_original),
-            hasDubbers = studio.isNotEmpty(),
-            hasSubtitles = isSubtitles,
+            hasDubbers = !studio.isNullOrBlank(),
+            hasSubtitles = studio == null,
             episodes = mappedEpisodes,
             quality = ResourceText.StringResource(Res.string.text_quality_adaptive),
             lastEpisode = mappedEpisodes.lastOrNull()?.number ?: 0
@@ -143,7 +134,6 @@ fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<Vide
     if (data.isEmpty()) return emptyList()
 
     val mappedEpisodes = data
-        .asSequence()
         .map {
             EpisodeModel(
                 number = it.number.toIntOrNull() ?: it.itemNumber,
@@ -152,7 +142,6 @@ fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<Vide
         }
         .distinctBy { it.number }
         .sortedBy { it.number }
-        .toList()
 
     return buildList(maxOf(1, teams.size)) {
         add(
@@ -183,41 +172,43 @@ fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<Vide
     }
 }
 
-fun AnimeLibEpisodeDetailResponse.toEpisodeVoices(episodeNumber: Int): List<VideoVoice> {
-    return data.players
-        .filter { it.player.equals("Animelib", ignoreCase = true) }
-        .mapIndexed { index, player ->
-            val isSubtitles = player.translationType?.label?.contains("Субтитры", ignoreCase = true) == true
-            val teamName = player.team?.let { ResourceText.StaticString(it.name) }
-                ?: player.translationType?.let { ResourceText.StaticString(it.label) }
-                ?: ResourceText.StringResource(Res.string.origin_original)
-
-            val quality = player.video?.quality
-                ?.maxOfOrNull { it.quality }
-                ?.let {
-                    ResourceText.StaticString(
-                        value = when (it) {
-                            2160 -> "4K"
-                            1440 -> "2K"
-                            1080 -> "Full HD"
-                            720 -> "HD"
-                            else -> "${it}p"
-                        }
-                    )
-                }
-                ?: ResourceText.StringResource(Res.string.text_quality_adaptive)
-
-            VideoVoice(
-                id = player.team?.id?.toInt() ?: index,
-                title = teamName,
-                hasDubbers = !isSubtitles,
-                hasSubtitles = isSubtitles,
-                episodes = emptyList(),
-                quality = quality,
-                lastEpisode = episodeNumber
-            )
+fun AnimeLibEpisodeDetailResponse.toEpisodeVoices(episodeNumber: Int) = data.players
+    .mapIndexedNotNull { index, player ->
+        if (!player.player.equals("Animelib", ignoreCase = true)) {
+            return@mapIndexedNotNull null
         }
-}
+
+        val isSubtitles = player.translationType?.label?.contains("Субтитры", ignoreCase = true) == true
+
+        val teamName = player.team?.let { ResourceText.StaticString(it.name) }
+            ?: player.translationType?.let { ResourceText.StaticString(it.label) }
+            ?: ResourceText.StringResource(Res.string.origin_original)
+
+        val quality = player.video?.quality
+            ?.maxOfOrNull { it.quality }
+            ?.let {
+                ResourceText.StaticString(
+                    value = when (it) {
+                        2160 -> "4K"
+                        1440 -> "2K"
+                        1080 -> "Full HD"
+                        720 -> "HD"
+                        else -> "${it}p"
+                    }
+                )
+            }
+            ?: ResourceText.StringResource(Res.string.text_quality_adaptive)
+
+        VideoVoice(
+            id = player.team?.id?.toInt() ?: index,
+            title = teamName,
+            hasDubbers = !isSubtitles,
+            hasSubtitles = isSubtitles,
+            episodes = emptyList(),
+            quality = quality,
+            lastEpisode = episodeNumber
+        )
+    }
 
 fun CvhSources.getQualityMap() = buildMap {
     fun putNotNull(quality: Int, url: String?) {

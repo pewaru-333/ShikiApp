@@ -21,6 +21,7 @@ import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.models.ui.mappers.toContent
 import org.application.shikiapp.shared.models.ui.mappers.toMappedList
+import org.application.shikiapp.shared.models.ui.mappers.toStatistics
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.EXTERNAL_LINK_KINDS
@@ -67,8 +68,7 @@ object AnimeMapper {
             charactersAll = extra.characterRoles.orEmpty()
                 .map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
             charactersMain = extra.characterRoles.orEmpty()
-                .filter { it.rolesRu.contains("Main") }
-                .map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
+                .mapNotNull { if (it.rolesRu.contains("Main")) it.toBasicContent() else null },
             chronology = extra.chronology.orEmpty().map {
                 Content(
                     id = it.id,
@@ -105,15 +105,13 @@ object AnimeMapper {
             licenseName = main.licenseNameRu.orEmpty(),
             licensors = main.licensors.orEmpty(),
             links = main.externalLinks.orEmpty()
-                .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS }
-                .map(AnimeMainQuery.Data.Anime.ExternalLink::mapper),
+                .mapNotNull { if (it.kind.rawValue in EXTERNAL_LINK_KINDS) it.mapper() else null },
             nextEpisodeAt = Formatter.getNextEpisode(main.nextEpisodeAt),
             origin = Enum.safeValueOf<Origin>(main.origin?.rawValue).title,
             personAll = extra.personRoles.orEmpty()
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
             personMain = extra.personRoles.orEmpty()
-                .filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }
-                .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
+                .mapNotNull { role -> if (role.rolesRu.any { it in ROLES_RUSSIAN }) role.toContent() else null },
             poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
             related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
@@ -124,20 +122,20 @@ object AnimeMapper {
             similar = similar.map(AnimeBasic::toContent),
             stats = Pair(
                 first = extra.scoresStats?.let { scores ->
-                    Statistics(
-                        sum = scores.sumOf(AnimeExtraQuery.Data.Anime.ScoresStat::count),
-                        scores = scores.filter { it.count > 0 }.associate {
-                            ResourceText.StaticString(it.score.toString()) to it.count.toString()
-                        }
+                    val (sum, map) = scores.toStatistics(
+                        countSelector = AnimeExtraQuery.Data.Anime.ScoresStat::count,
+                        keySelector = { ResourceText.StaticString(it.score.toString()) }
                     )
+
+                    Statistics(sum, map)
                 },
                 second = extra.statusesStats?.let { statuses ->
-                    Statistics(
-                        sum = statuses.sumOf(AnimeExtraQuery.Data.Anime.StatusesStat::count),
-                        scores = statuses.filter { it.count > 0 }.associate {
-                            ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) to it.count.toString()
-                        }
+                    val (sum, map) = statuses.toStatistics(
+                        countSelector = AnimeExtraQuery.Data.Anime.StatusesStat::count,
+                        keySelector = { ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) }
                     )
+
+                    Statistics(sum, map)
                 }
             ),
             status = Enum.safeValueOf<Status>(main.status?.rawValue).animeTitle ?: Res.string.text_unknown,
@@ -177,11 +175,7 @@ object AnimeMapper {
             ),
             url = main.url,
             video = video.take(3),
-            videoGrouped = video.run {
-                VideoKind.entries.associateWith { entry ->
-                    filter { it.kind in entry.kinds }
-                }
-            }.filterValues { it.isNotEmpty() }
+            videoGrouped = VideoKind.group(video)
         )
     }
 }

@@ -29,8 +29,15 @@ suspend fun User.mapper(
     history: Flow<PagingData<History>>,
     favourites: Map<FavouriteItem, List<BasicContent>>
 ) = withContext(Dispatchers.Default) {
-    val animeStatsSum = stats.statuses.anime.sumOf { it.size.toInt() }
-    val mangaStatsSum = stats.statuses.manga.sumOf { it.size.toInt() }
+    val (animeStatsSum, animeScores) = stats.statuses.anime.toStatistics(
+        countSelector = { it.size.toInt() },
+        keySelector = { ResourceText.StringResource(Formatter.getWatchStatus(it.name, LinkedType.ANIME)) }
+    )
+
+    val (mangaStatsSum, mangaScores) = stats.statuses.manga.toStatistics(
+        countSelector = { it.size.toInt() },
+        keySelector = { ResourceText.StringResource(Formatter.getWatchStatus(it.name, LinkedType.MANGA)) }
+    )
 
     org.application.shikiapp.shared.models.ui.User(
         about = HtmlParser.parseComment(aboutHtml),
@@ -64,22 +71,8 @@ suspend fun User.mapper(
         showComments = showComments,
         showStats = Preferences.userId != id && (animeStatsSum + mangaStatsSum > 0),
         stats = Pair(
-            first = Statistics(
-                sum = animeStatsSum,
-                scores = stats.statuses.anime.filter { it.size > 0 }.associate {
-                    ResourceText.StringResource(
-                        Formatter.getWatchStatus(it.name, LinkedType.ANIME)
-                    ) to it.size.toString()
-                }
-            ),
-            second = Statistics(
-                sum = mangaStatsSum,
-                scores = stats.statuses.manga.filter { it.size > 0 }.associate {
-                    ResourceText.StringResource(
-                        Formatter.getWatchStatus(it.name, LinkedType.MANGA)
-                    ) to it.size.toString()
-                }
-            )
+            first = Statistics(animeStatsSum, animeScores),
+            second = Statistics(mangaStatsSum, mangaScores)
         )
     )
 }

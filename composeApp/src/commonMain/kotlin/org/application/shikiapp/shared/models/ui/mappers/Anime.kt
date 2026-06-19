@@ -1,7 +1,6 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
 import androidx.paging.PagingData
-import androidx.paging.map
 import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.shikiapp.AnimeAiringQuery
@@ -70,15 +69,12 @@ object AnimeMapper {
                 )
             }
 
-        val status = Enum.safeValueOf<Status>(main.status?.rawValue)
-        val characterRoles = extra.characterRoles.orEmpty()
-
         return Anime(
             airedOn = Formatter.convertDate(main.airedOn?.date, false),
-            charactersAll = characterRoles.map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
-            charactersMain = characterRoles
-                .filter { it.rolesRu.contains("Main") }
+            charactersAll = extra.characterRoles.orEmpty()
                 .map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
+            charactersMain = extra.characterRoles.orEmpty()
+                .mapNotNull { if (it.rolesRu.contains("Main")) it.toBasicContent() else null },
             chronology = extra.chronology.orEmpty().map {
                 Content(
                     id = it.id,
@@ -99,7 +95,7 @@ object AnimeMapper {
                     ResourceText.StringResource(Res.string.text_minutes_short)
                 )
             ),
-            episodes = when (status) {
+            episodes = when (Enum.safeValueOf<Status>(main.status?.rawValue)) {
                 Status.ONGOING -> "${main.episodesAired} / ${Formatter.getFullEpisodes(main.episodes)}"
                 Status.RELEASED -> "${main.episodes} / ${main.episodes}"
                 else -> "${main.episodesAired} / ${main.episodes}"
@@ -115,15 +111,13 @@ object AnimeMapper {
             licenseName = main.licenseNameRu.orEmpty(),
             licensors = main.licensors.orEmpty(),
             links = main.externalLinks.orEmpty()
-                .filter { it.kind.rawValue in EXTERNAL_LINK_KINDS }
-                .map(AnimeMainQuery.Data.Anime.ExternalLink::mapper),
+                .mapNotNull { if (it.kind.rawValue in EXTERNAL_LINK_KINDS) it.mapper() else null },
             nextEpisodeAt = Formatter.getNextEpisode(main.nextEpisodeAt),
             origin = Enum.safeValueOf<Origin>(main.origin?.rawValue).title,
             personAll = extra.personRoles.orEmpty()
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
             personMain = extra.personRoles.orEmpty()
-                .filter { role -> role.rolesRu.any { it in ROLES_RUSSIAN } }
-                .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
+                .mapNotNull { role -> if (role.rolesRu.any { it in ROLES_RUSSIAN }) role.toContent() else null },
             poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
             related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
@@ -134,23 +128,23 @@ object AnimeMapper {
             similar = similar.map(AnimeBasic::toContent),
             stats = Pair(
                 first = extra.scoresStats?.let { scores ->
-                    Statistics(
-                        sum = scores.sumOf(AnimeExtraQuery.Data.Anime.ScoresStat::count),
-                        scores = scores.filter { it.count > 0 }.associate {
-                            ResourceText.StaticString(it.score.toString()) to it.count.toString()
-                        }
+                    val (sum, map) = scores.toStatistics(
+                        countSelector = AnimeExtraQuery.Data.Anime.ScoresStat::count,
+                        keySelector = { ResourceText.StaticString(it.score.toString()) }
                     )
+
+                    Statistics(sum, map)
                 },
                 second = extra.statusesStats?.let { statuses ->
-                    Statistics(
-                        sum = statuses.sumOf(AnimeExtraQuery.Data.Anime.StatusesStat::count),
-                        scores = statuses.filter { it.count > 0 }.associate {
-                            ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) to it.count.toString()
-                        }
+                    val (sum, map) = statuses.toStatistics(
+                        countSelector = AnimeExtraQuery.Data.Anime.StatusesStat::count,
+                        keySelector = { ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) }
                     )
+
+                    Statistics(sum, map)
                 }
             ),
-            status = status.animeTitle ?: Res.string.text_unknown,
+            status = Enum.safeValueOf<Status>(main.status?.rawValue).animeTitle ?: Res.string.text_unknown,
             studio = main.studios.firstOrNull()?.let {
                 Studio(
                     id = it.id,
@@ -187,18 +181,14 @@ object AnimeMapper {
             ),
             url = main.url,
             video = video.take(3),
-            videoGrouped = video.run {
-                VideoKind.entries.associateWith { entry ->
-                    filter { it.kind in entry.kinds }
-                }
-            }.filterValues { it.isNotEmpty() }
+            videoGrouped = VideoKind.group(video)
         )
     }
 }
 
 fun BasicInfo.toBasicContent() = BasicContent(
     id = id.toString(),
-    title = russian.orEmpty().ifEmpty(::name),
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
     poster = Formatter.replaceMissingAnimePoster(image.original, id)
 )
 
@@ -210,7 +200,7 @@ fun Link.mapper() = ExternalLink(
 
 fun PersonRole.toContent() = Content(
     id = person.id,
-    title = person.russian?.takeIf(String::isNotEmpty) ?: person.name,
+    title = person.russian.takeUnless(String?::isNullOrEmpty) ?: person.name,
     poster = person.poster?.originalUrl.orEmpty(),
     kind = Kind.SPECIAL,
     season = ResourceText.StaticString(rolesRu.joinToString()),
@@ -232,7 +222,7 @@ fun RelatedFragment.mapper() = Related(
 
 fun AnimeListQuery.Data.Anime.mapper() = Content(
     id = id,
-    title = russian.orEmpty().ifEmpty(::name),
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
     kind = Enum.safeValueOf<Kind>(kind?.rawValue),
     status = Enum.safeValueOf<Status>(status?.rawValue),
     season = Formatter.getSeason(airedOn?.date ?: season, kind?.rawValue),
@@ -242,7 +232,7 @@ fun AnimeListQuery.Data.Anime.mapper() = Content(
 
 fun AnimeAiringQuery.Data.Anime.mapper() = Content(
     id = id,
-    title = russian.orEmpty().ifEmpty(::name),
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
     poster = Formatter.replaceMissingAnimePoster(poster?.mainUrl, id),
     kind = Kind.TV,
     season = ResourceText.StaticString(BLANK),
@@ -252,7 +242,7 @@ fun AnimeAiringQuery.Data.Anime.mapper() = Content(
 
 fun AnimeRandomQuery.Data.Anime.mapper() = Content(
     id = id,
-    title = russian.orEmpty().ifEmpty(::name),
+    title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
     poster = Formatter.replaceMissingAnimePoster(poster?.mainUrl, id),
     kind = Kind.TV,
     season = ResourceText.StaticString(BLANK),
@@ -313,18 +303,29 @@ fun Franchise.toMappedList(): List<Pair<RelationKind, List<org.application.shiki
         .toList()
 }
 
-fun PagingData<Topic>.toAnimeContent() = map { topic ->
-    with(topic.linked) {
-        Content(
-            id = id.toString(),
-            title = russian.takeUnless { it.isNullOrBlank() } ?: name,
-            kind = Enum.safeValueOf<Kind>(kind),
-            status = Enum.safeValueOf<Status>(status),
-            season = Formatter.getSeason(airedOn, kind),
-            poster = Formatter.replaceMissingAnimePoster(image.original, id),
-            score = null
-        )
-    }
+fun Topic.toAnimeContent() = with(linked) {
+    Content(
+        id = id.toString(),
+        title = russian.takeUnless(String?::isNullOrBlank) ?: name,
+        kind = Enum.safeValueOf<Kind>(kind),
+        status = Enum.safeValueOf<Status>(status),
+        season = Formatter.getSeason(airedOn, kind),
+        poster = Formatter.replaceMissingAnimePoster(image.original, id),
+        score = null
+    )
 }
 
-fun PagingData<AnimeBasic>.toContent(): PagingData<BasicContent> = map(AnimeBasic::toContent)
+fun <T> List<T>.toStatistics(countSelector: (T) -> Int, keySelector: (T) -> ResourceText): Pair<Int, Map<ResourceText, String>> {
+    var sum = 0
+    val map = buildMap {
+        this@toStatistics.forEach { item ->
+            val count = countSelector(item)
+            if (count > 0) {
+                sum += count
+                put(keySelector(item), count.toString())
+            }
+        }
+    }
+
+    return sum to map
+}
