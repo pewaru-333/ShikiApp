@@ -3,6 +3,7 @@ package org.application.shikiapp.shared.utils
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
@@ -143,6 +144,8 @@ expect object AppLocale {
     @Composable
     infix fun provides(value: String?): ProvidedValue<*>
 }
+
+expect fun launchAuth(uriHandler: UriHandler)
 
 expect fun fromHtml(text: String?): AnnotatedString
 

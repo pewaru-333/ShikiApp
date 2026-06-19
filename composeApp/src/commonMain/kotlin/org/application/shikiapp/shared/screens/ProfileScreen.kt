@@ -34,10 +34,10 @@ import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.showDialogs
 import org.application.shikiapp.shared.models.viewModels.ProfileViewModel
-import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.response.LoginResponse
 import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.utils.launchAuth
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberVerifiedDomain
@@ -139,7 +139,7 @@ private fun LoginScreen(onClick: () -> Unit) {
             ) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { uriHandler.openUri(ApiRoutes.authUri) }
+                    onClick = { launchAuth(uriHandler) }
                 ) {
                     Text(stringResource(Res.string.text_login))
                     VectorIcon(Res.drawable.vector_keyboard_arrow_right)

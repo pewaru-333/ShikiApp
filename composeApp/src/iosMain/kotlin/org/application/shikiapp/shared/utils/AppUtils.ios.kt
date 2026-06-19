@@ -10,6 +10,7 @@ import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -24,10 +25,13 @@ import com.fleeksoft.ksoup.nodes.TextNode
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.runBlocking
+import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerIos
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
+import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.permissions.rememberPermissionState
 import org.application.shikiapp.shared.utils.ui.HtmlParser
@@ -44,6 +48,8 @@ import platform.Foundation.NSRelativeDateTimeFormatter
 import platform.Foundation.NSRelativeDateTimeFormatterStyleNamed
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
 import platform.Foundation.NSTemporaryDirectory
+import platform.Foundation.NSURL
+import platform.Foundation.NSURLRequest
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.currentLocale
@@ -76,6 +82,11 @@ import platform.UIKit.UIWindowScene
 import platform.UIKit.UIWindowSceneGeometryPreferencesIOS
 import platform.UIKit.attemptRotationToDeviceOrientation
 import platform.UIKit.setStatusBarStyle
+import platform.WebKit.WKNavigationAction
+import platform.WebKit.WKNavigationActionPolicy
+import platform.WebKit.WKNavigationDelegateProtocol
+import platform.WebKit.WKWebView
+import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
@@ -342,4 +353,64 @@ actual fun formatRelativeDays(daysAgo: Int): String {
         day = -daysAgo.toLong()
     }
     return formatter.localizedStringFromDateComponents(components)
+}
+
+private class AuthWebViewController : UIViewController(null, null) {
+    private val webView = WKWebView()
+
+    private val delegate = object : NSObject(), WKNavigationDelegateProtocol {
+        override fun webView(
+            webView: WKWebView,
+            decidePolicyForNavigationAction: WKNavigationAction,
+            decisionHandler: (WKNavigationActionPolicy) -> Unit
+        ) {
+            val requestUrl = decidePolicyForNavigationAction.request.URL?.absoluteString
+
+            if (requestUrl != null && requestUrl.startsWith(AppConfig.redirectUri)) {
+                decisionHandler(WKNavigationActionPolicy.WKNavigationActionPolicyCancel)
+
+                dismissViewControllerAnimated(true) {
+                    ExternalUriHandler.onNewUri(requestUrl)
+                }
+
+                return
+            }
+
+            decisionHandler(WKNavigationActionPolicy.WKNavigationActionPolicyAllow)
+        }
+    }
+
+    override fun loadView() {
+        this.view = webView
+    }
+
+    override fun viewDidLoad() {
+        super.viewDidLoad()
+
+        webView.navigationDelegate = delegate
+    }
+
+    fun loadUrl(url: String) {
+        webView.loadRequest(NSURLRequest(NSURL(string = url)))
+    }
+}
+
+actual fun launchAuth(uriHandler: UriHandler) {
+    val window = UIApplication.sharedApplication.windows
+        .filterIsInstance<UIWindow>()
+        .find(UIWindow::isKeyWindow)
+        ?: UIApplication.sharedApplication.keyWindow
+
+    var controller = window?.rootViewController
+    while (controller?.presentedViewController != null) {
+        controller = controller.presentedViewController
+    }
+
+    controller?.presentViewController(
+        animated = true,
+        completion = null,
+        viewControllerToPresent = AuthWebViewController().apply {
+            loadUrl(ApiRoutes.authUri)
+        }
+    )
 }
