@@ -4,22 +4,12 @@ import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.shared.models.data.ClubCommentPolicy
 import org.application.shikiapp.shared.models.data.ClubJoinPolicy
-import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.utils.ui.CommentContent
 
 data class Club(
-    val id: Long,
-    val topicId: Long,
     val name: String,
     val image: String?,
     val description: List<CommentContent>,
-    val images: Flow<PagingData<BasicContent>>,
-    val members: Flow<PagingData<BasicContent>>,
-    val animes: Flow<PagingData<BasicContent>>,
-    val mangas: Flow<PagingData<BasicContent>>,
-    val ranobe: Flow<PagingData<BasicContent>>,
-    val characters: Flow<PagingData<BasicContent>>,
-    val clubs: Flow<PagingData<BasicContent>>,
     val comments: Flow<PagingData<Comment>>,
     val isCensored: Boolean,
     val joinPolicy: ClubJoinPolicy,
