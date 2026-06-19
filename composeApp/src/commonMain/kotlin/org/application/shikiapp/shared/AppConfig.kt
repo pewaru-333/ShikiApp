@@ -21,8 +21,8 @@ data class AppConfig(
             redirectUri = "app://login"
         )
         private val DarkShiki = AppConfig(
-            baseUrl = "https://shikimori.net",
-            urlMirrors = listOf("https://shikimori.moe", "https://shikimori.rip"),
+            baseUrl = "https://shikimori.rip",
+            urlMirrors = listOf("https://shikimori.moe", "https://shikimori.net"),
             userAgent = "DarkShiki",
             clientId = "d8W9rjFLuEZKx_dYXzJ42nGvsUckx4vfhMu5Liyr7MY",
             clientSecret = "Sog_CyJs19eCuFbIvg06Gb8zu8AMXZE8VI2CKLN1td4",
