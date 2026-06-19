@@ -24,7 +24,9 @@ import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.useContents
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
@@ -47,9 +49,11 @@ import platform.Foundation.NSLocale
 import platform.Foundation.NSRelativeDateTimeFormatter
 import platform.Foundation.NSRelativeDateTimeFormatterStyleNamed
 import platform.Foundation.NSSearchPathForDirectoriesInDomains
+import platform.Foundation.NSString
 import platform.Foundation.NSTemporaryDirectory
 import platform.Foundation.NSURL
 import platform.Foundation.NSURLRequest
+import platform.Foundation.NSUTF8StringEncoding
 import platform.Foundation.NSUserDefaults
 import platform.Foundation.NSUserDomainMask
 import platform.Foundation.currentLocale
@@ -57,6 +61,7 @@ import platform.Foundation.languageCode
 import platform.Foundation.localeIdentifier
 import platform.Foundation.preferredLanguages
 import platform.Foundation.setValue
+import platform.Foundation.stringWithContentsOfURL
 import platform.UIKit.NSTextAlignmentCenter
 import platform.UIKit.UIApplication
 import platform.UIKit.UIColor
@@ -296,6 +301,12 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) {
             forceOrientationUpdate(previousMask)
         }
     }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+suspend fun loadSubtitleContent(url: String): String = withContext(Dispatchers.Default) {
+    val nsUrl = NSURL.URLWithString(url) ?: return@withContext BLANK
+    NSString.stringWithContentsOfURL(nsUrl, NSUTF8StringEncoding, null).orEmpty()
 }
 
 private fun forceOrientationUpdate(mask: UIInterfaceOrientationMask) {
