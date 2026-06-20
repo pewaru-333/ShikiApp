@@ -45,9 +45,9 @@ import io.github.peerless2012.ass.media.parser.AssSubtitleParserFactory
 import io.github.peerless2012.ass.media.type.AssRenderType
 import io.github.peerless2012.ass.media.widget.AssSubtitleView
 import kotlinx.coroutines.delay
-import org.application.shikiapp.shared.SubtitleView
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.ui.subtitles.SubtitleView
 import kotlin.time.Duration.Companion.milliseconds
 
 @UnstableApi
@@ -316,13 +316,13 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
 
     AndroidView(
         modifier = Modifier.fillMaxSize(),
-        update = { it.setCues(controller.cues) },
+        update = { it.cues = controller.cues },
         factory = { context ->
             SubtitleView(context).apply {
                 addView(AssSubtitleView(context, controller.assHandler))
-                setViewType(SubtitleView.VIEW_TYPE_WEB)
                 setUserDefaultStyle()
                 setUserDefaultTextSize()
+                viewType = SubtitleView.VIEW_TYPE_WEB
             }
         }
     )
