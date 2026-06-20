@@ -243,11 +243,12 @@ jobs:
           VERSION_CODE=${{ needs.get-version.outputs.version_code }}
           CHANGELOG_PATH="fastlane/metadata/android/ru/changelogs/${VERSION_CODE}.txt"
           
-          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          EOF=$(openssl rand -hex 8)
           
           echo "WHATS_NEW<<$EOF" >> $GITHUB_ENV
           if [ -f "$CHANGELOG_PATH" ]; then
             cat "$CHANGELOG_PATH" >> $GITHUB_ENV
+            echo "" >> $GITHUB_ENV
           else
             echo "— Это техническое обновление без изменений в интерфейсе." >> $GITHUB_ENV
           fi
