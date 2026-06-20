@@ -22,7 +22,7 @@ class CommonPaging<T : Any>(
         val newData = response.filter { item -> contentList.add(getId(item)) }
 
         val prevKey = if (page == 1) null else page - 1
-        val nextKey = if (response.isEmpty() || response.size < params.loadSize) null else page + 1
+        val nextKey = if (response.isEmpty()) null else page + 1
 
         LoadResult.Page(newData, prevKey, nextKey)
     } catch (e: Exception) {
