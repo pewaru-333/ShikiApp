@@ -223,3 +223,48 @@ jobs:
             ShikiRip.apk
             *-portable.zip
             *-portable.tar.gz
+
+  deploy-rustore:
+    runs-on: ubuntu-latest
+    needs: [ get-version, build-android ]
+
+    steps:
+      - name: 'Checkout repository'
+        uses: actions/checkout@v6
+
+      - name: 'Download ShikiApp APK'
+        uses: actions/download-artifact@v8
+        with:
+          name: ShikiApp-apk
+
+      - name: 'Read changelog'
+        id: read_changelog
+        run: |
+          VERSION_CODE=${{ needs.get-version.outputs.version_code }}
+          CHANGELOG_PATH="fastlane/metadata/android/ru/changelogs/${VERSION_CODE}.txt"
+          
+          EOF=$(dd if=/dev/urandom bs=15 count=1 status=none | base64)
+          
+          echo "WHATS_NEW<<$EOF" >> $GITHUB_ENV
+          if [ -f "$CHANGELOG_PATH" ]; then
+            cat "$CHANGELOG_PATH" >> $GITHUB_ENV
+          else
+            echo "— Это техническое обновление без изменений в интерфейсе." >> $GITHUB_ENV
+          fi
+          echo "$EOF" >> $GITHUB_ENV
+
+      - name: 'RuStore Publish'
+        id: rustore_publish
+        uses: Suro4ek/rustore-action@v0.0.1
+        with:
+          key_id: ${{ secrets.RUSTORE_KEY_ID }}
+          private_key: ${{ secrets.RUSTORE_PRIVATE_KEY }}
+          publish_type: 'INSTANTLY'
+          application_id: 'org.application.shikiapp'
+          file: 'ShikiApp.apk'
+          whats_new: ${{ env.WHATS_NEW }}
+
+      - name: 'Print RuStore Result'
+        run: |
+          echo "RuStore version ID: ${{ steps.rustore_publish.outputs.version_id }}"
+          echo "RuStore статус: ${{ steps.rustore_publish.outputs.status }}"
