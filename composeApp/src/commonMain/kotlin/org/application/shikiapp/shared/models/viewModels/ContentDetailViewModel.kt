@@ -9,7 +9,6 @@ import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import androidx.paging.map
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -17,15 +16,14 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.events.ContentDetailEvent
-import org.application.shikiapp.shared.models.data.Comment
 import org.application.shikiapp.shared.models.data.CommentToCreate
 import org.application.shikiapp.shared.models.states.BaseState
+import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.paging.CommonPaging
@@ -60,10 +58,11 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
             pagingSourceFactory = {
                 CommonPaging(Comment::id) { page, params ->
                     Network.topics.getComments(topicId, type, page, params.loadSize)
+                        .map { it.mapper() }
                 }.also { commentsPagingSource = it }
             }
         ).flow
-    }.map { it.map(Comment::mapper) }
+    }
         .cachedIn(viewModelScope)
         .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
 
