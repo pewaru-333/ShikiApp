@@ -11,11 +11,16 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 37
-        versionCode = 50
-        versionName = "alpha-0.7.2"
+        versionCode = 51
+        versionName = "alpha-0.7.3"
 
         buildFeatures {
             buildConfig = true
+        }
+
+        ndk {
+            //noinspection ChromeOsAbiSupport
+            abiFilters += listOf("arm64-v8a", "armeabi-v7a")
         }
     }
 

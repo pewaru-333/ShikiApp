@@ -36,7 +36,6 @@ kotlin {
         minSdk = 26
         compileSdk = 37
 
-        withJava()
         compilerOptions {
             jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
         }
@@ -89,7 +88,6 @@ kotlin {
                 // Utils
                 implementation(libs.coil.compose)
                 implementation(libs.coil.network.ktor)
-                implementation(libs.icu4j)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.ksoup)
                 implementation(libs.material.preferences)
@@ -121,6 +119,9 @@ kotlin {
                 implementation(libs.kotlinx.coroutines.swing)
 
                 implementation(libs.ktor.client.okhttp)
+
+                // Internalization
+                implementation(libs.icu4j)
 
                 // Video player
                 implementation(libs.vlcj)

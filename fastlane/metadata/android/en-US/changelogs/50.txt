@@ -1,3 +1,0 @@
-— Added full display of external subtitles (on iOS .vtt and .srt are supported only).
-— In the player on the PC, after returning from full-screen mode, the previous window state is remembered.
-— The design of the rating slider and date (year) fields in the filters in the catalog has been changed.

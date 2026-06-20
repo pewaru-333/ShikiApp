@@ -1,0 +1,2 @@
+— Optimized application size.
+— Fixed a bug that caused loading in the comments list to not work.
