@@ -1,11 +1,9 @@
 package org.application.shikiapp.shared.utils.enums
 
-import org.jetbrains.compose.resources.DrawableResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.vector_arrow_down
-import shikiapp.composeapp.generated.resources.vector_arrow_up
+import androidx.compose.ui.graphics.vector.ImageVector
+import org.application.shikiapp.shared.ui.theme.Icons
 
-enum class OrderDirection(val icon: DrawableResource) {
-    ASCENDING(Res.drawable.vector_arrow_up),
-    DESCENDING(Res.drawable.vector_arrow_down)
+enum class OrderDirection(val icon: ImageVector) {
+    ASCENDING(Icons.ArrowUp),
+    DESCENDING(Icons.ArrowDown)
 }
