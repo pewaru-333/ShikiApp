@@ -49,6 +49,7 @@ import shikiapp.composeapp.generated.resources.preference_episode_auto_add
 import shikiapp.composeapp.generated.resources.preference_episode_auto_add_summary
 import shikiapp.composeapp.generated.resources.preference_language
 import shikiapp.composeapp.generated.resources.preference_list_view
+import shikiapp.composeapp.generated.resources.preference_remember_catalog_list_order
 import shikiapp.composeapp.generated.resources.preference_start_page
 import shikiapp.composeapp.generated.resources.preference_theme
 import shikiapp.composeapp.generated.resources.preference_user_rates_list_size_show
@@ -62,6 +63,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     val startPage by Preferences.startPageFlow.collectAsStateWithLifecycle()
     val listView by Preferences.listViewFlow.collectAsStateWithLifecycle()
     val isAutoAdd by Preferences.episodeAutoAddFlow.collectAsStateWithLifecycle()
+    val rememberCatalogOrder by Preferences.rememberCatalogOrderFlow.collectAsStateWithLifecycle()
     val showUserRatesListSize by Preferences.showUserRateListSizeFlow.collectAsStateWithLifecycle()
     val userRatesWatchType by Preferences.userRatesStartTypeFlow.collectAsStateWithLifecycle()
     val userRatesWatchStatus by Preferences.userRatesStartWatchStatusFlow.collectAsStateWithLifecycle()
@@ -180,6 +182,14 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                                 }
                             )
                         }
+                    )
+                }
+
+                item {
+                    SwitchPreference(
+                        value = rememberCatalogOrder,
+                        onValueChange = Preferences::toggleRememberLastCatalogOrder,
+                        title = { Text(stringResource(Res.string.preference_remember_catalog_list_order)) }
                     )
                 }
 

@@ -20,6 +20,8 @@ import org.application.shikiapp.shared.utils.PREF_COLOR_PALETTE
 import org.application.shikiapp.shared.utils.PREF_DYNAMIC_COLORS
 import org.application.shikiapp.shared.utils.PREF_EPISODE_AUTO_ADD
 import org.application.shikiapp.shared.utils.PREF_HAS_AGREED_TO_WATCH
+import org.application.shikiapp.shared.utils.PREF_LAST_SORTING_ORDER
+import org.application.shikiapp.shared.utils.PREF_REMEMBER_CATALOG_LAST_ORDER
 import org.application.shikiapp.shared.utils.PREF_SHOW_USER_RATES_LIST_TAB_SIZE
 import org.application.shikiapp.shared.utils.PREF_START_PAGE
 import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_TYPE
@@ -30,6 +32,7 @@ import org.application.shikiapp.shared.utils.USER_ID
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ListView
 import org.application.shikiapp.shared.utils.enums.Menu
+import org.application.shikiapp.shared.utils.enums.Order
 import org.application.shikiapp.shared.utils.enums.Palette
 import org.application.shikiapp.shared.utils.enums.Theme
 import org.application.shikiapp.shared.utils.enums.WatchStatus
@@ -49,6 +52,14 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
         get() = app.getEnum(PREF_CATALOG_LIST_VIEW, ListView.COLUMN)
 
     val listViewFlow = app.getEnumStateFlow(PREF_CATALOG_LIST_VIEW, ListView.COLUMN, scope)
+
+    val lastCatalogOrder: Order
+        get() = app.getEnum(PREF_LAST_SORTING_ORDER, Order.RANKED)
+
+    val rememberCatalogOrder: Boolean
+        get() = app.getBoolean(PREF_REMEMBER_CATALOG_LAST_ORDER, false)
+
+    val rememberCatalogOrderFlow = app.getStateFlow(PREF_REMEMBER_CATALOG_LAST_ORDER, false, scope)
 
     val episodeAutoAdd: Boolean
         get() = app.getBoolean(PREF_EPISODE_AUTO_ADD, false)
@@ -160,6 +171,10 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
         putEnum(PREF_COLOR_PALETTE, palette)
     }
 
+    fun setLastCatalogOrder(order: Order = Order.RANKED) = app.edit {
+        putEnum(PREF_LAST_SORTING_ORDER, order)
+    }
+
     fun setUserRatesStartType(type: LinkedType) = app.edit {
         putEnum(PREF_USER_RATES_START_TYPE, type)
     }
@@ -198,6 +213,14 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
 
     fun setCanWatch() = app.edit {
         putBoolean(PREF_HAS_AGREED_TO_WATCH, true)
+    }
+
+    fun toggleRememberLastCatalogOrder(value: Boolean) = app.edit {
+        putBoolean(PREF_REMEMBER_CATALOG_LAST_ORDER, value)
+
+        if (!value) {
+            setLastCatalogOrder()
+        }
     }
 }
 

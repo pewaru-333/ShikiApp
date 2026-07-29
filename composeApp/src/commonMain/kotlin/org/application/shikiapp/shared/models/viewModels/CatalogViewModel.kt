@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.builtins.nullable
 import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum
+import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.FilterEvent
 import org.application.shikiapp.shared.models.data.Club
 import org.application.shikiapp.shared.models.states.CatalogState
@@ -240,8 +241,14 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                 _state.update { it.copy(search = BLANK) }
             }
 
-            is FilterEvent.SetOrder -> updateFilters {
-                it.copy(order = event.order)
+            is FilterEvent.SetOrder -> {
+                updateFilters {
+                    it.copy(order = event.order)
+                }
+
+                if (Preferences.rememberCatalogOrder) {
+                    Preferences.setLastCatalogOrder(event.order)
+                }
             }
 
             is FilterEvent.SetStatus -> updateFilters {
