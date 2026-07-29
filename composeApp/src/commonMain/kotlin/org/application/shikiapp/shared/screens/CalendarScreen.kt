@@ -57,6 +57,7 @@ import org.application.shikiapp.shared.ui.templates.MediaGridItem
 import org.application.shikiapp.shared.ui.templates.MediaGridItemDefaults
 import org.application.shikiapp.shared.ui.templates.ParagraphTitle
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
@@ -68,8 +69,6 @@ import shikiapp.composeapp.generated.resources.text_random
 import shikiapp.composeapp.generated.resources.text_schedule
 import shikiapp.composeapp.generated.resources.text_updates
 import shikiapp.composeapp.generated.resources.text_updates_anime
-import shikiapp.composeapp.generated.resources.vector_arrow_forward
-import shikiapp.composeapp.generated.resources.vector_refresh
 
 @Composable
 fun CalendarScreen(onNavigate: (Screen) -> Unit) {
@@ -95,7 +94,7 @@ fun CalendarScreen(onNavigate: (Screen) -> Unit) {
         Column(Modifier.fillMaxSize()) {
             TopAppBar(
                 title = { Text(stringResource(Res.string.text_updates)) },
-                actions = { IconButton(model::reload) { VectorIcon(Res.drawable.vector_refresh) } }
+                actions = { IconButton(model::reload) { VectorIcon(Icons.Refresh) } }
             )
 
             PrimaryTabRow(pagerState.currentPage) {
@@ -243,7 +242,7 @@ private fun AnimeSection(
         if (onIconClick == null) {
             Spacer(Modifier.size(48.dp))
         } else {
-            IconButton(onIconClick) { VectorIcon(Res.drawable.vector_arrow_forward) }
+            IconButton(onIconClick) { VectorIcon(Icons.ArrowForward) }
         }
     }
 
