@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 37
-        versionCode = 51
-        versionName = "alpha-0.7.3"
+        versionCode = 52
+        versionName = "alpha-0.7.4"
 
         buildFeatures {
             buildConfig = true
@@ -41,7 +41,7 @@ android {
 
         create("DarkShiki") {
             dimension = "version"
-            applicationId = "org.application.darkshiki"
+            applicationId = "rip.shikimori.app"
 
             manifestPlaceholders["authScheme"] = "darkshiki"
             manifestPlaceholders["authHost"] = "auth"

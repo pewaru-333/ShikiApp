@@ -1,4 +1,3 @@
-
 plugins {
     alias(libs.plugins.androidMultiplatformKotlinLibrary)
     alias(libs.plugins.apollo)
@@ -135,6 +134,8 @@ compose.resources {
 }
 
 val generateLanguagesList by tasks.registering {
+    description = "Generates language list"
+
     val resDir = file("src/commonMain/composeResources")
     val outputFile = file("src/commonMain/kotlin/GeneratedLanguages.kt")
 
@@ -143,17 +144,23 @@ val generateLanguagesList by tasks.registering {
 
     doLast {
         val languages = resDir.listFiles()
-            ?.filter { it.isDirectory && it.name.startsWith("values-") }
-            ?.map { it.name.substringAfter("values-") }
+            ?.mapNotNullTo(LinkedHashSet()) {
+                if (it.isDirectory && it.name.startsWith("values-")) {
+                    it.name.substringAfter("values-")
+                } else {
+                    null
+                }
+            }
             ?.plus("ru")
-            ?.distinct()
             ?: emptyList()
 
-        outputFile.writeText("""
+        outputFile.writeText(
+            """
             object AppLanguages {
                 val list = listOf(${languages.joinToString { "\"$it\"" }})
             }
-        """.trimIndent())
+        """.trimIndent()
+        )
     }
 }
 

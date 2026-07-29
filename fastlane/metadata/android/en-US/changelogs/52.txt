@@ -1,0 +1,4 @@
+— Added a setting for saving the sorting type in the catalog (disabled by default).
+— Now the filters in the catalog have a minimum score of one by default.
+— Changed the look and animation of viewing posters and images.
+— Fixed a bug that caused some fields to not be reset when the user score was changed.
