@@ -275,6 +275,8 @@
 
     <string name="preference_dynamic_colors">Системные цвета</string>
 
+    <string name="preference_remember_catalog_list_order">Запоминать последний тип сортировки в каталоге</string>
+
     <string name="preference_user_rates_start_type">Стартовая вкладка в списке оценок</string>
     <string name="preference_user_rates_start_status">Стартовый статус просмотра в списке оценок</string>
     <string name="preference_user_rates_list_size_show">Отображать размер на каждой вкладке в списке оценок</string>

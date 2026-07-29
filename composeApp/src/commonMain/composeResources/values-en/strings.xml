@@ -275,6 +275,8 @@
 
     <string name="preference_dynamic_colors">Dynamic colors</string>
 
+    <string name="preference_remember_catalog_list_order">Remember last sorting type in catalog filters</string>
+
     <string name="preference_user_rates_start_type">Start type in user rates</string>
     <string name="preference_user_rates_start_status">Start watch status in user rates</string>
     <string name="preference_user_rates_list_size_show">Show user list size on every tab</string>
