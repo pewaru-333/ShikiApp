@@ -44,7 +44,6 @@ sealed interface BaseDialogState {
         data object Fandubbers : Anime
         data object Fansubbers : Anime
         data object Reviews: Anime
-        data object Screenshot : Anime
         data object Screenshots : Anime
         data object Video : Anime
     }
