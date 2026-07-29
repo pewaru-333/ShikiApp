@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.shared.ui.templates
 
@@ -9,8 +9,9 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
+import androidx.compose.material3.LoadingIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -65,7 +66,7 @@ fun <T, P : Any> AnimatedScreen(
 @Composable
 fun LoadingScreen(modifier: Modifier = Modifier) =
     Box(
-        content = { CircularProgressIndicator() },
+        content = { LoadingIndicator() },
         contentAlignment = Alignment.Center,
         modifier = modifier
             .fillMaxSize()

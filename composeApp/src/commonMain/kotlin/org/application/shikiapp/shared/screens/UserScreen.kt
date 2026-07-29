@@ -127,6 +127,7 @@ import org.application.shikiapp.shared.ui.templates.Notifications
 import org.application.shikiapp.shared.ui.templates.Statistics
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.ui.templates.about
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.enums.FavouriteItem
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.MessageType
@@ -153,15 +154,6 @@ import shikiapp.composeapp.generated.resources.text_pay_attention
 import shikiapp.composeapp.generated.resources.text_remove_friend
 import shikiapp.composeapp.generated.resources.text_sure_to_delete_all_notifications
 import shikiapp.composeapp.generated.resources.text_sure_to_delete_dialog
-import shikiapp.composeapp.generated.resources.vector_add_friend
-import shikiapp.composeapp.generated.resources.vector_bad
-import shikiapp.composeapp.generated.resources.vector_check
-import shikiapp.composeapp.generated.resources.vector_exit_app
-import shikiapp.composeapp.generated.resources.vector_mail
-import shikiapp.composeapp.generated.resources.vector_remove_friend
-import shikiapp.composeapp.generated.resources.vector_send
-import shikiapp.composeapp.generated.resources.vector_settings
-import shikiapp.composeapp.generated.resources.vector_trash
 
 @Composable
 fun UserScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
@@ -243,7 +235,7 @@ fun UserView(
                 },
                 navigationIcon = {
                     if (Preferences.userId == user.id) {
-                        IconButton(onBack) { VectorIcon(Res.drawable.vector_exit_app) }
+                        IconButton(onBack) { VectorIcon(Icons.ExitApp) }
                     } else {
                         NavigationIcon(onBack)
                     }
@@ -386,7 +378,7 @@ private fun TopBarActions(user: User, unread: Int, onEvent: (ContentDetailEvent)
             onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.DialogAll)) },
             content = {
                 BadgedBox(
-                    content = { VectorIcon(Res.drawable.vector_mail) },
+                    content = { VectorIcon(Icons.Mail) },
                     badge = {
                         unread.let {
                             if (it > 0) {
@@ -413,7 +405,7 @@ private fun TopBarActions(user: User, unread: Int, onEvent: (ContentDetailEvent)
         IconComment { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) }
         IconButton(
             onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) },
-            content = { VectorIcon(Res.drawable.vector_settings) }
+            content = { VectorIcon(Icons.Settings) }
         )
     }
 
@@ -425,8 +417,8 @@ private fun TopBarActions(user: User, unread: Int, onEvent: (ContentDetailEvent)
                 onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.ToggleFriend)) },
                 content = {
                     VectorIcon(
-                        resId = if (user.inFriends) Res.drawable.vector_remove_friend
-                        else Res.drawable.vector_add_friend
+                        imageVector = if (user.inFriends) Icons.RemoveFriend
+                        else Icons.AddFriend
                     )
                 }
             )
@@ -434,7 +426,7 @@ private fun TopBarActions(user: User, unread: Int, onEvent: (ContentDetailEvent)
 
         IconButton(
             onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.DialogUser(user.id))) },
-            content = { VectorIcon(Res.drawable.vector_mail) }
+            content = { VectorIcon(Icons.Mail) }
         )
     }
 }
@@ -619,10 +611,10 @@ private fun DialogMail(
             if (pagerState.currentPage > 0) {
                 IconButton(
                     onClick = { mailManager.showDialogDeleteAll() },
-                    content = { VectorIcon(Res.drawable.vector_trash) }
+                    content = { VectorIcon(Icons.Trash) }
                 )
                 IconButton(
-                    content = { VectorIcon(Res.drawable.vector_check) },
+                    content = { VectorIcon(Icons.Check) },
                     onClick = {
                         mailManager.markAllRead(
                             if (pagerState.currentPage == 1) news.itemSnapshotList.items
@@ -716,7 +708,7 @@ private fun UserDialog(
                 ),
                 actions = {
                     AnimatedVisibility(dialogMessages.itemSnapshotList.isNotEmpty()) {
-                        IconButton(onShowDelete) { VectorIcon(Res.drawable.vector_trash) }
+                        IconButton(onShowDelete) { VectorIcon(Icons.Trash) }
                     }
                 },
                 title = {
@@ -864,7 +856,7 @@ private fun UserDialog(
                             )
                     ) {
                         VectorIcon(
-                            resId = Res.drawable.vector_send,
+                            imageVector = Icons.Send,
                             tint = if (textFieldState.text.isNotBlank()) MaterialTheme.colorScheme.onPrimary
                             else MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -919,13 +911,13 @@ private fun MessageBubble(message: Dialog, modifier: Modifier = Modifier) {
 
                 if (message.accountUser) {
                     val (icon, color) = when {
-                        message.isError -> Res.drawable.vector_bad to MaterialTheme.colorScheme.error
-                        message.isSending -> Res.drawable.vector_mail to MaterialTheme.colorScheme.primary
-                        else -> Res.drawable.vector_check to MaterialTheme.colorScheme.primary
+                        message.isError -> Icons.SmileBad to MaterialTheme.colorScheme.error
+                        message.isSending -> Icons.Mail to MaterialTheme.colorScheme.primary
+                        else -> Icons.Check to MaterialTheme.colorScheme.primary
                     }
 
                     VectorIcon(
-                        resId = icon,
+                        imageVector = icon,
                         modifier = Modifier.size(12.dp),
                         tint = color.copy(alpha = 0.8f)
                     )

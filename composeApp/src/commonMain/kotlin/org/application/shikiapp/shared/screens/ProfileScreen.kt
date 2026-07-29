@@ -37,6 +37,7 @@ import org.application.shikiapp.shared.models.viewModels.ProfileViewModel
 import org.application.shikiapp.shared.network.response.LoginResponse
 import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.launchAuth
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
@@ -54,8 +55,6 @@ import shikiapp.composeapp.generated.resources.text_pay_attention
 import shikiapp.composeapp.generated.resources.text_repeat_the_loading
 import shikiapp.composeapp.generated.resources.text_sure_to_logout
 import shikiapp.composeapp.generated.resources.text_to_settings
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
-import shikiapp.composeapp.generated.resources.vector_settings
 
 @Composable
 fun ProfileScreen(onNavigate: (Screen) -> Unit) {
@@ -142,7 +141,7 @@ private fun LoginScreen(onClick: () -> Unit) {
                     onClick = { launchAuth(uriHandler) }
                 ) {
                     Text(stringResource(Res.string.text_login))
-                    VectorIcon(Res.drawable.vector_keyboard_arrow_right)
+                    VectorIcon(Icons.KeyboardArrowRight)
                 }
 
                 Text(
@@ -172,7 +171,7 @@ private fun LoginScreen(onClick: () -> Unit) {
                 )
                 FilledTonalButton(domainHelper::onSettingsLaunch) {
                     Text(stringResource(Res.string.text_to_settings))
-                    VectorIcon(Res.drawable.vector_keyboard_arrow_right)
+                    VectorIcon(Icons.KeyboardArrowRight)
                 }
             }
         }
@@ -209,7 +208,7 @@ private fun ErrorScreen(onReload: () -> Unit, onClick: () -> Unit) =
 
 @Composable
 private fun BoxScope.IconButtonSettings(onClick: () -> Unit) = IconButton(
-    content = { VectorIcon(Res.drawable.vector_settings) },
+    content = { VectorIcon(Icons.Settings) },
     onClick = onClick,
     modifier = Modifier
         .align(Alignment.TopEnd)

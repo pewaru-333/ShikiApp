@@ -1,5 +1,5 @@
 @file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalFlexBoxApi::class
+    ExperimentalFlexBoxApi::class, ExperimentalFoundationStyleApi::class
 )
 
 package org.application.shikiapp.shared.screens
@@ -13,8 +13,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.togetherWith
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -40,6 +38,15 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
+import androidx.compose.foundation.style.MutableStyleState
+import androidx.compose.foundation.style.Style
+import androidx.compose.foundation.style.border
+import androidx.compose.foundation.style.contentPadding
+import androidx.compose.foundation.style.contentPaddingHorizontal
+import androidx.compose.foundation.style.fillWidth
+import androidx.compose.foundation.style.focused
+import androidx.compose.foundation.style.styleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.InputTransformation
@@ -69,6 +76,7 @@ import androidx.compose.material3.Label
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.LocalMaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.ModalNavigationDrawer
 import androidx.compose.material3.NavigationDrawerItem
@@ -95,7 +103,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
@@ -137,6 +144,7 @@ import org.application.shikiapp.shared.ui.templates.ContentList
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.ScaffoldSearchBar
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.CatalogItem
 import org.application.shikiapp.shared.utils.enums.Duration
@@ -172,12 +180,6 @@ import shikiapp.composeapp.generated.resources.text_season
 import shikiapp.composeapp.generated.resources.text_sorting
 import shikiapp.composeapp.generated.resources.text_start_year
 import shikiapp.composeapp.generated.resources.text_status
-import shikiapp.composeapp.generated.resources.vector_filter
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_down
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_up
-import shikiapp.composeapp.generated.resources.vector_menu
-import shikiapp.composeapp.generated.resources.vector_refresh
-import shikiapp.composeapp.generated.resources.vector_star
 
 @Composable
 fun CatalogScreen(onNavigate: (Screen) -> Unit) {
@@ -231,7 +233,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
             menuRow = menuRow,
             navigationIcon = {
                 if (isCompact) {
-                    IconButton(::toggleDrawer) { VectorIcon(Res.drawable.vector_menu) }
+                    IconButton(::toggleDrawer) { VectorIcon(Icons.Menu) }
                 }
             },
             actions = {
@@ -241,7 +243,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
                         content = {
                             BadgedBox(
                                 badge = { if (filters != FiltersState()) Badge() },
-                                content = { VectorIcon(Res.drawable.vector_filter) }
+                                content = { VectorIcon(Icons.Filter) }
                             )
                         }
                     )
@@ -499,7 +501,7 @@ private fun DialogFilters(
                         actions = {
                             IconButton(
                                 onClick = { onFilterEvent(FilterEvent.ClearFilters) },
-                                content = { VectorIcon(Res.drawable.vector_refresh) }
+                                content = { VectorIcon(Icons.Refresh) }
                             )
                         },
                         modifier = Modifier.drawBehind {
@@ -602,10 +604,11 @@ private fun Sorting(order: Order, onClick: (Order) -> Unit) {
         )
 
         Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .padding(bottom = 16.dp)
+            modifier = Modifier.styleable {
+                fillWidth()
+                contentPaddingHorizontal(16.dp)
+                contentPaddingBottom(16.dp)
+            }
         ) {
             ExposedDropdownMenuBox(
                 expanded = expanded,
@@ -666,7 +669,20 @@ private fun Season(
     ) {
         val textFieldState = rememberTextFieldState(text)
         val focusRequester = remember(::FocusRequester)
-        var isFocused by remember { mutableStateOf(false) }
+
+        val interactionSource = remember(::MutableInteractionSource)
+        val styleState = remember { MutableStyleState(interactionSource) }
+
+        val textFieldStyle = Style {
+            background(LocalMaterialTheme.currentValue.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+            shape(RoundedCornerShape(12.dp))
+            border(1.dp, Color.Transparent)
+            contentPadding(16.dp, 12.dp)
+
+            focused {
+                border(1.dp, LocalMaterialTheme.currentValue.colorScheme.primary)
+            }
+        }
 
         LaunchedEffect(textFieldState) {
             snapshotFlow { textFieldState.text.toString() }.collectLatest(onValueChange)
@@ -680,6 +696,7 @@ private fun Season(
 
         BasicTextField(
             state = textFieldState,
+            interactionSource = interactionSource,
             lineLimits = TextFieldLineLimits.SingleLine,
             cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
             textStyle = MaterialTheme.typography.bodyLarge.copy(
@@ -692,17 +709,7 @@ private fun Season(
             ),
             modifier = modifier
                 .focusRequester(focusRequester)
-                .onFocusChanged { isFocused = it.isFocused }
-                .background(
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .border(
-                    width = 1.dp,
-                    color = if (isFocused) MaterialTheme.colorScheme.primary else Color.Transparent,
-                    shape = RoundedCornerShape(12.dp)
-                )
-                .padding(16.dp, 12.dp),
+                .styleable(styleState, textFieldStyle),
             inputTransformation = InputTransformation.maxLength(4).then {
                 if (!asCharSequence().isDigitsOnly()) {
                     revertAllChanges()
@@ -746,7 +753,7 @@ private fun Season(
             }
 
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                Season.entries.forEach {
+                Season.entries.fastForEach {
                     FilterChip(
                         modifier = Modifier.height(36.dp),
                         selected = seasonSelected(it.name.lowercase()),
@@ -795,7 +802,7 @@ private fun Score(
                     },
                     content = {
                         VectorIcon(
-                            resId = Res.drawable.vector_star,
+                            imageVector = Icons.Star,
                             modifier = Modifier.size(ButtonDefaults.IconSize),
                             tint = Color(0xFFFFC319)
                         )
@@ -847,8 +854,8 @@ private fun AnimatedColumn(
         trailingContent = {
             IconButton(onExpandedChange) {
                 VectorIcon(
-                    resId = if (isExpanded) Res.drawable.vector_keyboard_arrow_up
-                    else Res.drawable.vector_keyboard_arrow_down
+                    imageVector = if (isExpanded) Icons.KeyboardArrowUp
+                    else Icons.KeyboardArrowDown
                 )
             }
         }
@@ -864,10 +871,11 @@ private fun AnimatedColumn(
         if (isExpanded) {
             Box(
                 content = { content() },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
-                    .padding(bottom = 16.dp)
+                modifier = Modifier.styleable {
+                    fillWidth()
+                    contentPaddingHorizontal(16.dp)
+                    contentPaddingBottom(16.dp)
+                }
             )
         }
     }

@@ -61,11 +61,9 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastForEach
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.extensions.flattenImages
 import org.application.shikiapp.shared.utils.ui.CommentContent
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
-import shikiapp.composeapp.generated.resources.vector_refresh
 
 @Composable
 fun HtmlContent(commentContent: List<CommentContent>?) {
@@ -314,7 +312,7 @@ private fun RenderContent(
 
                 Surface(Modifier.size(56.dp), CircleShape, Color.Black.copy(alpha = 0.6f)) {
                     VectorIcon(
-                        resId = Res.drawable.vector_refresh,
+                        imageVector = Icons.Refresh,
                         tint = Color.White,
                         modifier = Modifier.padding(14.dp)
                     )
@@ -351,7 +349,7 @@ private fun RenderContent(
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     VectorIcon(
-                        resId = Res.drawable.vector_keyboard_arrow_right,
+                        imageVector = Icons.KeyboardArrowRight,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         modifier = Modifier
                             .size(20.dp)

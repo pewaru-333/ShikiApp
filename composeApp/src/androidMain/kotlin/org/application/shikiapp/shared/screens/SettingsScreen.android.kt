@@ -41,6 +41,7 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import me.zhanghai.compose.preference.preference
 import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.PREF_DEEP_LINK_SETTINGS
 import org.application.shikiapp.shared.utils.extensions.getLinkDomains
@@ -55,7 +56,6 @@ import shikiapp.composeapp.generated.resources.text_app_links_support
 import shikiapp.composeapp.generated.resources.text_to_settings
 import shikiapp.composeapp.generated.resources.text_turned_off
 import shikiapp.composeapp.generated.resources.text_turned_on
-import shikiapp.composeapp.generated.resources.vector_website
 
 actual fun LazyListScope.deeplinkSetting(onClick: () -> Unit) = preference(
     key = PREF_DEEP_LINK_SETTINGS,
@@ -131,7 +131,7 @@ actual fun DeeplinkScreen(isVisible: Boolean, onBack: () -> Unit) =
                             .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
                     ) {
                         VectorIcon(
-                            resId = Res.drawable.vector_website,
+                            imageVector = Icons.Website,
                             tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(56.dp)
                         )

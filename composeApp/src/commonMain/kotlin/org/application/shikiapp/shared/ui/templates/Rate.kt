@@ -37,6 +37,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEachIndexed
 import org.application.shikiapp.shared.events.RateEvent
 import org.application.shikiapp.shared.models.states.NewRateState
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.Score
 import org.application.shikiapp.shared.utils.enums.WatchStatus
@@ -56,7 +57,6 @@ import shikiapp.composeapp.generated.resources.text_save
 import shikiapp.composeapp.generated.resources.text_score
 import shikiapp.composeapp.generated.resources.text_status
 import shikiapp.composeapp.generated.resources.text_volumes
-import shikiapp.composeapp.generated.resources.vector_trash
 import kotlin.enums.EnumEntries
 
 @Composable
@@ -106,7 +106,7 @@ fun DialogEditRate(
                 if (isExists) {
                     IconButton(
                         onClick = { onDelete(state.id) },
-                        content = { VectorIcon(Res.drawable.vector_trash) }
+                        content = { VectorIcon(Icons.Trash) }
                     )
                 }
             }

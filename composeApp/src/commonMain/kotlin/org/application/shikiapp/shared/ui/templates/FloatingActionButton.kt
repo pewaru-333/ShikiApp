@@ -21,10 +21,7 @@ import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.UserRate
 import org.application.shikiapp.shared.network.response.AsyncData
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.vector_bookmark
-import shikiapp.composeapp.generated.resources.vector_edit
-import shikiapp.composeapp.generated.resources.vector_favorite
+import org.application.shikiapp.shared.ui.theme.Icons
 
 @Composable
 fun FloatingActionButtonContent(
@@ -43,7 +40,7 @@ fun FloatingActionButtonContent(
                     when (isFavoured) {
                         AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
                         is AsyncData.Success -> VectorIcon(
-                            resId = Res.drawable.vector_favorite,
+                            imageVector = Icons.Favorite,
                             tint = if (isFavoured.data) Color.Red else LocalContentColor.current
                         )
                     }
@@ -65,8 +62,8 @@ fun FloatingActionButtonContent(
                             when (userRate) {
                                 AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
                                 is AsyncData.Success -> VectorIcon(
-                                    resId = if (userRate.data == null) Res.drawable.vector_bookmark
-                                    else Res.drawable.vector_edit
+                                    imageVector = if (userRate.data == null) Icons.Bookmark
+                                    else Icons.Edit
                                 )
                             }
                         }
@@ -79,7 +76,7 @@ fun FloatingActionButtonContent(
                             when (isFavoured) {
                                 AsyncData.Loading -> CircularProgressIndicator(Modifier.size(24.dp))
                                 is AsyncData.Success -> VectorIcon(
-                                    resId = Res.drawable.vector_favorite,
+                                    imageVector = Icons.Favorite,
                                     tint = if (isFavoured.data) Color.Red else LocalContentColor.current
                                 )
                             }

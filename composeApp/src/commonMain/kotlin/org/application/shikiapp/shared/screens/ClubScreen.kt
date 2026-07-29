@@ -16,7 +16,6 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
@@ -62,6 +61,7 @@ import org.application.shikiapp.shared.ui.templates.MenuItems
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.ui.templates.about
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.extensions.toContentLarge
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberToastState
@@ -69,18 +69,12 @@ import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_clubs
 import shikiapp.composeapp.generated.resources.text_description
 import shikiapp.composeapp.generated.resources.text_join_club
 import shikiapp.composeapp.generated.resources.text_leave_club
-import shikiapp.composeapp.generated.resources.vector_check
-import shikiapp.composeapp.generated.resources.vector_close
-import shikiapp.composeapp.generated.resources.vector_clubs
-import shikiapp.composeapp.generated.resources.vector_comments
-import shikiapp.composeapp.generated.resources.vector_more
 
 @Composable
 fun ClubScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
@@ -142,12 +136,12 @@ private fun ClubView(
                 actions = {
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) },
-                        content = { Icon(painterResource(Res.drawable.vector_comments), null) }
+                        content = { VectorIcon(Icons.Comments) }
                     )
 
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet)) },
-                        content = { VectorIcon(Res.drawable.vector_more) }
+                        content = { VectorIcon(Icons.MoreVertical) }
                     )
                 }
             )
@@ -290,7 +284,7 @@ private fun BottomSheet(isMember: Boolean, onEvent: (ContentDetailEvent) -> Unit
     ) {
         ListItem(
             headlineContent = { Text(stringResource(Res.string.text_clubs)) },
-            leadingContent = { Icon(painterResource(Res.drawable.vector_clubs), null) },
+            leadingContent = { VectorIcon(Icons.Clubs) },
             modifier = Modifier.clickable { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Club.Menu.CLUBS)) },
             colors = ListItemDefaults.colors(
                 containerColor = BottomSheetDefaults.ContainerColor,
@@ -303,7 +297,7 @@ private fun BottomSheet(isMember: Boolean, onEvent: (ContentDetailEvent) -> Unit
             if (isMember) {
                 ListItem(
                     headlineContent = { Text(stringResource(Res.string.text_leave_club)) },
-                    leadingContent = { VectorIcon(Res.drawable.vector_close) },
+                    leadingContent = { VectorIcon(Icons.Close) },
                     modifier = Modifier.clickable { onEvent(ContentDetailEvent.Club.LeaveClub) },
                     colors = ListItemDefaults.colors(
                         containerColor = BottomSheetDefaults.ContainerColor,
@@ -314,7 +308,7 @@ private fun BottomSheet(isMember: Boolean, onEvent: (ContentDetailEvent) -> Unit
             } else {
                 ListItem(
                     headlineContent = { Text(stringResource(Res.string.text_join_club)) },
-                    leadingContent = { VectorIcon(Res.drawable.vector_check) },
+                    leadingContent = { VectorIcon(Icons.Check) },
                     modifier = Modifier.clickable { onEvent(ContentDetailEvent.Club.JoinClub) },
                     colors = ListItemDefaults.colors(
                         containerColor = BottomSheetDefaults.ContainerColor,

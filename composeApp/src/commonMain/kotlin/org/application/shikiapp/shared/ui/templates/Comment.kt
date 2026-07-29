@@ -1,4 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalFoundationStyleApi::class
+)
 
 package org.application.shikiapp.shared.ui.templates
 
@@ -19,7 +21,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.consumeWindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -27,10 +29,16 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
+import androidx.compose.foundation.style.contentPadding
+import androidx.compose.foundation.style.fillHeight
+import androidx.compose.foundation.style.fillSize
+import androidx.compose.foundation.style.fillWidth
+import androidx.compose.foundation.style.size
+import androidx.compose.foundation.style.styleable
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.text.input.TextFieldLineLimits
@@ -46,6 +54,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.LocalMaterialTheme
 import androidx.compose.material3.MenuDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
@@ -82,6 +91,7 @@ import androidx.paging.compose.LazyPagingItems
 import androidx.paging.compose.itemKey
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.ui.Comment
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.extensions.flattenText
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.CommentListState
@@ -98,12 +108,6 @@ import shikiapp.composeapp.generated.resources.text_enter_message
 import shikiapp.composeapp.generated.resources.text_error_comment_create
 import shikiapp.composeapp.generated.resources.text_offtopic
 import shikiapp.composeapp.generated.resources.text_sure_to_delete_comment
-import shikiapp.composeapp.generated.resources.vector_check
-import shikiapp.composeapp.generated.resources.vector_close
-import shikiapp.composeapp.generated.resources.vector_edit
-import shikiapp.composeapp.generated.resources.vector_refresh
-import shikiapp.composeapp.generated.resources.vector_send
-import shikiapp.composeapp.generated.resources.vector_trash
 
 @Composable
 private fun Comment(
@@ -138,15 +142,19 @@ private fun Comment(
             )
     ) {
         Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp, 12.dp)
+            modifier = Modifier.styleable {
+                fillWidth()
+                contentPadding(16.dp, 12.dp)
+            }
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(MaterialTheme.shapes.small)
+                    .styleable {
+                        fillWidth()
+                        clip()
+                        shape(LocalMaterialTheme.currentValue.shapes.small)
+                    }
                     .combinedClickable(
                         onClick = { onNavigate(Screen.User(comment.userId)) },
                         onLongClick = {
@@ -155,7 +163,7 @@ private fun Comment(
                             }
                         }
                     )
-                    .padding(vertical = 4.dp)
+                    .styleable { contentPadding(4.dp) }
             ) {
                 CircleContentImage(comment.userAvatar, Modifier.size(40.dp))
 
@@ -228,7 +236,7 @@ private fun Comment(
                     ) {
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.text_change)) },
-                            trailingIcon = { VectorIcon(Res.drawable.vector_edit) },
+                            trailingIcon = { VectorIcon(Icons.Edit) },
                             onClick = {
                                 showMenu = false
                                 onEditClick()
@@ -236,7 +244,7 @@ private fun Comment(
                         )
                         DropdownMenuItem(
                             text = { Text(stringResource(Res.string.text_delete)) },
-                            trailingIcon = { VectorIcon(Res.drawable.vector_trash) },
+                            trailingIcon = { VectorIcon(Icons.Trash) },
                             onClick = {
                                 showMenu = false
                                 onDeleteClick()
@@ -279,27 +287,32 @@ fun Comments(
     Box(
         contentAlignment = Alignment.CenterEnd,
         modifier = Modifier
-            .fillMaxSize()
-            .background(Color.Black.copy(alpha = 0.4f))
+            .styleable {
+                fillSize()
+                background(Color.Black.copy(alpha = 0.4f))
+            }
             .clickable(enabled = false) {}
     ) {
         Scaffold(
-            modifier = Modifier
-                .fillMaxHeight()
-                .widthIn(max = 480.dp)
-                .fillMaxWidth(),
+            modifier = Modifier.styleable {
+                fillHeight()
+                maxWidth(480.dp)
+                fillWidth()
+            },
             topBar = {
                 TopAppBar(
                     title = { Text(stringResource(Res.string.text_comments)) },
                     navigationIcon = { NavigationIcon(onHide) },
-                    actions = { IconButton(state::refresh) { VectorIcon(Res.drawable.vector_refresh) } }
+                    actions = { IconButton(state::refresh) { VectorIcon(Icons.Refresh) } }
                 )
             }
         ) { values ->
             Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(values)
+                modifier = Modifier.styleable {
+                    fillSize()
+                    contentPadding(values)
+                }
+                    .consumeWindowInsets(values)
                     .imePadding()
             ) {
                 Box(Modifier.weight(1f)) {
@@ -356,10 +369,11 @@ fun Comments(
                     HorizontalDivider()
 
                     Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .background(MaterialTheme.colorScheme.surface)
-                            .padding(8.dp)
+                        modifier = Modifier.styleable {
+                            fillWidth()
+                            background(LocalMaterialTheme.currentValue.colorScheme.surface)
+                            contentPadding(8.dp)
+                        }
                     ) {
                         AnimatedVisibility(state.errorTrigger > 0L) {
                             var progress by remember { mutableFloatStateOf(1f) }
@@ -378,21 +392,23 @@ fun Comments(
                             }
 
                             Column(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp)
-                                    .clip(MaterialTheme.shapes.small)
-                                    .background(MaterialTheme.colorScheme.errorContainer)
+                                modifier = Modifier.styleable {
+                                    fillWidth()
+                                    contentPaddingBottom(8.dp)
+                                    clip()
+                                    background(LocalMaterialTheme.currentValue.colorScheme.errorContainer)
+                                }
                             ) {
                                 Row(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(16.dp, 8.dp)
+                                    modifier = Modifier.styleable {
+                                        fillWidth()
+                                        contentPadding(16.dp, 8.dp)
+                                    }
                                 ) {
                                     VectorIcon(
-                                        resId = Res.drawable.vector_close,
+                                        imageVector = Icons.Close,
                                         tint = MaterialTheme.colorScheme.onErrorContainer
                                     )
                                     Text(
@@ -414,15 +430,20 @@ fun Comments(
                         AnimatedVisibility(editComment != null) {
                             Row(
                                 verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(bottom = 8.dp)
-                                    .clip(RoundedCornerShape(16.dp))
-                                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                                    .padding(12.dp, 6.dp)
+                                modifier = Modifier.styleable {
+                                    fillWidth()
+                                    externalPaddingBottom(8.dp)
+
+                                    clip()
+                                    shape(RoundedCornerShape(16.dp))
+
+                                    background(LocalMaterialTheme.currentValue.colorScheme.surfaceVariant.copy(alpha = 0.5f))
+
+                                    contentPadding(12.dp, 6.dp)
+                                }
                             ) {
                                 VectorIcon(
-                                    resId = Res.drawable.vector_edit,
+                                    imageVector = Icons.Edit,
                                     tint = MaterialTheme.colorScheme.primary,
                                     modifier = Modifier.size(16.dp)
                                 )
@@ -437,7 +458,7 @@ fun Comments(
                                 )
                                 IconButton(
                                     modifier = Modifier.size(24.dp),
-                                    content = { VectorIcon(Res.drawable.vector_close) },
+                                    content = { VectorIcon(Icons.Close) },
                                     onClick = {
                                         editComment = null
                                         isOfftopic = false
@@ -467,10 +488,14 @@ fun Comments(
                                 decorator = { innerTextField ->
                                     Row(
                                         verticalAlignment = Alignment.Bottom,
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .clip(RoundedCornerShape(24.dp))
-                                            .background(MaterialTheme.colorScheme.surfaceVariant)
+                                        modifier = Modifier.styleable {
+                                            fillWidth()
+
+                                            clip()
+                                            shape(RoundedCornerShape(24.dp))
+
+                                            background(LocalMaterialTheme.currentValue.colorScheme.surfaceVariant)
+                                        }
                                     ) {
                                         Box(
                                             modifier = Modifier
@@ -509,14 +534,18 @@ fun Comments(
                             Box(
                                 contentAlignment = Alignment.Center,
                                 modifier = Modifier
-                                    .size(48.dp)
-                                    .clip(CircleShape)
-                                    .background(
-                                        color = if (state.textFieldState.text.isNotBlank() && !isSending)
-                                            MaterialTheme.colorScheme.primary
-                                        else
-                                            MaterialTheme.colorScheme.surfaceVariant
-                                    )
+                                    .styleable {
+                                        size(48.dp)
+                                        clip()
+                                        shape(CircleShape)
+
+                                        background(
+                                            color = if (state.textFieldState.text.isNotBlank() && !isSending)
+                                                LocalMaterialTheme.currentValue.colorScheme.primary
+                                            else
+                                                LocalMaterialTheme.currentValue.colorScheme.surfaceVariant
+                                        )
+                                    }
                                     .clickable(
                                         enabled = state.textFieldState.text.isNotBlank() && !isSending,
                                         onClick = {
@@ -540,7 +569,7 @@ fun Comments(
                                     )
                                 } else {
                                     VectorIcon(
-                                        resId = if (editComment != null) Res.drawable.vector_check else Res.drawable.vector_send,
+                                        imageVector = if (editComment != null) Icons.Check else Icons.Send,
                                         tint = if (state.textFieldState.text.isNotBlank()) MaterialTheme.colorScheme.onPrimary
                                         else MaterialTheme.colorScheme.onSurfaceVariant
                                     )

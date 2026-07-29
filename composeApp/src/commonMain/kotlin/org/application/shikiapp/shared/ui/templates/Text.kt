@@ -1,9 +1,13 @@
+@file:OptIn(ExperimentalFoundationStyleApi::class)
+
 package org.application.shikiapp.shared.ui.templates
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
+import androidx.compose.foundation.style.contentPadding
+import androidx.compose.foundation.style.fillWidth
+import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.MaterialTheme.LocalMaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
@@ -22,8 +26,9 @@ fun ParagraphTitle(text: String, modifier: Modifier = Modifier) = Text(
 fun TextStickyHeader(text: String) = Text(
     text = text,
     style = MaterialTheme.typography.titleMedium,
-    modifier = Modifier
-        .fillMaxWidth()
-        .background(MaterialTheme.colorScheme.tertiaryContainer)
-        .padding(16.dp, 8.dp)
+    modifier = Modifier.styleable {
+        fillWidth()
+        background(LocalMaterialTheme.currentValue.colorScheme.tertiaryContainer)
+        contentPadding(16.dp, 8.dp)
+    }
 )

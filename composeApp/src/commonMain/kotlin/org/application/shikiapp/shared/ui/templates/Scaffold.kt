@@ -36,12 +36,11 @@ import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.flow.collectLatest
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.BLANK
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_search
-import shikiapp.composeapp.generated.resources.vector_close
-import shikiapp.composeapp.generated.resources.vector_search
 
 @Composable
 fun ScaffoldSearchBar(
@@ -83,11 +82,11 @@ fun ScaffoldSearchBar(
                             textFieldState = textFieldState,
                             searchBarState = searchState,
                             onSearch = onSearch,
-                            leadingIcon = { VectorIcon(Res.drawable.vector_search) },
+                            leadingIcon = { VectorIcon(Icons.Search) },
                             placeholder = { Text(stringResource(Res.string.text_search)) },
                             trailingIcon = {
                                 if (search.isNotEmpty()) {
-                                    IconButton(onClear) { VectorIcon(Res.drawable.vector_close) }
+                                    IconButton(onClear) { VectorIcon(Icons.Close) }
                                 }
                             }
                         )

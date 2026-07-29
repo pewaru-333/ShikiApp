@@ -88,6 +88,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.pointer.pointerHoverIcon
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.keepScreenOn
@@ -123,6 +124,7 @@ import org.application.shikiapp.shared.ui.templates.MenuPlayerDefaults
 import org.application.shikiapp.shared.ui.templates.MenuPlayerItems
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.HideSystemBars
 import org.application.shikiapp.shared.utils.LockScreenOrientation
 import org.application.shikiapp.shared.utils.enums.PickerStep
@@ -139,7 +141,6 @@ import org.application.shikiapp.shared.utils.ui.VideoPlayerState
 import org.application.shikiapp.shared.utils.ui.rememberLinkHandler
 import org.application.shikiapp.shared.utils.ui.rememberVideoPlayerState
 import org.application.shikiapp.shared.utils.viewModel
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -158,20 +159,6 @@ import shikiapp.composeapp.generated.resources.text_sure_to_logout_animelib
 import shikiapp.composeapp.generated.resources.text_video_sources
 import shikiapp.composeapp.generated.resources.text_video_subtitles
 import shikiapp.composeapp.generated.resources.text_video_voice
-import shikiapp.composeapp.generated.resources.vector_arrow_back
-import shikiapp.composeapp.generated.resources.vector_close
-import shikiapp.composeapp.generated.resources.vector_exit_app
-import shikiapp.composeapp.generated.resources.vector_fullscreen
-import shikiapp.composeapp.generated.resources.vector_fullscreen_exit
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
-import shikiapp.composeapp.generated.resources.vector_list
-import shikiapp.composeapp.generated.resources.vector_pause
-import shikiapp.composeapp.generated.resources.vector_play
-import shikiapp.composeapp.generated.resources.vector_subtitles
-import shikiapp.composeapp.generated.resources.vector_ten_seconds_left
-import shikiapp.composeapp.generated.resources.vector_ten_seconds_right
-import shikiapp.composeapp.generated.resources.vector_volume_off
-import shikiapp.composeapp.generated.resources.vector_volume_on
 
 @Composable
 fun WatchScreen(onBack: () -> Unit) {
@@ -250,7 +237,7 @@ fun WatchScreen(onBack: () -> Unit) {
                     actions = {
                         if (state.showIconLogout) {
                             IconButton(model::toggleLogoutDialog) {
-                                VectorIcon(Res.drawable.vector_exit_app)
+                                VectorIcon(Icons.ExitApp)
                             }
                         }
                     }
@@ -338,7 +325,7 @@ private fun Sources(
         LazyColumn(Modifier.fillMaxSize(), listState) {
             items(sources, VideoSourceData::type) { source ->
                 ListItem(
-                    trailingContent = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
+                    trailingContent = { VectorIcon(Icons.KeyboardArrowRight) },
                     supportingContent = { Text(pluralStringResource(Res.plurals.plural_count_dubbers, source.voices.size, source.voices.size)) },
                     headlineContent = {
                         Text(
@@ -405,7 +392,7 @@ private fun Voices(
         LazyColumn(Modifier.fillMaxSize(), listState) {
             items(voices, VideoVoice::id) { item ->
                 ListItem(
-                    trailingContent = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
+                    trailingContent = { VectorIcon(Icons.KeyboardArrowRight) },
                     headlineContent = {
                         Text(
                             text = item.title.asComposableString(),
@@ -488,7 +475,7 @@ private fun Episodes(episodes: List<EpisodeModel>, listState: LazyListState, onL
             ListItem(
                 modifier = Modifier.clickable { onLoadVideo(it) },
                 headlineContent = { Text(stringResource(Res.string.text_episode_holder, it.number)) },
-                trailingContent = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
+                trailingContent = { VectorIcon(Icons.KeyboardArrowRight) },
                 leadingContent = {
                     AnimatedAsyncImage(
                         model = it.screenshot,
@@ -618,14 +605,14 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
 fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState, focusRequester: FocusRequester) =
     Row(Modifier.align(Alignment.Center), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
         IconVideoControl(
-            resId = Res.drawable.vector_ten_seconds_left,
+            icon = Icons.TenSecondsLeft,
             onClick = { playerState.seekTo(playerState.currentTime - 10f) },
             modifier = Modifier.size(50.dp),
             modifierI = Modifier.padding(8.dp),
         )
 
         IconVideoControl(
-            resId = if (playerState.isPlaying) Res.drawable.vector_pause else Res.drawable.vector_play,
+            icon = if (playerState.isPlaying) Icons.PauseCircle else Icons.PlayCircle,
             onClick = { playerState.togglePlayPause() },
             modifierI = Modifier.padding(4.dp),
             modifier = Modifier
@@ -634,7 +621,7 @@ fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState, focusRequester: Fo
         )
 
         IconVideoControl(
-            resId = Res.drawable.vector_ten_seconds_right,
+            icon = Icons.TenSecondsRight,
             onClick = { playerState.seekTo(playerState.currentTime + 10f) },
             modifier = Modifier.size(50.dp),
             modifierI = Modifier.padding(8.dp),
@@ -685,8 +672,8 @@ private fun BoxScope.VolumeScale(playerState: VideoPlayerState) =
             VectorIcon(
                 modifier = Modifier.size(24.dp),
                 tint = Color.White,
-                resId = if (playerState.volume == 0f) Res.drawable.vector_volume_off
-                else Res.drawable.vector_volume_on
+                imageVector = if (playerState.volume == 0f) Icons.VolumeOff
+                else Icons.VolumeUp
             )
         }
     }
@@ -738,7 +725,7 @@ private fun BoxScope.EpisodeList(
                     style = MaterialTheme.typography.titleLarge
                 )
                 ButtonFocused(
-                    content = Res.drawable.vector_close,
+                    content = Icons.Close,
                     onClick = onHide,
                     modifier = Modifier.focusProperties { left = FocusRequester.Cancel }
                 )
@@ -887,8 +874,8 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
         if (!playerState.controls.utils.isTV) {
             ButtonFocused(
                 onClick = playerState::toggleZoom,
-                content = if (playerState.isZoomed) Res.drawable.vector_fullscreen_exit
-                else Res.drawable.vector_fullscreen
+                content = if (playerState.isZoomed) Icons.FullscreenExit
+                else Icons.Fullscreen
             )
         }
     }
@@ -915,7 +902,7 @@ private fun VideoControls(state: WatchState, playerState: VideoPlayerState, focu
                     .align(Alignment.TopCenter)
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ButtonFocused(Res.drawable.vector_arrow_back, onClick = onBack)
+                    ButtonFocused(Icons.ArrowBack, onClick = onBack)
 
                     Spacer(Modifier.width(8.dp))
 
@@ -941,7 +928,7 @@ private fun VideoControls(state: WatchState, playerState: VideoPlayerState, focu
 
                     state.currentVoice?.let {
                         if (it.episodesCount > 1) {
-                            ButtonFocused(Res.drawable.vector_list, onClick = playerState.controls::toggleEpisodes)
+                            ButtonFocused(Icons.List, onClick = playerState.controls::toggleEpisodes)
                         }
                     }
                 }
@@ -1009,7 +996,7 @@ private fun Quality(state: WatchState, playerState: VideoPlayerState) = BoxWithC
 @Composable
 private fun Subtitles(state: WatchState, playerState: VideoPlayerState) = BoxWithConstraints {
     ButtonFocused(
-        content = Res.drawable.vector_subtitles,
+        content = Icons.Subtitles,
         onClick = playerState.controls::toggleSubtitles,
         tint = if (playerState.selectedSubtitlesTrack == null) Color.White
         else MaterialTheme.colorScheme.primary
@@ -1039,7 +1026,7 @@ private fun ButtonFocused(content: Any, modifier: Modifier = Modifier, tint: Col
     val contentColor = if (isFocused) MaterialTheme.colorScheme.onPrimary else Color.White
 
     when (content) {
-        is DrawableResource -> IconButton(
+        is ImageVector -> IconButton(
             onClick = onClick,
             modifier = modifier,
             interactionSource = interactionSource,
@@ -1097,7 +1084,7 @@ private fun AnimeLibAuth() {
                     onClick = { uriHandler.onOpenLink(ApiRoutes.authUriLib) },
                     content = {
                         Text(stringResource(Res.string.text_login))
-                        VectorIcon(Res.drawable.vector_keyboard_arrow_right)
+                        VectorIcon(Icons.KeyboardArrowRight)
                     }
                 )
 

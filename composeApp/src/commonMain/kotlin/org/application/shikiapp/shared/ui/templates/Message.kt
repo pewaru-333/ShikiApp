@@ -30,12 +30,14 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -47,6 +49,7 @@ import org.application.shikiapp.shared.models.ui.list.Dialog
 import org.application.shikiapp.shared.models.ui.list.Message
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.network.response.Response
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.Status
@@ -55,9 +58,6 @@ import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_broadcast_message_club
 import shikiapp.composeapp.generated.resources.text_no_messages
-import shikiapp.composeapp.generated.resources.vector_bookmark
-import shikiapp.composeapp.generated.resources.vector_check
-import shikiapp.composeapp.generated.resources.vector_trash
 
 @Composable
 fun DialogList(
@@ -66,7 +66,7 @@ fun DialogList(
     loadData: () -> Unit
 ) = AnimatedScreen(dialogs, loadData) { dialogList ->
     LazyColumn(Modifier.fillMaxSize()) {
-        items(dialogList, key = Dialog::id) { dialog ->
+        items(dialogList, Dialog::id) { dialog ->
             Column {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
@@ -79,10 +79,7 @@ fun DialogList(
 
                     Spacer(Modifier.width(16.dp))
 
-                    Column(
-                        modifier = Modifier.weight(1f),
-                        verticalArrangement = Arrangement.Center
-                    ) {
+                    Column(Modifier.weight(1f), Arrangement.Center) {
                         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
                             Text(
                                 maxLines = 1,
@@ -172,8 +169,8 @@ private fun MessageCardItem(
                                 onClick = { onMarkRead(if (this) 0 else 1) },
                                 content = {
                                     VectorIcon(
-                                        resId = if (this) Res.drawable.vector_bookmark
-                                        else Res.drawable.vector_check
+                                        imageVector = if (this) Icons.Bookmark
+                                        else Icons.Check
                                     )
                                 }
                             )
@@ -190,7 +187,7 @@ private fun MessageCardItem(
                         is AsyncData.Success -> {
                             if (!state.getValue()) {
                                 FilledTonalIconButton(
-                                    content = { VectorIcon(Res.drawable.vector_trash) },
+                                    content = { VectorIcon(Icons.Trash) },
                                     onClick = onDelete,
                                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -283,9 +280,13 @@ private fun BaseMessageCardItem(
     onDelete: () -> Unit
 ) {
     var lastRead by remember { mutableStateOf(news.read.getValue() ?: false) }
-    if (news.read is AsyncData.Success) {
-        lastRead = news.read.data
+
+    LaunchedEffect(news.read) {
+        if (news.read is AsyncData.Success) {
+            lastRead = news.read.data
+        }
     }
+
     val readState = news.read.getValue() ?: lastRead
 
     val backgroundColor by animateColorAsState(
@@ -297,7 +298,7 @@ private fun BaseMessageCardItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .drawBehind { drawRect(backgroundColor) }
             .padding(12.dp)
     ) {
         Row(
@@ -346,8 +347,8 @@ private fun BaseMessageCardItem(
                                 onClick = { onMarkRead(if (this) 0 else 1) },
                                 content = {
                                     VectorIcon(
-                                        resId = if (this) Res.drawable.vector_bookmark
-                                        else Res.drawable.vector_check
+                                        imageVector = if (this) Icons.Bookmark
+                                        else Icons.Check
                                     )
                                 }
                             )
@@ -363,7 +364,7 @@ private fun BaseMessageCardItem(
                         is AsyncData.Success -> {
                             if (!state.getValue()) {
                                 FilledTonalIconButton(
-                                    content = { VectorIcon(Res.drawable.vector_trash) },
+                                    content = { VectorIcon(Icons.Trash) },
                                     onClick = onDelete,
                                     colors = IconButtonDefaults.filledTonalIconButtonColors(
                                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -390,9 +391,13 @@ private fun Notification(
     onNavigate: (Screen) -> Unit
 ) {
     var lastRead by remember { mutableStateOf(notification.read.getValue() ?: false) }
-    if (notification.read is AsyncData.Success) {
-        lastRead = notification.read.data
+
+    LaunchedEffect(notification.read) {
+        if (notification.read is AsyncData.Success) {
+            lastRead = notification.read.data
+        }
     }
+
     val readState = notification.read.getValue() ?: lastRead
 
     val backgroundColor by animateColorAsState(
@@ -404,7 +409,7 @@ private fun Notification(
     Column(
         modifier = modifier
             .fillMaxWidth()
-            .background(backgroundColor)
+            .drawBehind { drawRect(backgroundColor) }
             .padding(12.dp, 10.dp)
     ) {
         Row(
@@ -443,12 +448,12 @@ private fun Notification(
                     is AsyncData.Success<*> -> {
                         if (state.getValue() == true) {
                             FilledTonalIconButton(
-                                content = { VectorIcon(Res.drawable.vector_bookmark) },
+                                content = { VectorIcon(Icons.Bookmark) },
                                 onClick = { onMarkRead(notification.id, 0) }
                             )
                         } else {
                             FilledTonalIconButton(
-                                content = { VectorIcon(Res.drawable.vector_check) },
+                                content = { VectorIcon(Icons.Check) },
                                 onClick = { onMarkRead(notification.id, 1) }
                             )
                         }
@@ -460,7 +465,7 @@ private fun Notification(
 
                     is AsyncData.Success<*> -> if (state.getValue() == false) {
                         FilledTonalIconButton(
-                            content = { VectorIcon(Res.drawable.vector_trash) },
+                            content = { VectorIcon(Icons.Trash) },
                             onClick = { onDelete(notification.id) },
                             colors = IconButtonDefaults.filledTonalIconButtonColors(
                                 containerColor = MaterialTheme.colorScheme.errorContainer,

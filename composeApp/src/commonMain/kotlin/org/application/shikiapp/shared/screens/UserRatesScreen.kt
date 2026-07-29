@@ -89,6 +89,7 @@ import org.application.shikiapp.shared.ui.templates.LoadingScreen
 import org.application.shikiapp.shared.ui.templates.NavigationIcon
 import org.application.shikiapp.shared.ui.templates.ScaffoldSearchBar
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.OrderRates
 import org.application.shikiapp.shared.utils.enums.WatchStatus
@@ -110,12 +111,6 @@ import shikiapp.composeapp.generated.resources.text_rate_chapters
 import shikiapp.composeapp.generated.resources.text_rereading_format
 import shikiapp.composeapp.generated.resources.text_rewatches_format
 import shikiapp.composeapp.generated.resources.text_to_profile
-import shikiapp.composeapp.generated.resources.vector_add
-import shikiapp.composeapp.generated.resources.vector_anime
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
-import shikiapp.composeapp.generated.resources.vector_manga
-import shikiapp.composeapp.generated.resources.vector_no_profile
-import shikiapp.composeapp.generated.resources.vector_star
 
 @Composable
 fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
@@ -196,12 +191,12 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                             FilledIconToggleButton(
                                 checked = type == LinkedType.ANIME,
                                 onCheckedChange = { model.setLinkedType(LinkedType.ANIME) },
-                                content = { VectorIcon(Res.drawable.vector_anime) }
+                                content = { VectorIcon(Icons.Anime) }
                             )
                             FilledIconToggleButton(
                                 checked = type == LinkedType.MANGA,
                                 onCheckedChange = { model.setLinkedType(LinkedType.MANGA) },
-                                content = { VectorIcon(Res.drawable.vector_manga) }
+                                content = { VectorIcon(Icons.Manga) }
                             )
                         }
                     }
@@ -308,7 +303,7 @@ private fun UnloggedScreen(onNavigate: (Screen) -> Unit) =
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(8.dp)
         ) {
-            VectorIcon(Res.drawable.vector_no_profile, Modifier.size(96.dp))
+            VectorIcon(Icons.ProfileOff, Modifier.size(96.dp))
             Text(
                 text = stringResource(Res.string.text_login_to_modify_lists),
                 textAlign = TextAlign.Center,
@@ -318,7 +313,7 @@ private fun UnloggedScreen(onNavigate: (Screen) -> Unit) =
                 onClick = { onNavigate(Screen.Profile) },
                 content = {
                     Text(stringResource(Res.string.text_to_profile))
-                    VectorIcon(Res.drawable.vector_keyboard_arrow_right)
+                    VectorIcon(Icons.KeyboardArrowRight)
                 }
             )
         }
@@ -375,7 +370,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
                         FilledTonalIconButton(
                             modifier = Modifier.size(32.dp),
                             onClick = { onIncrement(rate.id) },
-                            content = { VectorIcon(Res.drawable.vector_add) }
+                            content = { VectorIcon(Icons.Add) }
                         )
                     }
                 }
@@ -465,7 +460,7 @@ private fun UserRateCard(
 
             if (rate.score > 0) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    VectorIcon(Res.drawable.vector_star, Modifier.size(18.dp), Color(0xFFFFC319))
+                    VectorIcon(Icons.Star, Modifier.size(18.dp), Color(0xFFFFC319))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = rate.scoreString,
@@ -482,7 +477,7 @@ private fun UserRateCard(
         }
     }
 
-    AnimatedVisibility(rateState.isEditing(rate.id), Modifier, fadeIn(), fadeOut()) {
+    AnimatedVisibility(rateState.isEditing(rate.id), Modifier.matchParentSize(), fadeIn(), fadeOut()) {
         Box(
             contentAlignment = Alignment.Center,
             modifier = Modifier

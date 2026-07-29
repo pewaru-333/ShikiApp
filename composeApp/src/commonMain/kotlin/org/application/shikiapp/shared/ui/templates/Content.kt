@@ -1,4 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalFoundationStyleApi::class
+)
 
 package org.application.shikiapp.shared.ui.templates
 
@@ -47,6 +49,10 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
+import androidx.compose.foundation.style.contentPadding
+import androidx.compose.foundation.style.fillWidth
+import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.AssistChip
 import androidx.compose.material3.AssistChipDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -75,6 +81,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.font.FontWeight
@@ -110,6 +117,7 @@ import org.application.shikiapp.shared.models.ui.list.ContentSource
 import org.application.shikiapp.shared.models.ui.list.ContentViewType
 import org.application.shikiapp.shared.network.response.AsyncData
 import org.application.shikiapp.shared.screens.LabelInfoItem
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.Kind
@@ -124,7 +132,6 @@ import org.application.shikiapp.shared.utils.extensions.toContent
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
-import org.jetbrains.compose.resources.DrawableResource
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
@@ -160,19 +167,6 @@ import shikiapp.composeapp.generated.resources.text_subtitles
 import shikiapp.composeapp.generated.resources.text_user_rates
 import shikiapp.composeapp.generated.resources.text_voices_one
 import shikiapp.composeapp.generated.resources.text_volumes
-import shikiapp.composeapp.generated.resources.vector_anime
-import shikiapp.composeapp.generated.resources.vector_arrow_forward
-import shikiapp.composeapp.generated.resources.vector_calendar
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_down
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_right
-import shikiapp.composeapp.generated.resources.vector_keyboard_arrow_up
-import shikiapp.composeapp.generated.resources.vector_more
-import shikiapp.composeapp.generated.resources.vector_similar
-import shikiapp.composeapp.generated.resources.vector_star
-import shikiapp.composeapp.generated.resources.vector_statistics
-import shikiapp.composeapp.generated.resources.vector_subtitles
-import shikiapp.composeapp.generated.resources.vector_timer
-import shikiapp.composeapp.generated.resources.vector_voice_actors
 
 @Composable
 fun ScaffoldContent(
@@ -204,7 +198,7 @@ fun ScaffoldContent(
 
                     IconButton(
                         onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Sheet)) },
-                        content = { VectorIcon(Res.drawable.vector_more) }
+                        content = { VectorIcon(Icons.MoreVertical) }
                     )
                 }
             )
@@ -475,8 +469,8 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
                     }
                 ) {
                     VectorIcon(
-                        resId = if (maxLines == 8) Res.drawable.vector_keyboard_arrow_up
-                        else Res.drawable.vector_keyboard_arrow_down
+                        imageVector = if (maxLines == 8) Icons.KeyboardArrowUp
+                        else Icons.KeyboardArrowDown
                     )
                 }
             }
@@ -495,17 +489,21 @@ fun Description(description: AnnotatedString, withDivider: Boolean = true) {
 
             Column(
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    .styleable {
+                        fillWidth()
+                        clip()
+                        shape(RoundedCornerShape(8.dp))
+
+                        background(MaterialTheme.LocalMaterialTheme.currentValue.colorScheme.surfaceVariant.copy(alpha = 0.3f))
+                    }
                     .clickable { isVisible = !isVisible }
-                    .padding(12.dp, 8.dp)
+                    .styleable { contentPadding(12.dp, 8.dp) }
             ) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     VectorIcon(
                         modifier = Modifier.size(20.dp),
-                        resId = if (isVisible) Res.drawable.vector_keyboard_arrow_up
-                        else Res.drawable.vector_keyboard_arrow_down
+                        imageVector = if (isVisible) Icons.KeyboardArrowUp
+                        else Icons.KeyboardArrowDown
                     )
 
                     Spacer(Modifier.width(8.dp))
@@ -625,7 +623,7 @@ fun Profiles(
 ) = Column {
     Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
         ParagraphTitle(title)
-        IconButton(onShowFull) { VectorIcon(Res.drawable.vector_arrow_forward) }
+        IconButton(onShowFull) { VectorIcon(Icons.ArrowForward) }
     }
     LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
         items(list, BasicContent::id) {
@@ -871,7 +869,7 @@ fun ScoreInfo(score: String) = Column {
         horizontalArrangement = Arrangement.spacedBy(4.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
-        VectorIcon(Res.drawable.vector_star, Modifier.size(16.dp), Color(0xFFFFC319))
+        VectorIcon(Icons.Star, Modifier.size(16.dp), Color(0xFFFFC319))
         Text(
             text = score,
             style = MaterialTheme.typography.labelLarge.copy(fontWeight = FontWeight.Bold)
@@ -1019,7 +1017,7 @@ fun Statistics(
 }
 
 @Composable
-private fun DetailBox(icon: DrawableResource, label: String, value: String? = null, onClick: (() -> Unit)? = null) =
+private fun DetailBox(icon: ImageVector, label: String, value: String? = null, onClick: (() -> Unit)? = null) =
     Box(
         modifier = Modifier
             .clip(MaterialTheme.shapes.medium)
@@ -1038,7 +1036,7 @@ private fun DetailBox(icon: DrawableResource, label: String, value: String? = nu
                     .padding(12.dp, 8.dp),
             ) {
                 VectorIcon(
-                    resId = icon,
+                    imageVector = icon,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Column {
@@ -1055,7 +1053,7 @@ private fun DetailBox(icon: DrawableResource, label: String, value: String? = nu
                 }
                 if (onClick != null) {
                     VectorIcon(
-                        resId = Res.drawable.vector_keyboard_arrow_right,
+                        imageVector = Icons.KeyboardArrowRight,
                         tint = MaterialTheme.colorScheme.primary
                     )
                 }
@@ -1069,7 +1067,7 @@ private fun DetailBox(icon: DrawableResource, label: String, value: String? = nu
                     .padding(10.dp, 6.dp),
             ) {
                 VectorIcon(
-                    resId = icon,
+                    imageVector = icon,
                     tint = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 Text(
@@ -1092,7 +1090,7 @@ fun <T : BaseDialogState> MenuItems(
                 AssistChip(
                     border = null,
                     onClick = { onClick(entry) },
-                    trailingIcon = { VectorIcon(Res.drawable.vector_keyboard_arrow_right) },
+                    trailingIcon = { VectorIcon(Icons.KeyboardArrowRight) },
                     label = {
                         Text(
                             text = stringResource(getTitle(entry)),
@@ -1230,7 +1228,7 @@ fun LazyListScope.summary(
         studio?.let { studio ->
             item {
                 DetailBox(
-                    icon = Res.drawable.vector_anime,
+                    icon = Icons.Anime,
                     label = stringResource(Res.string.text_studio),
                     value = studio.title,
                     onClick = { onNavigate(Screen.Catalog(studio = studio.id)) }
@@ -1241,7 +1239,7 @@ fun LazyListScope.summary(
         publisher?.let { publisher ->
             item {
                 DetailBox(
-                    icon = Res.drawable.vector_anime,
+                    icon = Icons.Anime,
                     label = stringResource(Res.string.text_publisher),
                     value = publisher.title,
                     onClick = {
@@ -1259,7 +1257,7 @@ fun LazyListScope.summary(
         duration?.let { duration ->
             item {
                 DetailBox(
-                    icon = Res.drawable.vector_timer,
+                    icon = Icons.Timer,
                     label = stringResource(Res.string.text_episode),
                     value = duration.asComposableString()
                 )
@@ -1270,7 +1268,7 @@ fun LazyListScope.summary(
             if (text.isNotEmpty()) {
                 item {
                     DetailBox(
-                        icon = Res.drawable.vector_calendar,
+                        icon = Icons.Calendar,
                         label = stringResource(Res.string.text_episode_next),
                         value = text
                     )
@@ -1281,7 +1279,7 @@ fun LazyListScope.summary(
         if (similar.isNotEmpty()) {
             item {
                 DetailBox(
-                    icon = Res.drawable.vector_similar,
+                    icon = Icons.Similar,
                     label = stringResource(Res.string.text_similar),
                     onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Similar)) }
                 )
@@ -1290,7 +1288,7 @@ fun LazyListScope.summary(
 
         item {
             DetailBox(
-                icon = Res.drawable.vector_statistics,
+                icon = Icons.Statistics,
                 label = stringResource(Res.string.text_statistics),
                 onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Stats)) }
             )
@@ -1299,7 +1297,7 @@ fun LazyListScope.summary(
         if (duration != null) {
             item {
                 DetailBox(
-                    icon = Res.drawable.vector_subtitles,
+                    icon = Icons.Subtitles,
                     label = stringResource(Res.string.text_subtitles),
                     onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Fansubbers)) }
                 )
@@ -1307,7 +1305,7 @@ fun LazyListScope.summary(
 
             item {
                 DetailBox(
-                    icon = Res.drawable.vector_voice_actors,
+                    icon = Icons.VoiceActors,
                     label = stringResource(Res.string.text_voices_one),
                     onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Anime.Fandubbers)) }
                 )

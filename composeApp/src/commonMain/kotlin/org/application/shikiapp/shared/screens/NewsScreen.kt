@@ -2,7 +2,6 @@
 
 package org.application.shikiapp.shared.screens
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -49,7 +48,7 @@ import org.application.shikiapp.shared.models.viewModels.NewsViewModel
 import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
 import org.application.shikiapp.shared.ui.templates.ErrorScreen
 import org.application.shikiapp.shared.ui.templates.LoadingScreen
-import org.application.shikiapp.shared.ui.templates.rememberLoadingEffect
+import org.application.shikiapp.shared.ui.templates.loadingEffectModifier
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 
@@ -226,14 +225,14 @@ private fun NewsCardPlaceholder() = Card(Modifier.fillMaxWidth(), MaterialTheme.
             modifier = Modifier
                 .fillMaxWidth()
                 .aspectRatio(16f / 9f)
-                .background(rememberLoadingEffect())
+                .then(loadingEffectModifier())
         )
         Column(Modifier.padding(16.dp)) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth(0.9f)
                     .height(20.dp)
-                    .background(rememberLoadingEffect(), MaterialTheme.shapes.small)
+                    .then(loadingEffectModifier())
             )
 
             Spacer(Modifier.height(8.dp))
@@ -242,7 +241,7 @@ private fun NewsCardPlaceholder() = Card(Modifier.fillMaxWidth(), MaterialTheme.
                 modifier = Modifier
                     .fillMaxWidth(0.7f)
                     .height(20.dp)
-                    .background(rememberLoadingEffect(), MaterialTheme.shapes.small)
+                    .then(loadingEffectModifier())
             )
 
             Spacer(Modifier.height(12.dp))
@@ -251,7 +250,7 @@ private fun NewsCardPlaceholder() = Card(Modifier.fillMaxWidth(), MaterialTheme.
                 modifier = Modifier
                     .fillMaxWidth(0.5f)
                     .height(14.dp)
-                    .background(rememberLoadingEffect(), MaterialTheme.shapes.small)
+                    .then(loadingEffectModifier())
             )
         }
     }

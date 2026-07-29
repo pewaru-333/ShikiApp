@@ -1,3 +1,5 @@
+@file:OptIn(ExperimentalFoundationStyleApi::class)
+
 package org.application.shikiapp.shared.ui.templates
 
 
@@ -22,6 +24,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
+import androidx.compose.foundation.style.fillSize
+import androidx.compose.foundation.style.styleable
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ListItem
@@ -46,15 +51,12 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import org.application.shikiapp.shared.models.ui.Review
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.OpinionType
 import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.colors
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.vector_star
-import shikiapp.composeapp.generated.resources.vector_thumb_down
-import shikiapp.composeapp.generated.resources.vector_thumb_up
 
 data class MediaGridItemTitleConfig(
     val style: TextStyle,
@@ -146,16 +148,17 @@ fun RelatedCard(title: String, poster: String, relationText: String, onClick: ()
         ),
         imageOverlay = {
             Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .background(
-                        brush = Brush.verticalGradient(
+                modifier = Modifier.styleable {
+                    fillSize()
+                    background(
+                        value = Brush.verticalGradient(
                             colors = listOf(
                                 Color.Transparent,
                                 Color.Black.copy(alpha = 0.5f)
                             )
                         )
                     )
+                }
             )
 
             val (text, maxLines) = remember(relationText) {
@@ -235,7 +238,7 @@ fun ReviewCard(
         Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp), Alignment.CenterVertically) {
             review.animeScore?.let { score ->
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    VectorIcon(Res.drawable.vector_star, Modifier.size(18.dp), Color(0xFFFFC319))
+                    VectorIcon(Icons.Star, Modifier.size(18.dp), Color(0xFFFFC319))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = score.toString(),
@@ -264,7 +267,7 @@ fun ReviewCard(
 
             if (review.votesFor.isNotBlank()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    VectorIcon(Res.drawable.vector_thumb_up, Modifier.size(14.dp))
+                    VectorIcon(Icons.ThumbUp, Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = review.votesFor,
@@ -276,7 +279,7 @@ fun ReviewCard(
 
             if (review.votesAgainst.isNotBlank()) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    VectorIcon(Res.drawable.vector_thumb_down, Modifier.size(14.dp))
+                    VectorIcon(Icons.ThumbDown, Modifier.size(14.dp))
                     Spacer(Modifier.width(4.dp))
                     Text(
                         text = review.votesAgainst,
@@ -386,10 +389,13 @@ fun MediaListItem(
                 verticalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 val kindText = kind?.let { stringResource(it.title) }
-                val metaText = buildList {
-                    kindText?.let { add(it) }
-                    season?.takeIf(String::isNotBlank)?.let { add(it) }
-                }.joinToString(" • ")
+                val metaText = buildString {
+                    kindText?.let { append(it) }
+                    season?.takeIf(String::isNotBlank)?.let {
+                        append(" • ")
+                        append(it)
+                    }
+                }
 
                 if (metaText.isNotEmpty()) {
                     LocalChip(
@@ -516,7 +522,7 @@ fun BoxScope.ScoreLabel(score: String) =
     ) {
         Row(Modifier.padding(6.dp, 4.dp), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
             VectorIcon(
-                resId = Res.drawable.vector_star,
+                imageVector = Icons.Star,
                 tint = Color(0xFFFFC319),
                 modifier = Modifier.size(16.dp)
             )
