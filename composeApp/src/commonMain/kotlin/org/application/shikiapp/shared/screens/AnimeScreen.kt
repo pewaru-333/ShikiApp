@@ -1,4 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
+    ExperimentalFoundationStyleApi::class
+)
 
 package org.application.shikiapp.shared.screens
 
@@ -8,10 +10,8 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -23,6 +23,13 @@ import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
+import androidx.compose.foundation.style.Style
+import androidx.compose.foundation.style.contentPadding
+import androidx.compose.foundation.style.fillSize
+import androidx.compose.foundation.style.fillWidth
+import androidx.compose.foundation.style.size
+import androidx.compose.foundation.style.styleable
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.IconButton
@@ -34,7 +41,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextAlign
@@ -83,6 +89,7 @@ import org.application.shikiapp.shared.ui.templates.related
 import org.application.shikiapp.shared.ui.templates.reviews
 import org.application.shikiapp.shared.ui.templates.summary
 import org.application.shikiapp.shared.ui.templates.title
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.VideoKind
 import org.application.shikiapp.shared.utils.extensions.toContent
@@ -99,8 +106,6 @@ import shikiapp.composeapp.generated.resources.text_subtitles
 import shikiapp.composeapp.generated.resources.text_unknown
 import shikiapp.composeapp.generated.resources.text_video
 import shikiapp.composeapp.generated.resources.text_voices_one
-import shikiapp.composeapp.generated.resources.vector_arrow_forward
-import shikiapp.composeapp.generated.resources.vector_episode_play
 
 @Composable
 fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
@@ -168,9 +173,10 @@ private fun AnimeView(
         onEvent = onEvent,
         onToggleFavourite = { onEvent(ContentDetailEvent.Media.Anime.ToggleFavourite) },
         watchButton = {
-            IconButton({ onNavigate(Screen.Watch(anime.id)) }) {
-                VectorIcon(Res.drawable.vector_episode_play)
-            }
+            IconButton(
+                onClick = { onNavigate(Screen.Watch(anime.id)) },
+                content = { VectorIcon(Icons.EpisodePlay) }
+            )
         }
     ) {
         title(anime.title)
@@ -378,14 +384,22 @@ private fun AnimeView(
             Text(
                 text = stringResource(text),
                 style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 12.dp, bottom = 8.dp)
+                modifier = Modifier.styleable {
+                    fillWidth()
+                    contentPaddingStart(12.dp)
+                    contentPaddingBottom(8.dp)
+                }
             )
 
             LazyColumn {
                 items(list) { item ->
-                    Text(item, Modifier.padding(16.dp))
+                    Text(
+                        text = item,
+                        modifier = Modifier.styleable {
+                            fillWidth()
+                            contentPadding(16.dp)
+                        }
+                    )
                 }
             }
         }
@@ -393,41 +407,53 @@ private fun AnimeView(
 }
 
 @Composable
-private fun Screenshots(list: List<String>, onShowScreenshot: (Int) -> Unit, onShow: () -> Unit) =
+private fun Screenshots(list: List<String>, onShowScreenshot: (Int) -> Unit, onShow: () -> Unit) {
+    val imageShape = MaterialTheme.shapes.small
+    val imageStyle = Style {
+        size(172.dp, 97.dp)
+        clip()
+        shape(imageShape)
+    }
+
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            ParagraphTitle(stringResource(Res.string.text_screenshots), Modifier.padding(bottom = 4.dp))
-            IconButton(onShow) { VectorIcon(Res.drawable.vector_arrow_forward) }
+            ParagraphTitle(stringResource(Res.string.text_screenshots))
+            IconButton(onShow) { VectorIcon(Icons.ArrowForward) }
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             itemsIndexed(list.take(6), ::Pair) { index, item ->
                 AnimatedAsyncImage(
                     model = item,
                     modifier = Modifier
-                        .size(172.dp, 97.dp)
-                        .clip(MaterialTheme.shapes.small)
+                        .styleable(null, imageStyle)
                         .clickable { onShowScreenshot(index) }
                 )
             }
         }
     }
+}
 
 @Composable
 private fun Video(list: List<Video>, onShow: () -> Unit) {
     val handler = LocalUriHandler.current
+    val imageShape = MaterialTheme.shapes.small
+    val imageStyle = Style {
+        size(172.dp, 130.dp)
+        clip()
+        shape(imageShape)
+    }
 
     Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
         Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween, Alignment.CenterVertically) {
-            ParagraphTitle(stringResource(Res.string.text_video), Modifier.padding(bottom = 4.dp))
-            IconButton(onShow) { VectorIcon(Res.drawable.vector_arrow_forward) }
+            ParagraphTitle(stringResource(Res.string.text_video))
+            IconButton(onShow) { VectorIcon(Icons.ArrowForward) }
         }
         LazyRow(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(list, Video::url) {
                 AnimatedAsyncImage(
                     model = it.imageUrl,
                     modifier = Modifier
-                        .size(172.dp, 130.dp)
-                        .clip(MaterialTheme.shapes.small)
+                        .styleable(null, imageStyle)
                         .clickable { handler.openUri(it.url) }
                 )
             }
@@ -443,9 +469,16 @@ private fun Screenshots(
     onShowScreenshot: (Int) -> Unit,
     onHide: () -> Unit
 ) = AnimatedDialogScreen(isVisible, stringResource(Res.string.text_screenshots), onHide) { values ->
+    val imageShape = MaterialTheme.shapes.small
+    val imageStyle = Style {
+        fillWidth()
+        clip()
+        shape(imageShape)
+    }
+
     LazyVerticalGrid(
         columns = GridCells.Adaptive(160.dp),
-        modifier = Modifier.fillMaxSize(),
+        modifier = Modifier.styleable { fillSize() },
         state = listState,
         contentPadding = values.toContent(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
@@ -456,9 +489,8 @@ private fun Screenshots(
                 model = item,
                 contentScale = ContentScale.Crop,
                 modifier = Modifier
-                    .fillMaxWidth()
+                    .styleable(null, imageStyle)
                     .aspectRatio(16f / 9f)
-                    .clip(MaterialTheme.shapes.small)
                     .clickable { onShowScreenshot(index) }
             )
         }
@@ -469,6 +501,12 @@ private fun Screenshots(
 private fun Video(video: Map<VideoKind, List<Video>>, isVisible: Boolean, onHide: () -> Unit) =
     AnimatedDialogScreen(isVisible, stringResource(Res.string.text_video), onHide) { values ->
         val handler = LocalUriHandler.current
+        val imageShape = MaterialTheme.shapes.small
+        val imageStyle = Style {
+            fillWidth()
+            clip()
+            shape(imageShape)
+        }
 
         LazyVerticalGrid(
             columns = GridCells.Adaptive(120.dp),
@@ -485,9 +523,8 @@ private fun Video(video: Map<VideoKind, List<Video>>, isVisible: Boolean, onHide
                         poster = video.imageUrl,
                         onClick = { handler.openUri(video.url) },
                         posterModifier = Modifier
-                            .fillMaxWidth()
-                            .aspectRatio(172f / 130f)
-                            .clip(MaterialTheme.shapes.small),
+                            .styleable(null, imageStyle)
+                            .aspectRatio(172f / 130f),
                         titleConfig = MediaGridItemDefaults.titleConfig(
                             minLines = 2,
                             textAlign = TextAlign.Center,
