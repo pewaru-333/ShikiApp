@@ -23,6 +23,7 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.ui.ExternalLink
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.extensions.toClipEntry
 import org.application.shikiapp.shared.utils.ui.rememberLinkHandler
@@ -32,10 +33,6 @@ import shikiapp.composeapp.generated.resources.text_copy_link
 import shikiapp.composeapp.generated.resources.text_external_links
 import shikiapp.composeapp.generated.resources.text_official_site
 import shikiapp.composeapp.generated.resources.text_open_in_browser
-import shikiapp.composeapp.generated.resources.vector_copy
-import shikiapp.composeapp.generated.resources.vector_list
-import shikiapp.composeapp.generated.resources.vector_open_in_browser
-import shikiapp.composeapp.generated.resources.vector_website
 
 @Composable
 fun BottomSheet(
@@ -61,7 +58,7 @@ fun BottomSheet(
         ListItem(
             colors = colors,
             headlineContent = { Text(stringResource(Res.string.text_official_site)) },
-            leadingContent = { VectorIcon(Res.drawable.vector_website) },
+            leadingContent = { VectorIcon(Icons.Website) },
             modifier = Modifier.clickable { handler.openUri(website) }
         )
     }
@@ -69,7 +66,7 @@ fun BottomSheet(
     ListItem(
         colors = colors,
         headlineContent = { Text(stringResource(Res.string.text_copy_link)) },
-        leadingContent = { VectorIcon(Res.drawable.vector_copy) },
+        leadingContent = { VectorIcon(Icons.Copy) },
         modifier = Modifier.clickable {
             scope.launch { clipboard.setClipEntry(url.toClipEntry()) }
         }
@@ -79,7 +76,7 @@ fun BottomSheet(
         ListItem(
             colors = colors,
             headlineContent = { Text(stringResource(Res.string.text_external_links)) },
-            leadingContent = { VectorIcon(Res.drawable.vector_list) },
+            leadingContent = { VectorIcon(Icons.List) },
             modifier = Modifier.clickable { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Links)) }
         )
     }
@@ -87,7 +84,7 @@ fun BottomSheet(
     ListItem(
         colors = colors,
         headlineContent = { Text(stringResource(Res.string.text_open_in_browser)) },
-        leadingContent = { VectorIcon(Res.drawable.vector_open_in_browser) },
+        leadingContent = { VectorIcon(Icons.OpenInBrowser) },
         modifier = Modifier.clickable { onEvent(ContentDetailEvent.OpenLink) }
     )
 }
