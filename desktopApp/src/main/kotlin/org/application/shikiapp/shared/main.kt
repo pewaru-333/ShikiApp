@@ -6,6 +6,7 @@ package org.application.shikiapp.shared
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
@@ -17,17 +18,16 @@ import okio.FileSystem
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.di.AppModuleInitializer
 import org.application.shikiapp.shared.di.DesktopContext
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.initVlc
 import org.application.shikiapp.shared.utils.navigation.DesktopDeepLink
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.sharedImageLoader
 import org.application.shikiapp.shared.utils.ui.FullscreenHandler
 import org.application.shikiapp.shared.utils.ui.LocalFullscreenHandler
-import org.jetbrains.compose.resources.painterResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.app_name
-import shikiapp.composeapp.generated.resources.ic_launcher
 import kotlin.system.exitProcess
 
 fun main(args: Array<String>) {
@@ -55,7 +55,7 @@ fun main(args: Array<String>) {
         }
 
         Tray(
-            icon = painterResource(Res.drawable.ic_launcher)
+            icon = rememberVectorPainter(Icons.AppIcon)
         )
 
         CompositionLocalProvider(LocalFullscreenHandler provides fullscreenHandler) {
@@ -63,7 +63,7 @@ fun main(args: Array<String>) {
                 onCloseRequest = ::exitApplication,
                 state = windowState,
                 title = stringResource(Res.string.app_name),
-                icon = painterResource(Res.drawable.ic_launcher),
+                icon = rememberVectorPainter(Icons.AppIcon),
                 content = {
                     LaunchedEffect(Unit) {
                         DesktopDeepLink.startInstanceListener { uri ->
