@@ -1,0 +1,2 @@
+— Fixed a bug that prevented images from opening in the comments.
+— Fixed a bug that caused icons in the status bar to change color to the background color.
