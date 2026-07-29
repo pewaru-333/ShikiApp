@@ -33,6 +33,8 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.fromHtml
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.window.DialogProperties
+import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
@@ -224,6 +226,24 @@ actual fun HideSystemBars() {
     }
 }
 
+@Composable
+actual fun DialogSystemBarColors() {
+    val view = LocalView.current
+
+    DisposableEffect(view) {
+        val dialogWindow = (view.parent as? DialogWindowProvider)?.window
+
+        if (dialogWindow != null) {
+            val insetsController = WindowCompat.getInsetsController(dialogWindow, view)
+
+            insetsController.isAppearanceLightStatusBars = false
+            insetsController.isAppearanceLightNavigationBars = false
+        }
+
+        onDispose { }
+    }
+}
+
 actual fun formatRelativeDays(daysAgo: Int): String {
     val formatter = RelativeDateTimeFormatter.getInstance()
     return when (daysAgo) {
@@ -234,3 +254,8 @@ actual fun formatRelativeDays(daysAgo: Int): String {
 }
 
 actual fun launchAuth(uriHandler: UriHandler) = uriHandler.openUri(ApiRoutes.authUri)
+
+actual fun getFullscreenDialogProperties() = DialogProperties(
+    usePlatformDefaultWidth = false,
+    decorFitsSystemWindows = false
+)

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.createSavedStateHandle
@@ -155,6 +156,8 @@ expect fun formatRelativeDays(daysAgo: Int): String
 
 expect fun isDynamicColorAvailable(): Boolean
 
+expect fun getFullscreenDialogProperties(): DialogProperties
+
 @Composable
 expect fun rememberDataManager(): Pair<DataManager, PermissionState>
 
@@ -175,3 +178,6 @@ expect fun LockScreenOrientation(orientation: ScreenOrientation)
 
 @Composable
 expect fun HideSystemBars()
+
+@Composable
+expect fun DialogSystemBarColors()

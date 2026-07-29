@@ -18,6 +18,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.window.DialogProperties
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
@@ -360,6 +361,9 @@ actual fun HideSystemBars() {
     }
 }
 
+@Composable
+actual fun DialogSystemBarColors() = Unit
+
 actual fun formatRelativeDays(daysAgo: Int): String {
     val formatter = NSRelativeDateTimeFormatter().apply {
         dateTimeStyle = NSRelativeDateTimeFormatterStyleNamed
@@ -435,3 +439,7 @@ actual fun launchAuth(uriHandler: UriHandler) {
         }
     )
 }
+
+actual fun getFullscreenDialogProperties() = DialogProperties(
+    usePlatformDefaultWidth = false
+)

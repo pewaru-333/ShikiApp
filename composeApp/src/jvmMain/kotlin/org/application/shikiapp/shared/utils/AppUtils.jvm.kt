@@ -16,6 +16,7 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.window.DialogProperties
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
@@ -175,6 +176,9 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) = Unit
 @Composable
 actual fun HideSystemBars() = Unit
 
+@Composable
+actual fun DialogSystemBarColors() = Unit
+
 actual fun formatRelativeDays(daysAgo: Int): String {
     val formatter = RelativeDateTimeFormatter.getInstance()
 
@@ -186,3 +190,7 @@ actual fun formatRelativeDays(daysAgo: Int): String {
 }
 
 actual fun launchAuth(uriHandler: UriHandler) = uriHandler.openUri(ApiRoutes.authUri)
+
+actual fun getFullscreenDialogProperties() = DialogProperties(
+    usePlatformDefaultWidth = false
+)
