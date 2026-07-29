@@ -4,6 +4,7 @@ package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.MutableTransitionState
 import androidx.compose.animation.core.RepeatMode
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
@@ -68,9 +69,7 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.navigationevent.NavigationEventInfo
-import androidx.navigationevent.compose.NavigationBackHandler
-import androidx.navigationevent.compose.rememberNavigationEventState
+import androidx.compose.ui.window.Dialog
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.Companion.DefaultTransform
 import coil3.compose.AsyncImagePainter.State
@@ -82,7 +81,8 @@ import net.engawapg.lib.zoomable.ZoomState
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
 import org.application.shikiapp.shared.ui.theme.Icons
-import org.application.shikiapp.shared.utils.EdgeToEdge
+import org.application.shikiapp.shared.utils.DialogSystemBarColors
+import org.application.shikiapp.shared.utils.getFullscreenDialogProperties
 import org.application.shikiapp.shared.utils.rememberDataManager
 import org.application.shikiapp.shared.utils.rememberToastState
 import org.jetbrains.compose.resources.stringResource
@@ -236,14 +236,28 @@ fun DialogImages(
     isClubImage: Boolean = false,
     onClose: () -> Unit
 ) {
-    if (images.isEmpty()) return
+    var cachedImages by remember { mutableStateOf(images) }
+    var cachedIndex by remember { mutableStateOf(initialIndex) }
+
+    val transitionState = remember { MutableTransitionState(false) }
+
+    LaunchedEffect(images, initialIndex) {
+        if (images.isNotEmpty()) {
+            cachedImages = images
+            cachedIndex = initialIndex
+        }
+    }
+
+    LaunchedEffect(isVisible) {
+        transitionState.targetState = isVisible
+    }
 
     val scope = rememberCoroutineScope()
     val toast = rememberToastState()
     val (dataManager, permissionState) = rememberDataManager()
 
     var isDownloading by remember { mutableStateOf(false) }
-    val focusRequester = remember { FocusRequester() }
+    val focusRequester = remember(::FocusRequester)
 
     fun download(index: Int) {
         if (permissionState.isGranted) {
@@ -251,7 +265,7 @@ fun DialogImages(
 
             scope.launch {
                 isDownloading = true
-                val currentImage = images[index]
+                val currentImage = cachedImages[index]
                 val isDownloaded = dataManager.downloadImage(currentImage)
 
                 toast.onShow(
@@ -265,125 +279,123 @@ fun DialogImages(
         }
     }
 
-    EdgeToEdge(darkTheme = isVisible, isAmoled = false)
+    if ((transitionState.targetState || transitionState.currentState) && cachedImages.isNotEmpty()) {
+        Dialog(onClose, getFullscreenDialogProperties()) {
+            DialogSystemBarColors()
 
-    AnimatedVisibility(
-        visible = isVisible,
-        enter = fadeIn(tween(250)) + scaleIn(
-            initialScale = 0.85f,
-            animationSpec = spring(
-                dampingRatio = Spring.DampingRatioNoBouncy,
-                stiffness = Spring.StiffnessMediumLow
-            )
-        ),
-        exit = fadeOut(tween(200)) + scaleOut(
-            targetScale = 0.85f,
-            animationSpec = tween(200)
-        )
-    ) {
-        NavigationBackHandler(
-            state = rememberNavigationEventState(NavigationEventInfo.None),
-            isBackEnabled = isVisible,
-            onBackCompleted = onClose
-        )
+            AnimatedVisibility(
+                visibleState = transitionState,
+                enter = fadeIn(tween(250)) + scaleIn(
+                    initialScale = 0.85f,
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMediumLow
+                    )
+                ),
+                exit = fadeOut(tween(200)) + scaleOut(
+                    targetScale = 0.85f,
+                    animationSpec = tween(200)
+                )
+            ) {
+                LaunchedEffect(Unit) {
+                    focusRequester.requestFocus()
+                }
 
-        LaunchedEffect(Unit) {
-            focusRequester.requestFocus()
-        }
+                val imageStates = cachedImages.map { rememberZoomState() }
+                val pagerState = rememberPagerState(initialPage = cachedIndex, pageCount = cachedImages::size)
 
-        val imageStates = images.map { rememberZoomState() }
-        val pagerState = rememberPagerState(initialPage = initialIndex, pageCount = images::size)
+                Scaffold(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .pointerInput(Unit) { detectTapGestures { focusRequester.requestFocus() } }
+                        .focusRequester(focusRequester)
+                        .focusable()
+                        .onPreviewKeyEvent { event ->
+                            if (event.type == KeyEventType.KeyDown) {
+                                when (event.key) {
+                                    Key.DirectionRight -> {
+                                        scope.launch {
+                                            if (pagerState.currentPage < cachedImages.size - 1) {
+                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                            }
+                                        }
+                                        true
+                                    }
 
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .pointerInput(Unit) { detectTapGestures { focusRequester.requestFocus() } }
-                .focusRequester(focusRequester)
-                .focusable()
-                .onPreviewKeyEvent { event ->
-                    if (event.type == KeyEventType.KeyDown) {
-                        when (event.key) {
-                            Key.DirectionRight -> {
-                                scope.launch {
-                                    if (pagerState.currentPage < images.size - 1) {
-                                        pagerState.animateScrollToPage(pagerState.currentPage + 1)
+                                    Key.DirectionLeft -> {
+                                        scope.launch {
+                                            if (pagerState.currentPage > 0) {
+                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                            }
+                                        }
+                                        true
+                                    }
+
+                                    else -> false
+                                }
+                            } else false
+                        },
+                    containerColor = Color.Black,
+                    topBar = {
+                        TopAppBar(
+                            navigationIcon = {
+                                IconButton(onClose) {
+                                    VectorIcon(
+                                        imageVector = Icons.Close,
+                                        tint = Color.White
+                                    )
+                                }
+                            },
+                            actions = {
+                                IconButton(
+                                    enabled = !isDownloading,
+                                    onClick = { download(pagerState.currentPage) }
+                                ) {
+                                    if (isDownloading) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(24.dp),
+                                            color = Color.White,
+                                            strokeWidth = 2.dp
+                                        )
+                                    } else {
+                                        VectorIcon(Icons.Download, tint = Color.White)
                                     }
                                 }
-                                true
-                            }
-
-                            Key.DirectionLeft -> {
-                                scope.launch {
-                                    if (pagerState.currentPage > 0) {
-                                        pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                    }
-                                }
-                                true
-                            }
-
-                            else -> false
-                        }
-                    } else false
-                },
-            containerColor = Color.Black,
-            topBar = {
-                TopAppBar(
-                    navigationIcon = {
-                        IconButton(onClose) {
-                            VectorIcon(
-                                imageVector = Icons.Close,
-                                tint = Color.White
+                            },
+                            title = {
+                                Text(
+                                    color = Color.White,
+                                    text = if (isPoster) stringResource(Res.string.text_poster)
+                                    else if (isClubImage) stringResource(Res.string.text_picture)
+                                    else stringResource(Res.string.text_image_of, pagerState.currentPage + 1, cachedImages.size)
+                                )
+                            },
+                            colors = TopAppBarDefaults.topAppBarColors(
+                                containerColor = Color.Black.copy(alpha = 0.5f),
+                                titleContentColor = Color.White,
+                                navigationIconContentColor = Color.White,
+                                actionIconContentColor = Color.White
+                            )
+                        )
+                    }
+                ) { paddingValues ->
+                    HorizontalPager(
+                        state = pagerState,
+                        pageSpacing = 16.dp,
+                        userScrollEnabled = imageStates[pagerState.currentPage].scale == 1f,
+                        modifier = Modifier
+                            .fillMaxSize()
+                            .padding(paddingValues)
+                    ) { page ->
+                        Box(Modifier.fillMaxSize(), Alignment.Center) {
+                            ZoomableAsyncImage(
+                                model = cachedImages[page],
+                                state = imageStates[page],
+                                modifier = Modifier.fillMaxSize(),
+                                contentScale = ContentScale.Fit
                             )
                         }
-                    },
-                    actions = {
-                        IconButton(
-                            enabled = !isDownloading,
-                            onClick = { download(pagerState.currentPage) }
-                        ) {
-                            if (isDownloading) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(24.dp),
-                                    color = Color.White,
-                                    strokeWidth = 2.dp
-                                )
-                            } else {
-                                VectorIcon(Icons.Download, tint = Color.White)
-                            }
-                        }
-                    },
-                    title = {
-                        Text(
-                            color = Color.White,
-                            text = if (isPoster) stringResource(Res.string.text_poster)
-                            else if (isClubImage) stringResource(Res.string.text_picture)
-                            else stringResource(Res.string.text_image_of, pagerState.currentPage + 1, images.size)
-                        )
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Black.copy(alpha = 0.5f),
-                        titleContentColor = Color.White,
-                        navigationIconContentColor = Color.White,
-                        actionIconContentColor = Color.White
-                    )
-                )
-            }
-        ) { paddingValues ->
-            HorizontalPager(
-                state = pagerState,
-                pageSpacing = 16.dp,
-                userScrollEnabled = imageStates[pagerState.currentPage].scale == 1f,
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(paddingValues)
-            ) { page ->
-                Box(Modifier.fillMaxSize(), Alignment.Center) {
-                    ZoomableAsyncImage(
-                        model = images[page],
-                        state = imageStates[page],
-                        modifier = Modifier.fillMaxSize(),
-                        contentScale = ContentScale.Fit
-                    )
+                    }
                 }
             }
         }

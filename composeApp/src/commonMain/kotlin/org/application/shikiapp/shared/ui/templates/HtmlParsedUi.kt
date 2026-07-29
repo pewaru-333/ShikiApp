@@ -73,6 +73,11 @@ fun HtmlContent(commentContent: List<CommentContent>?) {
         commentContent?.flattenImages() ?: emptyList()
     }
 
+    val initialIndex = galleryInfo?.second ?: 0
+    val imageUrls = remember(galleryInfo) {
+        galleryInfo?.first?.map { it.fullUrl ?: it.previewUrl } ?: emptyList()
+    }
+
     BoxWithConstraints {
         val containerMaxWidth = maxWidth
 
@@ -92,16 +97,12 @@ fun HtmlContent(commentContent: List<CommentContent>?) {
         }
     }
 
-    galleryInfo?.let { (imageContents, initialIndex) ->
-        val imageUrls = imageContents.map { it.fullUrl ?: it.previewUrl }
-
-        DialogImages(
-            images = imageUrls,
-            initialIndex = initialIndex,
-            isVisible = true,
-            onClose = { galleryInfo = null }
-        )
-    }
+    DialogImages(
+        images = imageUrls,
+        initialIndex = initialIndex,
+        isVisible = galleryInfo != null,
+        onClose = { galleryInfo = null }
+    )
 }
 
 @Composable
