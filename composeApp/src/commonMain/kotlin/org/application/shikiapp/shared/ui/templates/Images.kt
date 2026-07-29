@@ -2,24 +2,30 @@
 
 package org.application.shikiapp.shared.ui.templates
 
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.scaleIn
+import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
+import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.systemBars
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
@@ -41,6 +47,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
@@ -49,6 +56,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.graphics.DefaultAlpha
 import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultFilterQuality
 import androidx.compose.ui.graphics.painter.Painter
 import androidx.compose.ui.input.key.Key
@@ -56,11 +64,13 @@ import androidx.compose.ui.input.key.KeyEventType
 import androidx.compose.ui.input.key.key
 import androidx.compose.ui.input.key.onPreviewKeyEvent
 import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
+import androidx.navigationevent.NavigationEventInfo
+import androidx.navigationevent.compose.NavigationBackHandler
+import androidx.navigationevent.compose.rememberNavigationEventState
 import coil3.compose.AsyncImage
 import coil3.compose.AsyncImagePainter.Companion.DefaultTransform
 import coil3.compose.AsyncImagePainter.State
@@ -71,6 +81,8 @@ import kotlinx.coroutines.launch
 import net.engawapg.lib.zoomable.ZoomState
 import net.engawapg.lib.zoomable.rememberZoomState
 import net.engawapg.lib.zoomable.zoomable
+import org.application.shikiapp.shared.ui.theme.Icons
+import org.application.shikiapp.shared.utils.EdgeToEdge
 import org.application.shikiapp.shared.utils.rememberDataManager
 import org.application.shikiapp.shared.utils.rememberToastState
 import org.jetbrains.compose.resources.stringResource
@@ -80,9 +92,6 @@ import shikiapp.composeapp.generated.resources.text_image_of
 import shikiapp.composeapp.generated.resources.text_picture
 import shikiapp.composeapp.generated.resources.text_poster
 import shikiapp.composeapp.generated.resources.text_saved
-import shikiapp.composeapp.generated.resources.vector_bad
-import shikiapp.composeapp.generated.resources.vector_close
-import shikiapp.composeapp.generated.resources.vector_download
 
 @Composable
 fun ZoomableAsyncImage(
@@ -148,35 +157,10 @@ fun AnimatedAsyncImage(
     clipToBounds = clipToBounds,
     success = success,
     loading = {
-        val shimmerColors = listOf(
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f),
-            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.15f),
-        )
-
-        val transition = rememberInfiniteTransition()
-        val translateAnim = transition.animateFloat(
-            initialValue = 0f,
-            targetValue = 1000f,
-            animationSpec = infiniteRepeatable(
-                repeatMode = RepeatMode.Reverse,
-                animation = tween(
-                    durationMillis = 1200,
-                    easing = FastOutSlowInEasing
-                )
-            )
-        )
-
-        val brush = Brush.linearGradient(
-            colors = shimmerColors,
-            start = Offset.Zero,
-            end = Offset(translateAnim.value, translateAnim.value)
-        )
-
         Spacer(
             modifier = modifier
                 .fillMaxSize()
-                .background(brush)
+                .then(loadingEffectModifier())
         )
     },
     error = {
@@ -187,7 +171,7 @@ fun AnimatedAsyncImage(
                 .background(MaterialTheme.colorScheme.surfaceVariant),
         ) {
             VectorIcon(
-                resId = Res.drawable.vector_bad,
+                imageVector = Icons.SmileBad,
                 modifier = Modifier.fillMaxSize(0.75f),
                 tint = MaterialTheme.colorScheme.onSurfaceVariant
             )
@@ -252,25 +236,22 @@ fun DialogImages(
     isClubImage: Boolean = false,
     onClose: () -> Unit
 ) {
-    if (!isVisible || images.isEmpty()) return
+    if (images.isEmpty()) return
 
     val scope = rememberCoroutineScope()
-    val imageStates = images.map { rememberZoomState() }
-    val pagerState = rememberPagerState(initialPage = initialIndex, pageCount = images::size)
-
-    val (dataManager, permissionState) = rememberDataManager()
     val toast = rememberToastState()
+    val (dataManager, permissionState) = rememberDataManager()
 
     var isDownloading by remember { mutableStateOf(false) }
     val focusRequester = remember { FocusRequester() }
 
-    fun download() {
+    fun download(index: Int) {
         if (permissionState.isGranted) {
             if (isDownloading) return
 
             scope.launch {
                 isDownloading = true
-                val currentImage = images[pagerState.currentPage]
+                val currentImage = images[index]
                 val isDownloaded = dataManager.downloadImage(currentImage)
 
                 toast.onShow(
@@ -284,21 +265,39 @@ fun DialogImages(
         }
     }
 
-    LaunchedEffect(Unit) {
-        focusRequester.requestFocus()
-    }
+    EdgeToEdge(darkTheme = isVisible, isAmoled = false)
 
-    Dialog(
-        onDismissRequest = onClose,
-        properties = DialogProperties(
-            usePlatformDefaultWidth = false,
-            dismissOnBackPress = true,
-            dismissOnClickOutside = true
+    AnimatedVisibility(
+        visible = isVisible,
+        enter = fadeIn(tween(250)) + scaleIn(
+            initialScale = 0.85f,
+            animationSpec = spring(
+                dampingRatio = Spring.DampingRatioNoBouncy,
+                stiffness = Spring.StiffnessMediumLow
+            )
+        ),
+        exit = fadeOut(tween(200)) + scaleOut(
+            targetScale = 0.85f,
+            animationSpec = tween(200)
         )
     ) {
+        NavigationBackHandler(
+            state = rememberNavigationEventState(NavigationEventInfo.None),
+            isBackEnabled = isVisible,
+            onBackCompleted = onClose
+        )
+
+        LaunchedEffect(Unit) {
+            focusRequester.requestFocus()
+        }
+
+        val imageStates = images.map { rememberZoomState() }
+        val pagerState = rememberPagerState(initialPage = initialIndex, pageCount = images::size)
+
         Scaffold(
             modifier = Modifier
                 .fillMaxSize()
+                .pointerInput(Unit) { detectTapGestures { focusRequester.requestFocus() } }
                 .focusRequester(focusRequester)
                 .focusable()
                 .onPreviewKeyEvent { event ->
@@ -327,19 +326,21 @@ fun DialogImages(
                     } else false
                 },
             containerColor = Color.Black,
-            contentWindowInsets = WindowInsets.systemBars,
             topBar = {
                 TopAppBar(
                     navigationIcon = {
-                        IconButton(onClick = onClose) {
+                        IconButton(onClose) {
                             VectorIcon(
-                                resId = Res.drawable.vector_close,
+                                imageVector = Icons.Close,
                                 tint = Color.White
                             )
                         }
                     },
                     actions = {
-                        IconButton(onClick = ::download, enabled = !isDownloading) {
+                        IconButton(
+                            enabled = !isDownloading,
+                            onClick = { download(pagerState.currentPage) }
+                        ) {
                             if (isDownloading) {
                                 CircularProgressIndicator(
                                     modifier = Modifier.size(24.dp),
@@ -347,7 +348,7 @@ fun DialogImages(
                                     strokeWidth = 2.dp
                                 )
                             } else {
-                                VectorIcon(Res.drawable.vector_download, tint = Color.White)
+                                VectorIcon(Icons.Download, tint = Color.White)
                             }
                         }
                     },
@@ -390,9 +391,12 @@ fun DialogImages(
 }
 
 @Composable
-fun rememberLoadingEffect(shimmerColor: Color = Color.LightGray): Brush {
+fun loadingEffectModifier(
+    shimmerColor: Color = Color.LightGray,
+    shape: Shape = MaterialTheme.shapes.small
+): Modifier {
     val transition = rememberInfiniteTransition()
-    val translateAnim = transition.animateFloat(
+    val translateAnim by transition.animateFloat(
         initialValue = 0f,
         targetValue = 1000f,
         animationSpec = infiniteRepeatable(
@@ -401,13 +405,20 @@ fun rememberLoadingEffect(shimmerColor: Color = Color.LightGray): Brush {
         )
     )
 
-    return Brush.linearGradient(
-        start = Offset.Zero,
-        end = Offset(translateAnim.value, translateAnim.value),
-        colors = listOf(
-            shimmerColor.copy(alpha = 0.6f),
-            shimmerColor.copy(alpha = 0.2f),
-            shimmerColor.copy(alpha = 0.6f)
-        )
-    )
+    return Modifier
+        .clip(shape)
+        .drawWithContent {
+            drawContent()
+            drawRect(
+                brush = Brush.linearGradient(
+                    start = Offset.Zero,
+                    end = Offset(translateAnim, translateAnim),
+                    colors = listOf(
+                        shimmerColor.copy(alpha = 0.6f),
+                        shimmerColor.copy(alpha = 0.2f),
+                        shimmerColor.copy(alpha = 0.6f)
+                    )
+                )
+            )
+        }
 }
