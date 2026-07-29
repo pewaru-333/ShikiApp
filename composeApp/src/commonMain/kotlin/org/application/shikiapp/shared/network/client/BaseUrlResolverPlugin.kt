@@ -8,6 +8,7 @@ import io.ktor.client.plugins.api.createClientPlugin
 import io.ktor.client.request.get
 import io.ktor.http.HttpHeaders
 import io.ktor.http.Url
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -40,7 +41,7 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
         pingClient.use { pingClient ->
             for (url in urls) {
                 try {
-                    if (pingClient.get(url).status.value in 200..499) {
+                    if (pingClient.get(url).status.isSuccess()) {
                         return url
                     }
                 } catch (_: Exception) {
