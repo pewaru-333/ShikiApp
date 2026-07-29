@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import io.ktor.client.call.body
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -26,14 +27,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.builtins.nullable
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.RateEvent
-import org.application.shikiapp.shared.events.RateEvent.SetChapters
-import org.application.shikiapp.shared.events.RateEvent.SetEpisodes
-import org.application.shikiapp.shared.events.RateEvent.SetRateId
-import org.application.shikiapp.shared.events.RateEvent.SetRewatches
-import org.application.shikiapp.shared.events.RateEvent.SetScore
-import org.application.shikiapp.shared.events.RateEvent.SetStatus
-import org.application.shikiapp.shared.events.RateEvent.SetText
-import org.application.shikiapp.shared.events.RateEvent.SetVolumes
 import org.application.shikiapp.shared.models.data.BaseRate
 import org.application.shikiapp.shared.models.data.NewRate
 import org.application.shikiapp.shared.models.states.NewRateState
@@ -51,6 +44,8 @@ import org.application.shikiapp.shared.utils.enums.Score
 import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.application.shikiapp.shared.utils.extensions.isDigitsOnly
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
+import org.application.shikiapp.shared.utils.extensions.toDefaultValue
+import org.application.shikiapp.shared.utils.extensions.toIntOrDefault
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.serializableNavType
 import kotlin.reflect.typeOf
@@ -209,14 +204,21 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     fun getRate(rate: UserRate, linkedType: LinkedType = type.value) {
-        onEvent(SetRateId(rate.id.toString()))
-        onEvent(SetStatus(Enum.safeValueOf<WatchStatus>(rate.status), linkedType))
-        onEvent(SetScore(Score.entries.first { it.score == rate.score }))
-        onEvent(SetChapters(rate.chapters.takeIf { it > 0 }?.toString()))
-        onEvent(SetEpisodes(rate.episodes.takeIf { it > 0 }?.toString()))
-        onEvent(SetVolumes(rate.volumes.takeIf { it > 0 }?.toString()))
-        onEvent(SetRewatches(rate.rewatches.takeIf { it > 0 }?.toString()))
-        onEvent(SetText(rate.text))
+        val status = Enum.safeValueOf<WatchStatus>(rate.status)
+
+        _newRate.update { state ->
+            state.copy(
+                id = rate.id.toString(),
+                status = status.name,
+                statusName = linkedType.getWatchStatusTitle(status),
+                score = Score.entries[rate.score],
+                chapters = rate.chapters.takeIf { it > 0 }?.toString(),
+                episodes = rate.episodes.takeIf { it > 0 }?.toString(),
+                volumes = rate.volumes.takeIf { it > 0 }?.toString(),
+                rewatches = rate.rewatches.takeIf { it > 0 }?.toString(),
+                text = rate.text.orEmpty()
+            )
+        }
 
         _ratesState.update { it.copy(showDialog = true) }
     }
@@ -250,7 +252,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
     fun update(rateId: String) {
         viewModelScope.launch {
-            val currentState =  _response.value as? RatesResponse.Success ?: return@launch
+            val currentState = _response.value as? RatesResponse.Success ?: return@launch
 
             _rateUiEvent.send(UserRateUiEvent.UpdateStart(rateId.toLong()))
             _ratesState.update { it.copy(showDialog = false) }
@@ -263,10 +265,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                             userId = Preferences.userId,
                             status = status.toString().lowercase(),
                             score = score?.score.toString(),
-                            chapters = chapters,
-                            episodes = episodes,
-                            volumes = volumes,
-                            rewatches = rewatches,
+                            chapters = chapters.toDefaultValue(),
+                            episodes = episodes.toDefaultValue(),
+                            volumes = volumes.toDefaultValue(),
+                            rewatches = rewatches.toDefaultValue(),
                             text = text
                         )
                     )
@@ -278,27 +280,31 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     val index = oldRates.indexOfFirst { it.id.toString() == rateId }
 
                     if (index != -1) {
+                        val score = responseRate.score.toIntOrDefault()
+                        val rewatches = responseRate.rewatches.toIntOrDefault()
                         val updatedRate = oldRates[index].copy(
                             status = responseRate.status.toString(),
-                            score = responseRate.score?.toIntOrNull() ?: 0,
-                            scoreString = responseRate.score.let { if (it?.toIntOrNull() != 0) it else '-' }.toString(),
-                            chapters = responseRate.chapters?.toIntOrNull() ?: 0,
-                            episodes = responseRate.episodes?.toIntOrNull() ?: 0,
-                            volumes = responseRate.volumes?.toIntOrNull() ?: 0,
-                            rewatches = responseRate.rewatches?.toIntOrNull() ?: 0,
+                            score = score,
+                            scoreString = score.takeIf { it != 0 }?.toString() ?: "-",
+                            chapters = responseRate.chapters.toIntOrDefault(),
+                            episodes = responseRate.episodes.toIntOrDefault(),
+                            volumes = responseRate.volumes.toIntOrDefault(),
+                            rewatches = rewatches,
+                            rewatchExists = rewatches > 0,
                             text = responseRate.text
                         )
 
                         val newRates = oldRates.toMutableList().apply { this[index] = updatedRate }
 
                         _response.emit(RatesResponse.Success(newRates))
-                        _rateUiEvent.send(UserRateUiEvent.UpdateFinish)
                     }
                 } else {
                     _rateUiEvent.send(UserRateUiEvent.Error)
                 }
             } catch (_: Exception) {
                 _rateUiEvent.send(UserRateUiEvent.Error)
+            } finally {
+                _rateUiEvent.send(UserRateUiEvent.UpdateFinish)
             }
         }
     }
@@ -344,13 +350,14 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                         val updatedRates = rates.filterNot { it.id.toString() == rateId }
 
                         _response.emit(RatesResponse.Success(updatedRates))
-                        _rateUiEvent.send(UserRateUiEvent.DeleteFinish)
                     }
                 } else {
                     _rateUiEvent.send(UserRateUiEvent.Error)
                 }
             } catch (_: Exception) {
                 _rateUiEvent.send(UserRateUiEvent.Error)
+            } finally {
+                _rateUiEvent.send(UserRateUiEvent.DeleteFinish)
             }
         }
     }
@@ -375,8 +382,9 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             try {
                 val request = Network.rates.increment(rateId)
 
-                if (request.status != HttpStatusCode.Created) {
+                if (!request.status.isSuccess()) {
                     _rateUiEvent.send(UserRateUiEvent.Error)
+                    _rateUiEvent.send(UserRateUiEvent.IncrementFinish)
 
                     return@launch
                 }
@@ -396,38 +404,67 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     }
 
                     _response.emit(RatesResponse.Success(newRates))
-                    _rateUiEvent.send(UserRateUiEvent.IncrementFinish)
                 }
             } catch (_: Exception) {
                 _rateUiEvent.send(UserRateUiEvent.Error)
+            } finally {
+                _rateUiEvent.send(UserRateUiEvent.IncrementFinish)
             }
         }
     }
 
     fun onEvent(event: RateEvent) = when (event) {
-        is SetRateId -> _newRate.update { it.copy(id = event.rateId) }
+        is RateEvent.SetRateId -> _newRate.update { it.copy(id = event.rateId) }
 
-        is SetStatus -> _newRate.update {
+        is RateEvent.SetStatus -> _newRate.update {
             it.copy(
                 status = event.status.name,
                 statusName = event.type.getWatchStatusTitle(event.status)
             )
         }
 
-        is SetScore -> _newRate.update { it.copy(score = event.score) }
+        is RateEvent.SetScore -> _newRate.update { it.copy(score = event.score) }
 
-        is SetChapters -> _newRate.update { it.copy(chapters = event.chapters) }
+        is RateEvent.SetChapters -> with(event.chapters) {
+            val value = this?.ifEmpty { null }
 
-        is SetEpisodes -> _newRate.update {
-            it.copy(episodes = event.episodes?.takeIf(String::isDigitsOnly))
+            if (value == null || value.isDigitsOnly()) {
+                _newRate.update {
+                    it.copy(chapters = value)
+                }
+            }
         }
 
-        is SetVolumes -> _newRate.update { it.copy(volumes = event.volumes) }
+        is RateEvent.SetEpisodes -> with(event.episodes) {
+            val value = this?.ifEmpty { null }
 
-        is SetRewatches -> _newRate.update {
-            it.copy(rewatches = event.rewatches?.takeIf(String::isDigitsOnly))
+            if (value == null || value.isDigitsOnly()) {
+                _newRate.update {
+                    it.copy(episodes = value)
+                }
+            }
         }
 
-        is SetText -> _newRate.update { it.copy(text = event.text.orEmpty()) }
+        is RateEvent.SetVolumes -> with(event.volumes) {
+            val value = this?.ifEmpty { null }
+
+            if (value == null || value.isDigitsOnly()) {
+                _newRate.update {
+                    it.copy(volumes = value)
+                }
+            }
+        }
+
+        is RateEvent.SetRewatches -> with(event.rewatches) {
+            val value = this?.ifEmpty { null }
+
+            if (value == null || value.isDigitsOnly()) {
+                _newRate.update {
+                    it.copy(rewatches = value)
+                }
+            }
+        }
+
+        is RateEvent.SetText -> _newRate.update { it.copy(text = event.text.orEmpty()) }
     }
 }
