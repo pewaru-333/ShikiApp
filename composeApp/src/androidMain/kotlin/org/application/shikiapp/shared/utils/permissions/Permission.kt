@@ -58,10 +58,9 @@ class Permission(private val context: Context, private val permission: String) :
             else -> ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }
 
-        showRationale = !granted && ActivityCompat.shouldShowRequestPermissionRationale(
-            context as Activity,
-            permission
-        )
+        showRationale = !granted &&
+                context is Activity &&
+                ActivityCompat.shouldShowRequestPermissionRationale(context, permission)
 
         return granted
     }
