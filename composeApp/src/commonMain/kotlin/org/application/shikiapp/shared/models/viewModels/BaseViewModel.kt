@@ -19,7 +19,7 @@ abstract class BaseViewModel<D, S, E> : ViewModel() {
     open val state = _state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), initState())
 
     protected suspend fun emit(state: Response<D, Throwable>) = _response.emit(state)
-    protected fun tryEmit(state: Response<D, Throwable>) = _response.tryEmit(state)
+    protected open fun tryEmit(state: Response<D, Throwable>) = _response.tryEmit(state)
     protected fun updateState(update: (S) -> S) = _state.update(update)
 
     abstract val contentId: Any
