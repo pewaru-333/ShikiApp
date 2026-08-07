@@ -4,26 +4,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.call.body
-import io.ktor.client.plugins.ClientRequestException
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.isSuccess
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
+import io.ktor.client.call.*
+import io.ktor.client.plugins.*
+import io.ktor.http.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.flowOn
-import kotlinx.coroutines.flow.onStart
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.*
 import kotlinx.serialization.builtins.nullable
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.RateEvent
@@ -37,11 +23,7 @@ import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.RatesResponse
 import org.application.shikiapp.shared.utils.BLANK
-import org.application.shikiapp.shared.utils.enums.LinkedType
-import org.application.shikiapp.shared.utils.enums.OrderDirection
-import org.application.shikiapp.shared.utils.enums.OrderRates
-import org.application.shikiapp.shared.utils.enums.Score
-import org.application.shikiapp.shared.utils.enums.WatchStatus
+import org.application.shikiapp.shared.utils.enums.*
 import org.application.shikiapp.shared.utils.extensions.isDigitsOnly
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
 import org.application.shikiapp.shared.utils.extensions.toDefaultValue
@@ -77,7 +59,6 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     private val _rateUiEvent = Channel<UserRateUiEvent>()
     val rateUiEvent = _rateUiEvent.receiveAsFlow()
 
-    @OptIn(ExperimentalCoroutinesApi::class)
     val rates = combine(
         flow = _response,
         flow2 = _ratesState.distinctUntilChanged { old, new ->
@@ -223,8 +204,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         _ratesState.update { it.copy(showDialog = true) }
     }
 
-    fun create(id: String, targetType: LinkedType, reload: () -> Unit) {
+    fun create(id: String, targetType: LinkedType, onCreate: () -> Unit, onReload: () -> Unit) {
         viewModelScope.launch {
+            onCreate()
+
             try {
                 with(_newRate.value) {
                     Network.rates.createRate(
@@ -245,7 +228,9 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             } catch (_: Exception) {
 
             } finally {
-                reload()
+                withContext(NonCancellable) {
+                    onReload()
+                }
             }
         }
     }
@@ -309,8 +294,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun update(rateId: String, reload: () -> Unit) {
+    fun update(rateId: String, onUpdate: () -> Unit, onReload: () -> Unit) {
         viewModelScope.launch {
+            onUpdate()
+
             try {
                 with(_newRate.value) {
                     Network.rates.updateRate(
@@ -330,7 +317,9 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             } catch (_: Exception) {
 
             } finally {
-                reload()
+                withContext(NonCancellable) {
+                    onReload()
+                }
             }
         }
     }
@@ -362,15 +351,19 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun delete(rateId: String, reload: () -> Unit) {
+    fun delete(rateId: String, onDelete: () -> Unit, onReload: () -> Unit) {
         viewModelScope.launch {
+            onDelete()
+
             try {
                 Network.rates.delete(rateId.toLong())
                 _newRate.emit(NewRateState())
             } catch (_: Exception) {
 
             } finally {
-                reload()
+                withContext(NonCancellable) {
+                    onReload()
+                }
             }
         }
     }

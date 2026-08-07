@@ -47,15 +47,17 @@ class MangaViewModel(saved: SavedStateHandle) : CachedDetailViewModel<MangaT, Ma
         super.onEvent(event)
 
         when (event) {
-            ContentDetailEvent.Media.ChangeRate -> with(response.value) {
-                if (this !is Response.Success) return
+            ContentDetailEvent.Media.CreateRate -> reloadData {
+                it.userRate.getValue() != null
+            }
 
-                val newData = data.copy(userRate = AsyncData.Loading)
+            ContentDetailEvent.Media.DeleteRate -> reloadData {
+                it.userRate.getValue() == null
+            }
 
+            ContentDetailEvent.Media.ChangeRate -> {
+                updateData { it.copy(userRate = AsyncData.Loading) }
                 updateState { it.copy(dialogState = null) }
-
-                tryEmit(Response.Success(newData))
-                loadData()
             }
 
             is ContentDetailEvent.Media.Manga.ToggleFavourite -> with(response.value) {

@@ -1,41 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalFoundationStyleApi::class
-)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalFoundationStyleApi::class)
 
 package org.application.shikiapp.shared.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
-import androidx.compose.foundation.lazy.grid.itemsIndexed
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.itemsIndexed
-import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
-import androidx.compose.foundation.style.Style
-import androidx.compose.foundation.style.contentPadding
-import androidx.compose.foundation.style.fillSize
-import androidx.compose.foundation.style.fillWidth
-import androidx.compose.foundation.style.size
-import androidx.compose.foundation.style.styleable
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.grid.*
+import androidx.compose.foundation.style.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -48,47 +20,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
 import org.application.shikiapp.shared.events.ContentDetailEvent
-import org.application.shikiapp.shared.models.states.AnimeState
-import org.application.shikiapp.shared.models.states.BaseDialogState
-import org.application.shikiapp.shared.models.states.showAuthors
-import org.application.shikiapp.shared.models.states.showCharacters
-import org.application.shikiapp.shared.models.states.showFandubbers
-import org.application.shikiapp.shared.models.states.showScreenshots
-import org.application.shikiapp.shared.models.states.showSheetContent
+import org.application.shikiapp.shared.models.states.*
 import org.application.shikiapp.shared.models.ui.Anime
 import org.application.shikiapp.shared.models.ui.Video
 import org.application.shikiapp.shared.models.viewModels.AnimeViewModel
 import org.application.shikiapp.shared.models.viewModels.UserRateViewModel
 import org.application.shikiapp.shared.network.response.Response.Success
-import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
-import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
-import org.application.shikiapp.shared.ui.templates.AnimatedScreen
-import org.application.shikiapp.shared.ui.templates.BottomSheet
-import org.application.shikiapp.shared.ui.templates.Comments
-import org.application.shikiapp.shared.ui.templates.DialogEditRate
-import org.application.shikiapp.shared.ui.templates.DialogImages
-import org.application.shikiapp.shared.ui.templates.DialogPoster
-import org.application.shikiapp.shared.ui.templates.LinkListener
-import org.application.shikiapp.shared.ui.templates.LinksSheet
-import org.application.shikiapp.shared.ui.templates.MediaGridItem
-import org.application.shikiapp.shared.ui.templates.MediaGridItemDefaults
-import org.application.shikiapp.shared.ui.templates.ParagraphTitle
-import org.application.shikiapp.shared.ui.templates.ProfilesFull
-import org.application.shikiapp.shared.ui.templates.RelatedFull
-import org.application.shikiapp.shared.ui.templates.ReviewsFull
-import org.application.shikiapp.shared.ui.templates.ScaffoldContent
-import org.application.shikiapp.shared.ui.templates.SimilarFull
-import org.application.shikiapp.shared.ui.templates.Statistics
-import org.application.shikiapp.shared.ui.templates.TextStickyHeader
-import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.ui.templates.description
-import org.application.shikiapp.shared.ui.templates.genres
-import org.application.shikiapp.shared.ui.templates.info
-import org.application.shikiapp.shared.ui.templates.profiles
-import org.application.shikiapp.shared.ui.templates.related
-import org.application.shikiapp.shared.ui.templates.reviews
-import org.application.shikiapp.shared.ui.templates.summary
-import org.application.shikiapp.shared.ui.templates.title
+import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.VideoKind
@@ -97,15 +35,7 @@ import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_anime
-import shikiapp.composeapp.generated.resources.text_authors
-import shikiapp.composeapp.generated.resources.text_characters
-import shikiapp.composeapp.generated.resources.text_screenshots
-import shikiapp.composeapp.generated.resources.text_subtitles
-import shikiapp.composeapp.generated.resources.text_unknown
-import shikiapp.composeapp.generated.resources.text_video
-import shikiapp.composeapp.generated.resources.text_voices_one
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun AnimeScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {
@@ -344,19 +274,22 @@ private fun AnimeView(
                 rateModel.create(
                     id = anime.id,
                     targetType = type,
-                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                    onCreate = { onEvent(ContentDetailEvent.Media.ChangeRate) },
+                    onReload = { onEvent(ContentDetailEvent.Media.CreateRate) }
                 )
             },
             onUpdate = {
                 rateModel.update(
                     rateId = rate?.id.toString(),
-                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                    onUpdate = { onEvent(ContentDetailEvent.Media.ChangeRate) },
+                    onReload = { onEvent(ContentDetailEvent.Media.CreateRate) }
                 )
             },
             onDelete = {
                 rateModel.delete(
                     rateId = rate?.id.toString(),
-                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                    onDelete = { onEvent(ContentDetailEvent.Media.ChangeRate) },
+                    onReload = { onEvent(ContentDetailEvent.Media.DeleteRate) }
                 )
             }
         )
@@ -375,34 +308,32 @@ private fun AnimeView(
     }
 
     if (state.showSheetContent) {
+        val (text, list) = if (state.showFandubbers) Res.string.text_voices_one to anime.fandubbers
+        else Res.string.text_subtitles to anime.fansubbers
+
         ModalBottomSheet(
-            onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) }
-        ) {
-            val (text, list) = if (state.showFandubbers) Res.string.text_voices_one to anime.fandubbers
-            else Res.string.text_subtitles to anime.fansubbers
+            onDismissRequest = { onEvent(ContentDetailEvent.ToggleDialog(null)) },
+            content = {
+                Text(
+                    text = stringResource(text),
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(16.dp, 12.dp)
+                )
 
-            Text(
-                text = stringResource(text),
-                style = MaterialTheme.typography.titleLarge,
-                modifier = Modifier.styleable {
-                    fillWidth()
-                    contentPaddingStart(12.dp)
-                    contentPaddingBottom(8.dp)
-                }
-            )
-
-            LazyColumn {
-                items(list) { item ->
-                    Text(
-                        text = item,
-                        modifier = Modifier.styleable {
-                            fillWidth()
-                            contentPadding(16.dp)
-                        }
-                    )
+                LazyColumn {
+                    items(list) { item ->
+                        Text(
+                            text = item,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp, 12.dp)
+                        )
+                    }
                 }
             }
-        }
+        )
     }
 }
 
@@ -508,6 +439,12 @@ private fun Video(video: Map<VideoKind, List<Video>>, isVisible: Boolean, onHide
             shape(imageShape)
         }
 
+        val titleConfig = MediaGridItemDefaults.titleConfig(
+            minLines = 2,
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.titleSmall
+        )
+
         LazyVerticalGrid(
             columns = GridCells.Adaptive(120.dp),
             modifier = Modifier.padding(values), // Без этого stickyHeader не двигается при прокрутке
@@ -522,14 +459,10 @@ private fun Video(video: Map<VideoKind, List<Video>>, isVisible: Boolean, onHide
                         title = video.name ?: stringResource(Res.string.text_unknown),
                         poster = video.imageUrl,
                         onClick = { handler.openUri(video.url) },
+                        titleConfig = titleConfig,
                         posterModifier = Modifier
                             .styleable(null, imageStyle)
-                            .aspectRatio(172f / 130f),
-                        titleConfig = MediaGridItemDefaults.titleConfig(
-                            minLines = 2,
-                            textAlign = TextAlign.Center,
-                            style = MaterialTheme.typography.titleSmall
-                        )
+                            .aspectRatio(172f / 130f)
                     )
                 }
             }

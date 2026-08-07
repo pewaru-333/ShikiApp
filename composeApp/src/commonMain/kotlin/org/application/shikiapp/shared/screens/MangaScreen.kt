@@ -1,10 +1,6 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-
 package org.application.shikiapp.shared.screens
 
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -19,24 +15,7 @@ import org.application.shikiapp.shared.models.ui.Manga
 import org.application.shikiapp.shared.models.viewModels.MangaViewModel
 import org.application.shikiapp.shared.models.viewModels.UserRateViewModel
 import org.application.shikiapp.shared.network.response.Response.Success
-import org.application.shikiapp.shared.ui.templates.AnimatedScreen
-import org.application.shikiapp.shared.ui.templates.BottomSheet
-import org.application.shikiapp.shared.ui.templates.Comments
-import org.application.shikiapp.shared.ui.templates.DialogEditRate
-import org.application.shikiapp.shared.ui.templates.DialogPoster
-import org.application.shikiapp.shared.ui.templates.LinkListener
-import org.application.shikiapp.shared.ui.templates.LinksSheet
-import org.application.shikiapp.shared.ui.templates.ProfilesFull
-import org.application.shikiapp.shared.ui.templates.RelatedFull
-import org.application.shikiapp.shared.ui.templates.ScaffoldContent
-import org.application.shikiapp.shared.ui.templates.SimilarFull
-import org.application.shikiapp.shared.ui.templates.Statistics
-import org.application.shikiapp.shared.ui.templates.genres
-import org.application.shikiapp.shared.ui.templates.info
-import org.application.shikiapp.shared.ui.templates.profiles
-import org.application.shikiapp.shared.ui.templates.related
-import org.application.shikiapp.shared.ui.templates.summary
-import org.application.shikiapp.shared.ui.templates.title
+import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
@@ -212,19 +191,22 @@ private fun MangaView(
                 rateModel.create(
                     id = manga.id,
                     targetType = type,
-                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                    onCreate = { onEvent(ContentDetailEvent.Media.ChangeRate) },
+                    onReload = { onEvent(ContentDetailEvent.Media.CreateRate) }
                 )
             },
             onUpdate = {
                 rateModel.update(
                     rateId = rate?.id.toString(),
-                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                    onUpdate = { onEvent(ContentDetailEvent.Media.ChangeRate) },
+                    onReload = { onEvent(ContentDetailEvent.Media.CreateRate) }
                 )
             },
             onDelete = {
                 rateModel.delete(
                     rateId = rate?.id.toString(),
-                    reload = { onEvent(ContentDetailEvent.Media.ChangeRate) }
+                    onDelete = { onEvent(ContentDetailEvent.Media.ChangeRate) },
+                    onReload = { onEvent(ContentDetailEvent.Media.DeleteRate) }
                 )
             }
         )
