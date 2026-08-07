@@ -220,7 +220,7 @@ class VideoPlayerState {
             get() = if (isControlsVisible) PointerIcon.Default else utils.pointerIcon
 
         val isControlsFocusable: Boolean
-            get() = if (utils.isTV) !isControlsVisible else true
+            get() = !utils.isTV || !isControlsVisible
 
         var isControlsVisible by mutableStateOf(false)
             private set

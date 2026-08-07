@@ -155,11 +155,9 @@ actual fun rememberVerifiedDomain() = object : IDomain {
 }
 
 @Composable
-actual fun rememberToastState(): IToast {
-    return object : IToast {
-        override fun onShow(resource: StringResource) = Unit
-        override fun onShow(text: String) = Unit
-    }
+actual fun rememberToastState() = object : IToast {
+    override fun onShow(resource: StringResource) = Unit
+    override fun onShow(text: String) = Unit
 }
 
 @Composable

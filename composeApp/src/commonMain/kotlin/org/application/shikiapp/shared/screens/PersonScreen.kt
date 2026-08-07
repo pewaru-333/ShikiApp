@@ -1,17 +1,7 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
-
 package org.application.shikiapp.shared.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -30,28 +20,12 @@ import org.application.shikiapp.shared.models.states.PersonState
 import org.application.shikiapp.shared.models.ui.Person
 import org.application.shikiapp.shared.models.viewModels.PersonViewModel
 import org.application.shikiapp.shared.network.response.Response.Success
-import org.application.shikiapp.shared.ui.templates.AnimatedScreen
-import org.application.shikiapp.shared.ui.templates.BottomSheet
-import org.application.shikiapp.shared.ui.templates.Comments
-import org.application.shikiapp.shared.ui.templates.DialogPoster
-import org.application.shikiapp.shared.ui.templates.LinkListener
-import org.application.shikiapp.shared.ui.templates.Names
-import org.application.shikiapp.shared.ui.templates.ParagraphTitle
-import org.application.shikiapp.shared.ui.templates.Poster
-import org.application.shikiapp.shared.ui.templates.ProfilesFull
-import org.application.shikiapp.shared.ui.templates.RelatedFull
-import org.application.shikiapp.shared.ui.templates.ScaffoldContent
-import org.application.shikiapp.shared.ui.templates.profiles
-import org.application.shikiapp.shared.ui.templates.related
+import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_birthday
-import shikiapp.composeapp.generated.resources.text_characters
-import shikiapp.composeapp.generated.resources.text_deathday
-import shikiapp.composeapp.generated.resources.text_roles
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun PersonScreen(onNavigate: (Screen) -> Unit, back: () -> Unit) {

@@ -1,16 +1,8 @@
-@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
-
 package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.size
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.FloatingActionButton
-import androidx.compose.material3.FloatingActionButtonMenu
-import androidx.compose.material3.LocalContentColor
-import androidx.compose.material3.SmallFloatingActionButton
-import androidx.compose.material3.animateFloatingActionButton
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -51,10 +43,7 @@ fun FloatingActionButtonContent(
                 expanded = true,
                 modifier = Modifier
                     .absoluteOffset(16.dp, 16.dp)
-                    .animateFloatingActionButton(
-                        visible = isVisible,
-                        alignment = Alignment.BottomEnd
-                    ),
+                    .animateFloatingActionButton(isVisible, Alignment.BottomEnd),
                 button = {
                     FloatingActionButton(
                         onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Media.Rate)) },

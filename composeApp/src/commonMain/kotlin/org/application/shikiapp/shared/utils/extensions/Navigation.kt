@@ -39,10 +39,7 @@ fun NavHostController.onNavigationItemClick(route: Screen) {
 fun NavBackStackEntry?.isTopLevelRouteSelected(route: Screen): Boolean {
     this ?: return false
 
-    val hasRoute = destination.hierarchy.any { it.hasRoute(route::class) }
-    if (!hasRoute) return false
-
-    return when (route) {
+    return destination.hierarchy.any { it.hasRoute(route::class) } && when (route) {
         is Screen.UserRates -> {
             val args = runCatching { toRoute<Screen.UserRates>() }.getOrNull()
             args?.editable == route.editable
@@ -55,9 +52,7 @@ fun NavBackStackEntry?.isTopLevelRouteSelected(route: Screen): Boolean {
 fun NavBackStackEntry?.isSameRoute(route: Screen): Boolean {
     this ?: return false
 
-    if (!destination.hasRoute(route::class)) return false
-
-    return when (route) {
+    return destination.hasRoute(route::class) && when (route) {
         is Screen.Catalog -> {
             val args = runCatching { toRoute<Screen.Catalog>() }.getOrNull()
             args == route

@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3Api::class)
 
 package org.application.shikiapp.shared.ui.templates
 
@@ -9,23 +9,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MenuDefaults
-import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -43,21 +28,7 @@ import org.application.shikiapp.shared.utils.enums.Score
 import org.application.shikiapp.shared.utils.enums.WatchStatus
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.blank
-import shikiapp.composeapp.generated.resources.text_change
-import shikiapp.composeapp.generated.resources.text_comment
-import shikiapp.composeapp.generated.resources.text_dismiss
-import shikiapp.composeapp.generated.resources.text_episodes
-import shikiapp.composeapp.generated.resources.text_rate
-import shikiapp.composeapp.generated.resources.text_rate_chapters
-import shikiapp.composeapp.generated.resources.text_rereadings
-import shikiapp.composeapp.generated.resources.text_rewatches
-import shikiapp.composeapp.generated.resources.text_save
-import shikiapp.composeapp.generated.resources.text_score
-import shikiapp.composeapp.generated.resources.text_status
-import shikiapp.composeapp.generated.resources.text_volumes
-import kotlin.enums.EnumEntries
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun DialogEditRate(
@@ -173,8 +144,8 @@ fun RateFieldsAll(state: NewRateState, type: LinkedType, onEvent: (RateEvent) ->
     }
 
 @Composable
-fun <T : Enum<T>> RateDropMenu(
-    items: EnumEntries<T>,
+fun <T> RateDropMenu(
+    items: List<T>,
     selected: (T) -> Boolean,
     title: StringResource?,
     label: StringResource,

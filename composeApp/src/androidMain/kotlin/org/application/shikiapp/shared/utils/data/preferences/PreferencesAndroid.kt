@@ -10,7 +10,6 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.onStart
 import me.zhanghai.compose.preference.Preferences
 import me.zhanghai.compose.preference.createPreferenceFlow
 
@@ -31,7 +30,7 @@ class PreferencesAndroid(private val prefs: SharedPreferences) : IPreferences {
 
     override fun flow(key: String): Flow<Unit> = callbackFlow {
         val listener = SharedPreferences.OnSharedPreferenceChangeListener { _, changedKey ->
-            if (key == changedKey) {
+            if (changedKey == key || changedKey == null) {
                 trySend(Unit)
             }
         }
@@ -41,7 +40,7 @@ class PreferencesAndroid(private val prefs: SharedPreferences) : IPreferences {
         trySend(Unit)
 
         awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
-    }.onStart { emit(Unit) }
+    }
 }
 
 @Composable

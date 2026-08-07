@@ -33,6 +33,7 @@ import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
 import org.application.shikiapp.shared.utils.enums.MessageType
 import org.application.shikiapp.shared.utils.extensions.requestWithCache
+import kotlin.time.Duration.Companion.milliseconds
 
 class Profile(private val client: HttpClient) {
     private val mutex = Mutex()
@@ -82,7 +83,7 @@ class Profile(private val client: HttpClient) {
                         return@withLock null
                     }
 
-                    delay(1000L * (attempt + 1))
+                    delay((1000L * (attempt + 1)).milliseconds)
                 }
             }
 

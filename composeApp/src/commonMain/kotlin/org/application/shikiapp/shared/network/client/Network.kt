@@ -1,5 +1,3 @@
-@file:OptIn(ExperimentalSerializationApi::class)
-
 package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.ApolloClient

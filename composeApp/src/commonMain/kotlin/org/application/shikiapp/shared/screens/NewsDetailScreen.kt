@@ -1,29 +1,13 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package org.application.shikiapp.shared.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -44,13 +28,7 @@ import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.NewsDetailState
 import org.application.shikiapp.shared.models.ui.NewsDetail
 import org.application.shikiapp.shared.models.viewModels.NewsDetailViewModel
-import org.application.shikiapp.shared.ui.templates.AnimatedAsyncImage
-import org.application.shikiapp.shared.ui.templates.AnimatedScreen
-import org.application.shikiapp.shared.ui.templates.Comments
-import org.application.shikiapp.shared.ui.templates.DialogImages
-import org.application.shikiapp.shared.ui.templates.HtmlContent
-import org.application.shikiapp.shared.ui.templates.IconComment
-import org.application.shikiapp.shared.ui.templates.NavigationIcon
+import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState

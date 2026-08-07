@@ -1,50 +1,18 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package org.application.shikiapp.shared.ui.templates
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.MutableTransitionState
-import androidx.compose.animation.core.RepeatMode
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.animateFloat
-import androidx.compose.animation.core.infiniteRepeatable
-import androidx.compose.animation.core.rememberInfiniteTransition
-import androidx.compose.animation.core.spring
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.scaleIn
-import androidx.compose.animation.scaleOut
+import androidx.compose.animation.*
+import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,19 +20,10 @@ import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.Brush
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.ColorFilter
-import androidx.compose.ui.graphics.DefaultAlpha
-import androidx.compose.ui.graphics.FilterQuality
-import androidx.compose.ui.graphics.Shape
+import androidx.compose.ui.graphics.*
 import androidx.compose.ui.graphics.drawscope.DrawScope.Companion.DefaultFilterQuality
 import androidx.compose.ui.graphics.painter.Painter
-import androidx.compose.ui.input.key.Key
-import androidx.compose.ui.input.key.KeyEventType
-import androidx.compose.ui.input.key.key
-import androidx.compose.ui.input.key.onPreviewKeyEvent
-import androidx.compose.ui.input.key.type
+import androidx.compose.ui.input.key.*
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.Dp
@@ -86,12 +45,7 @@ import org.application.shikiapp.shared.utils.getFullscreenDialogProperties
 import org.application.shikiapp.shared.utils.rememberDataManager
 import org.application.shikiapp.shared.utils.rememberToastState
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_error_loading
-import shikiapp.composeapp.generated.resources.text_image_of
-import shikiapp.composeapp.generated.resources.text_picture
-import shikiapp.composeapp.generated.resources.text_poster
-import shikiapp.composeapp.generated.resources.text_saved
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun ZoomableAsyncImage(
@@ -226,7 +180,6 @@ fun DialogPoster(link: String, isVisible: Boolean, onClose: () -> Unit) =
         onClose = onClose
     )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DialogImages(
     images: List<String>,
@@ -311,29 +264,27 @@ fun DialogImages(
                         .focusRequester(focusRequester)
                         .focusable()
                         .onPreviewKeyEvent { event ->
-                            if (event.type == KeyEventType.KeyDown) {
-                                when (event.key) {
-                                    Key.DirectionRight -> {
-                                        scope.launch {
-                                            if (pagerState.currentPage < cachedImages.size - 1) {
-                                                pagerState.animateScrollToPage(pagerState.currentPage + 1)
-                                            }
+                            event.type == KeyEventType.KeyDown && when (event.key) {
+                                Key.DirectionRight -> {
+                                    scope.launch {
+                                        if (pagerState.currentPage < cachedImages.size - 1) {
+                                            pagerState.animateScrollToPage(pagerState.currentPage + 1)
                                         }
-                                        true
                                     }
-
-                                    Key.DirectionLeft -> {
-                                        scope.launch {
-                                            if (pagerState.currentPage > 0) {
-                                                pagerState.animateScrollToPage(pagerState.currentPage - 1)
-                                            }
-                                        }
-                                        true
-                                    }
-
-                                    else -> false
+                                    true
                                 }
-                            } else false
+
+                                Key.DirectionLeft -> {
+                                    scope.launch {
+                                        if (pagerState.currentPage > 0) {
+                                            pagerState.animateScrollToPage(pagerState.currentPage - 1)
+                                        }
+                                    }
+                                    true
+                                }
+
+                                else -> false
+                            }
                         },
                     containerColor = Color.Black,
                     topBar = {

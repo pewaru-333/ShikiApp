@@ -1,10 +1,10 @@
 package org.application.shikiapp.shared.network.parser
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.forms.submitForm
-import io.ktor.client.request.get
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.parameters
+import io.ktor.client.*
+import io.ktor.client.request.*
+import io.ktor.client.request.forms.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.jsonArray
@@ -16,9 +16,7 @@ import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
 import kotlin.concurrent.Volatile
 import kotlin.io.encoding.Base64
-import kotlin.io.encoding.ExperimentalEncodingApi
 
-@OptIn(ExperimentalEncodingApi::class)
 class KodikParser private constructor(override val token: String, client: HttpClient) : BaseParser(client) {
     private var cryptStep: Int? = null
 
@@ -47,8 +45,8 @@ class KodikParser private constructor(override val token: String, client: HttpCl
                 val allTokens = tokensData.stable + tokensData.unstable + tokensData.legacy
 
                 var validParser: KodikParser? = null
-                for (tokenItem in allTokens) {
-                    val decryptedToken = decryptToken(tokenItem.tokn)
+                for ((tokn) in allTokens) {
+                    val decryptedToken = decryptToken(tokn)
                     if (validateToken(decryptedToken, Network.watchClient)) {
                         validParser = KodikParser(decryptedToken, Network.watchClient)
                         break

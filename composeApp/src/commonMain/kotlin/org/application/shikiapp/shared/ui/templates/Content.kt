@@ -1,82 +1,27 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class,
-    ExperimentalFoundationStyleApi::class
-)
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class, ExperimentalFoundationStyleApi::class)
 
 package org.application.shikiapp.shared.ui.templates
 
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.foundation.background
-import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxWithConstraints
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.RowScope
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentHeight
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.GridItemSpan
-import androidx.compose.foundation.lazy.grid.LazyGridState
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.rememberLazyGridState
-import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.animation.*
+import androidx.compose.foundation.*
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.*
+import androidx.compose.foundation.lazy.grid.*
 import androidx.compose.foundation.lazy.staggeredgrid.LazyStaggeredGridState
 import androidx.compose.foundation.lazy.staggeredgrid.LazyVerticalStaggeredGrid
 import androidx.compose.foundation.lazy.staggeredgrid.StaggeredGridCells
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.style.ExperimentalFoundationStyleApi
 import androidx.compose.foundation.style.contentPadding
 import androidx.compose.foundation.style.fillWidth
 import androidx.compose.foundation.style.styleable
-import androidx.compose.material3.AssistChip
-import androidx.compose.material3.AssistChipDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
-import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.LinearProgressIndicator
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PrimaryTabRow
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.Tab
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
-import androidx.compose.material3.TopAppBar
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -84,6 +29,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
@@ -100,17 +46,7 @@ import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
-import org.application.shikiapp.shared.models.ui.Franchise
-import org.application.shikiapp.shared.models.ui.Genre
-import org.application.shikiapp.shared.models.ui.History
-import org.application.shikiapp.shared.models.ui.Label
-import org.application.shikiapp.shared.models.ui.Publisher
-import org.application.shikiapp.shared.models.ui.Related
-import org.application.shikiapp.shared.models.ui.Review
-import org.application.shikiapp.shared.models.ui.Score
-import org.application.shikiapp.shared.models.ui.Statistics
-import org.application.shikiapp.shared.models.ui.Studio
-import org.application.shikiapp.shared.models.ui.UserRate
+import org.application.shikiapp.shared.models.ui.*
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.models.ui.list.ContentSource
@@ -124,49 +60,13 @@ import org.application.shikiapp.shared.utils.enums.Kind
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ListView
 import org.application.shikiapp.shared.utils.enums.RelationKind
-import org.application.shikiapp.shared.utils.extensions.add
-import org.application.shikiapp.shared.utils.extensions.appendLoadState
-import org.application.shikiapp.shared.utils.extensions.substringAfter
-import org.application.shikiapp.shared.utils.extensions.substringBefore
-import org.application.shikiapp.shared.utils.extensions.toContent
+import org.application.shikiapp.shared.utils.extensions.*
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_anime_list
-import shikiapp.composeapp.generated.resources.text_chronology
-import shikiapp.composeapp.generated.resources.text_date_from
-import shikiapp.composeapp.generated.resources.text_date_till
-import shikiapp.composeapp.generated.resources.text_description
-import shikiapp.composeapp.generated.resources.text_directly
-import shikiapp.composeapp.generated.resources.text_empty
-import shikiapp.composeapp.generated.resources.text_episode
-import shikiapp.composeapp.generated.resources.text_episode_next
-import shikiapp.composeapp.generated.resources.text_episodes
-import shikiapp.composeapp.generated.resources.text_franchise
-import shikiapp.composeapp.generated.resources.text_in_lists
-import shikiapp.composeapp.generated.resources.text_kind
-import shikiapp.composeapp.generated.resources.text_manga_list
-import shikiapp.composeapp.generated.resources.text_publisher
-import shikiapp.composeapp.generated.resources.text_rate_chapters
-import shikiapp.composeapp.generated.resources.text_rating
-import shikiapp.composeapp.generated.resources.text_related
-import shikiapp.composeapp.generated.resources.text_reviews
-import shikiapp.composeapp.generated.resources.text_score
-import shikiapp.composeapp.generated.resources.text_show_all_s
-import shikiapp.composeapp.generated.resources.text_show_all_u
-import shikiapp.composeapp.generated.resources.text_similar
-import shikiapp.composeapp.generated.resources.text_source
-import shikiapp.composeapp.generated.resources.text_spoiler
-import shikiapp.composeapp.generated.resources.text_statistics
-import shikiapp.composeapp.generated.resources.text_status
-import shikiapp.composeapp.generated.resources.text_studio
-import shikiapp.composeapp.generated.resources.text_subtitles
-import shikiapp.composeapp.generated.resources.text_user_rates
-import shikiapp.composeapp.generated.resources.text_voices_one
-import shikiapp.composeapp.generated.resources.text_volumes
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun ScaffoldContent(
@@ -402,7 +302,7 @@ fun ContentList(
                                 val kindSeason = if (kindName != null && season != null) {
                                     "$kindName • $season"
                                 } else {
-                                    kindName ?: season.orEmpty()
+                                    history?.description?.toString() ?: kindName ?: season
                                 }
 
                                 MediaGridItem(
@@ -419,12 +319,19 @@ fun ContentList(
                                         }
                                     },
                                     subtitleContent = {
-                                        if (kindSeason.isNotEmpty()) {
+                                        if (!kindSeason.isNullOrEmpty()) {
                                             Text(
-                                                text = kindSeason,
-                                                maxLines = 1,
+                                                style = textStyle,
                                                 overflow = TextOverflow.Ellipsis,
-                                                style = textStyle
+                                                maxLines = if (history != null) 2 else 1,
+                                                minLines = if (history != null) 2 else 1,
+                                                text = buildAnnotatedString {
+                                                    append(kindSeason)
+                                                    if (history != null) {
+                                                        appendLine()
+                                                        append(history.date)
+                                                    }
+                                                }
                                             )
                                         }
                                     }

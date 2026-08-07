@@ -1,9 +1,8 @@
 package org.application.shikiapp.shared.models.ui
 
-import io.ktor.http.Url
+import org.jetbrains.compose.resources.StringResource
 
 data class ExternalLink(
-    val url: Url,
-    val title: String,
-    val kind: String
+    val url: String,
+    val title: StringResource
 )

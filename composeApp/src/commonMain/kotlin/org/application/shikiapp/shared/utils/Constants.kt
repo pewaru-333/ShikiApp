@@ -1,5 +1,41 @@
 package org.application.shikiapp.shared.utils
 
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.external_link_amazon
+import shikiapp.composeapp.generated.resources.external_link_amediateka
+import shikiapp.composeapp.generated.resources.external_link_anime_db
+import shikiapp.composeapp.generated.resources.external_link_anime_news_network
+import shikiapp.composeapp.generated.resources.external_link_crunchyroll
+import shikiapp.composeapp.generated.resources.external_link_hidive
+import shikiapp.composeapp.generated.resources.external_link_hulu
+import shikiapp.composeapp.generated.resources.external_link_ivi
+import shikiapp.composeapp.generated.resources.external_link_kage_project
+import shikiapp.composeapp.generated.resources.external_link_kinopoisk
+import shikiapp.composeapp.generated.resources.external_link_kinopoisk_hd
+import shikiapp.composeapp.generated.resources.external_link_mangachan
+import shikiapp.composeapp.generated.resources.external_link_mangadex
+import shikiapp.composeapp.generated.resources.external_link_mangafox
+import shikiapp.composeapp.generated.resources.external_link_mangahub
+import shikiapp.composeapp.generated.resources.external_link_mangalib
+import shikiapp.composeapp.generated.resources.external_link_mangaupdates
+import shikiapp.composeapp.generated.resources.external_link_myanimelist
+import shikiapp.composeapp.generated.resources.external_link_netflix
+import shikiapp.composeapp.generated.resources.external_link_novel_tl
+import shikiapp.composeapp.generated.resources.external_link_novelupdates
+import shikiapp.composeapp.generated.resources.external_link_official_site
+import shikiapp.composeapp.generated.resources.external_link_okko
+import shikiapp.composeapp.generated.resources.external_link_ranobelib
+import shikiapp.composeapp.generated.resources.external_link_readmanga
+import shikiapp.composeapp.generated.resources.external_link_remanga
+import shikiapp.composeapp.generated.resources.external_link_ruranobe
+import shikiapp.composeapp.generated.resources.external_link_shiki
+import shikiapp.composeapp.generated.resources.external_link_smotret_anime
+import shikiapp.composeapp.generated.resources.external_link_twitter
+import shikiapp.composeapp.generated.resources.external_link_wikipedia
+import shikiapp.composeapp.generated.resources.external_link_wink
+import shikiapp.composeapp.generated.resources.external_link_world_art
+import shikiapp.composeapp.generated.resources.external_link_youtube
+
 // =========================================== Strings ============================================
 
 const val PREF_APP_CACHE = "app_cache"
@@ -38,38 +74,38 @@ val CACHE_LIST = listOf(16, 32, 64, 128, 256, 512)
 val ROLES_RUSSIAN = setOf("Автор оригинала", "Режиссёр", "Сюжет", "Сюжет и иллюстрации", "Рисовка")
 
 val EXTERNAL_LINK_KINDS = mapOf(
-    "official_site" to "Официальный сайт",
-    "wikipedia" to "Википедия",
-    "anime_news_network" to "Anime News Network",
-    "myanimelist" to "MyAnimeList",
-    "anime_db" to "AniDB",
-    "world_art" to "World Art",
-    "kinopoisk" to "Кинопоиск",
-    "kage_project" to "Kage Project",
-    "twitter" to "Twitter/X",
-    "smotret_anime" to "Anime 365",
-    "shiki" to "Шикимори",
-    "amediateka" to "Амедиатека",
-    "crunchyroll" to "Crunchyroll",
-    "amazon" to "Amazon",
-    "hidive" to "Hidive",
-    "hulu" to "Hulu",
-    "ivi" to "ИВИ",
-    "kinopoisk_hd" to "Кинопоиск HD",
-    "wink" to "Wink",
-    "netflix" to "Netflix",
-    "okko" to "Okko",
-    "youtube" to "Youtube",
-    "readmanga" to "ReadManga",
-    "mangalib" to "MangaLib",
-    "remanga" to "ReManga",
-    "mangaupdates" to "Baka-Updates",
-    "mangadex" to "MangaDex",
-    "mangafox" to "MangaFox",
-    "mangachan" to "Mangachan",
-    "mangahub" to "Mangahub",
-    "novel_tl" to "Novel.tl",
-    "ruranobe" to "RuRanobe",
-    "ranobelib" to "RanobeLib",
-    "novelupdates" to "Novel Updates"
+    "official_site" to Res.string.external_link_official_site,
+    "wikipedia" to Res.string.external_link_wikipedia,
+    "anime_news_network" to Res.string.external_link_anime_news_network,
+    "myanimelist" to Res.string.external_link_myanimelist,
+    "anime_db" to Res.string.external_link_anime_db,
+    "world_art" to Res.string.external_link_world_art,
+    "kinopoisk" to Res.string.external_link_kinopoisk,
+    "kage_project" to Res.string.external_link_kage_project,
+    "twitter" to Res.string.external_link_twitter,
+    "smotret_anime" to Res.string.external_link_smotret_anime,
+    "shiki" to Res.string.external_link_shiki,
+    "amediateka" to Res.string.external_link_amediateka,
+    "crunchyroll" to Res.string.external_link_crunchyroll,
+    "amazon" to Res.string.external_link_amazon,
+    "hidive" to Res.string.external_link_hidive,
+    "hulu" to Res.string.external_link_hulu,
+    "ivi" to Res.string.external_link_ivi,
+    "kinopoisk_hd" to Res.string.external_link_kinopoisk_hd,
+    "wink" to Res.string.external_link_wink,
+    "netflix" to Res.string.external_link_netflix,
+    "okko" to Res.string.external_link_okko,
+    "youtube" to Res.string.external_link_youtube,
+    "readmanga" to Res.string.external_link_readmanga,
+    "mangalib" to Res.string.external_link_mangalib,
+    "remanga" to Res.string.external_link_remanga,
+    "mangaupdates" to Res.string.external_link_mangaupdates,
+    "mangadex" to Res.string.external_link_mangadex,
+    "mangafox" to Res.string.external_link_mangafox,
+    "mangachan" to Res.string.external_link_mangachan,
+    "mangahub" to Res.string.external_link_mangahub,
+    "novel_tl" to Res.string.external_link_novel_tl,
+    "ruranobe" to Res.string.external_link_ruranobe,
+    "ranobelib" to Res.string.external_link_ranobelib,
+    "novelupdates" to Res.string.external_link_novelupdates
 )

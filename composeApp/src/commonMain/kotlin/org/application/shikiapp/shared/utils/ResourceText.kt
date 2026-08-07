@@ -33,8 +33,7 @@ sealed interface ResourceText : Comparable<ResourceText> {
             if (other == null || this::class != other::class) return false
 
             other as StringResource
-            if (resourceId != other.resourceId) return false
-            return args.contentDeepEquals(other.args)
+            return resourceId == other.resourceId && args.contentDeepEquals(other.args)
         }
 
         override fun hashCode(): Int {

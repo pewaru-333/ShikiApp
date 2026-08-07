@@ -35,6 +35,7 @@ import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -58,6 +59,7 @@ import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.enums.colors
 import org.jetbrains.compose.resources.stringResource
 
+@Immutable
 data class MediaGridItemTitleConfig(
     val style: TextStyle,
     val textAlign: TextAlign,
@@ -65,6 +67,7 @@ data class MediaGridItemTitleConfig(
     val minLines: Int
 )
 
+@Immutable
 data class MediaGridItemContainerConfig(
     val color: Color,
     val elevation: Dp

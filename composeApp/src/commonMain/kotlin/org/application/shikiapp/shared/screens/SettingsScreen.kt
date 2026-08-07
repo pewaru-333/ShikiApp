@@ -1,12 +1,9 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
-
 package org.application.shikiapp.shared.screens
 
 import AppLanguages
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -22,41 +19,13 @@ import me.zhanghai.compose.preference.SwitchPreference
 import me.zhanghai.compose.preference.preferenceCategory
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
-import org.application.shikiapp.shared.utils.AppLocale
-import org.application.shikiapp.shared.utils.CACHE_LIST
-import org.application.shikiapp.shared.utils.PREF_GROUP_APP_LISTS
-import org.application.shikiapp.shared.utils.PREF_GROUP_APP_SYSTEM
-import org.application.shikiapp.shared.utils.PREF_GROUP_APP_VIEW
+import org.application.shikiapp.shared.utils.*
 import org.application.shikiapp.shared.utils.data.preferences.rememberAppPreferences
-import org.application.shikiapp.shared.utils.enums.LinkedType
-import org.application.shikiapp.shared.utils.enums.ListView
-import org.application.shikiapp.shared.utils.enums.Menu
-import org.application.shikiapp.shared.utils.enums.Palette
-import org.application.shikiapp.shared.utils.enums.Theme
-import org.application.shikiapp.shared.utils.enums.WatchStatus
+import org.application.shikiapp.shared.utils.enums.*
 import org.application.shikiapp.shared.utils.extensions.getLocaleLocalizedName
-import org.application.shikiapp.shared.utils.isDynamicColorAvailable
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.preference_cache_size
-import shikiapp.composeapp.generated.resources.preference_cache_size_mb
-import shikiapp.composeapp.generated.resources.preference_category_app_view
-import shikiapp.composeapp.generated.resources.preference_category_lists
-import shikiapp.composeapp.generated.resources.preference_category_system
-import shikiapp.composeapp.generated.resources.preference_dynamic_colors
-import shikiapp.composeapp.generated.resources.preference_episode_auto_add
-import shikiapp.composeapp.generated.resources.preference_episode_auto_add_summary
-import shikiapp.composeapp.generated.resources.preference_language
-import shikiapp.composeapp.generated.resources.preference_list_view
-import shikiapp.composeapp.generated.resources.preference_remember_catalog_list_order
-import shikiapp.composeapp.generated.resources.preference_start_page
-import shikiapp.composeapp.generated.resources.preference_theme
-import shikiapp.composeapp.generated.resources.preference_user_rates_list_size_show
-import shikiapp.composeapp.generated.resources.preference_user_rates_start_status
-import shikiapp.composeapp.generated.resources.preference_user_rates_start_type
-import shikiapp.composeapp.generated.resources.text_palette
-import shikiapp.composeapp.generated.resources.text_settings
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
