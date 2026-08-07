@@ -13,7 +13,9 @@ sealed interface ContentDetailEvent {
     data class DeleteComment(val id: Long) : ContentDetailEvent
 
     sealed interface Media : ContentDetailEvent {
+        data object CreateRate : Media
         data object ChangeRate : Media
+        data object DeleteRate : Media
 
         sealed interface Anime : ContentDetailEvent {
             data object ToggleFavourite : Anime
