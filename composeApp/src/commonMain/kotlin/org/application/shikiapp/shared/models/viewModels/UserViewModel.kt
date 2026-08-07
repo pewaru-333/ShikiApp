@@ -468,8 +468,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         fun markAllRead(items: List<Message>) {
             viewModelScope.launch {
                 _updatingNotificationMap.value = items
-                    .filter { it.read.getValue() == false }
-                    .map { it.id }
+                    .mapNotNull { if (it.read.getValue() == false) it.id else null }
                     .associateWith { NotificationUpdateType.MarkingRead(AsyncData.Loading) }
 
                 try {
