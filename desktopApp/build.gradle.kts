@@ -27,7 +27,7 @@ compose.desktop {
 
         nativeDistributions {
             packageName = "ShikiApp"
-            packageVersion = "0.7.6"
+            packageVersion = "0.7.7"
 
             appResourcesRootDir.set(project.layout.projectDirectory.dir("files"))
 
@@ -37,17 +37,20 @@ compose.desktop {
                 "-Xms512m",
                 "-Xmx2048m",
 
+                "-XX:+AlwaysPreTouch",
                 "-XX:+UseZGC",
                 "-XX:+UseStringDeduplication",
                 "-XX:+UseCompactObjectHeaders",
+
                 "-XX:+TieredCompilation",
+                "-XX:+SegmentedCodeCache",
                 "-Xshare:auto",
 
                 "--enable-native-access=ALL-UNNAMED",
                 "-Dfile.encoding=UTF-8",
 
                 "-Dskiko.vsync.enabled=true",
-                "-Dskiko.fps.limit=120"
+                "-Dskiko.gpu.resource.cache.limit=1073741824" // 1GB VRAM cache limit
             )
             modules(
                 "java.logging",
