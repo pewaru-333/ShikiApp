@@ -1,5 +1,6 @@
 package org.application.shikiapp.shared.utils.extensions
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.verify.domain.DomainVerificationManager
@@ -9,6 +10,9 @@ import android.os.Build
 import android.provider.Settings
 import android.widget.Toast
 import androidx.annotation.RequiresApi
+import kotlinx.coroutines.runBlocking
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.text_error
 
 fun Context.openAppLinksSettings() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) Unit else
     try {
@@ -24,7 +28,12 @@ fun Context.openAppLinksSettings() = if (Build.VERSION.SDK_INT < Build.VERSION_C
             flags = Intent.FLAG_ACTIVITY_NEW_TASK
         }
 
-        startActivity(intent)
+        try {
+            startActivity(intent)
+        } catch (_: ActivityNotFoundException) {
+            val text = runBlocking { org.jetbrains.compose.resources.getString(Res.string.text_error) }
+            showToast(text)
+        }
     }
 
 @get:RequiresApi(Build.VERSION_CODES.S)
@@ -43,8 +52,8 @@ fun Context.isAllDomainsVerified(): Boolean {
 fun Context.getLinkDomains() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) emptyMap()
 else domainVerificationState?.hostToStateMap.orEmpty()
 
-fun Context.isLinkHandlingAllowed() = if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) true
-else domainVerificationState?.isLinkHandlingAllowed ?: false
+fun Context.isLinkHandlingAllowed() = Build.VERSION.SDK_INT < Build.VERSION_CODES.S ||
+        domainVerificationState?.isLinkHandlingAllowed ?: false
 
 fun Context.showToast(text: String, length: Int = Toast.LENGTH_SHORT) =
     Toast.makeText(this, text, length).show()
