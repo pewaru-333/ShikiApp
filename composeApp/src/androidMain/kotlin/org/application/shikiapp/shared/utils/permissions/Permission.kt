@@ -3,6 +3,7 @@ package org.application.shikiapp.shared.utils.permissions
 import android.Manifest
 import android.app.Activity
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -52,17 +53,30 @@ class Permission(private val context: Context, private val permission: String) :
 
     private fun hasPermission(): Boolean {
         val granted = when (permission) {
-            Manifest.permission.WRITE_EXTERNAL_STORAGE -> if (Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU) true
-            else ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+            Manifest.permission.WRITE_EXTERNAL_STORAGE -> Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU ||
+                    ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
 
             else -> ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
         }
 
+        val activity = context.findActivity()
+
         showRationale = !granted &&
-                context is Activity &&
-                ActivityCompat.shouldShowRequestPermissionRationale(context, permission)
+                activity != null &&
+                ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
 
         return granted
+    }
+
+    private fun Context.findActivity(): Activity? {
+        var currentContext = this
+
+        while (currentContext is ContextWrapper) {
+            if (currentContext is Activity) return currentContext
+            currentContext = currentContext.baseContext
+        }
+
+        return null
     }
 }
 
