@@ -39,7 +39,7 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
     private val _commentEvent = Channel<Boolean>()
     val commentEvent = _commentEvent.receiveAsFlow()
 
-    private val _commentParams = MutableStateFlow<CommentParams>(CommentParams())
+    private val _commentParams = MutableStateFlow(CommentParams())
 
     val comments = _commentParams.flatMapLatest { (topicId, _, type) ->
         if (topicId == null) flowOf(
@@ -110,8 +110,7 @@ abstract class ContentDetailViewModel<D, S: BaseState<S>> : BaseViewModel<D, S, 
             try {
                 val newComment = CommentToCreate.Comment(body = text)
                 val request = Network.profile.updateComment(id, newComment)
-                val offtopic = if (!isOfftopicChanged) true
-                else Network.profile.changeOfftopic(id).status == HttpStatusCode.Created
+                val offtopic = !isOfftopicChanged || Network.profile.changeOfftopic(id).status == HttpStatusCode.Created
 
                 _commentEvent.send(request.status == HttpStatusCode.OK && offtopic)
             } catch (_: Exception) {
