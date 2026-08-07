@@ -1,7 +1,6 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
 import androidx.paging.PagingData
-import io.ktor.http.Url
 import kotlinx.coroutines.flow.Flow
 import org.application.shikiapp.generated.shikiapp.AnimeAiringQuery
 import org.application.shikiapp.generated.shikiapp.AnimeExtraQuery
@@ -193,9 +192,8 @@ fun BasicInfo.toBasicContent() = BasicContent(
 )
 
 fun Link.mapper() = ExternalLink(
-    url = Url(url),
-    title = EXTERNAL_LINK_KINDS[kind.rawValue].orEmpty(),
-    kind = kind.rawValue
+    url = url,
+    title = EXTERNAL_LINK_KINDS[kind.rawValue] ?: Res.string.text_unknown
 )
 
 fun PersonRole.toContent() = Content(
