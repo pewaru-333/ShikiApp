@@ -16,6 +16,7 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
 import kotlinx.coroutines.delay
@@ -59,6 +60,8 @@ class VideoPlayerController(private val state: VideoPlayerState) {
     var imageBitmap by mutableStateOf<ImageBitmap?>(null)
         private set
 
+    private var openingJob: Job? = null
+
     internal fun play(url: String) {
         val options = state.headers.mapNotNull { (key, value) ->
             when (key.lowercase()) {
@@ -85,17 +88,15 @@ class VideoPlayerController(private val state: VideoPlayerState) {
 
     internal fun release() {
         coroutineScope.launch {
-            try {
+            runCatching {
                 if (state.isPlaying || mediaPlayer.status().isPlaying) {
                     mediaPlayer.controls().stop()
                 }
                 mediaPlayer.release()
                 factory.release()
-            } catch (_: Exception) {
-
-            } finally {
-                cancel()
             }
+        }.invokeOnCompletion {
+            coroutineScope.cancel()
         }
     }
 
@@ -152,10 +153,12 @@ class VideoPlayerController(private val state: VideoPlayerState) {
     private val playerEventListener = object : MediaPlayerEventAdapter() {
         override fun mediaPlayerReady(mediaPlayer: MediaPlayer) {
             isReady = true
+            openingJob?.cancel()
         }
 
         override fun opening(mediaPlayer: MediaPlayer) {
-            coroutineScope.launch {
+            openingJob?.cancel()
+            openingJob = coroutineScope.launch {
                 delay(10.seconds)
                 if (!isReady) {
                     error(mediaPlayer)
@@ -169,6 +172,7 @@ class VideoPlayerController(private val state: VideoPlayerState) {
         }
 
         override fun error(mediaPlayer: MediaPlayer) {
+            openingJob?.cancel()
             state.isLoading = false
             state.playNext()
         }
@@ -211,10 +215,6 @@ class VideoPlayerController(private val state: VideoPlayerState) {
     }
 
     private inner class VideoRenderCallback : RenderCallback {
-        private var bufferA = ByteArray(0)
-        private var bufferB = ByteArray(0)
-        private var useBufferA = true
-
         private var lastWidth = 0
         private var lastHeight = 0
         private var lastImageInfo = ImageInfo.DEFAULT
@@ -236,12 +236,6 @@ class VideoPlayerController(private val state: VideoPlayerState) {
             if (lastWidth != width || lastHeight != height) {
                 lastWidth = width
                 lastHeight = height
-
-                if (bufferA.size < size) {
-                    bufferA = ByteArray(size)
-                    bufferB = ByteArray(size)
-                }
-
                 lastImageInfo = ImageInfo(
                     width = width,
                     height = height,
@@ -253,22 +247,22 @@ class VideoPlayerController(private val state: VideoPlayerState) {
                 )
             }
 
-            val writeBuffer = if (useBufferA) bufferA else bufferB
-            buffer.get(writeBuffer, 0, size)
+            val frameBytes = ByteArray(size)
+            buffer.get(frameBytes, 0, size)
             buffer.rewind()
 
-            imageBitmap = Bitmap().apply {
-                installPixels(lastImageInfo, writeBuffer, width * 4)
-            }.asComposeImageBitmap()
-
-            useBufferA = !useBufferA
+            imageBitmap = with(Bitmap()) {
+                allocPixels(lastImageInfo)
+                installPixels(lastImageInfo, frameBytes, width * 4)
+                asComposeImageBitmap()
+            }
         }
     }
 }
 
 @Composable
 actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
-    val fullscreenHandler = LocalFullscreenHandler.current
+    val windowManager = LocalWindowManager.current
 
     val controller = remember(state) { VideoPlayerController(state) }
     val mediaPlayer = controller.mediaPlayer
@@ -307,8 +301,8 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
     }
 
     LaunchedEffect(state.isFullscreen) {
-        if (state.isFullscreen != fullscreenHandler.isFullscreen) {
-            fullscreenHandler.toggle()
+        if (state.isFullscreen != windowManager.isFullscreen) {
+            windowManager.toggleFullscreen()
         }
     }
 
@@ -316,6 +310,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         controller.create()
 
         onDispose {
+            windowManager.exitFullscreen()
             controller.release()
         }
     }
@@ -324,7 +319,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         Image(
             bitmap = bitmap,
             contentDescription = null,
-            modifier = Modifier.fillMaxSize(),
+            modifier = modifier.fillMaxSize(),
             contentScale = if (state.isZoomed) ContentScale.Crop else ContentScale.Fit
         )
     }

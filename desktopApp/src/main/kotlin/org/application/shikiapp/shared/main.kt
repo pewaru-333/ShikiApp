@@ -1,17 +1,19 @@
-@file:OptIn(ExperimentalCoilApi::class)
+@file:OptIn(ExperimentalComposeUiApi::class)
 
 package org.application.shikiapp.shared
 
 
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.remember
+import androidx.compose.ui.ExperimentalComposeUiApi
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
 import androidx.compose.ui.window.Tray
-import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
-import androidx.compose.ui.window.rememberWindowState
+import androidx.compose.ui.window.v2.Window
+import androidx.compose.ui.window.v2.WindowBoundsProvider
+import androidx.compose.ui.window.v2.WindowPositionProvider
+import androidx.compose.ui.window.v2.rememberWindowState
 import coil3.annotation.ExperimentalCoilApi
 import coil3.compose.setSingletonImageLoaderFactory
 import okio.FileSystem
@@ -23,8 +25,8 @@ import org.application.shikiapp.shared.utils.initVlc
 import org.application.shikiapp.shared.utils.navigation.DesktopDeepLink
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.sharedImageLoader
-import org.application.shikiapp.shared.utils.ui.FullscreenHandler
-import org.application.shikiapp.shared.utils.ui.LocalFullscreenHandler
+import org.application.shikiapp.shared.utils.ui.LocalWindowManager
+import org.application.shikiapp.shared.utils.ui.rememberWindowManager
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.app_name
@@ -44,8 +46,12 @@ fun main(args: Array<String>) {
         val app = AppModuleInitializer(DesktopContext(), AppConfig.createDesktopConfig())
         AppContext.init(app)
 
-        val windowState = rememberWindowState(WindowPlacement.Maximized)
-        val fullscreenHandler = remember(windowState) { FullscreenHandler(windowState) }
+        val windowState = rememberWindowState(
+            initialPlacement = WindowPlacement.Maximized,
+            initialBoundsProvider = WindowBoundsProvider(
+                positionProvider = WindowPositionProvider.CenteredOnScreen
+            )
+        )
 
         setSingletonImageLoaderFactory { context ->
             sharedImageLoader(
@@ -58,25 +64,27 @@ fun main(args: Array<String>) {
             icon = rememberVectorPainter(Icons.AppIcon)
         )
 
-        CompositionLocalProvider(LocalFullscreenHandler provides fullscreenHandler) {
-            Window(
-                onCloseRequest = ::exitApplication,
-                state = windowState,
-                title = stringResource(Res.string.app_name),
-                icon = rememberVectorPainter(Icons.AppIcon),
-                content = {
-                    LaunchedEffect(Unit) {
-                        DesktopDeepLink.startInstanceListener { uri ->
-                            windowState.isMinimized = false
-                            window.toFront()
+        Window(
+            onCloseRequest = ::exitApplication,
+            state = windowState,
+            title = stringResource(Res.string.app_name),
+            icon = rememberVectorPainter(Icons.AppIcon),
+            content = {
+                val windowManager = rememberWindowManager(windowState, window)
 
-                            ExternalUriHandler.onNewUri(uri)
-                        }
-                    }
-
+                CompositionLocalProvider(LocalWindowManager provides windowManager) {
                     App()
                 }
-            )
-        }
+
+                LaunchedEffect(Unit) {
+                    DesktopDeepLink.startInstanceListener { uri ->
+                        windowState.requestMinimized(false)
+                        window.toFront()
+
+                        ExternalUriHandler.onNewUri(uri)
+                    }
+                }
+            }
+        )
     }
 }
