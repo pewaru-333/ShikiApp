@@ -3,6 +3,8 @@
 package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +12,7 @@ import androidx.compose.material3.BottomSheetDefaults
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ListItem
 import androidx.compose.material3.ListItemDefaults
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
@@ -92,24 +95,33 @@ fun BottomSheet(
 @Composable
 fun LinksSheet(list: List<ExternalLink>, onHide: () -> Unit) {
     val handler = rememberLinkHandler()
+    val colors = ListItemDefaults.colors(
+        containerColor = BottomSheetDefaults.ContainerColor,
+        headlineColor = contentColorFor(BottomSheetDefaults.ContainerColor),
+        leadingIconColor = contentColorFor(BottomSheetDefaults.ContainerColor)
+    )
 
     ModalBottomSheet(onHide) {
+        Text(
+            text = stringResource(Res.string.text_external_links),
+            style = MaterialTheme.typography.titleMedium,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp, 12.dp)
+        )
+
         LazyColumn {
             items(list, ExternalLink::url) {
                 ListItem(
-                    modifier = Modifier.clickable { handler.onOpenLink(it.url.toString()) },
-                    headlineContent = { Text(it.title) },
+                    colors = colors,
+                    modifier = Modifier.clickable { handler.onOpenLink(it.url) },
+                    headlineContent = { Text(stringResource(it.title)) },
                     leadingContent = {
                         AnimatedAsyncImage(
-                            model = "https://www.google.com/s2/favicons?domain=${it.url.host}&sz=128",
+                            model = "https://www.google.com/s2/favicons?domain=${it.url}&sz=128",
                             modifier = Modifier.size(24.dp)
                         )
-                    },
-                    colors = ListItemDefaults.colors(
-                        containerColor = BottomSheetDefaults.ContainerColor,
-                        headlineColor = contentColorFor(BottomSheetDefaults.ContainerColor),
-                        leadingIconColor = contentColorFor(BottomSheetDefaults.ContainerColor)
-                    )
+                    }
                 )
             }
         }
