@@ -113,6 +113,15 @@
     <string name="kind_ranobe_light_novel">Light novel</string>
     <string name="kind_ranobe_novel">Novel</string>
 
+    <!-- Ссылки -->
+    <string name="external_link_official_site">Official Website</string>
+    <string name="external_link_wikipedia">Wikipedia</string>
+    <string name="external_link_kinopoisk">KinoPoisk</string>
+    <string name="external_link_shiki">Shikimori</string>
+    <string name="external_link_amediateka">Amediateka</string>
+    <string name="external_link_ivi">IVI</string>
+    <string name="external_link_kinopoisk_hd">KinoPoisk HD</string>
+
     <!-- Типы связей во франшизе -->
     <string name="relation_kind_adaptation">Adaptation</string>
     <string name="relation_kind_alternative_setting">Alternative setting</string>

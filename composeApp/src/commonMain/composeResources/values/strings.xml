@@ -113,6 +113,42 @@
     <string name="kind_ranobe_light_novel">Ранобэ</string>
     <string name="kind_ranobe_novel">Новелла</string>
 
+    <!-- Ссылки -->
+    <string name="external_link_official_site">Официальный сайт</string>
+    <string name="external_link_wikipedia">Википедия</string>
+    <string name="external_link_anime_news_network" translatable="false">Anime News Network</string>
+    <string name="external_link_myanimelist" translatable="false">MyAnimeList</string>
+    <string name="external_link_anime_db" translatable="false">AniDB</string>
+    <string name="external_link_world_art" translatable="false">World Art</string>
+    <string name="external_link_kinopoisk">Кинопоиск</string>
+    <string name="external_link_kage_project" translatable="false">Kage Project</string>
+    <string name="external_link_twitter" translatable="false">Twitter/X</string>
+    <string name="external_link_smotret_anime" translatable="false">Anime 365</string>
+    <string name="external_link_shiki">Шикимори</string>
+    <string name="external_link_amediateka">Амедиатека</string>
+    <string name="external_link_crunchyroll" translatable="false">Crunchyroll</string>
+    <string name="external_link_amazon" translatable="false">Amazon</string>
+    <string name="external_link_hidive" translatable="false">Hidive</string>
+    <string name="external_link_hulu" translatable="false">Hulu</string>
+    <string name="external_link_ivi">ИВИ</string>
+    <string name="external_link_kinopoisk_hd">Кинопоиск HD</string>
+    <string name="external_link_wink" translatable="false">Wink</string>
+    <string name="external_link_netflix" translatable="false">Netflix</string>
+    <string name="external_link_okko" translatable="false">Okko</string>
+    <string name="external_link_youtube" translatable="false">YouTube</string>
+    <string name="external_link_readmanga" translatable="false">ReadManga</string>
+    <string name="external_link_mangalib" translatable="false">MangaLib</string>
+    <string name="external_link_remanga" translatable="false">ReManga</string>
+    <string name="external_link_mangaupdates" translatable="false">Baka-Updates</string>
+    <string name="external_link_mangadex" translatable="false">MangaDex</string>
+    <string name="external_link_mangafox" translatable="false">MangaFox</string>
+    <string name="external_link_mangachan" translatable="false">Mangachan</string>
+    <string name="external_link_mangahub" translatable="false">Mangahub</string>
+    <string name="external_link_novel_tl" translatable="false">Novel.tl</string>
+    <string name="external_link_ruranobe" translatable="false">RuRanobe</string>
+    <string name="external_link_ranobelib" translatable="false">RanobeLib</string>
+    <string name="external_link_novelupdates" translatable="false">Novel Updates</string>
+
     <!-- Типы связей во франшизе -->
     <string name="relation_kind_adaptation">Адаптация</string>
     <string name="relation_kind_alternative_setting">Альтернативная вселенная</string>
