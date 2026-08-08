@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="androidApp/src/main/ic_launcher-playstore.png" width=256px height=256px/>
+<img src="androidApp/src/main/ic_launcher-playstore.png" width=256px height=256px alt="App icon">
 
 # ShikiApp
 
@@ -12,11 +12,15 @@
 
 <div align="center">
 
-[<img src="IzzyOnDroid.png" align="top" alt="Get it on IzzyOnDroid" height=80px/>](https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp)
+[<img src="RuStore.svg" align="top" alt="Get it on RuStore" height=80px/>](https://www.rustore.ru/catalog/app/org.application.shikiapp)
+[<img src="AppStore.svg" align="top" alt="Get it on AppStore" height=80px/>](https://apps.apple.com/ng/app/shikirip/id6780174945)
+
+<br>
+
+[<img src="IzzyOnDroid.svg" align="top" alt="Get it on IzzyOnDroid" height=80px/>](https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp)
 [<img src="F-Droid.svg" align="top" alt="Get it on F-Droid" height="80px">](https://f-droid.org/packages/org.application.shikiapp/)
 
 </div>
-
 
 ## Функции
 
@@ -30,22 +34,22 @@
 * Отправка комментариев, их изменение и удаление.
 * Добавление аниме, манги и ранобэ в свой список и в избранное.
 * Добавление персонажей и людей в избранное.
-* Возможность вступать или выходить в/из клубы(-ов).
+* Возможность вступать или выходить в/из клубы (-ов).
 
 ## Скриншоты
 
 <div>
 
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/08.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/09.jpg" width="180px" height="360px">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/10.jpg" width="180px" height="360px">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.jpg" width="180px" height="360px" alt="Screenshot 1">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.jpg" width="180px" height="360px" alt="Screenshot 2">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.jpg" width="180px" height="360px" alt="Screenshot 3">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04.jpg" width="180px" height="360px" alt="Screenshot 4">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.jpg" width="180px" height="360px" alt="Screenshot 5">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06.jpg" width="180px" height="360px" alt="Screenshot 6">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07.jpg" width="180px" height="360px" alt="Screenshot 7">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/08.jpg" width="180px" height="360px" alt="Screenshot 8">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/09.jpg" width="180px" height="360px" alt="Screenshot 9">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/10.jpg" width="180px" height="360px" alt="Screenshot 10">
 
 </div>
 
