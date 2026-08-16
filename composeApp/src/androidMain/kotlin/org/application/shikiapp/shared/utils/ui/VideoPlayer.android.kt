@@ -5,14 +5,8 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.webkit.MimeTypeMap
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
@@ -21,14 +15,7 @@ import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.net.toUri
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
-import androidx.media3.common.AudioAttributes
-import androidx.media3.common.C
-import androidx.media3.common.MediaItem
-import androidx.media3.common.MimeTypes
-import androidx.media3.common.PlaybackException
-import androidx.media3.common.Player
-import androidx.media3.common.TrackSelectionOverride
-import androidx.media3.common.Tracks
+import androidx.media3.common.*
 import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
@@ -45,6 +32,7 @@ import io.github.peerless2012.ass.media.parser.AssSubtitleParserFactory
 import io.github.peerless2012.ass.media.type.AssRenderType
 import io.github.peerless2012.ass.media.widget.AssSubtitleView
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ui.subtitles.SubtitleView
@@ -55,7 +43,7 @@ class VideoPlayerController(private val context: Context, private val state: Vid
     val assHandler = AssHandler(AssRenderType.EFFECTS_OPEN_GL)
     private val assParserFactory = AssSubtitleParserFactory(assHandler)
     private val extractorsFactory = DefaultExtractorsFactory().withAssMkvSupport(assParserFactory, assHandler)
-    private val mediaSourceFactory = DefaultMediaSourceFactory(context, extractorsFactory).setSubtitleParserFactory(assParserFactory)
+   // private val mediaSourceFactory = DefaultMediaSourceFactory(context, extractorsFactory).setSubtitleParserFactory(assParserFactory)
     private val renderersFactory = DefaultRenderersFactory(context).withAssSupport(assHandler)
 
     private val audioAttributes = AudioAttributes.Builder()
@@ -65,7 +53,7 @@ class VideoPlayerController(private val context: Context, private val state: Vid
 
     val exoPlayer = ExoPlayer.Builder(context.applicationContext)
         .setAudioAttributes(audioAttributes, true)
-        .setMediaSourceFactory(mediaSourceFactory)
+      //  .setMediaSourceFactory(mediaSourceFactory)
         .setRenderersFactory(renderersFactory)
         .setHandleAudioBecomingNoisy(true)
         .build()
@@ -230,9 +218,9 @@ class VideoPlayerController(private val context: Context, private val state: Vid
 @UnstableApi
 @Composable
 actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
-    val context = LocalContext.current
+    val context = LocalContext.current.applicationContext
 
-    val controller = remember(context.applicationContext) { VideoPlayerController(context, state) }
+    val controller = remember(context) { VideoPlayerController(context, state) }
     val exoPlayer = controller.exoPlayer
 
     LaunchedEffect(state.url) {
@@ -280,7 +268,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
     }
 
     LaunchedEffect(exoPlayer) {
-        while (true) {
+        while (isActive) {
             val total = exoPlayer.duration.coerceAtLeast(0) / 1000f
 
             if (total > 0f) {
@@ -291,7 +279,7 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
                 state.updateBuffer(exoPlayer.bufferedPercentage / 100f)
             }
 
-            delay(500.milliseconds)
+            delay(if (state.isPlaying) 500.milliseconds else 2000.milliseconds)
         }
     }
 
@@ -308,24 +296,26 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         }
     }
 
-    ContentFrame(
-        player = exoPlayer,
-        modifier = modifier,
-        contentScale = if (state.isZoomed) ContentScale.FillBounds else ContentScale.Fit
-    )
+    Box(modifier) {
+        ContentFrame(
+            player = exoPlayer,
+            modifier = Modifier.matchParentSize(),
+            contentScale = if (state.isZoomed) ContentScale.FillBounds else ContentScale.Fit
+        )
 
-    AndroidView(
-        modifier = Modifier.fillMaxSize(),
-        update = { it.cues = controller.cues },
-        factory = { context ->
-            SubtitleView(context).apply {
-                addView(AssSubtitleView(context, controller.assHandler))
-                setUserDefaultStyle()
-                setUserDefaultTextSize()
-                viewType = SubtitleView.VIEW_TYPE_WEB
+        AndroidView(
+            modifier = Modifier.matchParentSize(),
+            update = { it.cues = controller.cues },
+            factory = { context ->
+                SubtitleView(context).apply {
+                    addView(AssSubtitleView(context, controller.assHandler))
+                    setUserDefaultStyle()
+                    setUserDefaultTextSize()
+                    viewType = SubtitleView.VIEW_TYPE_WEB
+                }
             }
-        }
-    )
+        )
+    }
 }
 
 actual class VideoPlayerUtils actual constructor(private val context: Context) {

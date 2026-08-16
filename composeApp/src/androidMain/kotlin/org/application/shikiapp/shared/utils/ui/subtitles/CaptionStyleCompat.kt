@@ -35,8 +35,6 @@ data class CaptionStyleCompat(
         const val EDGE_TYPE_RAISED = 3
         const val EDGE_TYPE_DEPRESSED = 4
 
-        const val USE_TRACK_COLOR_SETTINGS = 1
-
         val DEFAULT = CaptionStyleCompat(
             foregroundColor = Color.WHITE,
             backgroundColor = Color.BLACK,

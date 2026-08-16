@@ -1,15 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_anime
-import shikiapp.composeapp.generated.resources.text_characters
-import shikiapp.composeapp.generated.resources.text_manga
-import shikiapp.composeapp.generated.resources.text_mangakas
-import shikiapp.composeapp.generated.resources.text_others
-import shikiapp.composeapp.generated.resources.text_people
-import shikiapp.composeapp.generated.resources.text_ranobe
-import shikiapp.composeapp.generated.resources.text_seyu
+import shikiapp.composeapp.generated.resources.*
 
 enum class FavouriteItem(val title: StringResource, val linkedType: LinkedType) {
     ANIME(Res.string.text_anime, LinkedType.ANIME),

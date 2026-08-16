@@ -2,13 +2,7 @@ package org.application.shikiapp.shared.models.ui.mappers
 
 import org.application.shikiapp.shared.models.ui.EpisodeModel
 import org.application.shikiapp.shared.models.ui.VideoVoice
-import org.application.shikiapp.shared.network.parser.AnimeLibEpisodeDetailResponse
-import org.application.shikiapp.shared.network.parser.AnimeLibEpisodesList
-import org.application.shikiapp.shared.network.parser.AnimeLibTeamItem
-import org.application.shikiapp.shared.network.parser.CollapsTitleDetails
-import org.application.shikiapp.shared.network.parser.CvhPlaylistResponse
-import org.application.shikiapp.shared.network.parser.CvhSources
-import org.application.shikiapp.shared.network.parser.KodikResultItem
+import org.application.shikiapp.shared.network.parser.*
 import org.application.shikiapp.shared.utils.ResourceText
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.origin_original

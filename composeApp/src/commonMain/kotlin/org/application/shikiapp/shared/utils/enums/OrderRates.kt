@@ -1,14 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.order_chapters
-import shikiapp.composeapp.generated.resources.order_created_at
-import shikiapp.composeapp.generated.resources.order_episodes
-import shikiapp.composeapp.generated.resources.order_kind
-import shikiapp.composeapp.generated.resources.order_name
-import shikiapp.composeapp.generated.resources.order_ranked
-import shikiapp.composeapp.generated.resources.order_updated_at
+import shikiapp.composeapp.generated.resources.*
 
 enum class OrderRates(val title: StringResource, val titleManga: StringResource? = null) {
     TITLE(Res.string.order_name),

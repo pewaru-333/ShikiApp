@@ -1,19 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.relation_kind_adaptation
-import shikiapp.composeapp.generated.resources.relation_kind_alternative_setting
-import shikiapp.composeapp.generated.resources.relation_kind_alternative_version
-import shikiapp.composeapp.generated.resources.relation_kind_character
-import shikiapp.composeapp.generated.resources.relation_kind_full_story
-import shikiapp.composeapp.generated.resources.relation_kind_other
-import shikiapp.composeapp.generated.resources.relation_kind_parent_story
-import shikiapp.composeapp.generated.resources.relation_kind_prequel
-import shikiapp.composeapp.generated.resources.relation_kind_sequel
-import shikiapp.composeapp.generated.resources.relation_kind_side_story
-import shikiapp.composeapp.generated.resources.relation_kind_spin_off
-import shikiapp.composeapp.generated.resources.relation_kind_summary
+import shikiapp.composeapp.generated.resources.*
 
 enum class RelationKind(val title: StringResource, val order: Int) {
     ADAPTATION(Res.string.relation_kind_adaptation, 1),

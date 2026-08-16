@@ -1,15 +1,7 @@
 package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.api.Query
-import org.application.shikiapp.generated.shikiapp.AnimeAiringQuery
-import org.application.shikiapp.generated.shikiapp.AnimeGenresQuery
-import org.application.shikiapp.generated.shikiapp.AnimeListQuery
-import org.application.shikiapp.generated.shikiapp.AnimeRandomQuery
-import org.application.shikiapp.generated.shikiapp.CharacterListQuery
-import org.application.shikiapp.generated.shikiapp.MangaGenresQuery
-import org.application.shikiapp.generated.shikiapp.MangaListQuery
-import org.application.shikiapp.generated.shikiapp.PeopleQuery
-import org.application.shikiapp.generated.shikiapp.UsersQuery
+import org.application.shikiapp.generated.shikiapp.*
 import org.application.shikiapp.generated.shikiapp.type.OrderEnum
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.models.ui.mappers.toContent

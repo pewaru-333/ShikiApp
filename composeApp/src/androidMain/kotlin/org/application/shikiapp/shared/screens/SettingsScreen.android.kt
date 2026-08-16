@@ -1,33 +1,13 @@
 package org.application.shikiapp.shared.screens
 
 import androidx.compose.foundation.border
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.SuggestionChip
-import androidx.compose.material3.SuggestionChipDefaults
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -49,13 +29,7 @@ import org.application.shikiapp.shared.utils.extensions.isLinkHandlingAllowed
 import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.preference_deep_link
-import shikiapp.composeapp.generated.resources.text_app_links_domain_status
-import shikiapp.composeapp.generated.resources.text_app_links_support
-import shikiapp.composeapp.generated.resources.text_to_settings
-import shikiapp.composeapp.generated.resources.text_turned_off
-import shikiapp.composeapp.generated.resources.text_turned_on
+import shikiapp.composeapp.generated.resources.*
 
 actual fun LazyListScope.deeplinkSetting(onClick: () -> Unit) = preference(
     key = PREF_DEEP_LINK_SETTINGS,

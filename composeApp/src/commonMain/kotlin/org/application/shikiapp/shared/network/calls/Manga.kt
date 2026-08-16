@@ -1,6 +1,6 @@
 package org.application.shikiapp.shared.network.calls
 
-import io.ktor.client.HttpClient
+import io.ktor.client.*
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.data.Manga
 import org.application.shikiapp.shared.models.data.MangaBasic

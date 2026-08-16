@@ -1,7 +1,7 @@
 package org.application.shikiapp.shared.utils.extensions
 
 import androidx.compose.ui.platform.toClipEntry
-import java.util.Locale
+import java.util.*
 
 actual fun String.getLocaleLocalizedName(): String {
     val locale = Locale.forLanguageTag(this)

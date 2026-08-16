@@ -5,15 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.status_anons
-import shikiapp.composeapp.generated.resources.status_ongoing_anime
-import shikiapp.composeapp.generated.resources.status_ongoing_manga
-import shikiapp.composeapp.generated.resources.status_paused_discontinued
-import shikiapp.composeapp.generated.resources.status_paused_manga
-import shikiapp.composeapp.generated.resources.status_released_anime
-import shikiapp.composeapp.generated.resources.status_released_manga
-import shikiapp.composeapp.generated.resources.text_unknown
+import shikiapp.composeapp.generated.resources.*
 
 enum class Status(
     val types: List<LinkedType>,

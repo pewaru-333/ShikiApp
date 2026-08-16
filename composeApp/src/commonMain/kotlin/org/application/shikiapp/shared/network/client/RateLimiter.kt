@@ -1,9 +1,8 @@
 package org.application.shikiapp.shared.network.client
 
-import io.ktor.client.plugins.api.Send
-import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.request.HttpRequestBuilder
-import io.ktor.client.statement.HttpResponse
+import io.ktor.client.plugins.api.*
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

@@ -6,11 +6,7 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.luminance
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.review_negative
-import shikiapp.composeapp.generated.resources.review_neutral
-import shikiapp.composeapp.generated.resources.review_positive
-import shikiapp.composeapp.generated.resources.text_unknown
+import shikiapp.composeapp.generated.resources.*
 
 enum class OpinionType(val title: StringResource) {
     POSITIVE(Res.string.review_positive),

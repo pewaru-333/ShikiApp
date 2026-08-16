@@ -23,7 +23,6 @@ class ShikiApp : Application(), SingletonImageLoader.Factory {
         AppContext.init(app)
     }
 
-    @OptIn(ExperimentalCoilApi::class)
     override fun newImageLoader(context: PlatformContext) = sharedImageLoader(
         context = context,
         cacheDir = context.cacheDir.toOkioPath(),

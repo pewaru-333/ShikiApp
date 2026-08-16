@@ -1,18 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.blank
-import shikiapp.composeapp.generated.resources.score_1
-import shikiapp.composeapp.generated.resources.score_10
-import shikiapp.composeapp.generated.resources.score_2
-import shikiapp.composeapp.generated.resources.score_3
-import shikiapp.composeapp.generated.resources.score_4
-import shikiapp.composeapp.generated.resources.score_5
-import shikiapp.composeapp.generated.resources.score_6
-import shikiapp.composeapp.generated.resources.score_7
-import shikiapp.composeapp.generated.resources.score_8
-import shikiapp.composeapp.generated.resources.score_9
+import shikiapp.composeapp.generated.resources.*
 
 enum class Score(val score: Int, val title: StringResource) {
     ZERO(0, Res.string.blank),

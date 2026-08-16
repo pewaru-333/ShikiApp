@@ -3,34 +3,13 @@
 package org.application.shikiapp.shared.screens
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.WindowInsets
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.systemBars
+import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.grid.rememberLazyGridState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.lazy.staggeredgrid.rememberLazyStaggeredGridState
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.contentColorFor
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
@@ -49,18 +28,7 @@ import org.application.shikiapp.shared.models.ui.Club
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.asSource
 import org.application.shikiapp.shared.models.viewModels.ClubViewModel
-import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
-import org.application.shikiapp.shared.ui.templates.AnimatedScreen
-import org.application.shikiapp.shared.ui.templates.CircleBorderedImage
-import org.application.shikiapp.shared.ui.templates.Comments
-import org.application.shikiapp.shared.ui.templates.ContentList
-import org.application.shikiapp.shared.ui.templates.DialogImage
-import org.application.shikiapp.shared.ui.templates.DialogImages
-import org.application.shikiapp.shared.ui.templates.DialogPoster
-import org.application.shikiapp.shared.ui.templates.MenuItems
-import org.application.shikiapp.shared.ui.templates.NavigationIcon
-import org.application.shikiapp.shared.ui.templates.VectorIcon
-import org.application.shikiapp.shared.ui.templates.about
+import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.extensions.toContentLarge
 import org.application.shikiapp.shared.utils.navigation.Screen
@@ -70,11 +38,7 @@ import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_clubs
-import shikiapp.composeapp.generated.resources.text_description
-import shikiapp.composeapp.generated.resources.text_join_club
-import shikiapp.composeapp.generated.resources.text_leave_club
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun ClubScreen(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {

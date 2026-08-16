@@ -3,17 +3,7 @@ package org.application.shikiapp.shared.models.states
 import org.application.shikiapp.shared.models.ui.list.ContentViewType
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_anime
-import shikiapp.composeapp.generated.resources.text_characters
-import shikiapp.composeapp.generated.resources.text_clubs
-import shikiapp.composeapp.generated.resources.text_favourite
-import shikiapp.composeapp.generated.resources.text_friends
-import shikiapp.composeapp.generated.resources.text_history
-import shikiapp.composeapp.generated.resources.text_manga
-import shikiapp.composeapp.generated.resources.text_members
-import shikiapp.composeapp.generated.resources.text_pictures
-import shikiapp.composeapp.generated.resources.text_ranobe
+import shikiapp.composeapp.generated.resources.*
 
 interface BaseState<S> {
     val isSendingComment: Boolean

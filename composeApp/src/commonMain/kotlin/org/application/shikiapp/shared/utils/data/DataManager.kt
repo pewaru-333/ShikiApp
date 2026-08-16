@@ -1,9 +1,8 @@
 package org.application.shikiapp.shared.utils.data
 
-import io.ktor.client.request.prepareGet
-import io.ktor.client.statement.readRawBytes
-import io.ktor.http.HttpStatusCode
-import io.ktor.http.decodeURLPart
+import io.ktor.client.request.*
+import io.ktor.client.statement.*
+import io.ktor.http.*
 import org.application.shikiapp.shared.network.client.Network
 import kotlin.coroutines.cancellation.CancellationException
 import kotlin.time.Clock

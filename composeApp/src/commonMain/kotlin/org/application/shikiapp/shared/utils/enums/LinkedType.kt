@@ -3,11 +3,7 @@ package org.application.shikiapp.shared.utils.enums
 import kotlinx.serialization.Serializable
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.blank
-import shikiapp.composeapp.generated.resources.text_anime
-import shikiapp.composeapp.generated.resources.text_manga
-import shikiapp.composeapp.generated.resources.text_ranobe
+import shikiapp.composeapp.generated.resources.*
 
 @Serializable
 enum class LinkedType(val title: StringResource) {

@@ -1,40 +1,6 @@
 package org.application.shikiapp.shared.utils
 
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.external_link_amazon
-import shikiapp.composeapp.generated.resources.external_link_amediateka
-import shikiapp.composeapp.generated.resources.external_link_anime_db
-import shikiapp.composeapp.generated.resources.external_link_anime_news_network
-import shikiapp.composeapp.generated.resources.external_link_crunchyroll
-import shikiapp.composeapp.generated.resources.external_link_hidive
-import shikiapp.composeapp.generated.resources.external_link_hulu
-import shikiapp.composeapp.generated.resources.external_link_ivi
-import shikiapp.composeapp.generated.resources.external_link_kage_project
-import shikiapp.composeapp.generated.resources.external_link_kinopoisk
-import shikiapp.composeapp.generated.resources.external_link_kinopoisk_hd
-import shikiapp.composeapp.generated.resources.external_link_mangachan
-import shikiapp.composeapp.generated.resources.external_link_mangadex
-import shikiapp.composeapp.generated.resources.external_link_mangafox
-import shikiapp.composeapp.generated.resources.external_link_mangahub
-import shikiapp.composeapp.generated.resources.external_link_mangalib
-import shikiapp.composeapp.generated.resources.external_link_mangaupdates
-import shikiapp.composeapp.generated.resources.external_link_myanimelist
-import shikiapp.composeapp.generated.resources.external_link_netflix
-import shikiapp.composeapp.generated.resources.external_link_novel_tl
-import shikiapp.composeapp.generated.resources.external_link_novelupdates
-import shikiapp.composeapp.generated.resources.external_link_official_site
-import shikiapp.composeapp.generated.resources.external_link_okko
-import shikiapp.composeapp.generated.resources.external_link_ranobelib
-import shikiapp.composeapp.generated.resources.external_link_readmanga
-import shikiapp.composeapp.generated.resources.external_link_remanga
-import shikiapp.composeapp.generated.resources.external_link_ruranobe
-import shikiapp.composeapp.generated.resources.external_link_shiki
-import shikiapp.composeapp.generated.resources.external_link_smotret_anime
-import shikiapp.composeapp.generated.resources.external_link_twitter
-import shikiapp.composeapp.generated.resources.external_link_wikipedia
-import shikiapp.composeapp.generated.resources.external_link_wink
-import shikiapp.composeapp.generated.resources.external_link_world_art
-import shikiapp.composeapp.generated.resources.external_link_youtube
+import shikiapp.composeapp.generated.resources.*
 
 // =========================================== Strings ============================================
 

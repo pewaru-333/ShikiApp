@@ -1,6 +1,6 @@
 package org.application.shikiapp.shared.network.client
 
-import io.ktor.http.URLBuilder
+import io.ktor.http.*
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.network.parser.AnimeLibParser
 import org.application.shikiapp.shared.utils.BLANK

@@ -2,14 +2,7 @@ package org.application.shikiapp.shared.utils.enums
 
 import org.application.shikiapp.shared.ui.theme.Color
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.palette_default
-import shikiapp.composeapp.generated.resources.palette_forest
-import shikiapp.composeapp.generated.resources.palette_graphite
-import shikiapp.composeapp.generated.resources.palette_night
-import shikiapp.composeapp.generated.resources.palette_ocean
-import shikiapp.composeapp.generated.resources.palette_sakura
-import shikiapp.composeapp.generated.resources.palette_sunset
+import shikiapp.composeapp.generated.resources.*
 
 enum class Palette(val title: StringResource) {
     DEFAULT(Res.string.palette_default), // FF6750A4

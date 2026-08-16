@@ -1,13 +1,10 @@
 package org.application.shikiapp.shared.utils.ui.subtitles
 
 import android.content.Context
-import android.content.res.Resources
 import android.util.AttributeSet
-import android.util.TypedValue
 import android.view.View
 import android.view.accessibility.CaptioningManager
 import android.widget.FrameLayout
-import androidx.annotation.Dimension
 import androidx.annotation.IntDef
 import androidx.media3.common.text.Cue
 import androidx.media3.common.util.UnstableApi
@@ -99,14 +96,6 @@ class SubtitleView @JvmOverloads constructor(
         innerSubtitleView = view
         output = view
         addView(view)
-    }
-
-    fun setFixedTextSize(@Dimension unit: Int, size: Float) {
-        val resources = context?.resources ?: Resources.getSystem()
-        setTextSize(
-            Cue.TEXT_SIZE_TYPE_ABSOLUTE,
-            TypedValue.applyDimension(unit, size, resources.displayMetrics)
-        )
     }
 
     fun setUserDefaultTextSize() {

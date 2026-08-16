@@ -8,14 +8,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.material3.BottomSheetDefaults
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ListItem
-import androidx.compose.material3.ListItemDefaults
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
-import androidx.compose.material3.Text
-import androidx.compose.material3.contentColorFor
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
@@ -31,11 +24,7 @@ import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.extensions.toClipEntry
 import org.application.shikiapp.shared.utils.ui.rememberLinkHandler
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_copy_link
-import shikiapp.composeapp.generated.resources.text_external_links
-import shikiapp.composeapp.generated.resources.text_official_site
-import shikiapp.composeapp.generated.resources.text_open_in_browser
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun BottomSheet(

@@ -8,22 +8,14 @@ import androidx.navigation.toRoute
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.emptyFlow
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.events.ContentDetailEvent
-import org.application.shikiapp.shared.models.data.AnimeBasic
-import org.application.shikiapp.shared.models.data.BasicInfo
-import org.application.shikiapp.shared.models.data.ClubImages
-import org.application.shikiapp.shared.models.data.MangaBasic
-import org.application.shikiapp.shared.models.data.UserBasic
+import org.application.shikiapp.shared.models.data.*
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.ClubState
 import org.application.shikiapp.shared.models.ui.Club
@@ -37,11 +29,7 @@ import org.application.shikiapp.shared.network.response.Response
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.navigation.Screen
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_successfully_joined_club
-import shikiapp.composeapp.generated.resources.text_successfully_leave_club
-import shikiapp.composeapp.generated.resources.text_unsuccessfully_joined_club
-import shikiapp.composeapp.generated.resources.text_unsuccessfully_leave_club
+import shikiapp.composeapp.generated.resources.*
 
 class ClubViewModel(saved: SavedStateHandle) : ContentDetailViewModel<Club, ClubState>() {
     override val contentId = saved.toRoute<Screen.Club>().id

@@ -3,9 +3,9 @@ package org.application.shikiapp.shared.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.plugins.auth.clearAuthTokens
-import io.ktor.http.HttpStatusCode
-import io.ktor.util.network.UnresolvedAddressException
+import io.ktor.client.plugins.auth.*
+import io.ktor.http.*
+import io.ktor.util.network.*
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock

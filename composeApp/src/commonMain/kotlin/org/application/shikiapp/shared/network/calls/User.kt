@@ -1,14 +1,9 @@
 package org.application.shikiapp.shared.network.calls
 
-import io.ktor.client.HttpClient
-import io.ktor.client.request.delete
-import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import org.application.shikiapp.shared.models.data.ClubBasic
-import org.application.shikiapp.shared.models.data.Favourites
-import org.application.shikiapp.shared.models.data.History
+import io.ktor.client.*
+import io.ktor.client.request.*
+import org.application.shikiapp.shared.models.data.*
 import org.application.shikiapp.shared.models.data.User
-import org.application.shikiapp.shared.models.data.UserBasic
 import org.application.shikiapp.shared.utils.extensions.requestWithCache
 
 class User(private val client: HttpClient) {

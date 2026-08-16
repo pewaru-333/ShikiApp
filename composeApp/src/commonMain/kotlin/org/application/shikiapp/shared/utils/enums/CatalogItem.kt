@@ -6,14 +6,7 @@ import org.application.shikiapp.shared.models.ui.list.ContentViewType
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_anime
-import shikiapp.composeapp.generated.resources.text_characters
-import shikiapp.composeapp.generated.resources.text_clubs
-import shikiapp.composeapp.generated.resources.text_manga
-import shikiapp.composeapp.generated.resources.text_people
-import shikiapp.composeapp.generated.resources.text_ranobe
-import shikiapp.composeapp.generated.resources.text_users
+import shikiapp.composeapp.generated.resources.*
 
 enum class CatalogItem(val title: StringResource, val icon: ImageVector) {
     ANIME(Res.string.text_anime, Icons.Anime) {

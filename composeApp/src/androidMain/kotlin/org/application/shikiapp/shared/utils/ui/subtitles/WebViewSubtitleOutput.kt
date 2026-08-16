@@ -297,7 +297,7 @@ class WebViewSubtitleOutput @JvmOverloads constructor(
                 )
 
                 CaptionStyleCompat.EDGE_TYPE_OUTLINE -> Util.formatInvariant(
-                    "1px 1px 0 %1\$s, 1px -1px 0 %1\$s, -1px 1px 0 %1\$s, -1px -1px 0 %1\$s",
+                    $$"1px 1px 0 %1$s, 1px -1px 0 %1$s, -1px 1px 0 %1$s, -1px -1px 0 %1$s",
                     HtmlUtils.toCssRgba(style.edgeColor)
                 )
 

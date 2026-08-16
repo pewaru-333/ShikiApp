@@ -7,40 +7,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import me.zhanghai.compose.preference.Preferences
 import org.application.shikiapp.shared.models.data.Token
-import org.application.shikiapp.shared.utils.ACCESS_TOKEN
-import org.application.shikiapp.shared.utils.ACCESS_TOKEN_LIB
-import org.application.shikiapp.shared.utils.BLANK
-import org.application.shikiapp.shared.utils.CREATED_AT
-import org.application.shikiapp.shared.utils.EXPIRES_IN
-import org.application.shikiapp.shared.utils.PREF_APP_CACHE
-import org.application.shikiapp.shared.utils.PREF_APP_LANGUAGE
-import org.application.shikiapp.shared.utils.PREF_APP_THEME
-import org.application.shikiapp.shared.utils.PREF_CATALOG_LIST_VIEW
-import org.application.shikiapp.shared.utils.PREF_COLOR_PALETTE
-import org.application.shikiapp.shared.utils.PREF_DYNAMIC_COLORS
-import org.application.shikiapp.shared.utils.PREF_EPISODE_AUTO_ADD
-import org.application.shikiapp.shared.utils.PREF_HAS_AGREED_TO_WATCH
-import org.application.shikiapp.shared.utils.PREF_LAST_SORTING_ORDER
-import org.application.shikiapp.shared.utils.PREF_REMEMBER_CATALOG_LAST_ORDER
-import org.application.shikiapp.shared.utils.PREF_SHOW_USER_RATES_LIST_TAB_SIZE
-import org.application.shikiapp.shared.utils.PREF_START_PAGE
-import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_TYPE
-import org.application.shikiapp.shared.utils.PREF_USER_RATES_START_WATCH_STATUS
-import org.application.shikiapp.shared.utils.REFRESH_TOKEN
-import org.application.shikiapp.shared.utils.REFRESH_TOKEN_LIB
-import org.application.shikiapp.shared.utils.USER_ID
-import org.application.shikiapp.shared.utils.enums.LinkedType
-import org.application.shikiapp.shared.utils.enums.ListView
-import org.application.shikiapp.shared.utils.enums.Menu
-import org.application.shikiapp.shared.utils.enums.Order
-import org.application.shikiapp.shared.utils.enums.Palette
-import org.application.shikiapp.shared.utils.enums.Theme
-import org.application.shikiapp.shared.utils.enums.WatchStatus
-import org.application.shikiapp.shared.utils.extensions.edit
-import org.application.shikiapp.shared.utils.extensions.getEnum
-import org.application.shikiapp.shared.utils.extensions.getEnumStateFlow
-import org.application.shikiapp.shared.utils.extensions.getFlow
-import org.application.shikiapp.shared.utils.extensions.getStateFlow
+import org.application.shikiapp.shared.utils.*
+import org.application.shikiapp.shared.utils.enums.*
+import org.application.shikiapp.shared.utils.extensions.*
 
 class Preferences(private val app: IPreferences, private val auth: IPreferences, scope: CoroutineScope) {
     val startPage: Menu

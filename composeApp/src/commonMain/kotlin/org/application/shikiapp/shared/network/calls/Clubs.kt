@@ -1,16 +1,9 @@
 package org.application.shikiapp.shared.network.calls
 
-import io.ktor.client.HttpClient
-import io.ktor.client.call.body
-import io.ktor.client.request.get
-import io.ktor.client.request.parameter
-import io.ktor.client.request.post
-import org.application.shikiapp.shared.models.data.AnimeBasic
-import org.application.shikiapp.shared.models.data.BasicInfo
-import org.application.shikiapp.shared.models.data.Club
-import org.application.shikiapp.shared.models.data.ClubImages
-import org.application.shikiapp.shared.models.data.MangaBasic
-import org.application.shikiapp.shared.models.data.UserBasic
+import io.ktor.client.*
+import io.ktor.client.call.*
+import io.ktor.client.request.*
+import org.application.shikiapp.shared.models.data.*
 
 class Clubs(private val client: HttpClient) {
     suspend fun getClubs(search: String, page: Int = 1, limit: Int = 15) = client.get("clubs") {

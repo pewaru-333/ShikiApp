@@ -1,25 +1,9 @@
-@file:OptIn(ExperimentalMaterial3Api::class)
+@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.shared.screens
 
-import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.foundation.layout.width
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.*
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -45,16 +29,7 @@ import org.application.shikiapp.shared.utils.rememberVerifiedDomain
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_add_app_links
-import shikiapp.composeapp.generated.resources.text_confirm
-import shikiapp.composeapp.generated.resources.text_dismiss
-import shikiapp.composeapp.generated.resources.text_forward_to_browser
-import shikiapp.composeapp.generated.resources.text_login
-import shikiapp.composeapp.generated.resources.text_pay_attention
-import shikiapp.composeapp.generated.resources.text_repeat_the_loading
-import shikiapp.composeapp.generated.resources.text_sure_to_logout
-import shikiapp.composeapp.generated.resources.text_to_settings
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun ProfileScreen(onNavigate: (Screen) -> Unit) {
@@ -187,7 +162,7 @@ private fun LoadingScreen(onClick: () -> Unit) =
     ) {
         IconButtonSettings(onClick)
 
-        CircularProgressIndicator(Modifier.align(Alignment.Center))
+        LoadingIndicator(Modifier.align(Alignment.Center))
     }
 
 @Composable

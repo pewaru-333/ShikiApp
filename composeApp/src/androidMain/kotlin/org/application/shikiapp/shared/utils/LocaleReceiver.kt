@@ -7,7 +7,7 @@ import android.content.Intent
 import android.os.Build
 import android.os.LocaleList
 import org.application.shikiapp.shared.di.Preferences
-import java.util.Locale
+import java.util.*
 
 class LocaleReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {

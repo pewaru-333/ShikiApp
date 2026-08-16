@@ -2,11 +2,7 @@ package org.application.shikiapp.shared.utils.enums
 
 import kotlinx.datetime.Month
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.season_autumn
-import shikiapp.composeapp.generated.resources.season_spring
-import shikiapp.composeapp.generated.resources.season_summer
-import shikiapp.composeapp.generated.resources.season_winter
+import shikiapp.composeapp.generated.resources.*
 
 enum class Season(val months: List<Month>, val title: StringResource) {
     WINTER(listOf(Month.JANUARY, Month.FEBRUARY, Month.DECEMBER), Res.string.season_winter),

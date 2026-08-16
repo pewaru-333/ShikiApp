@@ -3,14 +3,7 @@ package org.application.shikiapp.shared.utils.ui.subtitles
 import android.graphics.Typeface
 import android.text.Html
 import android.text.Spanned
-import android.text.style.AbsoluteSizeSpan
-import android.text.style.BackgroundColorSpan
-import android.text.style.ForegroundColorSpan
-import android.text.style.RelativeSizeSpan
-import android.text.style.StrikethroughSpan
-import android.text.style.StyleSpan
-import android.text.style.TypefaceSpan
-import android.text.style.UnderlineSpan
+import android.text.style.*
 import android.util.SparseArray
 import androidx.annotation.OptIn
 import androidx.core.util.size
@@ -146,7 +139,7 @@ object SpannedToHtmlConverter {
                 val style = getTextEmphasisStyle(span.markShape, span.markFill)
                 val position = getTextEmphasisPosition(span.position)
                 Util.formatInvariant(
-                    "<span style='-webkit-text-emphasis-style:%1\$s;text-emphasis-style:%1\$s;-webkit-text-emphasis-position:%2\$s;text-emphasis-position:%2\$s;display:inline-block;'>",
+                    $$"<span style='-webkit-text-emphasis-style:%1$s;text-emphasis-style:%1$s;-webkit-text-emphasis-position:%2$s;text-emphasis-position:%2$s;display:inline-block;'>",
                     style, position
                 )
             }

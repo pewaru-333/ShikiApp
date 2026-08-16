@@ -1,24 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.origin_book
-import shikiapp.composeapp.generated.resources.origin_card_game
-import shikiapp.composeapp.generated.resources.origin_four_koma_manga
-import shikiapp.composeapp.generated.resources.origin_game
-import shikiapp.composeapp.generated.resources.origin_light_novel
-import shikiapp.composeapp.generated.resources.origin_manga
-import shikiapp.composeapp.generated.resources.origin_mixed_media
-import shikiapp.composeapp.generated.resources.origin_music
-import shikiapp.composeapp.generated.resources.origin_novel
-import shikiapp.composeapp.generated.resources.origin_original
-import shikiapp.composeapp.generated.resources.origin_other
-import shikiapp.composeapp.generated.resources.origin_picture_book
-import shikiapp.composeapp.generated.resources.origin_radio
-import shikiapp.composeapp.generated.resources.origin_unknown
-import shikiapp.composeapp.generated.resources.origin_visual_novel
-import shikiapp.composeapp.generated.resources.origin_web_manga
-import shikiapp.composeapp.generated.resources.origin_web_novel
+import shikiapp.composeapp.generated.resources.*
 
 enum class Origin(val title: StringResource) {
     ORIGINAL(Res.string.origin_original),

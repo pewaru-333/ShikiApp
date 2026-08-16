@@ -1,21 +1,7 @@
 package org.application.shikiapp.shared.utils.enums
 
 import org.jetbrains.compose.resources.StringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.order_aired_on
-import shikiapp.composeapp.generated.resources.order_created_at_asc
-import shikiapp.composeapp.generated.resources.order_created_at_desc
-import shikiapp.composeapp.generated.resources.order_episodes
-import shikiapp.composeapp.generated.resources.order_id
-import shikiapp.composeapp.generated.resources.order_id_desc
-import shikiapp.composeapp.generated.resources.order_kind
-import shikiapp.composeapp.generated.resources.order_name
-import shikiapp.composeapp.generated.resources.order_popularity
-import shikiapp.composeapp.generated.resources.order_random
-import shikiapp.composeapp.generated.resources.order_ranked
-import shikiapp.composeapp.generated.resources.order_status
-import shikiapp.composeapp.generated.resources.order_updated_at_asc
-import shikiapp.composeapp.generated.resources.order_updated_at_desc
+import shikiapp.composeapp.generated.resources.*
 
 enum class Order(val title: StringResource) {
     ID(Res.string.order_id),
