@@ -1,15 +1,11 @@
 package org.application.shikiapp.shared.network.client
 
-import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
-import io.ktor.client.plugins.ResponseException
-import io.ktor.client.plugins.api.Send
-import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.request.get
-import io.ktor.http.HttpHeaders
-import io.ktor.http.Url
-import io.ktor.http.isSuccess
-import kotlinx.coroutines.CancellationException
+import io.ktor.client.*
+import io.ktor.client.plugins.*
+import io.ktor.client.plugins.api.*
+import io.ktor.client.request.*
+import io.ktor.http.*
+import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.application.shikiapp.shared.utils.BLANK
@@ -29,8 +25,11 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
     val mutex = Mutex()
     var workingUrl: String? = null
 
-    suspend fun resolveUrl(): String {
+    suspend fun resolveUrl(): String = coroutineScope {
         val pingClient = HttpClient {
+            expectSuccess = false
+            followRedirects = false
+
             install(HttpTimeout) {
                 requestTimeoutMillis = 3000
                 connectTimeoutMillis = 3000
@@ -38,18 +37,30 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
             }
         }
 
-        pingClient.use { pingClient ->
-            for (url in urls) {
-                try {
-                    if (pingClient.get(url).status.isSuccess()) {
-                        return url
+        pingClient.use { client ->
+            val winner = CompletableDeferred<String>()
+
+            urls.forEach { url ->
+                launch {
+                    try {
+                        val response = client.get(url)
+                        if (response.status.value in 200..399) {
+                            val location = response.headers[HttpHeaders.Location]
+                            winner.complete(location ?: url)
+                        }
+                    } catch (e: CancellationException) {
+                        throw e
+                    } catch (_: Exception) {
+
                     }
-                } catch (_: Exception) {
                 }
             }
-        }
 
-        return baseUrl
+            val result = winner.await()
+            coroutineContext.cancelChildren()
+
+            return@coroutineScope result
+        }
     }
 
     on(Send) { request ->
