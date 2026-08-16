@@ -20,8 +20,8 @@ jobs:
       - name: 'Extract versions from androidApp/build.gradle.kts'
         id: extract_version
         run: |
-          VERSION_CODE=$(grep "versionCode" androidApp/build.gradle.kts | sed 's/[^0-9]*//g')
-          VERSION_NAME=$(grep "versionName" androidApp/build.gradle.kts | cut -d '"' -f 2)
+          VERSION_CODE=$(grep "APP_VERSION_CODE" gradle.properties | cut -d '=' -f 2)
+          VERSION_NAME=$(grep "APP_VERSION_NAME" gradle.properties | cut -d '=' -f 2)
 
           echo "Извлечено: versionCode=${VERSION_CODE}, versionName=${VERSION_NAME}"
 
