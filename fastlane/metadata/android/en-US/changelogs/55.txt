@@ -1,4 +1,0 @@
-— Fixed a bug that caused the full-screen mode of the player on the PC to work incorrectly.
-— Fixed the display of icons and loading indicator when adding anime (manga, ranobe) to the list or favorites.
-— Fixed the delay in the image appearing in the gallery after downloading (Android).
-— Added localized link names of external sites on anime, manga, and ranobe pages.

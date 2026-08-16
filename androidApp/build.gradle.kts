@@ -11,8 +11,8 @@ android {
     defaultConfig {
         minSdk = 26
         targetSdk = 37
-        versionCode = 55
-        versionName = "alpha-0.7.7"
+        versionCode = project.findProperty("APP_VERSION_CODE").toString().toInt()
+        versionName = project.findProperty("APP_VERSION_NAME") as String
 
         buildFeatures {
             buildConfig = true
