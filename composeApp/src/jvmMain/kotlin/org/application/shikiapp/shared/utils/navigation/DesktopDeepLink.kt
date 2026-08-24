@@ -12,17 +12,16 @@ import java.net.Socket
 object DesktopDeepLink {
 
     private const val PORT = 47632
-    private const val DESKTOP_FILE_NAME = "shikiapp-deeplink"
-    private val SCHEMES = listOf("app", "ru.libapp.oauth")
+    private val SCHEMES = listOf("app", "darkshiki", "ru.libapp.oauth")
 
-    fun registerUriSchemeIfNeeded() {
+    fun registerUriSchemeIfNeeded(userAgent: String) {
         val system = System.getProperty("os.name").orEmpty().lowercase()
 
-        if (system.contains("win")) registerWindows()
-        else if (system.contains("linux")) registerLinux()
+        if (system.contains("win")) registerWindows(userAgent)
+        else if (system.contains("linux")) registerLinux(userAgent)
     }
 
-    private fun registerWindows() {
+    private fun registerWindows(userAgent: String) {
         for (scheme in SCHEMES) {
             val checkResult = runCommand("reg", "query", "HKCU\\SOFTWARE\\Classes\\$scheme", "/ve")
             if (checkResult != null && checkResult.contains("URL:")) continue
@@ -30,7 +29,7 @@ object DesktopDeepLink {
             val exePath = resolveExePath() ?: return
 
             // Стандарт
-            runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme", "/ve", "/d", "URL:ShikiApp", "/f")
+            runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme", "/ve", "/d", "URL:$userAgent", "/f")
             runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme", "/v", "URL Protocol", "/d", "", "/f")
             runCommand("reg", "add", "HKCU\\SOFTWARE\\Classes\\$scheme\\DefaultIcon", "/ve", "/d", "\"$exePath\",1", "/f")
 
@@ -42,9 +41,10 @@ object DesktopDeepLink {
         }
     }
 
-    private fun registerLinux() {
+    private fun registerLinux(userAgent: String) {
+        val desktopFileName = "$userAgent-deeplink"
         val appsDir = File(System.getProperty("user.home"), ".local/share/applications")
-        val desktopFile = File(appsDir, "$DESKTOP_FILE_NAME.desktop")
+        val desktopFile = File(appsDir, "$desktopFileName.desktop")
 
         val exePath = resolveExePath() ?: return
 
@@ -56,7 +56,7 @@ object DesktopDeepLink {
             """
             [Desktop Entry]
             Type=Application
-            Name=ShikiApp
+            Name=$userAgent
             Exec="$exePath" %u
             Terminal=false
             MimeType=$mimeTypes
@@ -67,7 +67,7 @@ object DesktopDeepLink {
         runCommand("update-desktop-database", appsDir.absolutePath)
 
         for (scheme in SCHEMES) {
-            runCommand("xdg-mime", "default", "$DESKTOP_FILE_NAME.desktop", "x-scheme-handler/$scheme")
+            runCommand("xdg-mime", "default", "$desktopFileName.desktop", "x-scheme-handler/$scheme")
         }
     }
 
