@@ -12,7 +12,7 @@ actual abstract class PlatformContext
 class DesktopContext : PlatformContext()
 actual class AppModuleInitializer actual constructor(override val context: PlatformContext, private val appConfig: AppConfig) : AppModule {
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
-    val preferencesDesktop = PreferencesDesktop()
+    val preferencesDesktop = PreferencesDesktop(appConfig)
 
     override val config: AppConfig
         get() = appConfig

@@ -8,27 +8,29 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import me.zhanghai.compose.preference.MapPreferences
+import org.application.shikiapp.shared.AppConfig
 import org.application.shikiapp.shared.di.AppContext
 import org.application.shikiapp.shared.di.AppModuleInitializer
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
-import java.util.*
+import java.util.Properties
 import me.zhanghai.compose.preference.Preferences as Prefs
 
-class PreferencesDesktop : IPreferences {
+class PreferencesDesktop(appConfig: AppConfig) : IPreferences {
+    private val userAgent = appConfig.userAgent
     private val prefsDir: File = run {
         val os = System.getProperty("os.name").lowercase()
         val baseDir = when {
-            os.contains("win") -> File(System.getenv("APPDATA"), "ShikiApp")
+            os.contains("win") -> File(System.getenv("APPDATA"), userAgent)
 
-            else -> File(System.getProperty("user.home"), ".config/ShikiApp")
+            else -> File(System.getProperty("user.home"), ".config/$userAgent")
         }
 
         baseDir.also { if (!it.exists()) it.mkdirs() }
     }
 
-    private val prefsFile = File(prefsDir, "preferences_shikiapp.properties")
+    private val prefsFile = File(prefsDir, "preferences_${userAgent.lowercase()}.properties")
     private val properties = Properties()
 
     private val _updates = MutableSharedFlow<String>(extraBufferCapacity = 64)
