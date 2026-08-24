@@ -3,6 +3,7 @@ package org.application.shikiapp.shared.models.ui
 import androidx.compose.ui.text.AnnotatedString
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
 import org.application.shikiapp.shared.network.response.AsyncData
@@ -54,5 +55,14 @@ data class Anime(
 )
 
 interface AnimeT {
+    val url: String
     val topicId: Long?
+
+    fun mapToAnime(
+        franchise: org.application.shikiapp.shared.models.data.Franchise,
+        similar: List<AnimeBasic>,
+        favoured: Boolean,
+        comments: Flow<PagingData<Comment>>,
+        reviews: Flow<PagingData<Review>>
+    ): Anime
 }
