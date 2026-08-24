@@ -14,7 +14,7 @@ import kotlin.time.Duration.Companion.milliseconds
 
 @Stable
 class VideoPlayerState {
-    val speedList = listOf(0.5f, 1f, 1.5f, 2f)
+    val speedList = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
     val controls = Controls()
 
     // Ссылка, статус, время
@@ -34,7 +34,7 @@ class VideoPlayerState {
     // Громкость, скорость, качество
     var volume by mutableFloatStateOf(1f)
         internal set
-    var speed by mutableFloatStateOf(speedList[1])
+    var speed by mutableFloatStateOf(speedList[2])
         internal set
     var currentQuality by mutableStateOf<Int?>(null)
         internal set
@@ -227,7 +227,7 @@ class VideoPlayerState {
         var isSliderDragging by mutableStateOf(false)
             private set
 
-        var speedLabel by mutableStateOf(speedLabels[1])
+        var speedLabel by mutableStateOf(speedLabels[2])
             private set
         var sliderValue by mutableFloatStateOf(0f)
             private set
@@ -360,8 +360,10 @@ class VideoPlayerState {
 
         @Composable
         fun QualityListener(qualities: List<Int>) = LaunchedEffect(qualities) {
-            qualityList = qualities
-            currentQuality = qualities.maxOrNull()
+            if (qualities.isNotEmpty()) {
+                qualityList = qualities
+                currentQuality = qualities.maxOrNull()
+            }
         }
     }
 }
