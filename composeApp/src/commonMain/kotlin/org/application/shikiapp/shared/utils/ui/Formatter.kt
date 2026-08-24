@@ -184,8 +184,8 @@ object Formatter {
         val body = Ksoup.parse(text, ApiRoutes.workingBaseUrl)
 
         val videos = body.select(".b-video").mapNotNullTo(ArrayList()) { element ->
-            val videoUrl = element.select("a").attr("href").toHttps()
-            val previewUrl = element.select("img").attr("src").toHttps()
+            val videoUrl = element.select("a").attr("abs:href").toHttps()
+            val previewUrl = element.select("img").attr("abs:src").toHttps()
             if (videoUrl.isNotEmpty()) CommentContent.VideoContent(previewUrl, videoUrl, "YouTube") else null
         }
 
@@ -209,12 +209,17 @@ object Formatter {
             }
         }
 
-        val images = body.select("a[href*=/original/], img[src*=/original/], a[href*=%2Foriginal%2F], img[src*=%2Foriginal%2F]")
-            .mapNotNullTo(LinkedHashSet()) { element ->
-                element.attr("href")
-                    .ifEmpty { element.attr("src") }
-                    .takeIf(String::isNotEmpty)
-            }.toList()
+        val cssQuery = buildString {
+            append("a[href*=/original/], img[src*=/original/], ")
+            append("a[href*=%2Foriginal%2F], img[src*=%2Foriginal%2F], ")
+            append("a[href*=/uploads/], img[src*=/uploads/]")
+        }
+
+        val images = body.select(cssQuery).mapNotNullTo(LinkedHashSet()) { element ->
+            element.attr("abs:href")
+                .ifEmpty { element.attr("abs:src") }
+                .takeIf(String::isNotEmpty)
+        }.toList()
 
         val poster: CommentContent?
         val finalVideos: List<CommentContent.VideoContent>
