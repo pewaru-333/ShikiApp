@@ -30,7 +30,7 @@ platform :ios do
       scheme: "iosApp",
       configuration: "DarkShiki Release",
       export_method: "app-store",
-      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242'",
+      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242' PROVISIONING_PROFILE_SPECIFIER='appstore release2'",
       export_options: {
         provisioningProfiles: {
           "rip.shiki.app" => "appstore release2"
