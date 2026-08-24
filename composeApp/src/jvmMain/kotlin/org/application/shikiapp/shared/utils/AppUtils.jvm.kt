@@ -28,9 +28,9 @@ import org.application.shikiapp.shared.utils.ui.HtmlParser
 import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
-import uk.co.caprica.vlcj.factory.discovery.NativeDiscovery
 import java.io.File
-import java.util.*
+import java.util.Locale
+
 
 actual fun fromHtml(text: String?) = buildAnnotatedString {
     Ksoup.parse(text.orEmpty()).body().childNodes().forEach { parseNode(it, this) }
@@ -81,8 +81,8 @@ fun initVlc() {
     val platform = Platform.RESOURCE_PREFIX
     val resourcesDir = System.getProperty("compose.application.resources.dir")?.let(::File)
 
-    val vlcPath = if (resourcesDir != null && resourcesDir.exists() && File(resourcesDir, platform).exists()) {
-        File(resourcesDir, platform).absolutePath
+    val vlcPath = if (resourcesDir != null && resourcesDir.exists() && File(resourcesDir, "vlc/$platform").exists()) {
+        File(resourcesDir, "vlc/$platform").absolutePath
     } else {
         val userDir = System.getProperty("user.dir")
         val baseDir = if (userDir.endsWith("desktopApp")) File(userDir)
@@ -96,8 +96,6 @@ fun initVlc() {
         System.setProperty("jna.library.path", vlcPath)
         System.setProperty("VLC_PLUGIN_PATH", "$vlcPath/plugins")
     }
-
-    NativeDiscovery().discover()
 }
 
 actual fun getDefaultLocale(context: PlatformContext): String = Locale.getDefault().language
