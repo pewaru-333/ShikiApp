@@ -1,10 +1,13 @@
 package org.application.shikiapp.shared.network.client
 
-import io.ktor.client.*
-import io.ktor.client.plugins.*
-import io.ktor.client.plugins.api.*
-import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.plugins.HttpTimeout
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.api.Send
+import io.ktor.client.plugins.api.createClientPlugin
+import io.ktor.client.request.get
+import io.ktor.http.HttpHeaders
+import io.ktor.http.Url
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -46,7 +49,8 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
                         val response = client.get(url)
                         if (response.status.value in 200..399) {
                             val location = response.headers[HttpHeaders.Location]
-                            winner.complete(location ?: url)
+                            val finalUrl = location?.removeSuffix("/") ?: url
+                            winner.complete(finalUrl)
                         }
                     } catch (e: CancellationException) {
                         throw e
