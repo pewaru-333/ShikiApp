@@ -244,7 +244,7 @@ private fun Sources(
             items(sources, VideoSourceData::type) { source ->
                 ListItem(
                     trailingContent = { VectorIcon(Icons.KeyboardArrowRight) },
-                    supportingContent = { Text(pluralStringResource(Res.plurals.plural_count_dubbers, source.voices.size, source.voices.size)) },
+                    supportingContent = { Text(pluralStringResource(Res.plurals.plural_count_variants, source.voices.size, source.voices.size)) },
                     headlineContent = {
                         Text(
                             text = stringResource(source.type.title),
