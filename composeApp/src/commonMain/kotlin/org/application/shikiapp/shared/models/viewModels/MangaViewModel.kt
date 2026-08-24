@@ -34,8 +34,7 @@ class MangaViewModel(saved: SavedStateHandle) : CachedDetailViewModel<MangaT, Ma
 
         setCommentParams(data.topicId, CommentableType.MANGA)
 
-        return Network.mangaRepository.mapToManga(
-            raw = data,
+        return data.mapToManga(
             franchise = franchise,
             similar = similar,
             favoured = favoured,
