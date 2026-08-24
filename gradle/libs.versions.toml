@@ -9,10 +9,9 @@ media3 = "1.11.0"
 compose-adaptive = "1.3.0-beta02"
 compose-lifecycle = "2.11.0"
 compose-material3 = "1.12.0-alpha03"
-compose-multiplatform = "1.12.0-beta03"
+compose-multiplatform = "1.12.0-rc01"
 compose-navigation = "2.10.0-alpha02"
 compose-navigation-event = "1.1.0"
-compose-navigation-suite = "1.12.0-alpha03"
 compose-paging = "3.5.1"
 
 # Kotlin
@@ -22,14 +21,14 @@ kotlinx-datetime = "0.8.0"
 kotlinx-serialization-json = "1.11.0"
 
 # Network
-apollo-api = "5.0.1"
+apollo-api = "5.1.0"
 ktor = "3.5.2"
 
 # Video (desktop)
-vlcj = "4.12.1"
+vlcj = "5.0.0-M4"
 
 # Video (Android)
-libass = "0.5.0"
+libass = "0.5.1"
 
 # Utils
 coil = "3.5.0"
@@ -39,7 +38,7 @@ ksoup = "0.2.6"
 zoomable = "2.13.0"
 
 # Build
-gradle = "9.3.1"
+gradle = "9.3.2"
 
 [libraries]
 # AndroidX
@@ -59,7 +58,7 @@ androidx-paging-compose = { group = "androidx.paging", name = "paging-compose", 
 # Compose Multiplatform
 compose-material3 = { group = "org.jetbrains.compose.material3", name = "material3", version.ref = "compose-material3" }
 compose-material3-adaptive = { group = "org.jetbrains.compose.material3.adaptive", name = "adaptive", version.ref = "compose-adaptive" }
-compose-material3-navigationSuite = { group = "org.jetbrains.compose.material3", name = "material3-adaptive-navigation-suite", version.ref = "compose-navigation-suite" }
+compose-material3-navigation-suite = { group = "org.jetbrains.compose.material3", name = "material3-adaptive-navigation-suite", version.ref = "compose-material3" }
 compose-resources = { group = "org.jetbrains.compose.components", name = "components-resources", version.ref = "compose-multiplatform" }
 compose-runtime = { group = "org.jetbrains.compose.runtime", name = "runtime", version.ref = "compose-multiplatform" }
 compose-ui = { group = "org.jetbrains.compose.ui", name = "ui", version.ref = "compose-multiplatform" }
