@@ -1,0 +1,69 @@
+default_platform(:ios)
+
+def read_gradle_property(property_name)
+  file_path = "../../gradle.properties"
+  if File.exist?(file_path)
+    File.readlines(file_path).each do |line|
+      if line.strip.start_with?(property_name + "=") || line.strip.start_with?(property_name + " =")
+        return line.split('=')[1].strip
+      end
+    end
+  end
+  UI.user_error!("Could not find #{property_name} in gradle.properties")
+end
+
+platform :ios do
+
+  desc "Phase 1: Build the iOS app and generate an .ipa file"
+  lane :build_ios_release do
+    raw_version_name = read_gradle_property("APP_VERSION_NAME")
+    version_code = read_gradle_property("APP_VERSION_CODE")
+    clean_version_name = raw_version_name.include?("-") ? raw_version_name.split("-").last : raw_version_name
+
+    UI.message("Applying Version: #{clean_version_name} and Build: #{version_code} to iOS project...")
+
+    increment_version_number(version_number: clean_version_name, xcodeproj: "../iosApp.xcodeproj")
+    increment_build_number(build_number: version_code, xcodeproj: "../iosApp.xcodeproj")
+
+    build_app(
+      workspace: "iosApp.xcworkspace",
+      scheme: "iosApp",
+      configuration: "DarkShiki Release",
+      export_method: "app-store",
+      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242'",
+      export_options: {
+        provisioningProfiles: {
+          "rip.shiki.app" => "appstore release2"
+        }
+      },
+      output_directory: "../build",
+      output_name: "ShikiApp.ipa"
+    )
+  end
+
+  desc "Phase 3: Deploy the pre-built .ipa to App Store Connect"
+  lane :deploy_ios_release do
+    version_code = read_gradle_property("APP_VERSION_CODE")
+    changelog_path = "../../fastlane/metadata/android/ru/changelogs/#{version_code}.txt"
+    changelog_text = File.exist?(changelog_path) ? File.read(changelog_path) : "— Это техническое обновление без изменений в интерфейсе."
+
+    app_store_connect_api_key(
+      key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
+      issuer_id: ENV["APP_STORE_CONNECT_API_KEY_ISSUER_ID"],
+      key_content: ENV["APP_STORE_CONNECT_API_KEY_KEY"],
+      in_house: false
+    )
+
+    upload_to_app_store(
+      ipa: "../build/ShikiApp.ipa",
+      submit_for_review: true,
+      force: true,
+      automatic_release: true,
+      skip_metadata: false,
+      skip_screenshots: true,
+      release_notes: {
+        "default" => changelog_text
+      }
+    )
+  end
+end
