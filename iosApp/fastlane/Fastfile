@@ -30,6 +30,7 @@ platform :ios do
       scheme: "iosApp",
       configuration: "DarkShiki Release",
       export_method: "app-store",
+      codesigning_identity: "Apple Distribution",
       xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242' PROVISIONING_PROFILE_SPECIFIER='appstore release2'",
       export_options: {
         provisioningProfiles: {
