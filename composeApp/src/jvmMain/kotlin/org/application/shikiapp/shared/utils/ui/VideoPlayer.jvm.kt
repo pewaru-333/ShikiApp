@@ -1,51 +1,85 @@
 package org.application.shikiapp.shared.utils.ui
 
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asComposeImageBitmap
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
-import androidx.compose.ui.layout.ContentScale
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.*
 import org.application.shikiapp.shared.di.DesktopContext
 import org.application.shikiapp.shared.di.PlatformContext
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.data.CertificatesHelper
 import org.jetbrains.skia.*
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
+import uk.co.caprica.vlcj.media.TrackType
+import uk.co.caprica.vlcj.player.base.AudioTrack
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
-import uk.co.caprica.vlcj.player.base.TrackDescription
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
 import uk.co.caprica.vlcj.player.embedded.videosurface.CallbackVideoSurface
-import uk.co.caprica.vlcj.player.embedded.videosurface.VideoSurfaceAdapters.getVideoSurfaceAdapter
+import uk.co.caprica.vlcj.player.embedded.videosurface.VideoSurface
+import uk.co.caprica.vlcj.player.embedded.videosurface.VideoSurfaceAdapters
 import uk.co.caprica.vlcj.player.embedded.videosurface.callback.BufferFormat
 import uk.co.caprica.vlcj.player.embedded.videosurface.callback.BufferFormatCallback
 import uk.co.caprica.vlcj.player.embedded.videosurface.callback.RenderCallback
-import uk.co.caprica.vlcj.player.embedded.videosurface.callback.format.RV32BufferFormat
+import uk.co.caprica.vlcj.player.embedded.videosurface.callback.format.StandardBufferFormat
 import java.awt.Point
 import java.awt.Toolkit
 import java.awt.image.BufferedImage
+import java.lang.foreign.MemorySegment
 import java.nio.ByteBuffer
+import java.util.concurrent.locks.ReentrantLock
+import kotlin.concurrent.withLock
 import kotlin.time.Duration.Companion.seconds
 
 class VideoPlayerController(private val state: VideoPlayerState) {
-    private val coroutineScope = CoroutineScope(Dispatchers.IO + SupervisorJob())
-    private val factory = MediaPlayerFactory()
+    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+    private val vlcArgs = listOf(
+        "--gnutls-dir-trust=${CertificatesHelper.directory.absolutePath}",
+        "--http-reconnect",
+        "--network-caching=5000"
+    )
+
+    private val factory = MediaPlayerFactory(null, vlcArgs) // vlc-4.0-25062026
+    private val mediaPlayer: EmbeddedMediaPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer()
+    private val videoSurface = SkiaImageVideoSurface()
 
     private val cachedSubtitles = mutableSetOf<String>()
 
-    val mediaPlayer: EmbeddedMediaPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer()
-
     private var isReady = false
-
-    var imageBitmap by mutableStateOf<ImageBitmap?>(null)
-        private set
 
     private var openingJob: Job? = null
 
-    internal fun play(url: String) {
+    internal suspend fun play() {
+        val url = state.url ?: return
+
+        try {
+            val response = Network.watchClient.get(url) {
+                header(HttpHeaders.Range, "bytes=0-0")
+            }
+
+            val status = response.status
+            if (status == HttpStatusCode.OK || status == HttpStatusCode.PartialContent) {
+                response.headers[HttpHeaders.ContentType]?.let { contentType ->
+                    if (contentType.startsWith("application/dash+xml", ignoreCase = true)) {
+                        state.playNext()
+                        return
+                    }
+                }
+            }
+        } catch (_: Exception) {
+            state.playNext()
+            return
+        }
+
         val options = state.headers.mapNotNull { (key, value) ->
             when (key.lowercase()) {
                 "user-agent" -> ":http-user-agent=$value"
@@ -54,40 +88,51 @@ class VideoPlayerController(private val state: VideoPlayerState) {
             }
         }
 
+        CertificatesHelper.installCertificates(url)
         mediaPlayer.media().play(url, *options.toTypedArray())
     }
 
     internal fun create() {
+        mediaPlayer.videoSurface().set(videoSurface)
         mediaPlayer.events().addMediaPlayerEventListener(playerEventListener)
-        mediaPlayer.videoSurface().set(
-            CallbackVideoSurface(
-                /* bufferFormatCallback = */ FormatCallback,
-                /* renderCallback = */ VideoRenderCallback(),
-                /* lockBuffers = */ true,
-                /* videoSurfaceAdapter = */ getVideoSurfaceAdapter()
-            )
-        )
     }
 
     internal fun release() {
-        coroutineScope.launch {
-            runCatching {
-                if (state.isPlaying || mediaPlayer.status().isPlaying) {
-                    mediaPlayer.controls().stop()
-                }
-                mediaPlayer.release()
-                factory.release()
+        mediaPlayer.release()
+        factory.release()
+        coroutineScope.cancel()
+    }
+
+    internal fun <R> withImage(block: (Image?) -> R): R = videoSurface.withImage(block)
+
+    internal fun togglePlayPause() {
+        if (state.isPlaying) mediaPlayer.controls().play()
+        else mediaPlayer.controls().pause()
+    }
+
+    internal fun setVolume() {
+        mediaPlayer.audio().setVolume((state.volume * 100).toInt())
+    }
+
+    internal fun setSpeed() {
+        mediaPlayer.controls().setRate(state.speed)
+    }
+
+    internal fun seek() {
+        state.seekTrigger?.let { seconds ->
+            if (state.totalTime > 0f) {
+                mediaPlayer.controls().setTime((seconds * 1000).toLong())
             }
-        }.invokeOnCompletion {
-            coroutineScope.cancel()
         }
     }
 
-    internal fun loadAudioTrack(index: Int) {
-        var audioTrack: TrackDescription? = null
+    internal fun loadAudioTrack() {
+        val index = state.audioTrackIndex ?: return
 
-        for (track in mediaPlayer.audio().trackDescriptions()) {
-            val description = track.description()
+        var audioTrack: AudioTrack? = null
+
+        for (track in mediaPlayer.tracks().audioTracks().tracks()) {
+            val description = track.name()
             val charIndex = description.lastIndexOf('-')
             if (charIndex == -1) continue
 
@@ -110,14 +155,12 @@ class VideoPlayerController(private val state: VideoPlayerState) {
             }
         }
 
-        if (audioTrack != null) {
-            mediaPlayer.audio().setTrack(audioTrack.id())
-        }
+        audioTrack?.let(mediaPlayer.tracks()::selectTrack)
     }
 
     internal fun loadSubtitles() {
         if (state.selectedSubtitlesTrack == null) {
-            mediaPlayer.subpictures().setTrack(-1)
+            mediaPlayer.tracks().deselect(TrackType.TEXT)
         } else {
             state.subtitles
                 .find { it.name == state.selectedSubtitlesTrack }
@@ -125,9 +168,10 @@ class VideoPlayerController(private val state: VideoPlayerState) {
                     if (cachedSubtitles.add(subtitleTrack.url)) {
                         mediaPlayer.subpictures().setSubTitleUri(subtitleTrack.url)
                     } else {
-                        val index = cachedSubtitles.indexOf(subtitleTrack.url) + 1
-                        val subtitle = mediaPlayer.subpictures().trackDescriptions()[index]
-                        mediaPlayer.subpictures().setTrack(subtitle.id())
+                        val index = cachedSubtitles.indexOf(subtitleTrack.url)
+                        val subtitle = mediaPlayer.tracks().textTracks().tracks()[index]
+
+                        mediaPlayer.tracks().selectTrack(subtitle)
                     }
                 }
         }
@@ -172,111 +216,127 @@ class VideoPlayerController(private val state: VideoPlayerState) {
             }
         }
 
-        override fun videoOutput(mediaPlayer: MediaPlayer, newCount: Int) {
-            var quality: Int? = null
-            for (videoTrack in mediaPlayer.media().info().videoTracks()) {
-                for (track in mediaPlayer.video().trackDescriptions()) {
-                    if (videoTrack.id() == track.id()) {
-                        quality = videoTrack.height()
-                        break
+        override fun elementaryStreamAdded(mediaPlayer: MediaPlayer, type: TrackType, id: Int, streamId: String) {
+            if (type == TrackType.TEXT) {
+                mediaPlayer.tracks().select(type, streamId)
+            }
+        }
+
+        override fun elementaryStreamUpdated(mediaPlayer: MediaPlayer, type: TrackType, id: Int, streamId: String) {
+            if (type != TrackType.VIDEO) return
+
+            val videoTracks = mediaPlayer.tracks().videoTracks()
+            val currentQuality = videoTracks.tracks()
+                .firstOrNull { it.id() == mediaPlayer.tracks().selectedVideoTrack().id() }
+                ?.height()
+                ?.takeIf { it > 0 }
+
+            val mergedQualities = hashSetOf<Int>().apply {
+                addAll(state.qualityList)
+
+                videoTracks.tracks().forEach { track ->
+                    val height = track.height()
+                    if (height > 0) {
+                        add(height)
                     }
                 }
+            }.sortedDescending()
+
+
+            if (mergedQualities.isNotEmpty() && state.qualityList != mergedQualities) {
+                state.qualityList = mergedQualities
             }
 
-            if (quality != null && state.currentQuality != quality) {
-                state.currentQuality = quality
+            if (currentQuality != null && state.currentQuality != currentQuality) {
+                state.currentQuality = currentQuality
             }
 
             state.tracksRevision++
         }
     }
 
-    private object FormatCallback : BufferFormatCallback {
-        override fun getBufferFormat(sourceWidth: Int, sourceHeight: Int) = RV32BufferFormat(sourceWidth, sourceHeight)
-        override fun newFormatSize(bufferWidth: Int, bufferHeight: Int, displayWidth: Int, displayHeight: Int) = Unit
-        override fun allocatedBuffers(buffers: Array<ByteBuffer>) = Unit
-    }
+    class SkiaImageVideoSurface : VideoSurface(VideoSurfaceAdapters.getVideoSurfaceAdapter()) {
+        private val videoSurface = SkiaImageCallbackVideoSurface()
+        private val skiaImage = mutableStateOf<Image?>(null)
+        private val lock = ReentrantLock()
+        private lateinit var pixmap: Pixmap
 
-    private inner class VideoRenderCallback : RenderCallback {
-        private var lastWidth = 0
-        private var lastHeight = 0
-        private var lastImageInfo = ImageInfo.DEFAULT
+        internal fun <R> withImage(block: (Image?) -> R): R = lock.withLock {
+            block(skiaImage.value)
+        }
 
-        override fun lock(mediaPlayer: MediaPlayer) = Unit
-        override fun unlock(mediaPlayer: MediaPlayer) = Unit
-        override fun display(
-            mediaPlayer: MediaPlayer,
-            nativeBuffers: Array<ByteBuffer>,
-            bufferFormat: BufferFormat,
-            displayWidth: Int,
-            displayHeight: Int
-        ) {
-            val buffer = nativeBuffers[0]
-            val width = bufferFormat.width
-            val height = bufferFormat.height
-            val size = width * height * 4
+        override fun attach(mediaPlayer: MediaPlayer?) {
+            videoSurface.attach(mediaPlayer)
+        }
 
-            if (lastWidth != width || lastHeight != height) {
-                lastWidth = width
-                lastHeight = height
-                lastImageInfo = ImageInfo(
+        private inner class SkiaImageBufferFormatCallback : BufferFormatCallback {
+            private var width = 0
+            private var height = 0
+
+            override fun newFormatSize(bufferWidth: Int, bufferHeight: Int, displayWidth: Int, displayHeight: Int) = Unit
+            override fun getBufferFormat(sourceWidth: Int, sourceHeight: Int): BufferFormat {
+                width = sourceWidth
+                height = sourceHeight
+
+                return StandardBufferFormat(sourceWidth, sourceHeight)
+            }
+
+            override fun allocatedBuffers(buffers: Array<out ByteBuffer>) {
+                val buffer = buffers[0]
+                val pointer = MemorySegment.ofBuffer(buffer).address()
+                val imageInfo = ImageInfo(
                     width = width,
                     height = height,
-                    colorInfo = ColorInfo(
-                        alphaType = ColorAlphaType.OPAQUE,
-                        colorType = ColorType.BGRA_8888,
-                        colorSpace = ColorSpace.sRGB
-                    )
+                    colorType = ColorType.RGBA_8888,
+                    alphaType = ColorAlphaType.PREMUL
                 )
-            }
 
-            val frameBytes = ByteArray(size)
-            buffer.get(frameBytes, 0, size)
-            buffer.rewind()
-
-            imageBitmap = with(Bitmap()) {
-                allocPixels(lastImageInfo)
-                installPixels(lastImageInfo, frameBytes, width * 4)
-                asComposeImageBitmap()
+                pixmap = Pixmap.make(imageInfo, pointer, width * 4)
             }
         }
+
+        private inner class SkiaImageRenderCallback : RenderCallback {
+            override fun lock(mediaPlayer: MediaPlayer?) = Unit
+            override fun unlock(mediaPlayer: MediaPlayer?) = Unit
+            override fun display(mediaPlayer: MediaPlayer, nativeBuffers: Array<out ByteBuffer>, bufferFormat: BufferFormat, displayWidth: Int, displayHeight: Int) {
+               lock.withLock {
+                   skiaImage.value?.close()
+                   skiaImage.value = Image.makeFromPixmap(pixmap)
+               }
+            }
+        }
+
+        private inner class SkiaImageCallbackVideoSurface : CallbackVideoSurface(SkiaImageBufferFormatCallback(), SkiaImageRenderCallback(), true)
     }
 }
 
 @Composable
 actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
     val windowManager = LocalWindowManager.current
-
     val controller = remember(state) { VideoPlayerController(state) }
-    val mediaPlayer = controller.mediaPlayer
 
     LaunchedEffect(state.url) {
-        state.url?.let(controller::play)
+        controller.play()
     }
 
     LaunchedEffect(state.isPlaying) {
-        if (state.isPlaying) mediaPlayer.controls().play()
-        else mediaPlayer.controls().pause()
+        controller.togglePlayPause()
     }
 
     LaunchedEffect(state.volume) {
-        mediaPlayer.audio().setVolume((state.volume * 100).toInt())
+        controller.setVolume()
     }
 
     LaunchedEffect(state.speed) {
-        mediaPlayer.controls().setRate(state.speed)
+        controller.setSpeed()
     }
 
     LaunchedEffect(state.seekTrigger, state.totalTime) {
-        state.seekTrigger?.let { seconds ->
-            if (state.totalTime > 0f) {
-                mediaPlayer.controls().setTime((seconds * 1000).toLong())
-            }
-        }
+        controller.seek()
     }
 
     LaunchedEffect(state.audioTrackIndex, state.tracksRevision) {
-        state.audioTrackIndex?.let(controller::loadAudioTrack)
+        controller.loadAudioTrack()
     }
 
     LaunchedEffect(state.selectedSubtitlesTrack) {
@@ -298,13 +358,30 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         }
     }
 
-    controller.imageBitmap?.let { bitmap ->
-        Image(
-            bitmap = bitmap,
-            contentDescription = null,
-            modifier = modifier.fillMaxSize(),
-            contentScale = if (state.isZoomed) ContentScale.Crop else ContentScale.Fit
-        )
+    Canvas(modifier.fillMaxSize()) {
+        controller.withImage { image ->
+            image?.let { img ->
+                val canvasWidth = size.width
+                val canvasHeight = size.height
+                val imageWidth = img.width.toFloat()
+                val imageHeight = img.height.toFloat()
+
+                val scale = minOf(canvasWidth / imageWidth, canvasHeight / imageHeight)
+                val scaledWidth = imageWidth * scale
+                val scaledHeight = imageHeight * scale
+
+                val xOffset = (canvasWidth - scaledWidth) / 2
+                val yOffset = (canvasHeight - scaledHeight) / 2
+
+                drawIntoCanvas { canvas ->
+                    canvas.save()
+                    canvas.translate(xOffset, yOffset)
+                    canvas.scale(scale, scale)
+                    canvas.skiaCanvas.drawImage(img, 0f, 0f)
+                    canvas.restore()
+                }
+            }
+        }
     }
 }
 
