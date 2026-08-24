@@ -1,13 +1,15 @@
 package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.ApolloClient
-import io.ktor.client.*
+import io.ktor.client.HttpClient
 import io.ktor.client.plugins.*
-import io.ktor.client.plugins.auth.*
-import io.ktor.client.plugins.auth.providers.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import io.ktor.client.plugins.auth.Auth
+import io.ktor.client.plugins.auth.providers.BearerTokens
+import io.ktor.client.plugins.auth.providers.bearer
+import io.ktor.client.plugins.cache.HttpCache
+import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.http.HttpStatusCode
+import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.IO
 import kotlinx.io.IOException
@@ -91,6 +93,8 @@ object Network {
 
                 retryOnExceptionIf { _, throwable -> throwable is IOException }
             }
+
+            install(HttpCache)
 
             install(RateLimit)
 
