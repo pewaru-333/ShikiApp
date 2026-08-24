@@ -4,8 +4,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.call.*
-import io.ktor.http.*
+import io.ktor.client.call.body
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
 import org.application.shikiapp.shared.di.Preferences
@@ -99,10 +99,16 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
         is PlayerEvent.ChangeQuality -> changeQuality(event.quality)
         is PlayerEvent.OnAutoQualityChanged -> {
+            val qualities = if (event.qualityList.size > 1 || currentState.qualityList.isEmpty()) {
+                event.qualityList.ifEmpty { currentState.qualityList }
+            } else {
+                currentState.qualityList
+            }
+
             _state.update {
                 it.copy(
                     currentQuality = event.quality,
-                    qualityList = event.qualityList.ifEmpty(it::qualityList)
+                    qualityList = qualities
                 )
             }
         }
