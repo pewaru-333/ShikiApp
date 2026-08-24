@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">ShikiApp</string>
+    <string name="app_name_rip">ShikiRip</string>
 
     <!-- Описание -->
     <string name="text_authors">Authors</string>
@@ -389,9 +390,9 @@
 
     <string name="text_explain_before_watch">This app does not host video files, but streams them from publicly available third-party sources. The developers are not responsible for content on external servers. By continuing to watch, you acknowledge and agree to these terms.</string>
 
-    <plurals name="plural_count_dubbers">
-        <item quantity="one">%1$d dubber</item>
-        <item quantity="other">%1$d dubbers</item>
+    <plurals name="plural_count_variants">
+        <item quantity="one">%1$d variant</item>
+        <item quantity="other">%1$d variants</item>
     </plurals>
 
     <plurals name="plural_count_episodes">

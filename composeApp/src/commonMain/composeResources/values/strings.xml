@@ -1,5 +1,6 @@
 <resources>
     <string name="app_name">ShikiApp</string>
+    <string name="app_name_rip">ShikiRip</string>
 
     <!-- Описание -->
     <string name="text_authors">Авторы</string>
@@ -418,13 +419,13 @@
 
     <string name="text_explain_before_watch">Приложение не хранит видеофайлы, а воспроизводит их из открытых сторонних источников. Разработчики не несут ответственности за контент на внешних серверах. Продолжая просмотр, вы соглашаетесь с данными условиями.</string>
 
-    <plurals name="plural_count_dubbers">
-        <item quantity="zero">%1$d озвучек</item>
-        <item quantity="one">%1$d озвучка</item>
-        <item quantity="two">%1$d озвучки</item>
-        <item quantity="few">%1$d озвучки</item>
-        <item quantity="many">%1$d озвучек</item>
-        <item quantity="other">%1$d озвучек</item>
+    <plurals name="plural_count_variants">
+        <item quantity="zero">%1$d вариантов</item>
+        <item quantity="one">%1$d вариант</item>
+        <item quantity="two">%1$d варианта</item>
+        <item quantity="few">%1$d варианта</item>
+        <item quantity="many">%1$d вариантов</item>
+        <item quantity="other">%1$d вариантов</item>
     </plurals>
 
     <plurals name="plural_count_episodes">
