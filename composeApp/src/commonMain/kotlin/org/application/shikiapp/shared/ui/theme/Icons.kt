@@ -233,6 +233,3381 @@ object Icons {
             return _AppIcon!!
         }
 
+    private var _AppIconRip: ImageVector? = null
+
+    val AppIconRip: ImageVector
+        get() {
+            if (_AppIconRip != null) return _AppIconRip!!
+
+            return ImageVector.Builder(
+                name = "_AppIconRip",
+                defaultWidth = 108.0.dp,
+                defaultHeight = 108.0.dp,
+                viewportWidth = 108.0f,
+                viewportHeight = 108.0f,
+            ).apply {
+                // <rect width="108" height="108" fill="#000" />
+                path(
+                    fill = SolidColor(Color(0xFF000000)),
+                ) {
+                    // M 0 0
+                    moveTo(x = 0.0f, y = 0.0f)
+                    // h 108
+                    horizontalLineToRelative(dx = 108.0f)
+                    // v 108
+                    verticalLineToRelative(dy = 108.0f)
+                    // h -108z
+                    horizontalLineToRelative(dx = -108.0f)
+                    close()
+                }
+                // m62.68 27.33 -.06 .06 -.46 .62 -.35 .5 h-.99 c-.15 0 -.15 .07 -.02 .32 l.1 .19 -.7 .05 a81 81 0 0 0 -7.16 .9 10 10 0 0 1 -1.48 .1 c-1.01 .02 -1.1 .04 -1.75 .41 q-.16 .1 -.28 .04 -.11 -.07 -.19 .03 c-.07 .08 -.31 .12 -2.09 .31 q-.73 .08 -1.46 .2 c-.72 .12 -.76 .12 -1.15 0 a17 17 0 0 0 -2.73 -.37 l-.6 -.05 -.36 .32 a5 5 0 0 0 -.63 .67 C40.12 31.91 40 32 39.88 32 c-.27 0 -2.73 .38 -4.51 .7 -1.92 .35 -2.65 .42 -3.21 .3 -.59 -.11 -.6 -.12 -.57 -.86 .03 -.63 .02 -.65 -.14 -.73 -.37 -.19 -.73 -.08 -1.2 .36 a.6 .6 0 0 1 -.45 .15 2 2 0 0 0 -.66 .17 l-.4 .18 .03 .35 c.01 .2 0 .41 -.05 .48 a3 3 0 0 0 -.04 1.03 4 4 0 0 1 -.09 1.33 l-.11 .43 .32 .46 c.65 .9 1.1 1.6 1.1 1.67 0 .04 .2 .26 .46 .48 1.11 .97 1.58 1.24 2.67 1.47 1.16 .25 1.35 .23 2.06 -.15 a5 5 0 0 0 .86 -.57 8 8 0 0 1 1.63 -.84 c1.48 -.66 1.67 -.74 1.67 -.65 l.2 2 c.24 2.25 .32 4.4 .22 6.06 -.08 1.3 -.14 1.47 -1.06 3.2 a37 37 0 0 1 -4.4 6.68 q-.42 .48 -.78 1 a12 12 0 0 1 -1.9 2.08 c-.3 .26 -.48 .48 -.46 .54 s.23 .16 .46 .24 a3 3 0 0 1 .5 .21 c.1 .11 .23 .07 .73 -.2 l.49 -.27 .19 .14 c.24 .15 .66 .17 1.02 .03 q.3 -.1 .63 -.13 a2 2 0 0 0 1.12 -.49 2 2 0 0 1 .47 -.26 22 22 0 0 0 2.79 -2.82 33 33 0 0 1 1.58 -1.66 9 9 0 0 1 1.66 -1.41 c.68 -.4 1.22 -.9 1.29 -1.18 a2 2 0 0 1 .2 -.47 3.5 3.5 0 0 0 .38 -1.5 3 3 0 0 0 -.22 -.5 c-.17 -.32 -.19 -.42 -.22 -1.28 a6 6 0 0 0 -1.07 -3.5 6 6 0 0 1 -.83 -1.82 9 9 0 0 1 -.36 -4.08 c.1 -.56 .16 -.63 .61 -.9 a5 5 0 0 0 .7 -.5 l.27 -.25 1.3 -.14 a33 33 0 0 0 1.79 -.25 l1.28 -.27 a17 17 0 0 0 1.42 -.36 q.5 -.17 1.03 -.3 a13 13 0 0 1 2.14 -.2 29 29 0 0 1 .03 2.13 c0 1.82 -.02 2.3 -.18 3.64 a49 49 0 0 0 -.38 5.54 c-.06 2.52 -.08 2.63 -.49 2.93 -.3 .21 -.6 .17 -1.5 -.22 l-2.08 -.86 a39 39 0 0 1 -2.2 -.97 c-.5 -.26 -.92 -.45 -.92 -.43 s.25 .35 .57 .74 .57 .71 .57 .73 -.06 .04 -.14 .04 c-.12 0 -.13 .01 -.04 .14 q.1 .14 .07 .37 c-.03 .18 -.01 .24 .12 .33 a1 1 0 0 1 .32 .37 2 2 0 0 0 .3 .4 2 2 0 0 1 .3 .35 c.06 .13 .3 .36 .5 .52 s.43 .37 .47 .46 .24 .25 .47 .36 a4 4 0 0 1 1.43 1.26 c.08 .19 .23 .34 .66 .62 a13 13 0 0 1 1.62 1.42 c1.22 1.2 1.29 1.25 2.28 1.19 .65 -.05 .97 -.17 1.36 -.52 q.19 -.18 .4 -.33 a2 2 0 0 0 .37 -.44 2 2 0 0 1 .42 -.48 c.28 -.17 .79 -.88 .79 -1.11 0 -.34 .13 -.55 .57 -.97 a2.3 2.3 0 0 0 .71 -1.08 8 8 0 0 0 .63 -2.68 19 19 0 0 0 -.03 -4.3 103 103 0 0 0 -1.64 -7.77 12 12 0 0 1 -.51 -2.22 c0 -.07 .14 -.08 .7 -.04 a6 6 0 0 0 1.47 -.07 5 5 0 0 1 1.65 -.04 6 6 0 0 1 .87 .1 84 84 0 0 1 1.27 4.1 c.36 1.41 .37 1.51 .44 5.05 l.08 4.88 a7 7 0 0 0 .2 2.17 6 6 0 0 0 .93 2 q.35 .52 .66 1.07 a5 5 0 0 0 1.34 1.57 11 11 0 0 0 1.9 1.24 3.4 3.4 0 0 1 1.39 1.22 c.17 .25 .42 .58 .55 .74 s.3 .43 .38 .58 c.13 .26 .17 .3 .9 .5 a6 6 0 0 0 1.78 .04 c.29 -.05 .4 -.11 .86 -.57 q.93 -.88 .92 -1.33 c0 -.47 .07 -.6 .34 -.72 q.27 -.1 .26 -.22 c0 -.43 -.44 -2.14 -.67 -2.58 -.15 -.3 -2.08 -2.9 -3.7 -5 -1.72 -2.24 -2.32 -3.2 -2.68 -4.25 a64 64 0 0 1 -.81 -4.7 18 18 0 0 0 -1.17 -4.22 4 4 0 0 1 -.3 -.93 c.15 0 3.62 .97 3.82 1.07 l1.16 .63 c.5 .3 .99 .52 1.08 .52 s.52 .24 1.02 .57 l.85 .58 .45 -.04 c.64 -.06 .76 -.09 1.03 -.27 .38 -.27 .6 -.3 .91 -.17 .59 .28 .99 .33 .63 .08 -.53 -.37 -.58 -.55 -.27 -1.02 .37 -.56 .4 -.6 .79 -.8 .61 -.3 .65 -.38 .85 -1.48 a8 8 0 0 1 .28 -1.17 c.15 -.33 .12 -.53 -.14 -.78 a5 5 0 0 1 -.5 -.64 c-.22 -.32 -.28 -.48 -.28 -.71 0 -.27 -.02 -.32 -.22 -.44 a3 3 0 0 0 -.47 -.24 c-.3 -.1 -.74 -.57 -.68 -.7 l.07 -.19 c.06 -.14 -.49 -.43 -1.03 -.56 -.33 -.08 -.44 -.1 -.47 -.14 l-2.7 -.3 q-.05 .02 -.24 .02 a13 13 0 0 1 -1.06 -.1 q-.58 -.08 -1.16 -.11 a254 254 0 0 0 -5.76 .1 l-.97 .04 -.16 -.33 a3 3 0 0 0 -.56 -.72 c-.28 -.29 -.37 -.36 -.43 -.33
+                path(
+                    fill = SolidColor(Color(0xFFFFFFFF)),
+                ) {
+                    // M 62.68 27.33
+                    moveTo(x = 62.68f, y = 27.33f)
+                    // l -0.06 0.06
+                    lineToRelative(dx = -0.06f, dy = 0.06f)
+                    // l -0.46 0.62
+                    lineToRelative(dx = -0.46f, dy = 0.62f)
+                    // l -0.35 0.5
+                    lineToRelative(dx = -0.35f, dy = 0.5f)
+                    // h -0.99
+                    horizontalLineToRelative(dx = -0.99f)
+                    // c -0.15 0 -0.15 0.07 -0.02 0.32
+                    curveToRelative(
+                        dx1 = -0.15f,
+                        dy1 = 0.0f,
+                        dx2 = -0.15f,
+                        dy2 = 0.07f,
+                        dx3 = -0.02f,
+                        dy3 = 0.32f,
+                    )
+                    // l 0.1 0.19
+                    lineToRelative(dx = 0.1f, dy = 0.19f)
+                    // l -0.7 0.05
+                    lineToRelative(dx = -0.7f, dy = 0.05f)
+                    // a 81 81 0 0 0 -7.16 0.9
+                    arcToRelative(
+                        a = 81.0f,
+                        b = 81.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -7.16f,
+                        dy1 = 0.9f,
+                    )
+                    // a 10 10 0 0 1 -1.48 0.1
+                    arcToRelative(
+                        a = 10.0f,
+                        b = 10.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.48f,
+                        dy1 = 0.1f,
+                    )
+                    // c -1.01 0.02 -1.1 0.04 -1.75 0.41
+                    curveToRelative(
+                        dx1 = -1.01f,
+                        dy1 = 0.02f,
+                        dx2 = -1.1f,
+                        dy2 = 0.04f,
+                        dx3 = -1.75f,
+                        dy3 = 0.41f,
+                    )
+                    // q -0.16 0.1 -0.28 0.04
+                    quadToRelative(
+                        dx1 = -0.16f,
+                        dy1 = 0.1f,
+                        dx2 = -0.28f,
+                        dy2 = 0.04f,
+                    )
+                    // q -0.11 -0.07 -0.19 0.03
+                    quadToRelative(
+                        dx1 = -0.11f,
+                        dy1 = -0.07f,
+                        dx2 = -0.19f,
+                        dy2 = 0.03f,
+                    )
+                    // c -0.07 0.08 -0.31 0.12 -2.09 0.31
+                    curveToRelative(
+                        dx1 = -0.07f,
+                        dy1 = 0.08f,
+                        dx2 = -0.31f,
+                        dy2 = 0.12f,
+                        dx3 = -2.09f,
+                        dy3 = 0.31f,
+                    )
+                    // q -0.73 0.08 -1.46 0.2
+                    quadToRelative(
+                        dx1 = -0.73f,
+                        dy1 = 0.08f,
+                        dx2 = -1.46f,
+                        dy2 = 0.2f,
+                    )
+                    // c -0.72 0.12 -0.76 0.12 -1.15 0
+                    curveToRelative(
+                        dx1 = -0.72f,
+                        dy1 = 0.12f,
+                        dx2 = -0.76f,
+                        dy2 = 0.12f,
+                        dx3 = -1.15f,
+                        dy3 = 0.0f,
+                    )
+                    // a 17 17 0 0 0 -2.73 -0.37
+                    arcToRelative(
+                        a = 17.0f,
+                        b = 17.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -2.73f,
+                        dy1 = -0.37f,
+                    )
+                    // l -0.6 -0.05
+                    lineToRelative(dx = -0.6f, dy = -0.05f)
+                    // l -0.36 0.32
+                    lineToRelative(dx = -0.36f, dy = 0.32f)
+                    // a 5 5 0 0 0 -0.63 0.67
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.63f,
+                        dy1 = 0.67f,
+                    )
+                    // C 40.12 31.91 40 32 39.88 32
+                    curveTo(
+                        x1 = 40.12f,
+                        y1 = 31.91f,
+                        x2 = 40.0f,
+                        y2 = 32.0f,
+                        x3 = 39.88f,
+                        y3 = 32.0f,
+                    )
+                    // c -0.27 0 -2.73 0.38 -4.51 0.7
+                    curveToRelative(
+                        dx1 = -0.27f,
+                        dy1 = 0.0f,
+                        dx2 = -2.73f,
+                        dy2 = 0.38f,
+                        dx3 = -4.51f,
+                        dy3 = 0.7f,
+                    )
+                    // c -1.92 0.35 -2.65 0.42 -3.21 0.3
+                    curveToRelative(
+                        dx1 = -1.92f,
+                        dy1 = 0.35f,
+                        dx2 = -2.65f,
+                        dy2 = 0.42f,
+                        dx3 = -3.21f,
+                        dy3 = 0.3f,
+                    )
+                    // c -0.59 -0.11 -0.6 -0.12 -0.57 -0.86
+                    curveToRelative(
+                        dx1 = -0.59f,
+                        dy1 = -0.11f,
+                        dx2 = -0.6f,
+                        dy2 = -0.12f,
+                        dx3 = -0.57f,
+                        dy3 = -0.86f,
+                    )
+                    // c 0.03 -0.63 0.02 -0.65 -0.14 -0.73
+                    curveToRelative(
+                        dx1 = 0.03f,
+                        dy1 = -0.63f,
+                        dx2 = 0.02f,
+                        dy2 = -0.65f,
+                        dx3 = -0.14f,
+                        dy3 = -0.73f,
+                    )
+                    // c -0.37 -0.19 -0.73 -0.08 -1.2 0.36
+                    curveToRelative(
+                        dx1 = -0.37f,
+                        dy1 = -0.19f,
+                        dx2 = -0.73f,
+                        dy2 = -0.08f,
+                        dx3 = -1.2f,
+                        dy3 = 0.36f,
+                    )
+                    // a 0.6 0.6 0 0 1 -0.45 0.15
+                    arcToRelative(
+                        a = 0.6f,
+                        b = 0.6f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.45f,
+                        dy1 = 0.15f,
+                    )
+                    // a 2 2 0 0 0 -0.66 0.17
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.66f,
+                        dy1 = 0.17f,
+                    )
+                    // l -0.4 0.18
+                    lineToRelative(dx = -0.4f, dy = 0.18f)
+                    // l 0.03 0.35
+                    lineToRelative(dx = 0.03f, dy = 0.35f)
+                    // c 0.01 0.2 0 0.41 -0.05 0.48
+                    curveToRelative(
+                        dx1 = 0.01f,
+                        dy1 = 0.2f,
+                        dx2 = 0.0f,
+                        dy2 = 0.41f,
+                        dx3 = -0.05f,
+                        dy3 = 0.48f,
+                    )
+                    // a 3 3 0 0 0 -0.04 1.03
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.04f,
+                        dy1 = 1.03f,
+                    )
+                    // a 4 4 0 0 1 -0.09 1.33
+                    arcToRelative(
+                        a = 4.0f,
+                        b = 4.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.09f,
+                        dy1 = 1.33f,
+                    )
+                    // l -0.11 0.43
+                    lineToRelative(dx = -0.11f, dy = 0.43f)
+                    // l 0.32 0.46
+                    lineToRelative(dx = 0.32f, dy = 0.46f)
+                    // c 0.65 0.9 1.1 1.6 1.1 1.67
+                    curveToRelative(
+                        dx1 = 0.65f,
+                        dy1 = 0.9f,
+                        dx2 = 1.1f,
+                        dy2 = 1.6f,
+                        dx3 = 1.1f,
+                        dy3 = 1.67f,
+                    )
+                    // c 0 0.04 0.2 0.26 0.46 0.48
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.04f,
+                        dx2 = 0.2f,
+                        dy2 = 0.26f,
+                        dx3 = 0.46f,
+                        dy3 = 0.48f,
+                    )
+                    // c 1.11 0.97 1.58 1.24 2.67 1.47
+                    curveToRelative(
+                        dx1 = 1.11f,
+                        dy1 = 0.97f,
+                        dx2 = 1.58f,
+                        dy2 = 1.24f,
+                        dx3 = 2.67f,
+                        dy3 = 1.47f,
+                    )
+                    // c 1.16 0.25 1.35 0.23 2.06 -0.15
+                    curveToRelative(
+                        dx1 = 1.16f,
+                        dy1 = 0.25f,
+                        dx2 = 1.35f,
+                        dy2 = 0.23f,
+                        dx3 = 2.06f,
+                        dy3 = -0.15f,
+                    )
+                    // a 5 5 0 0 0 0.86 -0.57
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.86f,
+                        dy1 = -0.57f,
+                    )
+                    // a 8 8 0 0 1 1.63 -0.84
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.63f,
+                        dy1 = -0.84f,
+                    )
+                    // c 1.48 -0.66 1.67 -0.74 1.67 -0.65
+                    curveToRelative(
+                        dx1 = 1.48f,
+                        dy1 = -0.66f,
+                        dx2 = 1.67f,
+                        dy2 = -0.74f,
+                        dx3 = 1.67f,
+                        dy3 = -0.65f,
+                    )
+                    // l 0.2 2
+                    lineToRelative(dx = 0.2f, dy = 2.0f)
+                    // c 0.24 2.25 0.32 4.4 0.22 6.06
+                    curveToRelative(
+                        dx1 = 0.24f,
+                        dy1 = 2.25f,
+                        dx2 = 0.32f,
+                        dy2 = 4.4f,
+                        dx3 = 0.22f,
+                        dy3 = 6.06f,
+                    )
+                    // c -0.08 1.3 -0.14 1.47 -1.06 3.2
+                    curveToRelative(
+                        dx1 = -0.08f,
+                        dy1 = 1.3f,
+                        dx2 = -0.14f,
+                        dy2 = 1.47f,
+                        dx3 = -1.06f,
+                        dy3 = 3.2f,
+                    )
+                    // a 37 37 0 0 1 -4.4 6.68
+                    arcToRelative(
+                        a = 37.0f,
+                        b = 37.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -4.4f,
+                        dy1 = 6.68f,
+                    )
+                    // q -0.42 0.48 -0.78 1
+                    quadToRelative(
+                        dx1 = -0.42f,
+                        dy1 = 0.48f,
+                        dx2 = -0.78f,
+                        dy2 = 1.0f,
+                    )
+                    // a 12 12 0 0 1 -1.9 2.08
+                    arcToRelative(
+                        a = 12.0f,
+                        b = 12.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.9f,
+                        dy1 = 2.08f,
+                    )
+                    // c -0.3 0.26 -0.48 0.48 -0.46 0.54
+                    curveToRelative(
+                        dx1 = -0.3f,
+                        dy1 = 0.26f,
+                        dx2 = -0.48f,
+                        dy2 = 0.48f,
+                        dx3 = -0.46f,
+                        dy3 = 0.54f,
+                    )
+                    // s 0.23 0.16 0.46 0.24
+                    reflectiveCurveToRelative(
+                        dx1 = 0.23f,
+                        dy1 = 0.16f,
+                        dx2 = 0.46f,
+                        dy2 = 0.24f,
+                    )
+                    // a 3 3 0 0 1 0.5 0.21
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.5f,
+                        dy1 = 0.21f,
+                    )
+                    // c 0.1 0.11 0.23 0.07 0.73 -0.2
+                    curveToRelative(
+                        dx1 = 0.1f,
+                        dy1 = 0.11f,
+                        dx2 = 0.23f,
+                        dy2 = 0.07f,
+                        dx3 = 0.73f,
+                        dy3 = -0.2f,
+                    )
+                    // l 0.49 -0.27
+                    lineToRelative(dx = 0.49f, dy = -0.27f)
+                    // l 0.19 0.14
+                    lineToRelative(dx = 0.19f, dy = 0.14f)
+                    // c 0.24 0.15 0.66 0.17 1.02 0.03
+                    curveToRelative(
+                        dx1 = 0.24f,
+                        dy1 = 0.15f,
+                        dx2 = 0.66f,
+                        dy2 = 0.17f,
+                        dx3 = 1.02f,
+                        dy3 = 0.03f,
+                    )
+                    // q 0.3 -0.1 0.63 -0.13
+                    quadToRelative(
+                        dx1 = 0.3f,
+                        dy1 = -0.1f,
+                        dx2 = 0.63f,
+                        dy2 = -0.13f,
+                    )
+                    // a 2 2 0 0 0 1.12 -0.49
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.12f,
+                        dy1 = -0.49f,
+                    )
+                    // a 2 2 0 0 1 0.47 -0.26
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.47f,
+                        dy1 = -0.26f,
+                    )
+                    // a 22 22 0 0 0 2.79 -2.82
+                    arcToRelative(
+                        a = 22.0f,
+                        b = 22.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 2.79f,
+                        dy1 = -2.82f,
+                    )
+                    // a 33 33 0 0 1 1.58 -1.66
+                    arcToRelative(
+                        a = 33.0f,
+                        b = 33.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.58f,
+                        dy1 = -1.66f,
+                    )
+                    // a 9 9 0 0 1 1.66 -1.41
+                    arcToRelative(
+                        a = 9.0f,
+                        b = 9.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.66f,
+                        dy1 = -1.41f,
+                    )
+                    // c 0.68 -0.4 1.22 -0.9 1.29 -1.18
+                    curveToRelative(
+                        dx1 = 0.68f,
+                        dy1 = -0.4f,
+                        dx2 = 1.22f,
+                        dy2 = -0.9f,
+                        dx3 = 1.29f,
+                        dy3 = -1.18f,
+                    )
+                    // a 2 2 0 0 1 0.2 -0.47
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.2f,
+                        dy1 = -0.47f,
+                    )
+                    // a 3.5 3.5 0 0 0 0.38 -1.5
+                    arcToRelative(
+                        a = 3.5f,
+                        b = 3.5f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.38f,
+                        dy1 = -1.5f,
+                    )
+                    // a 3 3 0 0 0 -0.22 -0.5
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.22f,
+                        dy1 = -0.5f,
+                    )
+                    // c -0.17 -0.32 -0.19 -0.42 -0.22 -1.28
+                    curveToRelative(
+                        dx1 = -0.17f,
+                        dy1 = -0.32f,
+                        dx2 = -0.19f,
+                        dy2 = -0.42f,
+                        dx3 = -0.22f,
+                        dy3 = -1.28f,
+                    )
+                    // a 6 6 0 0 0 -1.07 -3.5
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.07f,
+                        dy1 = -3.5f,
+                    )
+                    // a 6 6 0 0 1 -0.83 -1.82
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.83f,
+                        dy1 = -1.82f,
+                    )
+                    // a 9 9 0 0 1 -0.36 -4.08
+                    arcToRelative(
+                        a = 9.0f,
+                        b = 9.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.36f,
+                        dy1 = -4.08f,
+                    )
+                    // c 0.1 -0.56 0.16 -0.63 0.61 -0.9
+                    curveToRelative(
+                        dx1 = 0.1f,
+                        dy1 = -0.56f,
+                        dx2 = 0.16f,
+                        dy2 = -0.63f,
+                        dx3 = 0.61f,
+                        dy3 = -0.9f,
+                    )
+                    // a 5 5 0 0 0 0.7 -0.5
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.7f,
+                        dy1 = -0.5f,
+                    )
+                    // l 0.27 -0.25
+                    lineToRelative(dx = 0.27f, dy = -0.25f)
+                    // l 1.3 -0.14
+                    lineToRelative(dx = 1.3f, dy = -0.14f)
+                    // a 33 33 0 0 0 1.79 -0.25
+                    arcToRelative(
+                        a = 33.0f,
+                        b = 33.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.79f,
+                        dy1 = -0.25f,
+                    )
+                    // l 1.28 -0.27
+                    lineToRelative(dx = 1.28f, dy = -0.27f)
+                    // a 17 17 0 0 0 1.42 -0.36
+                    arcToRelative(
+                        a = 17.0f,
+                        b = 17.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.42f,
+                        dy1 = -0.36f,
+                    )
+                    // q 0.5 -0.17 1.03 -0.3
+                    quadToRelative(
+                        dx1 = 0.5f,
+                        dy1 = -0.17f,
+                        dx2 = 1.03f,
+                        dy2 = -0.3f,
+                    )
+                    // a 13 13 0 0 1 2.14 -0.2
+                    arcToRelative(
+                        a = 13.0f,
+                        b = 13.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 2.14f,
+                        dy1 = -0.2f,
+                    )
+                    // a 29 29 0 0 1 0.03 2.13
+                    arcToRelative(
+                        a = 29.0f,
+                        b = 29.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.03f,
+                        dy1 = 2.13f,
+                    )
+                    // c 0 1.82 -0.02 2.3 -0.18 3.64
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 1.82f,
+                        dx2 = -0.02f,
+                        dy2 = 2.3f,
+                        dx3 = -0.18f,
+                        dy3 = 3.64f,
+                    )
+                    // a 49 49 0 0 0 -0.38 5.54
+                    arcToRelative(
+                        a = 49.0f,
+                        b = 49.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.38f,
+                        dy1 = 5.54f,
+                    )
+                    // c -0.06 2.52 -0.08 2.63 -0.49 2.93
+                    curveToRelative(
+                        dx1 = -0.06f,
+                        dy1 = 2.52f,
+                        dx2 = -0.08f,
+                        dy2 = 2.63f,
+                        dx3 = -0.49f,
+                        dy3 = 2.93f,
+                    )
+                    // c -0.3 0.21 -0.6 0.17 -1.5 -0.22
+                    curveToRelative(
+                        dx1 = -0.3f,
+                        dy1 = 0.21f,
+                        dx2 = -0.6f,
+                        dy2 = 0.17f,
+                        dx3 = -1.5f,
+                        dy3 = -0.22f,
+                    )
+                    // l -2.08 -0.86
+                    lineToRelative(dx = -2.08f, dy = -0.86f)
+                    // a 39 39 0 0 1 -2.2 -0.97
+                    arcToRelative(
+                        a = 39.0f,
+                        b = 39.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -2.2f,
+                        dy1 = -0.97f,
+                    )
+                    // c -0.5 -0.26 -0.92 -0.45 -0.92 -0.43
+                    curveToRelative(
+                        dx1 = -0.5f,
+                        dy1 = -0.26f,
+                        dx2 = -0.92f,
+                        dy2 = -0.45f,
+                        dx3 = -0.92f,
+                        dy3 = -0.43f,
+                    )
+                    // s 0.25 0.35 0.57 0.74
+                    reflectiveCurveToRelative(
+                        dx1 = 0.25f,
+                        dy1 = 0.35f,
+                        dx2 = 0.57f,
+                        dy2 = 0.74f,
+                    )
+                    // s 0.57 0.71 0.57 0.73
+                    reflectiveCurveToRelative(
+                        dx1 = 0.57f,
+                        dy1 = 0.71f,
+                        dx2 = 0.57f,
+                        dy2 = 0.73f,
+                    )
+                    // s -0.06 0.04 -0.14 0.04
+                    reflectiveCurveToRelative(
+                        dx1 = -0.06f,
+                        dy1 = 0.04f,
+                        dx2 = -0.14f,
+                        dy2 = 0.04f,
+                    )
+                    // c -0.12 0 -0.13 0.01 -0.04 0.14
+                    curveToRelative(
+                        dx1 = -0.12f,
+                        dy1 = 0.0f,
+                        dx2 = -0.13f,
+                        dy2 = 0.01f,
+                        dx3 = -0.04f,
+                        dy3 = 0.14f,
+                    )
+                    // q 0.1 0.14 0.07 0.37
+                    quadToRelative(
+                        dx1 = 0.1f,
+                        dy1 = 0.14f,
+                        dx2 = 0.07f,
+                        dy2 = 0.37f,
+                    )
+                    // c -0.03 0.18 -0.01 0.24 0.12 0.33
+                    curveToRelative(
+                        dx1 = -0.03f,
+                        dy1 = 0.18f,
+                        dx2 = -0.01f,
+                        dy2 = 0.24f,
+                        dx3 = 0.12f,
+                        dy3 = 0.33f,
+                    )
+                    // a 1 1 0 0 1 0.32 0.37
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.32f,
+                        dy1 = 0.37f,
+                    )
+                    // a 2 2 0 0 0 0.3 0.4
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.3f,
+                        dy1 = 0.4f,
+                    )
+                    // a 2 2 0 0 1 0.3 0.35
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.3f,
+                        dy1 = 0.35f,
+                    )
+                    // c 0.06 0.13 0.3 0.36 0.5 0.52
+                    curveToRelative(
+                        dx1 = 0.06f,
+                        dy1 = 0.13f,
+                        dx2 = 0.3f,
+                        dy2 = 0.36f,
+                        dx3 = 0.5f,
+                        dy3 = 0.52f,
+                    )
+                    // s 0.43 0.37 0.47 0.46
+                    reflectiveCurveToRelative(
+                        dx1 = 0.43f,
+                        dy1 = 0.37f,
+                        dx2 = 0.47f,
+                        dy2 = 0.46f,
+                    )
+                    // s 0.24 0.25 0.47 0.36
+                    reflectiveCurveToRelative(
+                        dx1 = 0.24f,
+                        dy1 = 0.25f,
+                        dx2 = 0.47f,
+                        dy2 = 0.36f,
+                    )
+                    // a 4 4 0 0 1 1.43 1.26
+                    arcToRelative(
+                        a = 4.0f,
+                        b = 4.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.43f,
+                        dy1 = 1.26f,
+                    )
+                    // c 0.08 0.19 0.23 0.34 0.66 0.62
+                    curveToRelative(
+                        dx1 = 0.08f,
+                        dy1 = 0.19f,
+                        dx2 = 0.23f,
+                        dy2 = 0.34f,
+                        dx3 = 0.66f,
+                        dy3 = 0.62f,
+                    )
+                    // a 13 13 0 0 1 1.62 1.42
+                    arcToRelative(
+                        a = 13.0f,
+                        b = 13.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.62f,
+                        dy1 = 1.42f,
+                    )
+                    // c 1.22 1.2 1.29 1.25 2.28 1.19
+                    curveToRelative(
+                        dx1 = 1.22f,
+                        dy1 = 1.2f,
+                        dx2 = 1.29f,
+                        dy2 = 1.25f,
+                        dx3 = 2.28f,
+                        dy3 = 1.19f,
+                    )
+                    // c 0.65 -0.05 0.97 -0.17 1.36 -0.52
+                    curveToRelative(
+                        dx1 = 0.65f,
+                        dy1 = -0.05f,
+                        dx2 = 0.97f,
+                        dy2 = -0.17f,
+                        dx3 = 1.36f,
+                        dy3 = -0.52f,
+                    )
+                    // q 0.19 -0.18 0.4 -0.33
+                    quadToRelative(
+                        dx1 = 0.19f,
+                        dy1 = -0.18f,
+                        dx2 = 0.4f,
+                        dy2 = -0.33f,
+                    )
+                    // a 2 2 0 0 0 0.37 -0.44
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.37f,
+                        dy1 = -0.44f,
+                    )
+                    // a 2 2 0 0 1 0.42 -0.48
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.42f,
+                        dy1 = -0.48f,
+                    )
+                    // c 0.28 -0.17 0.79 -0.88 0.79 -1.11
+                    curveToRelative(
+                        dx1 = 0.28f,
+                        dy1 = -0.17f,
+                        dx2 = 0.79f,
+                        dy2 = -0.88f,
+                        dx3 = 0.79f,
+                        dy3 = -1.11f,
+                    )
+                    // c 0 -0.34 0.13 -0.55 0.57 -0.97
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.34f,
+                        dx2 = 0.13f,
+                        dy2 = -0.55f,
+                        dx3 = 0.57f,
+                        dy3 = -0.97f,
+                    )
+                    // a 2.3 2.3 0 0 0 0.71 -1.08
+                    arcToRelative(
+                        a = 2.3f,
+                        b = 2.3f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.71f,
+                        dy1 = -1.08f,
+                    )
+                    // a 8 8 0 0 0 0.63 -2.68
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.63f,
+                        dy1 = -2.68f,
+                    )
+                    // a 19 19 0 0 0 -0.03 -4.3
+                    arcToRelative(
+                        a = 19.0f,
+                        b = 19.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.03f,
+                        dy1 = -4.3f,
+                    )
+                    // a 103 103 0 0 0 -1.64 -7.77
+                    arcToRelative(
+                        a = 103.0f,
+                        b = 103.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.64f,
+                        dy1 = -7.77f,
+                    )
+                    // a 12 12 0 0 1 -0.51 -2.22
+                    arcToRelative(
+                        a = 12.0f,
+                        b = 12.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.51f,
+                        dy1 = -2.22f,
+                    )
+                    // c 0 -0.07 0.14 -0.08 0.7 -0.04
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.07f,
+                        dx2 = 0.14f,
+                        dy2 = -0.08f,
+                        dx3 = 0.7f,
+                        dy3 = -0.04f,
+                    )
+                    // a 6 6 0 0 0 1.47 -0.07
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.47f,
+                        dy1 = -0.07f,
+                    )
+                    // a 5 5 0 0 1 1.65 -0.04
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.65f,
+                        dy1 = -0.04f,
+                    )
+                    // a 6 6 0 0 1 0.87 0.1
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.87f,
+                        dy1 = 0.1f,
+                    )
+                    // a 84 84 0 0 1 1.27 4.1
+                    arcToRelative(
+                        a = 84.0f,
+                        b = 84.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.27f,
+                        dy1 = 4.1f,
+                    )
+                    // c 0.36 1.41 0.37 1.51 0.44 5.05
+                    curveToRelative(
+                        dx1 = 0.36f,
+                        dy1 = 1.41f,
+                        dx2 = 0.37f,
+                        dy2 = 1.51f,
+                        dx3 = 0.44f,
+                        dy3 = 5.05f,
+                    )
+                    // l 0.08 4.88
+                    lineToRelative(dx = 0.08f, dy = 4.88f)
+                    // a 7 7 0 0 0 0.2 2.17
+                    arcToRelative(
+                        a = 7.0f,
+                        b = 7.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.2f,
+                        dy1 = 2.17f,
+                    )
+                    // a 6 6 0 0 0 0.93 2
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.93f,
+                        dy1 = 2.0f,
+                    )
+                    // q 0.35 0.52 0.66 1.07
+                    quadToRelative(
+                        dx1 = 0.35f,
+                        dy1 = 0.52f,
+                        dx2 = 0.66f,
+                        dy2 = 1.07f,
+                    )
+                    // a 5 5 0 0 0 1.34 1.57
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.34f,
+                        dy1 = 1.57f,
+                    )
+                    // a 11 11 0 0 0 1.9 1.24
+                    arcToRelative(
+                        a = 11.0f,
+                        b = 11.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.9f,
+                        dy1 = 1.24f,
+                    )
+                    // a 3.4 3.4 0 0 1 1.39 1.22
+                    arcToRelative(
+                        a = 3.4f,
+                        b = 3.4f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.39f,
+                        dy1 = 1.22f,
+                    )
+                    // c 0.17 0.25 0.42 0.58 0.55 0.74
+                    curveToRelative(
+                        dx1 = 0.17f,
+                        dy1 = 0.25f,
+                        dx2 = 0.42f,
+                        dy2 = 0.58f,
+                        dx3 = 0.55f,
+                        dy3 = 0.74f,
+                    )
+                    // s 0.3 0.43 0.38 0.58
+                    reflectiveCurveToRelative(
+                        dx1 = 0.3f,
+                        dy1 = 0.43f,
+                        dx2 = 0.38f,
+                        dy2 = 0.58f,
+                    )
+                    // c 0.13 0.26 0.17 0.3 0.9 0.5
+                    curveToRelative(
+                        dx1 = 0.13f,
+                        dy1 = 0.26f,
+                        dx2 = 0.17f,
+                        dy2 = 0.3f,
+                        dx3 = 0.9f,
+                        dy3 = 0.5f,
+                    )
+                    // a 6 6 0 0 0 1.78 0.04
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.78f,
+                        dy1 = 0.04f,
+                    )
+                    // c 0.29 -0.05 0.4 -0.11 0.86 -0.57
+                    curveToRelative(
+                        dx1 = 0.29f,
+                        dy1 = -0.05f,
+                        dx2 = 0.4f,
+                        dy2 = -0.11f,
+                        dx3 = 0.86f,
+                        dy3 = -0.57f,
+                    )
+                    // q 0.93 -0.88 0.92 -1.33
+                    quadToRelative(
+                        dx1 = 0.93f,
+                        dy1 = -0.88f,
+                        dx2 = 0.92f,
+                        dy2 = -1.33f,
+                    )
+                    // c 0 -0.47 0.07 -0.6 0.34 -0.72
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.47f,
+                        dx2 = 0.07f,
+                        dy2 = -0.6f,
+                        dx3 = 0.34f,
+                        dy3 = -0.72f,
+                    )
+                    // q 0.27 -0.1 0.26 -0.22
+                    quadToRelative(
+                        dx1 = 0.27f,
+                        dy1 = -0.1f,
+                        dx2 = 0.26f,
+                        dy2 = -0.22f,
+                    )
+                    // c 0 -0.43 -0.44 -2.14 -0.67 -2.58
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.43f,
+                        dx2 = -0.44f,
+                        dy2 = -2.14f,
+                        dx3 = -0.67f,
+                        dy3 = -2.58f,
+                    )
+                    // c -0.15 -0.3 -2.08 -2.9 -3.7 -5
+                    curveToRelative(
+                        dx1 = -0.15f,
+                        dy1 = -0.3f,
+                        dx2 = -2.08f,
+                        dy2 = -2.9f,
+                        dx3 = -3.7f,
+                        dy3 = -5.0f,
+                    )
+                    // c -1.72 -2.24 -2.32 -3.2 -2.68 -4.25
+                    curveToRelative(
+                        dx1 = -1.72f,
+                        dy1 = -2.24f,
+                        dx2 = -2.32f,
+                        dy2 = -3.2f,
+                        dx3 = -2.68f,
+                        dy3 = -4.25f,
+                    )
+                    // a 64 64 0 0 1 -0.81 -4.7
+                    arcToRelative(
+                        a = 64.0f,
+                        b = 64.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.81f,
+                        dy1 = -4.7f,
+                    )
+                    // a 18 18 0 0 0 -1.17 -4.22
+                    arcToRelative(
+                        a = 18.0f,
+                        b = 18.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.17f,
+                        dy1 = -4.22f,
+                    )
+                    // a 4 4 0 0 1 -0.3 -0.93
+                    arcToRelative(
+                        a = 4.0f,
+                        b = 4.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.3f,
+                        dy1 = -0.93f,
+                    )
+                    // c 0.15 0 3.62 0.97 3.82 1.07
+                    curveToRelative(
+                        dx1 = 0.15f,
+                        dy1 = 0.0f,
+                        dx2 = 3.62f,
+                        dy2 = 0.97f,
+                        dx3 = 3.82f,
+                        dy3 = 1.07f,
+                    )
+                    // l 1.16 0.63
+                    lineToRelative(dx = 1.16f, dy = 0.63f)
+                    // c 0.5 0.3 0.99 0.52 1.08 0.52
+                    curveToRelative(
+                        dx1 = 0.5f,
+                        dy1 = 0.3f,
+                        dx2 = 0.99f,
+                        dy2 = 0.52f,
+                        dx3 = 1.08f,
+                        dy3 = 0.52f,
+                    )
+                    // s 0.52 0.24 1.02 0.57
+                    reflectiveCurveToRelative(
+                        dx1 = 0.52f,
+                        dy1 = 0.24f,
+                        dx2 = 1.02f,
+                        dy2 = 0.57f,
+                    )
+                    // l 0.85 0.58
+                    lineToRelative(dx = 0.85f, dy = 0.58f)
+                    // l 0.45 -0.04
+                    lineToRelative(dx = 0.45f, dy = -0.04f)
+                    // c 0.64 -0.06 0.76 -0.09 1.03 -0.27
+                    curveToRelative(
+                        dx1 = 0.64f,
+                        dy1 = -0.06f,
+                        dx2 = 0.76f,
+                        dy2 = -0.09f,
+                        dx3 = 1.03f,
+                        dy3 = -0.27f,
+                    )
+                    // c 0.38 -0.27 0.6 -0.3 0.91 -0.17
+                    curveToRelative(
+                        dx1 = 0.38f,
+                        dy1 = -0.27f,
+                        dx2 = 0.6f,
+                        dy2 = -0.3f,
+                        dx3 = 0.91f,
+                        dy3 = -0.17f,
+                    )
+                    // c 0.59 0.28 0.99 0.33 0.63 0.08
+                    curveToRelative(
+                        dx1 = 0.59f,
+                        dy1 = 0.28f,
+                        dx2 = 0.99f,
+                        dy2 = 0.33f,
+                        dx3 = 0.63f,
+                        dy3 = 0.08f,
+                    )
+                    // c -0.53 -0.37 -0.58 -0.55 -0.27 -1.02
+                    curveToRelative(
+                        dx1 = -0.53f,
+                        dy1 = -0.37f,
+                        dx2 = -0.58f,
+                        dy2 = -0.55f,
+                        dx3 = -0.27f,
+                        dy3 = -1.02f,
+                    )
+                    // c 0.37 -0.56 0.4 -0.6 0.79 -0.8
+                    curveToRelative(
+                        dx1 = 0.37f,
+                        dy1 = -0.56f,
+                        dx2 = 0.4f,
+                        dy2 = -0.6f,
+                        dx3 = 0.79f,
+                        dy3 = -0.8f,
+                    )
+                    // c 0.61 -0.3 0.65 -0.38 0.85 -1.48
+                    curveToRelative(
+                        dx1 = 0.61f,
+                        dy1 = -0.3f,
+                        dx2 = 0.65f,
+                        dy2 = -0.38f,
+                        dx3 = 0.85f,
+                        dy3 = -1.48f,
+                    )
+                    // a 8 8 0 0 1 0.28 -1.17
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.28f,
+                        dy1 = -1.17f,
+                    )
+                    // c 0.15 -0.33 0.12 -0.53 -0.14 -0.78
+                    curveToRelative(
+                        dx1 = 0.15f,
+                        dy1 = -0.33f,
+                        dx2 = 0.12f,
+                        dy2 = -0.53f,
+                        dx3 = -0.14f,
+                        dy3 = -0.78f,
+                    )
+                    // a 5 5 0 0 1 -0.5 -0.64
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.5f,
+                        dy1 = -0.64f,
+                    )
+                    // c -0.22 -0.32 -0.28 -0.48 -0.28 -0.71
+                    curveToRelative(
+                        dx1 = -0.22f,
+                        dy1 = -0.32f,
+                        dx2 = -0.28f,
+                        dy2 = -0.48f,
+                        dx3 = -0.28f,
+                        dy3 = -0.71f,
+                    )
+                    // c 0 -0.27 -0.02 -0.32 -0.22 -0.44
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.27f,
+                        dx2 = -0.02f,
+                        dy2 = -0.32f,
+                        dx3 = -0.22f,
+                        dy3 = -0.44f,
+                    )
+                    // a 3 3 0 0 0 -0.47 -0.24
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.47f,
+                        dy1 = -0.24f,
+                    )
+                    // c -0.3 -0.1 -0.74 -0.57 -0.68 -0.7
+                    curveToRelative(
+                        dx1 = -0.3f,
+                        dy1 = -0.1f,
+                        dx2 = -0.74f,
+                        dy2 = -0.57f,
+                        dx3 = -0.68f,
+                        dy3 = -0.7f,
+                    )
+                    // l 0.07 -0.19
+                    lineToRelative(dx = 0.07f, dy = -0.19f)
+                    // c 0.06 -0.14 -0.49 -0.43 -1.03 -0.56
+                    curveToRelative(
+                        dx1 = 0.06f,
+                        dy1 = -0.14f,
+                        dx2 = -0.49f,
+                        dy2 = -0.43f,
+                        dx3 = -1.03f,
+                        dy3 = -0.56f,
+                    )
+                    // c -0.33 -0.08 -0.44 -0.1 -0.47 -0.14
+                    curveToRelative(
+                        dx1 = -0.33f,
+                        dy1 = -0.08f,
+                        dx2 = -0.44f,
+                        dy2 = -0.1f,
+                        dx3 = -0.47f,
+                        dy3 = -0.14f,
+                    )
+                    // l -2.7 -0.3
+                    lineToRelative(dx = -2.7f, dy = -0.3f)
+                    // q -0.05 0.02 -0.24 0.02
+                    quadToRelative(
+                        dx1 = -0.05f,
+                        dy1 = 0.02f,
+                        dx2 = -0.24f,
+                        dy2 = 0.02f,
+                    )
+                    // a 13 13 0 0 1 -1.06 -0.1
+                    arcToRelative(
+                        a = 13.0f,
+                        b = 13.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.06f,
+                        dy1 = -0.1f,
+                    )
+                    // q -0.58 -0.08 -1.16 -0.11
+                    quadToRelative(
+                        dx1 = -0.58f,
+                        dy1 = -0.08f,
+                        dx2 = -1.16f,
+                        dy2 = -0.11f,
+                    )
+                    // a 254 254 0 0 0 -5.76 0.1
+                    arcToRelative(
+                        a = 254.0f,
+                        b = 254.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -5.76f,
+                        dy1 = 0.1f,
+                    )
+                    // l -0.97 0.04
+                    lineToRelative(dx = -0.97f, dy = 0.04f)
+                    // l -0.16 -0.33
+                    lineToRelative(dx = -0.16f, dy = -0.33f)
+                    // a 3 3 0 0 0 -0.56 -0.72
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.56f,
+                        dy1 = -0.72f,
+                    )
+                    // c -0.28 -0.29 -0.37 -0.36 -0.43 -0.33
+                    curveToRelative(
+                        dx1 = -0.28f,
+                        dy1 = -0.29f,
+                        dx2 = -0.37f,
+                        dy2 = -0.36f,
+                        dx3 = -0.43f,
+                        dy3 = -0.33f,
+                    )
+                }
+                // M48.1 76.4 q-.02 -.25 -.23 -.27 c-.16 0 -.24 .05 -.37 .22 -.08 .1 -.07 .12 .25 .12 .2 0 .35 -.03 .35 -.06 m6.15 -3.74 a1.6 1.6 0 0 0 -.83 -.33 q-.38 -.06 -.07 .2 a1 1 0 0 0 .78 .3 l.32 -.01z m-18.5 -1.22 a2 2 0 0 0 0 -.49 1.3 1.3 0 0 1 .41 -1.17 10 10 0 0 1 2.21 -1.12 c1.8 -.63 6.56 -1.12 13.1 -1.35 4.05 -.14 5.86 -.24 6.53 -.37 a3 3 0 0 1 .69 -.05 q.2 .03 .26 -.04 t.58 -.03 c.38 .03 .53 .02 .53 -.04 q.02 -.06 .27 -.07 c.3 0 .42 -.11 .2 -.2 -.1 -.02 .15 -.1 .83 -.2 1.13 -.17 1.06 -.17 1.06 -.04 q0 .09 .07 .1 .05 0 .06 -.07 0 -.09 .1 0 c.12 .1 .3 .04 .3 -.1 0 -.13 .17 -.2 .78 -.3 l.62 -.1 q.13 -.02 .15 .03 -.01 .06 -.19 .07 c-.29 0 -.48 .07 -.48 .18 0 .08 .07 .1 .35 .05 q.95 -.13 .98 -.31 .02 -.12 -.1 -.12 -.14 0 -.02 -.07 a1 1 0 0 1 .23 -.07 .4 .4 0 0 0 .23 -.08 12 12 0 0 1 1.46 -.51 c3.49 -1.1 4.79 -1.77 6.07 -3.14 .41 -.44 .95 -1.16 .95 -1.27 s-.2 -.02 -.27 .12 a3 3 0 0 1 -.87 .82 2 2 0 0 0 -.45 .41 q-.16 .2 -.24 .22 a2 2 0 0 0 -.46 .31 6 6 0 0 1 -1.49 .82 8.75 8.75 0 0 0 1.69 -1.96 l.48 -.66 v.36 c0 .32 .01 .35 .1 .24 a5 5 0 0 0 .3 -.76 3 3 0 0 1 .52 -.97 q.48 -.59 .4 -.66 c-.07 -.06 -.52 .4 -.65 .66 q-.13 .28 -.32 .5 L72.5 60.3 v-.22 c0 -.29 -.08 -.27 -.8 .08 a6.4 6.4 0 0 1 -2.56 .83 9 9 0 0 0 -1.41 .22 23 23 0 0 1 -3.23 .56 8 8 0 0 1 -2 .03 7 7 0 0 0 -1.03 .02 20 20 0 0 1 -2.41 .1 85 85 0 0 1 3.97 -.3 q.24 .01 .13 -.1 c-.06 -.06 -.37 -.08 -1.57 -.05 q-1.5 .02 -1.74 -.04 a25 25 0 0 0 -3.08 -.28 6 6 0 0 1 -1.36 -.2 20 20 0 0 0 -2.37 -.48 c-.77 -.12 -.97 -.18 -1.24 -.39 a1 1 0 0 0 -.64 -.21 5 5 0 0 1 -.64 -.07 19 19 0 0 0 -2.36 .06 26 26 0 0 1 -2.52 .08 28 28 0 0 0 -4.29 .2 7 7 0 0 0 -1.73 .42 l-1.14 .42 a6 6 0 0 0 -2.54 1.67 c-.69 .73 -.82 1.02 -1.4 2.9 a7 7 0 0 0 -.5 2.49 c-.08 1.46 .03 1.81 .75 2.45 .19 .16 .33 .34 .33 .41 0 .37 .43 .75 .62 .56
+                path(
+                    fill = SolidColor(Color(0xFFFFFFFF)),
+                ) {
+                    // M 48.1 76.4
+                    moveTo(x = 48.1f, y = 76.4f)
+                    // q -0.02 -0.25 -0.23 -0.27
+                    quadToRelative(
+                        dx1 = -0.02f,
+                        dy1 = -0.25f,
+                        dx2 = -0.23f,
+                        dy2 = -0.27f,
+                    )
+                    // c -0.16 0 -0.24 0.05 -0.37 0.22
+                    curveToRelative(
+                        dx1 = -0.16f,
+                        dy1 = 0.0f,
+                        dx2 = -0.24f,
+                        dy2 = 0.05f,
+                        dx3 = -0.37f,
+                        dy3 = 0.22f,
+                    )
+                    // c -0.08 0.1 -0.07 0.12 0.25 0.12
+                    curveToRelative(
+                        dx1 = -0.08f,
+                        dy1 = 0.1f,
+                        dx2 = -0.07f,
+                        dy2 = 0.12f,
+                        dx3 = 0.25f,
+                        dy3 = 0.12f,
+                    )
+                    // c 0.2 0 0.35 -0.03 0.35 -0.06
+                    curveToRelative(
+                        dx1 = 0.2f,
+                        dy1 = 0.0f,
+                        dx2 = 0.35f,
+                        dy2 = -0.03f,
+                        dx3 = 0.35f,
+                        dy3 = -0.06f,
+                    )
+                    // m 6.15 -3.74
+                    moveToRelative(dx = 6.15f, dy = -3.74f)
+                    // a 1.6 1.6 0 0 0 -0.83 -0.33
+                    arcToRelative(
+                        a = 1.6f,
+                        b = 1.6f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.83f,
+                        dy1 = -0.33f,
+                    )
+                    // q -0.38 -0.06 -0.07 0.2
+                    quadToRelative(
+                        dx1 = -0.38f,
+                        dy1 = -0.06f,
+                        dx2 = -0.07f,
+                        dy2 = 0.2f,
+                    )
+                    // a 1 1 0 0 0 0.78 0.3
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.78f,
+                        dy1 = 0.3f,
+                    )
+                    // l 0.32 -0.01z
+                    lineToRelative(dx = 0.32f, dy = -0.01f)
+                    close()
+                    // m -18.5 -1.22
+                    moveToRelative(dx = -18.5f, dy = -1.22f)
+                    // a 2 2 0 0 0 0 -0.49
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.0f,
+                        dy1 = -0.49f,
+                    )
+                    // a 1.3 1.3 0 0 1 0.41 -1.17
+                    arcToRelative(
+                        a = 1.3f,
+                        b = 1.3f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.41f,
+                        dy1 = -1.17f,
+                    )
+                    // a 10 10 0 0 1 2.21 -1.12
+                    arcToRelative(
+                        a = 10.0f,
+                        b = 10.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 2.21f,
+                        dy1 = -1.12f,
+                    )
+                    // c 1.8 -0.63 6.56 -1.12 13.1 -1.35
+                    curveToRelative(
+                        dx1 = 1.8f,
+                        dy1 = -0.63f,
+                        dx2 = 6.56f,
+                        dy2 = -1.12f,
+                        dx3 = 13.1f,
+                        dy3 = -1.35f,
+                    )
+                    // c 4.05 -0.14 5.86 -0.24 6.53 -0.37
+                    curveToRelative(
+                        dx1 = 4.05f,
+                        dy1 = -0.14f,
+                        dx2 = 5.86f,
+                        dy2 = -0.24f,
+                        dx3 = 6.53f,
+                        dy3 = -0.37f,
+                    )
+                    // a 3 3 0 0 1 0.69 -0.05
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.69f,
+                        dy1 = -0.05f,
+                    )
+                    // q 0.2 0.03 0.26 -0.04
+                    quadToRelative(
+                        dx1 = 0.2f,
+                        dy1 = 0.03f,
+                        dx2 = 0.26f,
+                        dy2 = -0.04f,
+                    )
+                    // t 0.58 -0.03
+                    reflectiveQuadToRelative(
+                        dx1 = 0.58f,
+                        dy1 = -0.03f,
+                    )
+                    // c 0.38 0.03 0.53 0.02 0.53 -0.04
+                    curveToRelative(
+                        dx1 = 0.38f,
+                        dy1 = 0.03f,
+                        dx2 = 0.53f,
+                        dy2 = 0.02f,
+                        dx3 = 0.53f,
+                        dy3 = -0.04f,
+                    )
+                    // q 0.02 -0.06 0.27 -0.07
+                    quadToRelative(
+                        dx1 = 0.02f,
+                        dy1 = -0.06f,
+                        dx2 = 0.27f,
+                        dy2 = -0.07f,
+                    )
+                    // c 0.3 0 0.42 -0.11 0.2 -0.2
+                    curveToRelative(
+                        dx1 = 0.3f,
+                        dy1 = 0.0f,
+                        dx2 = 0.42f,
+                        dy2 = -0.11f,
+                        dx3 = 0.2f,
+                        dy3 = -0.2f,
+                    )
+                    // c -0.1 -0.02 0.15 -0.1 0.83 -0.2
+                    curveToRelative(
+                        dx1 = -0.1f,
+                        dy1 = -0.02f,
+                        dx2 = 0.15f,
+                        dy2 = -0.1f,
+                        dx3 = 0.83f,
+                        dy3 = -0.2f,
+                    )
+                    // c 1.13 -0.17 1.06 -0.17 1.06 -0.04
+                    curveToRelative(
+                        dx1 = 1.13f,
+                        dy1 = -0.17f,
+                        dx2 = 1.06f,
+                        dy2 = -0.17f,
+                        dx3 = 1.06f,
+                        dy3 = -0.04f,
+                    )
+                    // q 0 0.09 0.07 0.1
+                    quadToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.09f,
+                        dx2 = 0.07f,
+                        dy2 = 0.1f,
+                    )
+                    // q 0.05 0 0.06 -0.07
+                    quadToRelative(
+                        dx1 = 0.05f,
+                        dy1 = 0.0f,
+                        dx2 = 0.06f,
+                        dy2 = -0.07f,
+                    )
+                    // q 0 -0.09 0.1 0
+                    quadToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.09f,
+                        dx2 = 0.1f,
+                        dy2 = 0.0f,
+                    )
+                    // c 0.12 0.1 0.3 0.04 0.3 -0.1
+                    curveToRelative(
+                        dx1 = 0.12f,
+                        dy1 = 0.1f,
+                        dx2 = 0.3f,
+                        dy2 = 0.04f,
+                        dx3 = 0.3f,
+                        dy3 = -0.1f,
+                    )
+                    // c 0 -0.13 0.17 -0.2 0.78 -0.3
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.13f,
+                        dx2 = 0.17f,
+                        dy2 = -0.2f,
+                        dx3 = 0.78f,
+                        dy3 = -0.3f,
+                    )
+                    // l 0.62 -0.1
+                    lineToRelative(dx = 0.62f, dy = -0.1f)
+                    // q 0.13 -0.02 0.15 0.03
+                    quadToRelative(
+                        dx1 = 0.13f,
+                        dy1 = -0.02f,
+                        dx2 = 0.15f,
+                        dy2 = 0.03f,
+                    )
+                    // q -0.01 0.06 -0.19 0.07
+                    quadToRelative(
+                        dx1 = -0.01f,
+                        dy1 = 0.06f,
+                        dx2 = -0.19f,
+                        dy2 = 0.07f,
+                    )
+                    // c -0.29 0 -0.48 0.07 -0.48 0.18
+                    curveToRelative(
+                        dx1 = -0.29f,
+                        dy1 = 0.0f,
+                        dx2 = -0.48f,
+                        dy2 = 0.07f,
+                        dx3 = -0.48f,
+                        dy3 = 0.18f,
+                    )
+                    // c 0 0.08 0.07 0.1 0.35 0.05
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.08f,
+                        dx2 = 0.07f,
+                        dy2 = 0.1f,
+                        dx3 = 0.35f,
+                        dy3 = 0.05f,
+                    )
+                    // q 0.95 -0.13 0.98 -0.31
+                    quadToRelative(
+                        dx1 = 0.95f,
+                        dy1 = -0.13f,
+                        dx2 = 0.98f,
+                        dy2 = -0.31f,
+                    )
+                    // q 0.02 -0.12 -0.1 -0.12
+                    quadToRelative(
+                        dx1 = 0.02f,
+                        dy1 = -0.12f,
+                        dx2 = -0.1f,
+                        dy2 = -0.12f,
+                    )
+                    // q -0.14 0 -0.02 -0.07
+                    quadToRelative(
+                        dx1 = -0.14f,
+                        dy1 = 0.0f,
+                        dx2 = -0.02f,
+                        dy2 = -0.07f,
+                    )
+                    // a 1 1 0 0 1 0.23 -0.07
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.23f,
+                        dy1 = -0.07f,
+                    )
+                    // a 0.4 0.4 0 0 0 0.23 -0.08
+                    arcToRelative(
+                        a = 0.4f,
+                        b = 0.4f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.23f,
+                        dy1 = -0.08f,
+                    )
+                    // a 12 12 0 0 1 1.46 -0.51
+                    arcToRelative(
+                        a = 12.0f,
+                        b = 12.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.46f,
+                        dy1 = -0.51f,
+                    )
+                    // c 3.49 -1.1 4.79 -1.77 6.07 -3.14
+                    curveToRelative(
+                        dx1 = 3.49f,
+                        dy1 = -1.1f,
+                        dx2 = 4.79f,
+                        dy2 = -1.77f,
+                        dx3 = 6.07f,
+                        dy3 = -3.14f,
+                    )
+                    // c 0.41 -0.44 0.95 -1.16 0.95 -1.27
+                    curveToRelative(
+                        dx1 = 0.41f,
+                        dy1 = -0.44f,
+                        dx2 = 0.95f,
+                        dy2 = -1.16f,
+                        dx3 = 0.95f,
+                        dy3 = -1.27f,
+                    )
+                    // s -0.2 -0.02 -0.27 0.12
+                    reflectiveCurveToRelative(
+                        dx1 = -0.2f,
+                        dy1 = -0.02f,
+                        dx2 = -0.27f,
+                        dy2 = 0.12f,
+                    )
+                    // a 3 3 0 0 1 -0.87 0.82
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.87f,
+                        dy1 = 0.82f,
+                    )
+                    // a 2 2 0 0 0 -0.45 0.41
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.45f,
+                        dy1 = 0.41f,
+                    )
+                    // q -0.16 0.2 -0.24 0.22
+                    quadToRelative(
+                        dx1 = -0.16f,
+                        dy1 = 0.2f,
+                        dx2 = -0.24f,
+                        dy2 = 0.22f,
+                    )
+                    // a 2 2 0 0 0 -0.46 0.31
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.46f,
+                        dy1 = 0.31f,
+                    )
+                    // a 6 6 0 0 1 -1.49 0.82
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.49f,
+                        dy1 = 0.82f,
+                    )
+                    // a 8.75 8.75 0 0 0 1.69 -1.96
+                    arcToRelative(
+                        a = 8.75f,
+                        b = 8.75f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.69f,
+                        dy1 = -1.96f,
+                    )
+                    // l 0.48 -0.66
+                    lineToRelative(dx = 0.48f, dy = -0.66f)
+                    // v 0.36
+                    verticalLineToRelative(dy = 0.36f)
+                    // c 0 0.32 0.01 0.35 0.1 0.24
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.32f,
+                        dx2 = 0.01f,
+                        dy2 = 0.35f,
+                        dx3 = 0.1f,
+                        dy3 = 0.24f,
+                    )
+                    // a 5 5 0 0 0 0.3 -0.76
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.3f,
+                        dy1 = -0.76f,
+                    )
+                    // a 3 3 0 0 1 0.52 -0.97
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.52f,
+                        dy1 = -0.97f,
+                    )
+                    // q 0.48 -0.59 0.4 -0.66
+                    quadToRelative(
+                        dx1 = 0.48f,
+                        dy1 = -0.59f,
+                        dx2 = 0.4f,
+                        dy2 = -0.66f,
+                    )
+                    // c -0.07 -0.06 -0.52 0.4 -0.65 0.66
+                    curveToRelative(
+                        dx1 = -0.07f,
+                        dy1 = -0.06f,
+                        dx2 = -0.52f,
+                        dy2 = 0.4f,
+                        dx3 = -0.65f,
+                        dy3 = 0.66f,
+                    )
+                    // q -0.13 0.28 -0.32 0.5
+                    quadToRelative(
+                        dx1 = -0.13f,
+                        dy1 = 0.28f,
+                        dx2 = -0.32f,
+                        dy2 = 0.5f,
+                    )
+                    // L 72.5 60.3
+                    lineTo(x = 72.5f, y = 60.3f)
+                    // v -0.22
+                    verticalLineToRelative(dy = -0.22f)
+                    // c 0 -0.29 -0.08 -0.27 -0.8 0.08
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.29f,
+                        dx2 = -0.08f,
+                        dy2 = -0.27f,
+                        dx3 = -0.8f,
+                        dy3 = 0.08f,
+                    )
+                    // a 6.4 6.4 0 0 1 -2.56 0.83
+                    arcToRelative(
+                        a = 6.4f,
+                        b = 6.4f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -2.56f,
+                        dy1 = 0.83f,
+                    )
+                    // a 9 9 0 0 0 -1.41 0.22
+                    arcToRelative(
+                        a = 9.0f,
+                        b = 9.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.41f,
+                        dy1 = 0.22f,
+                    )
+                    // a 23 23 0 0 1 -3.23 0.56
+                    arcToRelative(
+                        a = 23.0f,
+                        b = 23.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -3.23f,
+                        dy1 = 0.56f,
+                    )
+                    // a 8 8 0 0 1 -2 0.03
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -2.0f,
+                        dy1 = 0.03f,
+                    )
+                    // a 7 7 0 0 0 -1.03 0.02
+                    arcToRelative(
+                        a = 7.0f,
+                        b = 7.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.03f,
+                        dy1 = 0.02f,
+                    )
+                    // a 20 20 0 0 1 -2.41 0.1
+                    arcToRelative(
+                        a = 20.0f,
+                        b = 20.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -2.41f,
+                        dy1 = 0.1f,
+                    )
+                    // a 85 85 0 0 1 3.97 -0.3
+                    arcToRelative(
+                        a = 85.0f,
+                        b = 85.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 3.97f,
+                        dy1 = -0.3f,
+                    )
+                    // q 0.24 0.01 0.13 -0.1
+                    quadToRelative(
+                        dx1 = 0.24f,
+                        dy1 = 0.01f,
+                        dx2 = 0.13f,
+                        dy2 = -0.1f,
+                    )
+                    // c -0.06 -0.06 -0.37 -0.08 -1.57 -0.05
+                    curveToRelative(
+                        dx1 = -0.06f,
+                        dy1 = -0.06f,
+                        dx2 = -0.37f,
+                        dy2 = -0.08f,
+                        dx3 = -1.57f,
+                        dy3 = -0.05f,
+                    )
+                    // q -1.5 0.02 -1.74 -0.04
+                    quadToRelative(
+                        dx1 = -1.5f,
+                        dy1 = 0.02f,
+                        dx2 = -1.74f,
+                        dy2 = -0.04f,
+                    )
+                    // a 25 25 0 0 0 -3.08 -0.28
+                    arcToRelative(
+                        a = 25.0f,
+                        b = 25.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -3.08f,
+                        dy1 = -0.28f,
+                    )
+                    // a 6 6 0 0 1 -1.36 -0.2
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.36f,
+                        dy1 = -0.2f,
+                    )
+                    // a 20 20 0 0 0 -2.37 -0.48
+                    arcToRelative(
+                        a = 20.0f,
+                        b = 20.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -2.37f,
+                        dy1 = -0.48f,
+                    )
+                    // c -0.77 -0.12 -0.97 -0.18 -1.24 -0.39
+                    curveToRelative(
+                        dx1 = -0.77f,
+                        dy1 = -0.12f,
+                        dx2 = -0.97f,
+                        dy2 = -0.18f,
+                        dx3 = -1.24f,
+                        dy3 = -0.39f,
+                    )
+                    // a 1 1 0 0 0 -0.64 -0.21
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.64f,
+                        dy1 = -0.21f,
+                    )
+                    // a 5 5 0 0 1 -0.64 -0.07
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.64f,
+                        dy1 = -0.07f,
+                    )
+                    // a 19 19 0 0 0 -2.36 0.06
+                    arcToRelative(
+                        a = 19.0f,
+                        b = 19.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -2.36f,
+                        dy1 = 0.06f,
+                    )
+                    // a 26 26 0 0 1 -2.52 0.08
+                    arcToRelative(
+                        a = 26.0f,
+                        b = 26.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -2.52f,
+                        dy1 = 0.08f,
+                    )
+                    // a 28 28 0 0 0 -4.29 0.2
+                    arcToRelative(
+                        a = 28.0f,
+                        b = 28.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -4.29f,
+                        dy1 = 0.2f,
+                    )
+                    // a 7 7 0 0 0 -1.73 0.42
+                    arcToRelative(
+                        a = 7.0f,
+                        b = 7.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.73f,
+                        dy1 = 0.42f,
+                    )
+                    // l -1.14 0.42
+                    lineToRelative(dx = -1.14f, dy = 0.42f)
+                    // a 6 6 0 0 0 -2.54 1.67
+                    arcToRelative(
+                        a = 6.0f,
+                        b = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -2.54f,
+                        dy1 = 1.67f,
+                    )
+                    // c -0.69 0.73 -0.82 1.02 -1.4 2.9
+                    curveToRelative(
+                        dx1 = -0.69f,
+                        dy1 = 0.73f,
+                        dx2 = -0.82f,
+                        dy2 = 1.02f,
+                        dx3 = -1.4f,
+                        dy3 = 2.9f,
+                    )
+                    // a 7 7 0 0 0 -0.5 2.49
+                    arcToRelative(
+                        a = 7.0f,
+                        b = 7.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.5f,
+                        dy1 = 2.49f,
+                    )
+                    // c -0.08 1.46 0.03 1.81 0.75 2.45
+                    curveToRelative(
+                        dx1 = -0.08f,
+                        dy1 = 1.46f,
+                        dx2 = 0.03f,
+                        dy2 = 1.81f,
+                        dx3 = 0.75f,
+                        dy3 = 2.45f,
+                    )
+                    // c 0.19 0.16 0.33 0.34 0.33 0.41
+                    curveToRelative(
+                        dx1 = 0.19f,
+                        dy1 = 0.16f,
+                        dx2 = 0.33f,
+                        dy2 = 0.34f,
+                        dx3 = 0.33f,
+                        dy3 = 0.41f,
+                    )
+                    // c 0 0.37 0.43 0.75 0.62 0.56
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.37f,
+                        dx2 = 0.43f,
+                        dy2 = 0.75f,
+                        dx3 = 0.62f,
+                        dy3 = 0.56f,
+                    )
+                }
+                // M72.26 65.87 c1.36 -.09 2.63 .9 3.51 2.77 a5.5 5.5 0 0 1 .62 2.83 9 9 0 0 1 -.14 2.22 c-.33 1.89 -.42 2.1 -1.11 2.79 a10 10 0 0 1 -4.48 2.16 16 16 0 0 1 -3.26 .22 c-1.85 .03 -2 .02 -2.26 -.1 a4 4 0 0 0 -1.07 -.2 8 8 0 0 1 -1.04 -.13 3 3 0 0 0 -.6 -.07 c-.22 0 -.43 -.04 -.47 -.08 -.16 -.16 -.92 -.33 -1.66 -.37 a5 5 0 0 1 -.86 -.1 c-.22 -.12 -.11 -.18 .25 -.14 .2 .02 .41 0 .49 -.04 .1 -.06 .07 -.07 -.18 -.08 l-.74 -.04 c-.36 -.04 -.4 -.06 -.3 -.13 .25 -.18 .03 -.23 -1.08 -.23 -1 0 -1.3 -.05 -1 -.16 a3 3 0 0 1 .55 -.05 q.4 -.02 .25 -.03 l-.55 -.1 a30 30 0 0 0 -2.62 -.1 l-2.36 -.03 q-.1 0 -.05 -.14 .05 -.13 -.06 -.13 c-.05 0 -.18 -.1 -.28 -.24 -.2 -.26 -.26 -.24 -.34 .1 l-.06 .22 -.49 .02 c-.38 .01 -.51 0 -.64 -.1 a1 1 0 0 0 -.4 -.17 l-.25 -.05 .04 .4 c.04 .31 .03 .37 -.05 .34 l-.48 -.12 -.38 -.07 .14 -.2 a1 1 0 0 1 .43 -.25 l.26 -.07 -.4 -.01 h-.66 c-.14 0 -.25 -.02 -.25 -.06 s.04 -.08 .08 -.08 l.33 -.02 a2 2 0 0 0 .47 -.16 1 1 0 0 1 .35 -.15 q.1 0 .12 -.07 -.01 -.08 -.56 -.05 c-.54 .02 -.55 .02 -.57 .2 -.03 .2 -.03 .2 -.18 .15 a.1 .1 0 0 1 -.06 -.13 c.04 -.1 -.08 -.2 -.18 -.13 l-.35 .06 -2.6 .21 q-.34 .04 -.34 .14 -.02 .16 -.18 .02 c-.06 -.06 -.32 -.05 -.96 0 -.78 .08 -.88 .1 -.88 .22 q0 .12 -.15 .12 l-.62 .06 a2 2 0 0 1 -.55 .02 2 2 0 0 1 -.33 -.45 c-.27 -.43 -.49 -.7 -.58 -.7 q-.05 0 -.01 .1 .02 .09 -.04 .1 -.07 .01 -.06 .1 .02 .12 -.2 .17 c-.25 .05 -.36 .13 -.2 .13 q.1 .01 .12 .08 c.02 .07 -.4 .22 -.98 .4 -.61 .22 -.97 .36 -.97 .42 0 .07 .2 .02 .79 -.17 1.37 -.47 1.97 -.57 1.97 -.34 0 .1 -.11 .15 -.63 .27 l-.71 .14 a6.02 6.02 0 0 1 -1.52 .67 A6 6 0 0 0 36.8 78 a2 2 0 0 1 -.42 .25 4.5 4.5 0 0 0 -1.49 1.34 c-.43 .58 -.57 .76 -.52 .82 l-2.71 .31 q.02 -.02 -.03 -.09 -.07 -.08 0 -.66 c.2 -1.84 .94 -3.13 2.19 -3.78 a3 3 0 0 0 .52 -.32 c.13 -.2 1.71 -.8 2.59 -.99 q.6 -.12 1.2 -.3 .67 -.17 1.35 -.26 c1 -.1 2.35 -.32 2.8 -.46 a13 13 0 0 1 1.16 -.27 4 4 0 0 0 .8 -.2 q.07 -.05 .42 0 a5 5 0 0 0 1.24 0 33 33 0 0 1 2.63 -.07 c1.47 .01 1.88 -.01 2.63 -.13 a11 11 0 0 1 1.45 -.14 c.74 0 2.92 -.23 2.53 -.26 L54.7 72.7 c-.31 -.07 -.33 -.08 -.27 -.22 s.1 -.15 1.05 -.14 c.8 0 .99 .02 1.05 .1 .07 .1 .14 .1 .43 .05 .32 -.07 .34 -.08 .24 -.16 s-.11 -.1 -.02 -.16 a1 1 0 0 1 .2 -.07 l6.04 -.6 a3 3 0 0 0 .67 -.1 q.02 -.04 -.08 -.04 T63.9 71.3 c0 -.1 .34 -.13 .81 -.06 .33 .05 .5 .05 .61 0 .13 -.06 .1 -.06 -.2 -.04 -.64 .07 -.37 -.08 .3 -.16 l.84 -.11 a1 1 0 0 0 .3 -.1 14 14 0 0 1 1.64 -.29 20 20 0 0 0 2.09 -.37 7 7 0 0 0 2.67 -1.33 l.3 -.27 -.11 -.26 a2 2 0 0 0 -1 -1.08 c-.7 -.34 -1.02 -.39 -2.37 -.43 -1.23 -.03 -1.52 -.08 -1.38 -.24 a5 5 0 0 1 1.52 -.24 8 8 0 0 0 1.75 -.35 3 3 0 0 1 .59 -.1 m-31.78 8.54 a1 1 0 0 0 -.36 .07 1 1 0 0 1 -.5 .07 q-.1 -.03 -.17 .04 c-.03 .06 .07 .07 .4 .04 q.45 -.05 .45 .02 -.01 .06 -.19 .1 c-.49 .11 -.57 .16 -.15 .12 q.4 -.04 .81 -.05 c.35 0 .37 0 .4 .18 .01 .15 .06 .18 .39 .25 .45 .09 .39 .1 .72 -.06 a8 8 0 0 1 1.8 -.44 c.3 -.04 .46 -.08 .35 -.1 -.1 0 -.73 .08 -1.37 .17 -1.2 .17 -1.54 .2 -1.46 .13 a12 12 0 0 1 1.17 -.26 l1.13 -.23 h-.66 c-.58 -.01 -.68 .01 -.86 .14 q-.2 .15 -.27 .07 -.08 -.06 -.57 -.04 c-.42 .04 -.53 .02 -.77 -.1 a1 1 0 0 0 -.3 -.12 m9.54 1.13 q-.05 0 -.08 .02 -.04 .04 .05 .1 c.13 .08 .18 .08 .24 0 .03 -.05 -.11 -.12 -.21 -.12 m-10.94 .2 L39 75.83 a.3 .3 0 0 1 -.22 .1 q-.15 0 -.03 .08 l.14 .06 q.2 -.03 .2 -.22 0 -.1 -.02 -.1 m-4.9 4.4 q-.1 -.01 -.26 .1 -.22 .15 -.03 .12 c.19 0 .4 -.17 .28 -.21
+                path(
+                    fill = SolidColor(Color(0xFFFFFFFF)),
+                ) {
+                    // M 72.26 65.87
+                    moveTo(x = 72.26f, y = 65.87f)
+                    // c 1.36 -0.09 2.63 0.9 3.51 2.77
+                    curveToRelative(
+                        dx1 = 1.36f,
+                        dy1 = -0.09f,
+                        dx2 = 2.63f,
+                        dy2 = 0.9f,
+                        dx3 = 3.51f,
+                        dy3 = 2.77f,
+                    )
+                    // a 5.5 5.5 0 0 1 0.62 2.83
+                    arcToRelative(
+                        a = 5.5f,
+                        b = 5.5f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.62f,
+                        dy1 = 2.83f,
+                    )
+                    // a 9 9 0 0 1 -0.14 2.22
+                    arcToRelative(
+                        a = 9.0f,
+                        b = 9.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.14f,
+                        dy1 = 2.22f,
+                    )
+                    // c -0.33 1.89 -0.42 2.1 -1.11 2.79
+                    curveToRelative(
+                        dx1 = -0.33f,
+                        dy1 = 1.89f,
+                        dx2 = -0.42f,
+                        dy2 = 2.1f,
+                        dx3 = -1.11f,
+                        dy3 = 2.79f,
+                    )
+                    // a 10 10 0 0 1 -4.48 2.16
+                    arcToRelative(
+                        a = 10.0f,
+                        b = 10.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -4.48f,
+                        dy1 = 2.16f,
+                    )
+                    // a 16 16 0 0 1 -3.26 0.22
+                    arcToRelative(
+                        a = 16.0f,
+                        b = 16.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -3.26f,
+                        dy1 = 0.22f,
+                    )
+                    // c -1.85 0.03 -2 0.02 -2.26 -0.1
+                    curveToRelative(
+                        dx1 = -1.85f,
+                        dy1 = 0.03f,
+                        dx2 = -2.0f,
+                        dy2 = 0.02f,
+                        dx3 = -2.26f,
+                        dy3 = -0.1f,
+                    )
+                    // a 4 4 0 0 0 -1.07 -0.2
+                    arcToRelative(
+                        a = 4.0f,
+                        b = 4.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.07f,
+                        dy1 = -0.2f,
+                    )
+                    // a 8 8 0 0 1 -1.04 -0.13
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.04f,
+                        dy1 = -0.13f,
+                    )
+                    // a 3 3 0 0 0 -0.6 -0.07
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.6f,
+                        dy1 = -0.07f,
+                    )
+                    // c -0.22 0 -0.43 -0.04 -0.47 -0.08
+                    curveToRelative(
+                        dx1 = -0.22f,
+                        dy1 = 0.0f,
+                        dx2 = -0.43f,
+                        dy2 = -0.04f,
+                        dx3 = -0.47f,
+                        dy3 = -0.08f,
+                    )
+                    // c -0.16 -0.16 -0.92 -0.33 -1.66 -0.37
+                    curveToRelative(
+                        dx1 = -0.16f,
+                        dy1 = -0.16f,
+                        dx2 = -0.92f,
+                        dy2 = -0.33f,
+                        dx3 = -1.66f,
+                        dy3 = -0.37f,
+                    )
+                    // a 5 5 0 0 1 -0.86 -0.1
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.86f,
+                        dy1 = -0.1f,
+                    )
+                    // c -0.22 -0.12 -0.11 -0.18 0.25 -0.14
+                    curveToRelative(
+                        dx1 = -0.22f,
+                        dy1 = -0.12f,
+                        dx2 = -0.11f,
+                        dy2 = -0.18f,
+                        dx3 = 0.25f,
+                        dy3 = -0.14f,
+                    )
+                    // c 0.2 0.02 0.41 0 0.49 -0.04
+                    curveToRelative(
+                        dx1 = 0.2f,
+                        dy1 = 0.02f,
+                        dx2 = 0.41f,
+                        dy2 = 0.0f,
+                        dx3 = 0.49f,
+                        dy3 = -0.04f,
+                    )
+                    // c 0.1 -0.06 0.07 -0.07 -0.18 -0.08
+                    curveToRelative(
+                        dx1 = 0.1f,
+                        dy1 = -0.06f,
+                        dx2 = 0.07f,
+                        dy2 = -0.07f,
+                        dx3 = -0.18f,
+                        dy3 = -0.08f,
+                    )
+                    // l -0.74 -0.04
+                    lineToRelative(dx = -0.74f, dy = -0.04f)
+                    // c -0.36 -0.04 -0.4 -0.06 -0.3 -0.13
+                    curveToRelative(
+                        dx1 = -0.36f,
+                        dy1 = -0.04f,
+                        dx2 = -0.4f,
+                        dy2 = -0.06f,
+                        dx3 = -0.3f,
+                        dy3 = -0.13f,
+                    )
+                    // c 0.25 -0.18 0.03 -0.23 -1.08 -0.23
+                    curveToRelative(
+                        dx1 = 0.25f,
+                        dy1 = -0.18f,
+                        dx2 = 0.03f,
+                        dy2 = -0.23f,
+                        dx3 = -1.08f,
+                        dy3 = -0.23f,
+                    )
+                    // c -1 0 -1.3 -0.05 -1 -0.16
+                    curveToRelative(
+                        dx1 = -1.0f,
+                        dy1 = 0.0f,
+                        dx2 = -1.3f,
+                        dy2 = -0.05f,
+                        dx3 = -1.0f,
+                        dy3 = -0.16f,
+                    )
+                    // a 3 3 0 0 1 0.55 -0.05
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.55f,
+                        dy1 = -0.05f,
+                    )
+                    // q 0.4 -0.02 0.25 -0.03
+                    quadToRelative(
+                        dx1 = 0.4f,
+                        dy1 = -0.02f,
+                        dx2 = 0.25f,
+                        dy2 = -0.03f,
+                    )
+                    // l -0.55 -0.1
+                    lineToRelative(dx = -0.55f, dy = -0.1f)
+                    // a 30 30 0 0 0 -2.62 -0.1
+                    arcToRelative(
+                        a = 30.0f,
+                        b = 30.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -2.62f,
+                        dy1 = -0.1f,
+                    )
+                    // l -2.36 -0.03
+                    lineToRelative(dx = -2.36f, dy = -0.03f)
+                    // q -0.1 0 -0.05 -0.14
+                    quadToRelative(
+                        dx1 = -0.1f,
+                        dy1 = 0.0f,
+                        dx2 = -0.05f,
+                        dy2 = -0.14f,
+                    )
+                    // q 0.05 -0.13 -0.06 -0.13
+                    quadToRelative(
+                        dx1 = 0.05f,
+                        dy1 = -0.13f,
+                        dx2 = -0.06f,
+                        dy2 = -0.13f,
+                    )
+                    // c -0.05 0 -0.18 -0.1 -0.28 -0.24
+                    curveToRelative(
+                        dx1 = -0.05f,
+                        dy1 = 0.0f,
+                        dx2 = -0.18f,
+                        dy2 = -0.1f,
+                        dx3 = -0.28f,
+                        dy3 = -0.24f,
+                    )
+                    // c -0.2 -0.26 -0.26 -0.24 -0.34 0.1
+                    curveToRelative(
+                        dx1 = -0.2f,
+                        dy1 = -0.26f,
+                        dx2 = -0.26f,
+                        dy2 = -0.24f,
+                        dx3 = -0.34f,
+                        dy3 = 0.1f,
+                    )
+                    // l -0.06 0.22
+                    lineToRelative(dx = -0.06f, dy = 0.22f)
+                    // l -0.49 0.02
+                    lineToRelative(dx = -0.49f, dy = 0.02f)
+                    // c -0.38 0.01 -0.51 0 -0.64 -0.1
+                    curveToRelative(
+                        dx1 = -0.38f,
+                        dy1 = 0.01f,
+                        dx2 = -0.51f,
+                        dy2 = 0.0f,
+                        dx3 = -0.64f,
+                        dy3 = -0.1f,
+                    )
+                    // a 1 1 0 0 0 -0.4 -0.17
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.4f,
+                        dy1 = -0.17f,
+                    )
+                    // l -0.25 -0.05
+                    lineToRelative(dx = -0.25f, dy = -0.05f)
+                    // l 0.04 0.4
+                    lineToRelative(dx = 0.04f, dy = 0.4f)
+                    // c 0.04 0.31 0.03 0.37 -0.05 0.34
+                    curveToRelative(
+                        dx1 = 0.04f,
+                        dy1 = 0.31f,
+                        dx2 = 0.03f,
+                        dy2 = 0.37f,
+                        dx3 = -0.05f,
+                        dy3 = 0.34f,
+                    )
+                    // l -0.48 -0.12
+                    lineToRelative(dx = -0.48f, dy = -0.12f)
+                    // l -0.38 -0.07
+                    lineToRelative(dx = -0.38f, dy = -0.07f)
+                    // l 0.14 -0.2
+                    lineToRelative(dx = 0.14f, dy = -0.2f)
+                    // a 1 1 0 0 1 0.43 -0.25
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.43f,
+                        dy1 = -0.25f,
+                    )
+                    // l 0.26 -0.07
+                    lineToRelative(dx = 0.26f, dy = -0.07f)
+                    // l -0.4 -0.01
+                    lineToRelative(dx = -0.4f, dy = -0.01f)
+                    // h -0.66
+                    horizontalLineToRelative(dx = -0.66f)
+                    // c -0.14 0 -0.25 -0.02 -0.25 -0.06
+                    curveToRelative(
+                        dx1 = -0.14f,
+                        dy1 = 0.0f,
+                        dx2 = -0.25f,
+                        dy2 = -0.02f,
+                        dx3 = -0.25f,
+                        dy3 = -0.06f,
+                    )
+                    // s 0.04 -0.08 0.08 -0.08
+                    reflectiveCurveToRelative(
+                        dx1 = 0.04f,
+                        dy1 = -0.08f,
+                        dx2 = 0.08f,
+                        dy2 = -0.08f,
+                    )
+                    // l 0.33 -0.02
+                    lineToRelative(dx = 0.33f, dy = -0.02f)
+                    // a 2 2 0 0 0 0.47 -0.16
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.47f,
+                        dy1 = -0.16f,
+                    )
+                    // a 1 1 0 0 1 0.35 -0.15
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.35f,
+                        dy1 = -0.15f,
+                    )
+                    // q 0.1 0 0.12 -0.07
+                    quadToRelative(
+                        dx1 = 0.1f,
+                        dy1 = 0.0f,
+                        dx2 = 0.12f,
+                        dy2 = -0.07f,
+                    )
+                    // q -0.01 -0.08 -0.56 -0.05
+                    quadToRelative(
+                        dx1 = -0.01f,
+                        dy1 = -0.08f,
+                        dx2 = -0.56f,
+                        dy2 = -0.05f,
+                    )
+                    // c -0.54 0.02 -0.55 0.02 -0.57 0.2
+                    curveToRelative(
+                        dx1 = -0.54f,
+                        dy1 = 0.02f,
+                        dx2 = -0.55f,
+                        dy2 = 0.02f,
+                        dx3 = -0.57f,
+                        dy3 = 0.2f,
+                    )
+                    // c -0.03 0.2 -0.03 0.2 -0.18 0.15
+                    curveToRelative(
+                        dx1 = -0.03f,
+                        dy1 = 0.2f,
+                        dx2 = -0.03f,
+                        dy2 = 0.2f,
+                        dx3 = -0.18f,
+                        dy3 = 0.15f,
+                    )
+                    // a 0.1 0.1 0 0 1 -0.06 -0.13
+                    arcToRelative(
+                        a = 0.1f,
+                        b = 0.1f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.06f,
+                        dy1 = -0.13f,
+                    )
+                    // c 0.04 -0.1 -0.08 -0.2 -0.18 -0.13
+                    curveToRelative(
+                        dx1 = 0.04f,
+                        dy1 = -0.1f,
+                        dx2 = -0.08f,
+                        dy2 = -0.2f,
+                        dx3 = -0.18f,
+                        dy3 = -0.13f,
+                    )
+                    // l -0.35 0.06
+                    lineToRelative(dx = -0.35f, dy = 0.06f)
+                    // l -2.6 0.21
+                    lineToRelative(dx = -2.6f, dy = 0.21f)
+                    // q -0.34 0.04 -0.34 0.14
+                    quadToRelative(
+                        dx1 = -0.34f,
+                        dy1 = 0.04f,
+                        dx2 = -0.34f,
+                        dy2 = 0.14f,
+                    )
+                    // q -0.02 0.16 -0.18 0.02
+                    quadToRelative(
+                        dx1 = -0.02f,
+                        dy1 = 0.16f,
+                        dx2 = -0.18f,
+                        dy2 = 0.02f,
+                    )
+                    // c -0.06 -0.06 -0.32 -0.05 -0.96 0
+                    curveToRelative(
+                        dx1 = -0.06f,
+                        dy1 = -0.06f,
+                        dx2 = -0.32f,
+                        dy2 = -0.05f,
+                        dx3 = -0.96f,
+                        dy3 = 0.0f,
+                    )
+                    // c -0.78 0.08 -0.88 0.1 -0.88 0.22
+                    curveToRelative(
+                        dx1 = -0.78f,
+                        dy1 = 0.08f,
+                        dx2 = -0.88f,
+                        dy2 = 0.1f,
+                        dx3 = -0.88f,
+                        dy3 = 0.22f,
+                    )
+                    // q 0 0.12 -0.15 0.12
+                    quadToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.12f,
+                        dx2 = -0.15f,
+                        dy2 = 0.12f,
+                    )
+                    // l -0.62 0.06
+                    lineToRelative(dx = -0.62f, dy = 0.06f)
+                    // a 2 2 0 0 1 -0.55 0.02
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.55f,
+                        dy1 = 0.02f,
+                    )
+                    // a 2 2 0 0 1 -0.33 -0.45
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.33f,
+                        dy1 = -0.45f,
+                    )
+                    // c -0.27 -0.43 -0.49 -0.7 -0.58 -0.7
+                    curveToRelative(
+                        dx1 = -0.27f,
+                        dy1 = -0.43f,
+                        dx2 = -0.49f,
+                        dy2 = -0.7f,
+                        dx3 = -0.58f,
+                        dy3 = -0.7f,
+                    )
+                    // q -0.05 0 -0.01 0.1
+                    quadToRelative(
+                        dx1 = -0.05f,
+                        dy1 = 0.0f,
+                        dx2 = -0.01f,
+                        dy2 = 0.1f,
+                    )
+                    // q 0.02 0.09 -0.04 0.1
+                    quadToRelative(
+                        dx1 = 0.02f,
+                        dy1 = 0.09f,
+                        dx2 = -0.04f,
+                        dy2 = 0.1f,
+                    )
+                    // q -0.07 0.01 -0.06 0.1
+                    quadToRelative(
+                        dx1 = -0.07f,
+                        dy1 = 0.01f,
+                        dx2 = -0.06f,
+                        dy2 = 0.1f,
+                    )
+                    // q 0.02 0.12 -0.2 0.17
+                    quadToRelative(
+                        dx1 = 0.02f,
+                        dy1 = 0.12f,
+                        dx2 = -0.2f,
+                        dy2 = 0.17f,
+                    )
+                    // c -0.25 0.05 -0.36 0.13 -0.2 0.13
+                    curveToRelative(
+                        dx1 = -0.25f,
+                        dy1 = 0.05f,
+                        dx2 = -0.36f,
+                        dy2 = 0.13f,
+                        dx3 = -0.2f,
+                        dy3 = 0.13f,
+                    )
+                    // q 0.1 0.01 0.12 0.08
+                    quadToRelative(
+                        dx1 = 0.1f,
+                        dy1 = 0.01f,
+                        dx2 = 0.12f,
+                        dy2 = 0.08f,
+                    )
+                    // c 0.02 0.07 -0.4 0.22 -0.98 0.4
+                    curveToRelative(
+                        dx1 = 0.02f,
+                        dy1 = 0.07f,
+                        dx2 = -0.4f,
+                        dy2 = 0.22f,
+                        dx3 = -0.98f,
+                        dy3 = 0.4f,
+                    )
+                    // c -0.61 0.22 -0.97 0.36 -0.97 0.42
+                    curveToRelative(
+                        dx1 = -0.61f,
+                        dy1 = 0.22f,
+                        dx2 = -0.97f,
+                        dy2 = 0.36f,
+                        dx3 = -0.97f,
+                        dy3 = 0.42f,
+                    )
+                    // c 0 0.07 0.2 0.02 0.79 -0.17
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.07f,
+                        dx2 = 0.2f,
+                        dy2 = 0.02f,
+                        dx3 = 0.79f,
+                        dy3 = -0.17f,
+                    )
+                    // c 1.37 -0.47 1.97 -0.57 1.97 -0.34
+                    curveToRelative(
+                        dx1 = 1.37f,
+                        dy1 = -0.47f,
+                        dx2 = 1.97f,
+                        dy2 = -0.57f,
+                        dx3 = 1.97f,
+                        dy3 = -0.34f,
+                    )
+                    // c 0 0.1 -0.11 0.15 -0.63 0.27
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = 0.1f,
+                        dx2 = -0.11f,
+                        dy2 = 0.15f,
+                        dx3 = -0.63f,
+                        dy3 = 0.27f,
+                    )
+                    // l -0.71 0.14
+                    lineToRelative(dx = -0.71f, dy = 0.14f)
+                    // a 6.02 6.02 0 0 1 -1.52 0.67
+                    arcToRelative(
+                        a = 6.02f,
+                        b = 6.02f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -1.52f,
+                        dy1 = 0.67f,
+                    )
+                    // A 6 6 0 0 0 36.8 78
+                    arcTo(
+                        horizontalEllipseRadius = 6.0f,
+                        verticalEllipseRadius = 6.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        x1 = 36.8f,
+                        y1 = 78.0f,
+                    )
+                    // a 2 2 0 0 1 -0.42 0.25
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.42f,
+                        dy1 = 0.25f,
+                    )
+                    // a 4.5 4.5 0 0 0 -1.49 1.34
+                    arcToRelative(
+                        a = 4.5f,
+                        b = 4.5f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.49f,
+                        dy1 = 1.34f,
+                    )
+                    // c -0.43 0.58 -0.57 0.76 -0.52 0.82
+                    curveToRelative(
+                        dx1 = -0.43f,
+                        dy1 = 0.58f,
+                        dx2 = -0.57f,
+                        dy2 = 0.76f,
+                        dx3 = -0.52f,
+                        dy3 = 0.82f,
+                    )
+                    // l -2.71 0.31
+                    lineToRelative(dx = -2.71f, dy = 0.31f)
+                    // q 0.02 -0.02 -0.03 -0.09
+                    quadToRelative(
+                        dx1 = 0.02f,
+                        dy1 = -0.02f,
+                        dx2 = -0.03f,
+                        dy2 = -0.09f,
+                    )
+                    // q -0.07 -0.08 0 -0.66
+                    quadToRelative(
+                        dx1 = -0.07f,
+                        dy1 = -0.08f,
+                        dx2 = 0.0f,
+                        dy2 = -0.66f,
+                    )
+                    // c 0.2 -1.84 0.94 -3.13 2.19 -3.78
+                    curveToRelative(
+                        dx1 = 0.2f,
+                        dy1 = -1.84f,
+                        dx2 = 0.94f,
+                        dy2 = -3.13f,
+                        dx3 = 2.19f,
+                        dy3 = -3.78f,
+                    )
+                    // a 3 3 0 0 0 0.52 -0.32
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.52f,
+                        dy1 = -0.32f,
+                    )
+                    // c 0.13 -0.2 1.71 -0.8 2.59 -0.99
+                    curveToRelative(
+                        dx1 = 0.13f,
+                        dy1 = -0.2f,
+                        dx2 = 1.71f,
+                        dy2 = -0.8f,
+                        dx3 = 2.59f,
+                        dy3 = -0.99f,
+                    )
+                    // q 0.6 -0.12 1.2 -0.3
+                    quadToRelative(
+                        dx1 = 0.6f,
+                        dy1 = -0.12f,
+                        dx2 = 1.2f,
+                        dy2 = -0.3f,
+                    )
+                    // q 0.67 -0.17 1.35 -0.26
+                    quadToRelative(
+                        dx1 = 0.67f,
+                        dy1 = -0.17f,
+                        dx2 = 1.35f,
+                        dy2 = -0.26f,
+                    )
+                    // c 1 -0.1 2.35 -0.32 2.8 -0.46
+                    curveToRelative(
+                        dx1 = 1.0f,
+                        dy1 = -0.1f,
+                        dx2 = 2.35f,
+                        dy2 = -0.32f,
+                        dx3 = 2.8f,
+                        dy3 = -0.46f,
+                    )
+                    // a 13 13 0 0 1 1.16 -0.27
+                    arcToRelative(
+                        a = 13.0f,
+                        b = 13.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.16f,
+                        dy1 = -0.27f,
+                    )
+                    // a 4 4 0 0 0 0.8 -0.2
+                    arcToRelative(
+                        a = 4.0f,
+                        b = 4.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.8f,
+                        dy1 = -0.2f,
+                    )
+                    // q 0.07 -0.05 0.42 0
+                    quadToRelative(
+                        dx1 = 0.07f,
+                        dy1 = -0.05f,
+                        dx2 = 0.42f,
+                        dy2 = 0.0f,
+                    )
+                    // a 5 5 0 0 0 1.24 0
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.24f,
+                        dy1 = 0.0f,
+                    )
+                    // a 33 33 0 0 1 2.63 -0.07
+                    arcToRelative(
+                        a = 33.0f,
+                        b = 33.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 2.63f,
+                        dy1 = -0.07f,
+                    )
+                    // c 1.47 0.01 1.88 -0.01 2.63 -0.13
+                    curveToRelative(
+                        dx1 = 1.47f,
+                        dy1 = 0.01f,
+                        dx2 = 1.88f,
+                        dy2 = -0.01f,
+                        dx3 = 2.63f,
+                        dy3 = -0.13f,
+                    )
+                    // a 11 11 0 0 1 1.45 -0.14
+                    arcToRelative(
+                        a = 11.0f,
+                        b = 11.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.45f,
+                        dy1 = -0.14f,
+                    )
+                    // c 0.74 0 2.92 -0.23 2.53 -0.26
+                    curveToRelative(
+                        dx1 = 0.74f,
+                        dy1 = 0.0f,
+                        dx2 = 2.92f,
+                        dy2 = -0.23f,
+                        dx3 = 2.53f,
+                        dy3 = -0.26f,
+                    )
+                    // L 54.7 72.7
+                    lineTo(x = 54.7f, y = 72.7f)
+                    // c -0.31 -0.07 -0.33 -0.08 -0.27 -0.22
+                    curveToRelative(
+                        dx1 = -0.31f,
+                        dy1 = -0.07f,
+                        dx2 = -0.33f,
+                        dy2 = -0.08f,
+                        dx3 = -0.27f,
+                        dy3 = -0.22f,
+                    )
+                    // s 0.1 -0.15 1.05 -0.14
+                    reflectiveCurveToRelative(
+                        dx1 = 0.1f,
+                        dy1 = -0.15f,
+                        dx2 = 1.05f,
+                        dy2 = -0.14f,
+                    )
+                    // c 0.8 0 0.99 0.02 1.05 0.1
+                    curveToRelative(
+                        dx1 = 0.8f,
+                        dy1 = 0.0f,
+                        dx2 = 0.99f,
+                        dy2 = 0.02f,
+                        dx3 = 1.05f,
+                        dy3 = 0.1f,
+                    )
+                    // c 0.07 0.1 0.14 0.1 0.43 0.05
+                    curveToRelative(
+                        dx1 = 0.07f,
+                        dy1 = 0.1f,
+                        dx2 = 0.14f,
+                        dy2 = 0.1f,
+                        dx3 = 0.43f,
+                        dy3 = 0.05f,
+                    )
+                    // c 0.32 -0.07 0.34 -0.08 0.24 -0.16
+                    curveToRelative(
+                        dx1 = 0.32f,
+                        dy1 = -0.07f,
+                        dx2 = 0.34f,
+                        dy2 = -0.08f,
+                        dx3 = 0.24f,
+                        dy3 = -0.16f,
+                    )
+                    // s -0.11 -0.1 -0.02 -0.16
+                    reflectiveCurveToRelative(
+                        dx1 = -0.11f,
+                        dy1 = -0.1f,
+                        dx2 = -0.02f,
+                        dy2 = -0.16f,
+                    )
+                    // a 1 1 0 0 1 0.2 -0.07
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.2f,
+                        dy1 = -0.07f,
+                    )
+                    // l 6.04 -0.6
+                    lineToRelative(dx = 6.04f, dy = -0.6f)
+                    // a 3 3 0 0 0 0.67 -0.1
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.67f,
+                        dy1 = -0.1f,
+                    )
+                    // q 0.02 -0.04 -0.08 -0.04
+                    quadToRelative(
+                        dx1 = 0.02f,
+                        dy1 = -0.04f,
+                        dx2 = -0.08f,
+                        dy2 = -0.04f,
+                    )
+                    // T 63.9 71.3
+                    reflectiveQuadTo(
+                        x1 = 63.9f,
+                        y1 = 71.3f,
+                    )
+                    // c 0 -0.1 0.34 -0.13 0.81 -0.06
+                    curveToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.1f,
+                        dx2 = 0.34f,
+                        dy2 = -0.13f,
+                        dx3 = 0.81f,
+                        dy3 = -0.06f,
+                    )
+                    // c 0.33 0.05 0.5 0.05 0.61 0
+                    curveToRelative(
+                        dx1 = 0.33f,
+                        dy1 = 0.05f,
+                        dx2 = 0.5f,
+                        dy2 = 0.05f,
+                        dx3 = 0.61f,
+                        dy3 = 0.0f,
+                    )
+                    // c 0.13 -0.06 0.1 -0.06 -0.2 -0.04
+                    curveToRelative(
+                        dx1 = 0.13f,
+                        dy1 = -0.06f,
+                        dx2 = 0.1f,
+                        dy2 = -0.06f,
+                        dx3 = -0.2f,
+                        dy3 = -0.04f,
+                    )
+                    // c -0.64 0.07 -0.37 -0.08 0.3 -0.16
+                    curveToRelative(
+                        dx1 = -0.64f,
+                        dy1 = 0.07f,
+                        dx2 = -0.37f,
+                        dy2 = -0.08f,
+                        dx3 = 0.3f,
+                        dy3 = -0.16f,
+                    )
+                    // l 0.84 -0.11
+                    lineToRelative(dx = 0.84f, dy = -0.11f)
+                    // a 1 1 0 0 0 0.3 -0.1
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 0.3f,
+                        dy1 = -0.1f,
+                    )
+                    // a 14 14 0 0 1 1.64 -0.29
+                    arcToRelative(
+                        a = 14.0f,
+                        b = 14.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.64f,
+                        dy1 = -0.29f,
+                    )
+                    // a 20 20 0 0 0 2.09 -0.37
+                    arcToRelative(
+                        a = 20.0f,
+                        b = 20.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 2.09f,
+                        dy1 = -0.37f,
+                    )
+                    // a 7 7 0 0 0 2.67 -1.33
+                    arcToRelative(
+                        a = 7.0f,
+                        b = 7.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 2.67f,
+                        dy1 = -1.33f,
+                    )
+                    // l 0.3 -0.27
+                    lineToRelative(dx = 0.3f, dy = -0.27f)
+                    // l -0.11 -0.26
+                    lineToRelative(dx = -0.11f, dy = -0.26f)
+                    // a 2 2 0 0 0 -1 -1.08
+                    arcToRelative(
+                        a = 2.0f,
+                        b = 2.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -1.0f,
+                        dy1 = -1.08f,
+                    )
+                    // c -0.7 -0.34 -1.02 -0.39 -2.37 -0.43
+                    curveToRelative(
+                        dx1 = -0.7f,
+                        dy1 = -0.34f,
+                        dx2 = -1.02f,
+                        dy2 = -0.39f,
+                        dx3 = -2.37f,
+                        dy3 = -0.43f,
+                    )
+                    // c -1.23 -0.03 -1.52 -0.08 -1.38 -0.24
+                    curveToRelative(
+                        dx1 = -1.23f,
+                        dy1 = -0.03f,
+                        dx2 = -1.52f,
+                        dy2 = -0.08f,
+                        dx3 = -1.38f,
+                        dy3 = -0.24f,
+                    )
+                    // a 5 5 0 0 1 1.52 -0.24
+                    arcToRelative(
+                        a = 5.0f,
+                        b = 5.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.52f,
+                        dy1 = -0.24f,
+                    )
+                    // a 8 8 0 0 0 1.75 -0.35
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = 1.75f,
+                        dy1 = -0.35f,
+                    )
+                    // a 3 3 0 0 1 0.59 -0.1
+                    arcToRelative(
+                        a = 3.0f,
+                        b = 3.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 0.59f,
+                        dy1 = -0.1f,
+                    )
+                    // m -31.78 8.54
+                    moveToRelative(dx = -31.78f, dy = 8.54f)
+                    // a 1 1 0 0 0 -0.36 0.07
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.36f,
+                        dy1 = 0.07f,
+                    )
+                    // a 1 1 0 0 1 -0.5 0.07
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.5f,
+                        dy1 = 0.07f,
+                    )
+                    // q -0.1 -0.03 -0.17 0.04
+                    quadToRelative(
+                        dx1 = -0.1f,
+                        dy1 = -0.03f,
+                        dx2 = -0.17f,
+                        dy2 = 0.04f,
+                    )
+                    // c -0.03 0.06 0.07 0.07 0.4 0.04
+                    curveToRelative(
+                        dx1 = -0.03f,
+                        dy1 = 0.06f,
+                        dx2 = 0.07f,
+                        dy2 = 0.07f,
+                        dx3 = 0.4f,
+                        dy3 = 0.04f,
+                    )
+                    // q 0.45 -0.05 0.45 0.02
+                    quadToRelative(
+                        dx1 = 0.45f,
+                        dy1 = -0.05f,
+                        dx2 = 0.45f,
+                        dy2 = 0.02f,
+                    )
+                    // q -0.01 0.06 -0.19 0.1
+                    quadToRelative(
+                        dx1 = -0.01f,
+                        dy1 = 0.06f,
+                        dx2 = -0.19f,
+                        dy2 = 0.1f,
+                    )
+                    // c -0.49 0.11 -0.57 0.16 -0.15 0.12
+                    curveToRelative(
+                        dx1 = -0.49f,
+                        dy1 = 0.11f,
+                        dx2 = -0.57f,
+                        dy2 = 0.16f,
+                        dx3 = -0.15f,
+                        dy3 = 0.12f,
+                    )
+                    // q 0.4 -0.04 0.81 -0.05
+                    quadToRelative(
+                        dx1 = 0.4f,
+                        dy1 = -0.04f,
+                        dx2 = 0.81f,
+                        dy2 = -0.05f,
+                    )
+                    // c 0.35 0 0.37 0 0.4 0.18
+                    curveToRelative(
+                        dx1 = 0.35f,
+                        dy1 = 0.0f,
+                        dx2 = 0.37f,
+                        dy2 = 0.0f,
+                        dx3 = 0.4f,
+                        dy3 = 0.18f,
+                    )
+                    // c 0.01 0.15 0.06 0.18 0.39 0.25
+                    curveToRelative(
+                        dx1 = 0.01f,
+                        dy1 = 0.15f,
+                        dx2 = 0.06f,
+                        dy2 = 0.18f,
+                        dx3 = 0.39f,
+                        dy3 = 0.25f,
+                    )
+                    // c 0.45 0.09 0.39 0.1 0.72 -0.06
+                    curveToRelative(
+                        dx1 = 0.45f,
+                        dy1 = 0.09f,
+                        dx2 = 0.39f,
+                        dy2 = 0.1f,
+                        dx3 = 0.72f,
+                        dy3 = -0.06f,
+                    )
+                    // a 8 8 0 0 1 1.8 -0.44
+                    arcToRelative(
+                        a = 8.0f,
+                        b = 8.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.8f,
+                        dy1 = -0.44f,
+                    )
+                    // c 0.3 -0.04 0.46 -0.08 0.35 -0.1
+                    curveToRelative(
+                        dx1 = 0.3f,
+                        dy1 = -0.04f,
+                        dx2 = 0.46f,
+                        dy2 = -0.08f,
+                        dx3 = 0.35f,
+                        dy3 = -0.1f,
+                    )
+                    // c -0.1 0 -0.73 0.08 -1.37 0.17
+                    curveToRelative(
+                        dx1 = -0.1f,
+                        dy1 = 0.0f,
+                        dx2 = -0.73f,
+                        dy2 = 0.08f,
+                        dx3 = -1.37f,
+                        dy3 = 0.17f,
+                    )
+                    // c -1.2 0.17 -1.54 0.2 -1.46 0.13
+                    curveToRelative(
+                        dx1 = -1.2f,
+                        dy1 = 0.17f,
+                        dx2 = -1.54f,
+                        dy2 = 0.2f,
+                        dx3 = -1.46f,
+                        dy3 = 0.13f,
+                    )
+                    // a 12 12 0 0 1 1.17 -0.26
+                    arcToRelative(
+                        a = 12.0f,
+                        b = 12.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = 1.17f,
+                        dy1 = -0.26f,
+                    )
+                    // l 1.13 -0.23
+                    lineToRelative(dx = 1.13f, dy = -0.23f)
+                    // h -0.66
+                    horizontalLineToRelative(dx = -0.66f)
+                    // c -0.58 -0.01 -0.68 0.01 -0.86 0.14
+                    curveToRelative(
+                        dx1 = -0.58f,
+                        dy1 = -0.01f,
+                        dx2 = -0.68f,
+                        dy2 = 0.01f,
+                        dx3 = -0.86f,
+                        dy3 = 0.14f,
+                    )
+                    // q -0.2 0.15 -0.27 0.07
+                    quadToRelative(
+                        dx1 = -0.2f,
+                        dy1 = 0.15f,
+                        dx2 = -0.27f,
+                        dy2 = 0.07f,
+                    )
+                    // q -0.08 -0.06 -0.57 -0.04
+                    quadToRelative(
+                        dx1 = -0.08f,
+                        dy1 = -0.06f,
+                        dx2 = -0.57f,
+                        dy2 = -0.04f,
+                    )
+                    // c -0.42 0.04 -0.53 0.02 -0.77 -0.1
+                    curveToRelative(
+                        dx1 = -0.42f,
+                        dy1 = 0.04f,
+                        dx2 = -0.53f,
+                        dy2 = 0.02f,
+                        dx3 = -0.77f,
+                        dy3 = -0.1f,
+                    )
+                    // a 1 1 0 0 0 -0.3 -0.12
+                    arcToRelative(
+                        a = 1.0f,
+                        b = 1.0f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = false,
+                        dx1 = -0.3f,
+                        dy1 = -0.12f,
+                    )
+                    // m 9.54 1.13
+                    moveToRelative(dx = 9.54f, dy = 1.13f)
+                    // q -0.05 0 -0.08 0.02
+                    quadToRelative(
+                        dx1 = -0.05f,
+                        dy1 = 0.0f,
+                        dx2 = -0.08f,
+                        dy2 = 0.02f,
+                    )
+                    // q -0.04 0.04 0.05 0.1
+                    quadToRelative(
+                        dx1 = -0.04f,
+                        dy1 = 0.04f,
+                        dx2 = 0.05f,
+                        dy2 = 0.1f,
+                    )
+                    // c 0.13 0.08 0.18 0.08 0.24 0
+                    curveToRelative(
+                        dx1 = 0.13f,
+                        dy1 = 0.08f,
+                        dx2 = 0.18f,
+                        dy2 = 0.08f,
+                        dx3 = 0.24f,
+                        dy3 = 0.0f,
+                    )
+                    // c 0.03 -0.05 -0.11 -0.12 -0.21 -0.12
+                    curveToRelative(
+                        dx1 = 0.03f,
+                        dy1 = -0.05f,
+                        dx2 = -0.11f,
+                        dy2 = -0.12f,
+                        dx3 = -0.21f,
+                        dy3 = -0.12f,
+                    )
+                    // m -10.94 0.2
+                    moveToRelative(dx = -10.94f, dy = 0.2f)
+                    // L 39 75.83
+                    lineTo(x = 39.0f, y = 75.83f)
+                    // a 0.3 0.3 0 0 1 -0.22 0.1
+                    arcToRelative(
+                        a = 0.3f,
+                        b = 0.3f,
+                        theta = 0.0f,
+                        isMoreThanHalf = false,
+                        isPositiveArc = true,
+                        dx1 = -0.22f,
+                        dy1 = 0.1f,
+                    )
+                    // q -0.15 0 -0.03 0.08
+                    quadToRelative(
+                        dx1 = -0.15f,
+                        dy1 = 0.0f,
+                        dx2 = -0.03f,
+                        dy2 = 0.08f,
+                    )
+                    // l 0.14 0.06
+                    lineToRelative(dx = 0.14f, dy = 0.06f)
+                    // q 0.2 -0.03 0.2 -0.22
+                    quadToRelative(
+                        dx1 = 0.2f,
+                        dy1 = -0.03f,
+                        dx2 = 0.2f,
+                        dy2 = -0.22f,
+                    )
+                    // q 0 -0.1 -0.02 -0.1
+                    quadToRelative(
+                        dx1 = 0.0f,
+                        dy1 = -0.1f,
+                        dx2 = -0.02f,
+                        dy2 = -0.1f,
+                    )
+                    // m -4.9 4.4
+                    moveToRelative(dx = -4.9f, dy = 4.4f)
+                    // q -0.1 -0.01 -0.26 0.1
+                    quadToRelative(
+                        dx1 = -0.1f,
+                        dy1 = -0.01f,
+                        dx2 = -0.26f,
+                        dy2 = 0.1f,
+                    )
+                    // q -0.22 0.15 -0.03 0.12
+                    quadToRelative(
+                        dx1 = -0.22f,
+                        dy1 = 0.15f,
+                        dx2 = -0.03f,
+                        dy2 = 0.12f,
+                    )
+                    // c 0.19 0 0.4 -0.17 0.28 -0.21
+                    curveToRelative(
+                        dx1 = 0.19f,
+                        dy1 = 0.0f,
+                        dx2 = 0.4f,
+                        dy2 = -0.17f,
+                        dx3 = 0.28f,
+                        dy3 = -0.21f,
+                    )
+                }
+            }.build().also { _AppIconRip = it }
+        }
+
     private var _add: ImageVector? = null
 
     @Suppress("CheckReturnValue")
