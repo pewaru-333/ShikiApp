@@ -1,5 +1,12 @@
 package org.application.shikiapp.shared
 
+import androidx.compose.ui.graphics.vector.ImageVector
+import org.application.shikiapp.shared.ui.theme.Icons
+import org.jetbrains.compose.resources.StringResource
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.app_name
+import shikiapp.composeapp.generated.resources.app_name_rip
+
 data class AppConfig(
     val baseUrl: String,
     val urlMirrors: List<String>,
@@ -32,8 +39,25 @@ data class AppConfig(
         fun createFlavorConfig(userAgent: String) = if (userAgent == "ShikiApp") ShikiApp
         else DarkShiki
 
-        fun createDesktopConfig() = ShikiApp.copy(
-            redirectUri = "app://login/"
-        )
+        fun createDesktopConfig(userAgent: String): Pair<AppConfig, DesktopConfig> {
+            val isRip = userAgent == "ShikiRip"
+
+            val appConfig = if (isRip) DarkShiki
+            else ShikiApp.copy(
+                redirectUri = "app://login/"
+            )
+
+            val desktopConfig = DesktopConfig(
+                appName = if (isRip) Res.string.app_name_rip else Res.string.app_name,
+                appIcon = if (isRip) Icons.AppIconRip else Icons.AppIcon
+            )
+
+            return appConfig to desktopConfig
+        }
     }
+
+    data class DesktopConfig(
+        val appName: StringResource,
+        val appIcon: ImageVector
+    )
 }
