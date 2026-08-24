@@ -217,11 +217,13 @@ jobs:
       - name: 'Grant execution permission to Gradle Wrapper'
         run: chmod +x gradlew
 
-      - name: 'Setup Ruby and Fastlane'
+      - name: 'Setup Ruby'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
+
+      - name: 'Install Fastlane'
+        run: gem install fastlane
 
       - name: 'Install Apple Certificate and Provisioning Profile'
         env:
@@ -250,7 +252,8 @@ jobs:
       - name: 'Build iOS App via Fastlane'
         run: |
           cd iosApp
-          bundle exec fastlane build_ios_release
+          fastlane build_ios_release
+
       - name: 'Upload iOS IPA as artifact'
         uses: actions/upload-artifact@v7
         with:
@@ -364,17 +367,19 @@ jobs:
           echo "RuStore статус: ${{ steps.rustore_publish.outputs.status }}"
 
   deploy-ios:
-    runs-on: macos-14
+    runs-on: macos-26
     needs: [ get-version, create-release ]
     steps:
       - name: 'Checkout repository'
         uses: actions/checkout@v7
 
-      - name: 'Setup Ruby and Fastlane'
+      - name: 'Setup Ruby'
         uses: ruby/setup-ruby@v1
         with:
           ruby-version: '3.2'
-          bundler-cache: true
+
+      - name: 'Install Fastlane'
+        run: gem install fastlane
 
       - name: 'Download iOS IPA'
         uses: actions/download-artifact@v4
@@ -389,4 +394,4 @@ jobs:
           APP_STORE_CONNECT_API_KEY_KEY: ${{ secrets.APP_STORE_CONNECT_API_KEY_KEY }}
         run: |
           cd iosApp
-          bundle exec fastlane deploy_ios_release
+          fastlane deploy_ios_release
