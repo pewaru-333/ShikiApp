@@ -17,6 +17,10 @@ dependencies {
     implementation(libs.coil.compose)
 }
 
+val appName = project.findProperty("userAgent")
+    .toString()
+    .let { if (it == "DarkShiki") "ShikiRip" else it }
+
 compose.desktop {
     application {
         mainClass = "org.application.shikiapp.shared.MainKt"
@@ -26,7 +30,7 @@ compose.desktop {
         }
 
         nativeDistributions {
-            packageName = "ShikiApp"
+            packageName = appName
             packageVersion = project.findProperty("APP_VERSION_NAME").toString()
                 .substringAfterLast('-')
 
@@ -34,7 +38,9 @@ compose.desktop {
 
             targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
 
-            jvmArgs += listOfNotNull(
+            jvmArgs(
+                "-Dapp.userAgent=$appName",
+
                 "-Xms512m",
                 "-Xmx2048m",
 
@@ -51,7 +57,7 @@ compose.desktop {
                 "-Dfile.encoding=UTF-8",
 
                 "-Dskiko.vsync.enabled=true",
-                "-Dskiko.gpu.resource.cache.limit=1073741824" // 1GB VRAM cache limit
+                "-Dskiko.gpu.resourceCacheLimit=1073741824" // 1GB VRAM cache limit
             )
             modules(
                 "java.logging",
@@ -63,11 +69,17 @@ compose.desktop {
             )
 
             windows {
-                iconFile.set(project.file("src/main/resources/icons/icon.ico"))
+                val icon = if (appName == "ShikiApp") "src/main/resources/icons/icon.ico"
+                else "src/main/resources/icons/icon_rip.ico"
+
+                iconFile.set(project.file(icon))
             }
 
             linux {
-                iconFile.set(project.file("src/main/resources/icons/icon.png"))
+                val icon = if (appName == "ShikiApp") "src/main/resources/icons/icon.png"
+                else "src/main/resources/icons/icon_rip.png"
+
+                iconFile.set(project.file(icon))
             }
         }
     }
@@ -75,11 +87,10 @@ compose.desktop {
 
 tasks.register<Zip>("packageZipDistributable") {
     group = "compose desktop"
-    description = "Create .zip archive"
+    description = "Create .zip archive for $appName"
 
     dependsOn("createReleaseDistributable")
 
-    val appName = "ShikiApp"
     val buildDir = layout.buildDirectory.get().asFile
 
     val appImageDir = file("$buildDir/compose/binaries/main-release/app/$appName")

@@ -1,0 +1,5 @@
+— Added a PC version for ShikiRip.
+— Optimized the videoplayer on the PC. Fixed an error switching to fullscreen mode and back.
+— Optimized the videoplayer on Android. Fixed a bug that caused the video zoom to not change. Fixed an issue where subtitles were sometimes shown by default.
+— Fixed an error (very rare) that caused some browsers to incorrectly receive a link for authorization in the application.
+— Many minor improvements and optimizations.

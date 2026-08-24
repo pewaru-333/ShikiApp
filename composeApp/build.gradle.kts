@@ -36,17 +36,23 @@ kotlin {
         compileSdk = 37
 
         compilerOptions {
-            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_21)
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
         }
 
-        androidResources.enable = true
+        androidResources {
+            enable = true
+        }
     }
 
     compilerOptions.freeCompilerArgs.add("-Xexpect-actual-classes")
 
     applyDefaultHierarchyTemplate()
 
-    jvm()
+    jvm {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_25)
+        }
+    }
 
     listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
         target.binaries.framework {
@@ -66,7 +72,7 @@ kotlin {
                 // Material Design & Adaptive
                 implementation(libs.compose.material3)
                 implementation(libs.compose.material3.adaptive)
-                implementation(libs.compose.material3.navigationSuite)
+                implementation(libs.compose.material3.navigation.suite)
 
                 // Kotlin
                 implementation(libs.kotlin.library)
@@ -133,11 +139,11 @@ compose.resources {
     publicResClass = true
 }
 
-val generateLanguagesList by tasks.registering {
+val generateLanguagesList = tasks.register("genLangList") {
     description = "Generates language list"
 
     val resDir = file("src/commonMain/composeResources")
-    val outputFile = file("src/commonMain/kotlin/GeneratedLanguages.kt")
+    val outputFile = file("src/commonMain/kotlin/AppLanguages.kt")
 
     inputs.dir(resDir)
     outputs.file(outputFile)
