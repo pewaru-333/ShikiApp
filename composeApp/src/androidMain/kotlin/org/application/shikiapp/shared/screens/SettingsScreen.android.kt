@@ -1,5 +1,7 @@
 package org.application.shikiapp.shared.screens
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
@@ -31,12 +33,15 @@ import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.*
 
-actual fun LazyListScope.deeplinkSetting(onClick: () -> Unit) = preference(
-    key = PREF_DEEP_LINK_SETTINGS,
-    title = { Text(stringResource(Res.string.preference_deep_link)) },
-    onClick = onClick
-)
+actual fun LazyListScope.deeplinkSetting(onClick: () -> Unit) =
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) Unit
+    else preference(
+        key = PREF_DEEP_LINK_SETTINGS,
+        title = { Text(stringResource(Res.string.preference_deep_link)) },
+        onClick = onClick
+    )
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 actual fun DeeplinkScreen(isVisible: Boolean, onBack: () -> Unit) =
     AnimatedDialogScreen(isVisible, BLANK, onBack) { values ->
