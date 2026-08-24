@@ -12,6 +12,7 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.ChecksSdkIntAtLeast
+import androidx.annotation.RequiresApi
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.*
@@ -43,7 +44,7 @@ import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
-import java.util.*
+import java.util.Locale
 
 actual fun fromHtml(text: String?) =
     if (text == null) androidx.compose.ui.text.AnnotatedString(BLANK)
@@ -103,6 +104,7 @@ actual fun rememberDataManager(): Pair<DataManager, PermissionState> {
     return Pair(DataManager(dataManager), permissionState)
 }
 
+@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 actual fun rememberVerifiedDomain(): IDomain {
     val context = LocalContext.current
