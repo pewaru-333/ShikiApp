@@ -1,9 +1,9 @@
 package org.application.shikiapp.shared.network.calls
 
-import io.ktor.client.*
-import io.ktor.client.call.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
+import io.ktor.client.request.forms.submitForm
 import io.ktor.http.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.sync.Mutex
@@ -16,7 +16,6 @@ import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.REFRESH_TOKEN
 import org.application.shikiapp.shared.utils.enums.MessageType
-import org.application.shikiapp.shared.utils.extensions.requestWithCache
 import kotlin.time.Duration.Companion.milliseconds
 
 class Profile(private val client: HttpClient) {
@@ -84,10 +83,7 @@ class Profile(private val client: HttpClient) {
     suspend fun deleteFavourite(linkedType: String, linkedId: Any) =
         client.delete("favorites/$linkedType/$linkedId")
 
-    suspend fun getDialogs(): List<Dialog> = client.requestWithCache(
-        cacheKey = "user_dialogs",
-        url = "dialogs"
-    )
+    suspend fun getDialogs(): List<Dialog> = client.get("dialogs").body()
 
     suspend fun getUserDialog(userId: Long, page: Int, limit: Int): List<FullMessage> =
         client.get("dialogs/$userId") {

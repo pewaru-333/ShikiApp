@@ -1,23 +1,16 @@
 package org.application.shikiapp.shared.network.calls
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.get
 import org.application.shikiapp.shared.models.data.Calendar
 import org.application.shikiapp.shared.models.data.Character
 import org.application.shikiapp.shared.models.data.Person
-import org.application.shikiapp.shared.utils.extensions.requestWithCache
 
 class Content(private val client: HttpClient) {
-    suspend fun getCalendar() = client.get("calendar").body<List<Calendar>>()
+    suspend fun getCalendar(): List<Calendar> = client.get("calendar").body()
 
-    suspend fun getCharacter(id: Any) = client.requestWithCache<Character>(
-        cacheKey = "character:$id",
-        url = "characters/$id"
-    )
+    suspend fun getCharacter(id: Any): Character = client.get("characters/$id").body()
 
-    suspend fun getPerson(id: Any) = client.requestWithCache<Person>(
-        cacheKey = "person:$id",
-        url = "people/$id"
-    )
+    suspend fun getPerson(id: Any): Person = client.get("people/$id").body()
 }

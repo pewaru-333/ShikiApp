@@ -1,31 +1,27 @@
 package org.application.shikiapp.shared.network.calls
 
-import io.ktor.client.*
-import io.ktor.client.call.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
 import io.ktor.client.request.*
-import io.ktor.http.*
+import io.ktor.http.ContentType
+import io.ktor.http.contentType
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.BaseRate
 import org.application.shikiapp.shared.models.data.NewRate
 import org.application.shikiapp.shared.models.data.UserRate
-import org.application.shikiapp.shared.utils.extensions.requestWithCache
 
 class UserRates(private val client: HttpClient) {
-    suspend fun getAnimeRates(id: Long, page: Int, limit: Int = 5000) = client.requestWithCache<List<BaseRate>?>(
-        cacheKey = "anime_rates:$id",
-        url = "users/$id/anime_rates"
-    ) {
-        parameter("page", page)
-        parameter("limit", limit)
-    }
+    suspend fun getAnimeRates(id: Long, page: Int, limit: Int = 5000): List<BaseRate>? =
+        client.get("users/$id/anime_rates") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body()
 
-    suspend fun getMangaRates(id: Long, page: Int, limit: Int = 5000) = client.requestWithCache<List<BaseRate>?>(
-        cacheKey = "manga_rates:$id",
-        url = "users/$id/manga_rates"
-    ) {
-        parameter("page", page)
-        parameter("limit", limit)
-    }
+    suspend fun getMangaRates(id: Long, page: Int, limit: Int = 5000): List<BaseRate>? =
+        client.get("users/$id/manga_rates") {
+            parameter("page", page)
+            parameter("limit", limit)
+        }.body()
 
     suspend fun getAnimeRate(animeId: String) = client.get("v2/user_rates") {
         parameter("user_id", Preferences.userId)
