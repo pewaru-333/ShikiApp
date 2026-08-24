@@ -5,9 +5,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.content.res.Configuration
 import android.webkit.MimeTypeMap
-import androidx.compose.foundation.layout.Box
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
@@ -19,12 +24,13 @@ import androidx.media3.common.*
 import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
+import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.exoplayer.source.DefaultMediaSourceFactory
 import androidx.media3.extractor.DefaultExtractorsFactory
-import androidx.media3.ui.compose.ContentFrame
+import androidx.media3.ui.compose.PlayerSurface
 import io.github.peerless2012.ass.media.AssHandler
 import io.github.peerless2012.ass.media.kt.withAssMkvSupport
 import io.github.peerless2012.ass.media.kt.withAssSupport
@@ -43,7 +49,6 @@ class VideoPlayerController(private val context: Context, private val state: Vid
     val assHandler = AssHandler(AssRenderType.EFFECTS_OPEN_GL)
     private val assParserFactory = AssSubtitleParserFactory(assHandler)
     private val extractorsFactory = DefaultExtractorsFactory().withAssMkvSupport(assParserFactory, assHandler)
-   // private val mediaSourceFactory = DefaultMediaSourceFactory(context, extractorsFactory).setSubtitleParserFactory(assParserFactory)
     private val renderersFactory = DefaultRenderersFactory(context).withAssSupport(assHandler)
 
     private val audioAttributes = AudioAttributes.Builder()
@@ -51,18 +56,21 @@ class VideoPlayerController(private val context: Context, private val state: Vid
         .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
         .build()
 
-    val exoPlayer = ExoPlayer.Builder(context.applicationContext)
-        .setAudioAttributes(audioAttributes, true)
-      //  .setMediaSourceFactory(mediaSourceFactory)
-        .setRenderersFactory(renderersFactory)
-        .setHandleAudioBecomingNoisy(true)
-        .build()
-        .apply {
-            addListener(PlayerEventListener())
-            assHandler.init(this)
-        }
+    internal val player: Player
+        field = ExoPlayer.Builder(context)
+            .setAudioAttributes(audioAttributes, true)
+            .setRenderersFactory(renderersFactory)
+            .setHandleAudioBecomingNoisy(true)
+            .build()
+            .apply {
+                addListener(PlayerEventListener())
+                assHandler.init(this)
+            }
 
-    var cues by mutableStateOf<List<Cue>>(emptyList())
+    internal var cues by mutableStateOf<List<Cue>>(emptyList())
+        private set
+
+    internal var videoSize by mutableStateOf(Size.Unspecified)
         private set
 
     private inner class PlayerEventListener : Player.Listener {
@@ -86,8 +94,9 @@ class VideoPlayerController(private val context: Context, private val state: Vid
 
         override fun onTracksChanged(tracks: Tracks) {
             val isAdaptive = state.url?.let {
-                it.contains(".m3u8", ignoreCase = true) ||
-                        it.contains(".mpd", ignoreCase = true)
+                val type = Util.inferContentType(it.toUri())
+
+                type == C.CONTENT_TYPE_HLS || type == C.CONTENT_TYPE_DASH
             }
 
             if (isAdaptive == true) {
@@ -103,7 +112,7 @@ class VideoPlayerController(private val context: Context, private val state: Vid
                     }
                 }
 
-                if (qualities.isNotEmpty()) {
+                if (qualities.isNotEmpty() && (qualities.size > 1 || state.qualityList.isEmpty())) {
                     state.qualityList = qualities.sortedDescending()
                 }
             }
@@ -113,7 +122,19 @@ class VideoPlayerController(private val context: Context, private val state: Vid
                 if (group.type == C.TRACK_TYPE_VIDEO) {
                     for (i in 0 until group.length) {
                         if (group.isTrackSelected(i)) {
-                            quality = group.getTrackFormat(i).height
+                            val trackFormat = group.getTrackFormat(i)
+
+                            val width = trackFormat.width
+                            val height = trackFormat.height
+                            val rotation = trackFormat.rotationDegrees
+
+                            videoSize = if (rotation == 90 || rotation == 270) {
+                                Size(height.toFloat(), width.toFloat())
+                            } else {
+                                Size(width.toFloat(), height.toFloat())
+                            }
+
+                            quality = height
                             break@search
                         }
                     }
@@ -128,7 +149,9 @@ class VideoPlayerController(private val context: Context, private val state: Vid
         }
     }
 
-    internal fun loadVideo(url: String) {
+    internal fun loadVideo() {
+        val url = state.url ?: return
+
         val dataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent(state.headers.getOrDefault("User-Agent", BLANK))
             .setDefaultRequestProperties(state.headers)
@@ -161,17 +184,64 @@ class VideoPlayerController(private val context: Context, private val state: Vid
             .setSubtitleParserFactory(assParserFactory)
             .createMediaSource(mediaItem)
 
-        exoPlayer.setMediaSource(mediaSource)
-        exoPlayer.prepare()
-        exoPlayer.playWhenReady = state.isPlaying
+        player.setMediaSource(mediaSource)
+        player.prepare()
+        player.playWhenReady = state.isPlaying
     }
 
-    internal fun setQuality(quality: Int) {
-        for (group in exoPlayer.currentTracks.groups) {
+    internal fun play() {
+        if (state.isPlaying) player.play() else player.pause()
+    }
+
+    internal fun pause() {
+        player.pause()
+        state.pause()
+    }
+
+    internal fun release() {
+        player.stop()
+        player.clearMediaItems()
+        player.release()
+    }
+
+    internal fun setVolume() {
+        player.volume = state.volume
+    }
+
+    internal fun setSpeed() {
+        player.setPlaybackSpeed(state.speed)
+    }
+
+    internal fun seek() {
+        state.seekTrigger?.let { seconds ->
+            if (state.totalTime > 0f) {
+                player.seekTo((seconds * 1000).toLong())
+            }
+        }
+    }
+
+    internal suspend fun updateBuffer() {
+        val total = player.duration.coerceAtLeast(0) / 1000f
+
+        if (total > 0f) {
+            if (player.isPlaying) {
+                val current = player.currentPosition / 1000f
+                state.updateTime(current, total)
+            }
+            state.updateBuffer(player.bufferedPercentage / 100f)
+        }
+
+        delay(if (state.isPlaying) 1000.milliseconds else 3000.milliseconds)
+    }
+
+    internal fun setQuality() {
+        val quality = state.currentQuality ?: return
+
+        for (group in player.currentTracks.groups) {
             if (group.type == C.TRACK_TYPE_VIDEO) {
                 for (i in 0 until group.length) {
                     if (group.getTrackFormat(i).height == quality) {
-                        exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
+                        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
                             .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, i))
                             .build()
 
@@ -182,13 +252,14 @@ class VideoPlayerController(private val context: Context, private val state: Vid
         }
     }
 
-    internal fun setAudioTrack(audioTrackIndex: Int) {
+    internal fun setAudioTrack() {
+        val audioTrackIndex = state.audioTrackIndex ?: return
         var index = 0
 
-        for (group in exoPlayer.currentTracks.groups) {
+        for (group in player.currentTracks.groups) {
             if (group.type == C.TRACK_TYPE_AUDIO) {
                 if (index == audioTrackIndex) {
-                    exoPlayer.trackSelectionParameters = exoPlayer.trackSelectionParameters.buildUpon()
+                    player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
                         .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
                         .build()
 
@@ -201,106 +272,107 @@ class VideoPlayerController(private val context: Context, private val state: Vid
     }
 
     internal fun setSubtitleTrack() {
-        val builder = exoPlayer.trackSelectionParameters.buildUpon()
+        val builder = player.trackSelectionParameters.buildUpon()
             .clearOverridesOfType(C.TRACK_TYPE_TEXT)
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, state.selectedSubtitlesTrack == null)
 
         if (state.selectedSubtitlesTrack != null) {
-            exoPlayer.currentTracks.groups
+            player.currentTracks.groups
                 .find { it.type == C.TRACK_TYPE_TEXT && it.getTrackFormat(0).label == state.selectedSubtitlesTrack }
                 ?.let { builder.setOverrideForType(TrackSelectionOverride(it.mediaTrackGroup, 0)) }
         }
 
-        exoPlayer.trackSelectionParameters = builder.build()
+        player.trackSelectionParameters = builder.build()
     }
 }
 
 @UnstableApi
 @Composable
 actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
-    val context = LocalContext.current.applicationContext
-
+    val context = LocalContext.current
     val controller = remember(context) { VideoPlayerController(context, state) }
-    val exoPlayer = controller.exoPlayer
 
     LaunchedEffect(state.url) {
-        state.url?.let(controller::loadVideo)
+        controller.loadVideo()
     }
 
     LaunchedEffect(state.currentQuality, state.tracksRevision) {
-        state.currentQuality?.let(controller::setQuality)
+        controller.setQuality()
     }
 
     LaunchedEffect(state.audioTrackIndex, state.tracksRevision) {
-        state.audioTrackIndex?.let(controller::setAudioTrack)
+        controller.setAudioTrack()
     }
 
-    LaunchedEffect(state.selectedSubtitlesTrack) {
+    LaunchedEffect(state.selectedSubtitlesTrack, state.tracksRevision) {
         controller.setSubtitleTrack()
     }
 
     LaunchedEffect(state.isPlaying) {
-        if (state.isPlaying) exoPlayer.play() else exoPlayer.pause()
+        controller.play()
     }
 
     LaunchedEffect(state.volume) {
-        exoPlayer.volume = state.volume
+        controller.setVolume()
     }
 
     LaunchedEffect(state.speed) {
-        exoPlayer.setPlaybackSpeed(state.speed)
+        controller.setSpeed()
     }
 
     LaunchedEffect(state.seekTrigger, state.totalTime) {
-        state.seekTrigger?.let { seconds ->
-            if (state.totalTime > 0f) {
-                exoPlayer.seekTo((seconds * 1000).toLong())
-            }
-        }
+        controller.seek()
     }
 
-    LaunchedEffect(state.isZoomed) {
-        exoPlayer.videoScalingMode = if (state.isZoomed) {
-            C.VIDEO_SCALING_MODE_SCALE_TO_FIT_WITH_CROPPING
-        } else {
-            C.VIDEO_SCALING_MODE_SCALE_TO_FIT
-        }
-    }
-
-    LaunchedEffect(exoPlayer) {
+    LaunchedEffect(controller) {
         while (isActive) {
-            val total = exoPlayer.duration.coerceAtLeast(0) / 1000f
-
-            if (total > 0f) {
-                if (exoPlayer.isPlaying) {
-                    val current = exoPlayer.currentPosition / 1000f
-                    state.updateTime(current, total)
-                }
-                state.updateBuffer(exoPlayer.bufferedPercentage / 100f)
-            }
-
-            delay(if (state.isPlaying) 500.milliseconds else 2000.milliseconds)
+            controller.updateBuffer()
         }
     }
 
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) {
-        exoPlayer.pause()
-        state.pause()
+        controller.pause()
     }
 
-    DisposableEffect(exoPlayer) {
+    DisposableEffect(controller) {
         onDispose {
-            exoPlayer.stop()
-            exoPlayer.clearMediaItems()
-            exoPlayer.release()
+            controller.release()
         }
     }
 
-    Box(modifier) {
-        ContentFrame(
-            player = exoPlayer,
-            modifier = Modifier.matchParentSize(),
-            contentScale = if (state.isZoomed) ContentScale.FillBounds else ContentScale.Fit
+    BoxWithConstraints(modifier) {
+        val scaleValue = remember(state.isZoomed, controller.videoSize, constraints) {
+            if (!state.isZoomed) return@remember 1f
+
+            val videoSize = controller.videoSize
+            if (videoSize == Size.Unspecified) return@remember 1f
+
+            val maxSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
+            val fit = ContentScale.Fit.computeScaleFactor(videoSize, maxSize).scaleX
+
+            if (fit <= 0f) return@remember 1f
+
+            val crop = ContentScale.Crop.computeScaleFactor(videoSize, maxSize).scaleX
+
+            crop / fit
+        }
+
+        val scale by animateFloatAsState(
+            targetValue = scaleValue,
+            animationSpec = tween(
+                durationMillis = 300,
+                easing = FastOutSlowInEasing
+            )
+        )
+
+        PlayerSurface(
+            player = controller.player,
+            modifier = Modifier
+                .matchParentSize()
+                .graphicsLayer {
+                    scaleX = scale
+                    scaleY = scale
+                }
         )
 
         AndroidView(
