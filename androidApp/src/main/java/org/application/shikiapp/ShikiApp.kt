@@ -4,7 +4,6 @@ import android.app.Application
 import android.os.Build.VERSION.SDK_INT
 import coil3.PlatformContext
 import coil3.SingletonImageLoader
-import coil3.annotation.ExperimentalCoilApi
 import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import okio.Path.Companion.toOkioPath
