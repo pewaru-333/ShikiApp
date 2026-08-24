@@ -8,8 +8,9 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
-import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.network.client.ApiRoutes
+import org.application.shikiapp.shared.utils.extensions.asyncScope
 import org.application.shikiapp.shared.utils.extensions.showToast
 import org.application.shikiapp.shared.utils.extensions.toFullUrl
 import org.jetbrains.compose.resources.getString
@@ -36,12 +37,14 @@ private class AndroidLinkHandler(private val context: Context) : IAction {
 
                 context.startActivity(intent)
             } catch (_: Exception) {
-                val text = runBlocking { getString(Res.string.text_error_open_link) }
-                context.showToast(text)
+                context.asyncScope.launch {
+                    context.showToast(getString(Res.string.text_error_open_link))
+                }
             }
         } else {
-            val text = runBlocking { getString(Res.string.text_no_browser) }
-            context.showToast(text)
+            context.asyncScope.launch {
+                context.showToast(getString(Res.string.text_no_browser))
+            }
         }
     }
 }
