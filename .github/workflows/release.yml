@@ -149,12 +149,6 @@ jobs:
       - name: 'Build Windows Portable Zip'
         run: ./gradlew :desktopApp:packageZipDistributable -PuserAgent=${{ matrix.flavor }}
 
-      - name: 'Rename Zip'
-        shell: bash
-        run: |
-          mv desktopApp/build/distributions/${{ matrix.flavor }}-windows-portable.zip \
-             desktopApp/build/distributions/${{ matrix.out_name }}-windows-portable.zip
-
       - name: 'Upload Windows Zip as artifact'
         uses: actions/upload-artifact@v7
         with:
@@ -189,7 +183,7 @@ jobs:
       - name: 'Package Portable Linux Build'
         run: |
           cd desktopApp/build/compose/binaries/main-release/app
-          tar -czvf ${{ matrix.out_name }}-linux-portable.tar.gz ${{ matrix.flavor }}/
+          tar -czvf ${{ matrix.out_name }}-linux-portable.tar.gz ${{ matrix.out_name }}/
 
       - name: 'Upload Linux Portable as artifact'
         uses: actions/upload-artifact@v7
@@ -198,7 +192,7 @@ jobs:
           path: desktopApp/build/compose/binaries/main-release/app/${{ matrix.out_name }}-linux-portable.tar.gz
 
   build-ios:
-    runs-on: macos-26
+    runs-on: macos-15
     needs: get-version
 
     steps:
@@ -370,7 +364,7 @@ jobs:
           echo "RuStore статус: ${{ steps.rustore_publish.outputs.status }}"
 
   deploy-ios:
-    runs-on: macos-26
+    runs-on: macos-15
     needs: [ get-version, create-release ]
     steps:
       - name: 'Checkout repository'
