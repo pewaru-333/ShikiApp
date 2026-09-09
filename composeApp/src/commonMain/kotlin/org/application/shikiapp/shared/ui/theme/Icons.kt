@@ -6694,6 +6694,83 @@ object Icons {
             return _person!!
         }
 
+    private var pictureInPicture: ImageVector? = null
+
+    val PictureInPicture: ImageVector
+        get() {
+            if (pictureInPicture != null) {
+                return pictureInPicture!!
+            }
+            pictureInPicture =
+                ImageVector.Builder(
+                    name = "picture_in_picture_alt",
+                    defaultWidth = 24.dp,
+                    defaultHeight = 24.dp,
+                    viewportWidth = 24f,
+                    viewportHeight = 24f,
+                )
+                    .apply {
+                        path(
+                            fill = SolidColor(Color.Black),
+                            fillAlpha = 1f,
+                            stroke = null,
+                            strokeAlpha = 1f,
+                            strokeLineWidth = 1f,
+                            strokeLineCap = StrokeCap.Butt,
+                            strokeLineJoin = StrokeJoin.Bevel,
+                            strokeLineMiter = 1f,
+                            pathFillType = PathFillType.NonZero,
+                        ) {
+                            moveTo(4f, 20f)
+                            quadTo(3.18f, 20f, 2.59f, 19.41f)
+                            reflectiveQuadTo(2f, 18f)
+                            verticalLineTo(6f)
+                            quadTo(2f, 5.18f, 2.59f, 4.59f)
+                            reflectiveQuadTo(4f, 4f)
+                            horizontalLineTo(20f)
+                            quadToRelative(0.83f, 0f, 1.41f, 0.59f)
+                            quadTo(22f, 5.18f, 22f, 6f)
+                            verticalLineTo(18f)
+                            quadToRelative(0f, 0.82f, -0.59f, 1.41f)
+                            reflectiveQuadTo(20f, 20f)
+                            horizontalLineTo(4f)
+                            close()
+                            moveTo(4f, 18f)
+                            horizontalLineTo(20f)
+                            verticalLineTo(6f)
+                            horizontalLineTo(4f)
+                            verticalLineTo(18f)
+                            close()
+                            moveToRelative(0f, 0f)
+                            verticalLineTo(6f)
+                            verticalLineTo(18f)
+                            close()
+                            moveToRelative(8f, -1f)
+                            horizontalLineToRelative(6f)
+                            quadToRelative(0.43f, 0f, 0.71f, -0.29f)
+                            quadTo(19f, 16.43f, 19f, 16f)
+                            verticalLineTo(12f)
+                            quadToRelative(0f, -0.43f, -0.29f, -0.71f)
+                            reflectiveQuadTo(18f, 11f)
+                            horizontalLineTo(12f)
+                            quadToRelative(-0.42f, 0f, -0.71f, 0.29f)
+                            reflectiveQuadTo(11f, 12f)
+                            verticalLineToRelative(4f)
+                            quadToRelative(0f, 0.43f, 0.29f, 0.71f)
+                            reflectiveQuadTo(12f, 17f)
+                            close()
+                            moveToRelative(1f, -2f)
+                            verticalLineTo(13f)
+                            horizontalLineToRelative(4f)
+                            verticalLineToRelative(2f)
+                            horizontalLineTo(13f)
+                            close()
+                        }
+                    }
+                    .build()
+            return pictureInPicture!!
+        }
+
     private var _playCircle: ImageVector? = null
 
     @Suppress("CheckReturnValue")
@@ -6946,6 +7023,52 @@ object Icons {
                     }
                     .build()
             return _refresh!!
+        }
+
+    private var _remove: ImageVector? = null
+
+    @Suppress("CheckReturnValue")
+    val Remove: ImageVector
+        get() {
+            if (_remove != null) {
+                return _remove!!
+            }
+            _remove =
+                ImageVector.Builder(
+                    name = "remove",
+                    defaultWidth = 24.dp,
+                    defaultHeight = 24.dp,
+                    viewportWidth = 24f,
+                    viewportHeight = 24f,
+                )
+                    .apply {
+                        path(
+                            fill = SolidColor(Color.Black),
+                            fillAlpha = 1f,
+                            stroke = null,
+                            strokeAlpha = 1f,
+                            strokeLineWidth = 1f,
+                            strokeLineCap = StrokeCap.Butt,
+                            strokeLineJoin = StrokeJoin.Bevel,
+                            strokeLineMiter = 1f,
+                            pathFillType = PathFillType.NonZero,
+                        ) {
+                            moveTo(6f, 13f)
+                            quadTo(5.58f, 13f, 5.29f, 12.71f)
+                            quadTo(5f, 12.43f, 5f, 12f)
+                            reflectiveQuadTo(5.29f, 11.29f)
+                            reflectiveQuadTo(6f, 11f)
+                            horizontalLineTo(18f)
+                            quadToRelative(0.43f, 0f, 0.71f, 0.29f)
+                            reflectiveQuadTo(19f, 12f)
+                            reflectiveQuadToRelative(-0.29f, 0.71f)
+                            reflectiveQuadTo(18f, 13f)
+                            horizontalLineTo(6f)
+                            close()
+                        }
+                    }
+                    .build()
+            return _remove!!
         }
 
     private var _remove_friend: ImageVector? = null
