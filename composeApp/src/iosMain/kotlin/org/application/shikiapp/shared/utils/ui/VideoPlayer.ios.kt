@@ -1,39 +1,118 @@
+@file:OptIn(ExperimentalForeignApi::class)
+
 package org.application.shikiapp.shared.utils.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.viewinterop.UIKitView
 import kotlinx.cinterop.ExperimentalForeignApi
 import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
-import kotlinx.coroutines.delay
-import org.application.shikiapp.shared.di.AppleContext
-import org.application.shikiapp.shared.di.PlatformContext
+import kotlinx.coroutines.*
+import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.utils.ui.subtitles.ComposeSubtitleLayer
+import platform.AVFAudio.AVAudioSession
+import platform.AVFAudio.AVAudioSessionCategoryPlayback
+import platform.AVFAudio.setActive
 import platform.AVFoundation.*
+import platform.AVKit.AVPictureInPictureController
 import platform.CoreGraphics.CGRectZero
 import platform.CoreMedia.CMTimeGetSeconds
 import platform.CoreMedia.CMTimeMakeWithSeconds
 import platform.CoreMedia.kCMTimeZero
 import platform.Foundation.NSNotificationCenter
+import platform.Foundation.NSOperationQueue
 import platform.Foundation.NSURL
 import platform.Foundation.NSValue
 import platform.UIKit.*
-import kotlin.time.Duration.Companion.milliseconds
+import platform.darwin.NSObjectProtocol
+import platform.darwin.dispatch_get_main_queue
 import kotlin.time.Duration.Companion.seconds
 
-@OptIn(ExperimentalForeignApi::class)
-@Composable
-actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
-    val player = remember(::AVPlayer)
+actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictureInPicture {
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + SupervisorJob())
+    internal val player = AVPlayer()
 
-    LaunchedEffect(state.url) {
-        val currentUrl = state.url ?: return@LaunchedEffect
-        val nsUrl = NSURL.URLWithString(currentUrl) ?: return@LaunchedEffect
+    internal var pipController: AVPictureInPictureController? = null
+
+    private var resignObserver: NSObjectProtocol? = null
+    private var backgroundObserver: NSObjectProtocol? = null
+    private var timeObserver: Any? = null
+    private var fallbackJob: Job? = null
+
+
+    override val feature = object : VideoPlayerFeature {
+        override val pictureInPicture =
+            if (AVPictureInPictureController.isPictureInPictureSupported()) this@VideoPlayerController
+            else null
+
+        override val isTV = false
+        override val showPlayPause = true
+        override val visibilityDelay = 3000L
+        override val pointerIcon = PointerIcon.Default
+    }
+
+
+    override fun create() {
+        try {
+            val audioSession = AVAudioSession.sharedInstance()
+            audioSession.setCategory(AVAudioSessionCategoryPlayback, null)
+            audioSession.setActive(true, null)
+        } catch (_: Exception) {
+
+        }
+
+        val center = NSNotificationCenter.defaultCenter
+        val queue = NSOperationQueue.mainQueue
+
+        resignObserver = center.addObserverForName(
+            name = UIApplicationWillResignActiveNotification,
+            `object` = null,
+            queue = queue,
+            usingBlock = {
+                if (pipController?.isPictureInPictureActive() == false) {
+                    pause()
+                }
+            }
+        )
+
+        backgroundObserver = center.addObserverForName(
+            name = UIApplicationDidEnterBackgroundNotification,
+            `object` = null,
+            queue = queue,
+            usingBlock = {
+                if (pipController?.isPictureInPictureActive() == false) {
+                    pause()
+                }
+            }
+        )
+
+        timeObserver = player.addPeriodicTimeObserverForInterval(
+            interval = CMTimeMakeWithSeconds(1.0, 1000),
+            queue = dispatch_get_main_queue(),
+            usingBlock = { updatePlayerState() }
+        )
+    }
+
+    override fun release() {
+        val center = NSNotificationCenter.defaultCenter
+
+        backgroundObserver?.let { center.removeObserver(it) }
+        resignObserver?.let { center.removeObserver(it) }
+        timeObserver?.let { player.removeTimeObserver(it) }
+
+        player.pause()
+        player.replaceCurrentItemWithPlayerItem(null)
+
+        coroutineScope.cancel()
+    }
+
+    override fun onLoadVideo(url: String) {
+        val nsUrl = NSURL.URLWithString(url) ?: return
 
         val options = mutableMapOf<Any?, Any?>()
         if (state.headers.isNotEmpty()) {
@@ -44,142 +123,176 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         val playerItem = AVPlayerItem.playerItemWithAsset(asset)
 
         player.replaceCurrentItemWithPlayerItem(playerItem)
+        player.play()
 
-        if (state.isPlaying) {
-            player.play()
-        }
-    }
+        fallbackJob?.cancel()
+        fallbackJob = coroutineScope.launch {
+            delay(10.seconds)
 
-    LaunchedEffect(state.url) {
-        if (state.url == null) return@LaunchedEffect
+            if (state.isPlaying) return@launch
 
-        delay(10.seconds)
+            val isActuallyPlaying = player.timeControlStatus == AVPlayerTimeControlStatusPlaying
+            val currentTime = CMTimeGetSeconds(player.currentTime())
+            val hasStarted = !currentTime.isNaN() && currentTime > 0.1
 
-        if (!state.isPlaying) return@LaunchedEffect
-
-        val isPlaying = player.timeControlStatus == AVPlayerTimeControlStatusPlaying
-
-        val currentTime = CMTimeGetSeconds(player.currentTime())
-        val hasStarted = !currentTime.isNaN() && currentTime > 0.1
-
-        if (!isPlaying && !hasStarted) {
-            player.pause()
-            player.replaceCurrentItemWithPlayerItem(null)
-
-            state.playNext()
-        }
-    }
-
-    LaunchedEffect(state.isPlaying) {
-        if (state.isPlaying) player.play() else player.pause()
-    }
-
-    LaunchedEffect(state.volume) {
-        player.volume = state.volume
-    }
-
-    LaunchedEffect(state.speed) {
-        player.rate = state.speed
-    }
-
-    LaunchedEffect(state.seekTrigger) {
-        state.seekTrigger?.let { seconds ->
-            player.seekToTime(
-                time = CMTimeMakeWithSeconds(seconds.toDouble(), 1000),
-                toleranceBefore = kCMTimeZero.readValue(),
-                toleranceAfter = kCMTimeZero.readValue()
-            )
-        }
-    }
-
-    LaunchedEffect(player, state.url) {
-        while (true) {
-            player.currentItem?.let { currentItem ->
-                val isReady = currentItem.status == AVPlayerItemStatusReadyToPlay
-                val isWaiting = player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
-
-                state.isLoading = !isReady || isWaiting
-
-                val currentTime = CMTimeGetSeconds(player.currentTime())
-                val totalDuration = CMTimeGetSeconds(currentItem.duration)
-
-                val isValid = !totalDuration.isNaN() && totalDuration > 0.0
-                if (isValid && player.timeControlStatus == AVPlayerTimeControlStatusPlaying) {
-                    state.updateTime(currentTime.toFloat(), totalDuration.toFloat())
-                }
-
-                val firstRange = currentItem.loadedTimeRanges.firstOrNull() as? NSValue
-                if (firstRange != null && isValid) {
-                    firstRange.CMTimeRangeValue.useContents {
-                        val bufferStart = CMTimeGetSeconds(start.readValue())
-                        val bufferDuration = CMTimeGetSeconds(duration.readValue())
-
-                        val bufferEnd = bufferStart + bufferDuration
-                        val bufferPercentage = (bufferEnd / totalDuration).toFloat()
-
-                        state.updateBuffer(bufferPercentage)
-                    }
-                }
-            }
-
-            delay(100.milliseconds)
-        }
-    }
-
-    DisposableEffect(player) {
-        val center = NSNotificationCenter.defaultCenter
-
-        val resignObserver = center.addObserverForName(
-            name = UIApplicationWillResignActiveNotification,
-            `object` = null,
-            queue = null,
-            usingBlock = {
+            if (!isActuallyPlaying && !hasStarted) {
                 player.pause()
-                state.pause()
+                player.replaceCurrentItemWithPlayerItem(null)
+                playNext()
             }
-        )
-
-        val backgroundObserver = center.addObserverForName(
-            name = UIApplicationDidEnterBackgroundNotification,
-            `object` = null,
-            queue = null,
-            usingBlock = {
-                player.pause()
-                state.pause()
-            }
-        )
-
-        onDispose {
-            center.removeObserver(resignObserver)
-            center.removeObserver(backgroundObserver)
-
-            player.pause()
-            player.replaceCurrentItemWithPlayerItem(null)
         }
     }
 
+    override fun onPlay() {
+        player.play()
+
+        state.isPlaying = true
+    }
+
+    override fun onPause() {
+        player.pause()
+
+        state.isPlaying = false
+    }
+
+    override fun onSetVolume(volume: Float) {
+        player.volume = volume
+
+        updateVolume(volume)
+    }
+
+    override fun onSetSpeed(speed: Float) {
+        player.rate = speed
+
+        updateSpeed(speed)
+    }
+
+    override fun onSeek(millis: Float) {
+        player.seekToTime(
+            time = CMTimeMakeWithSeconds(millis.toDouble(), 1000),
+            toleranceBefore = kCMTimeZero.readValue(),
+            toleranceAfter = kCMTimeZero.readValue()
+        )
+    }
+
+    override fun onLoadAudioTrack(index: Int) {
+        val currentItem = player.currentItem ?: return
+        val asset = currentItem.asset
+
+        val audioGroup = asset.mediaSelectionGroupForMediaCharacteristic(AVMediaCharacteristicAudible) ?: return
+        val options = audioGroup.options
+
+        if (index >= 0 && index < options.size) {
+            val selectedOption = options[index] as? AVMediaSelectionOption ?: return
+
+            val currentSelection = currentItem.currentMediaSelection.selectedMediaOptionInMediaSelectionGroup(audioGroup)
+            if (currentSelection == selectedOption) return
+
+            currentItem.selectMediaOption(selectedOption, audioGroup)
+        }
+    }
+
+    override fun onLoadSubtitleTrack(index: Int) {
+        val currentItem = player.currentItem ?: return
+        val asset = currentItem.asset
+
+        val subtitleGroup = asset.mediaSelectionGroupForMediaCharacteristic(AVMediaCharacteristicLegible) ?: return
+        val options = subtitleGroup.options
+
+        if (index == 0 && subtitleGroup.allowsEmptySelection) {
+            currentItem.selectMediaOption(null, subtitleGroup)
+            return
+        }
+
+        val optionIndex = index - 1
+        if (optionIndex !in options.indices) return
+
+        val selectedOption = options[optionIndex] as? AVMediaSelectionOption ?: return
+        val currentOption = currentItem.currentMediaSelection.selectedMediaOptionInMediaSelectionGroup(subtitleGroup)
+
+        if (currentOption?.extendedLanguageTag == selectedOption.extendedLanguageTag) {
+            return
+        }
+
+        currentItem.selectMediaOption(selectedOption, subtitleGroup)
+    }
+
+    override fun enterPIP() {
+        val pip = pipController ?: return
+
+        if (!pip.isPictureInPictureActive()) {
+            pip.startPictureInPicture()
+            controls.hideControls()
+        }
+    }
+
+    private fun updatePlayerState() {
+        val item = player.currentItem ?: return
+
+        val isReady = item.status == AVPlayerItemStatusReadyToPlay
+        val isWaiting = player.timeControlStatus == AVPlayerTimeControlStatusWaitingToPlayAtSpecifiedRate
+
+        state.isLoading = !isReady || isWaiting
+        state.isPlaying = player.timeControlStatus == AVPlayerTimeControlStatusPlaying
+
+        val current = CMTimeGetSeconds(player.currentTime())
+        val duration = CMTimeGetSeconds(item.duration)
+
+        if (!duration.isNaN() && duration > 0) {
+            state.currentTime = current.toFloat()
+            state.totalTime = duration.toFloat()
+
+            val range = item.loadedTimeRanges.firstOrNull() as? NSValue ?: return
+            range.CMTimeRangeValue.useContents {
+                val start = CMTimeGetSeconds(this.start.readValue())
+                val bufferDuration = CMTimeGetSeconds(this.duration.readValue())
+
+                updateBuffer(((start + bufferDuration) / duration).toFloat())
+            }
+        }
+    }
+}
+
+@Composable
+actual fun rememberVideoPlayerController(onEvent: (PlayerEvent) -> Unit): VideoPlayerController {
+    val currentEvent by rememberUpdatedState(onEvent)
+
+    return remember {
+        VideoPlayerController().apply {
+            eventListener = currentEvent
+        }
+    }
+}
+
+@OptIn(ExperimentalForeignApi::class)
+@Composable
+actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
     UIKitView(
         modifier = modifier,
         onRelease = { it.player = null },
         factory = {
             PlayerUIView().apply {
-                this.player = player
+                this.player = controller.player
                 backgroundColor = UIColor.blackColor
+
+                if (AVPictureInPictureController.isPictureInPictureSupported()) {
+                    controller.pipController = AVPictureInPictureController(playerLayer).apply {
+                        canStartPictureInPictureAutomaticallyFromInline = true
+                    }
+                }
             }
         },
         update = { view ->
-            view.player = player
-
-            view.videoGravity = if (state.isZoomed) AVLayerVideoGravityResizeAspectFill
+            view.videoGravity = if (controller.state.isZoomed) AVLayerVideoGravityResizeAspectFill
             else AVLayerVideoGravityResizeAspect
         }
     )
 
-    if (state.selectedSubtitlesTrack != null) {
-        val track = state.subtitles.find { it.name == state.selectedSubtitlesTrack }
+    if (controller.state.selectedSubtitlesTrack != null) {
+        val track = controller.state.subtitles.find { it.name == controller.state.selectedSubtitlesTrack }
 
         ComposeSubtitleLayer(
-            currentTimeMs = (state.currentTime * 1000f).toLong(),
+            currentTimeMs = (controller.state.currentTime * 1000f).toLong(),
             subtitleTrack = track
         )
     }
@@ -191,24 +304,18 @@ private class PlayerUIView : UIView(CGRectZero.readValue()) {
         override fun layerClass() = AVPlayerLayer
     }
 
+    val playerLayer: AVPlayerLayer
+        get() = layer as AVPlayerLayer
+
     var player: AVPlayer?
-        get() = (layer as? AVPlayerLayer)?.player
+        get() = playerLayer.player
         set(value) {
-            (layer as? AVPlayerLayer)?.player = value
+            playerLayer.player = value
         }
 
     var videoGravity: String?
-        get() = (layer as? AVPlayerLayer)?.videoGravity
+        get() = playerLayer.videoGravity
         set(value) {
-            (layer as? AVPlayerLayer)?.videoGravity = value
+            playerLayer.videoGravity = value
         }
-}
-
-actual class VideoPlayerUtils actual constructor(context: PlatformContext) {
-    actual val isTV = false
-    actual val showPlayPause = true
-    actual val visibilityDelay = 3000L
-    actual val pointerIcon = PointerIcon.Default
-
-    actual constructor() : this(AppleContext())
 }

@@ -6,16 +6,16 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.PointerIcon
 import kotlinx.coroutines.delay
-import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
+import kotlin.ranges.coerceIn
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 @Stable
 class VideoPlayerState {
     val speedList = listOf(0.5f, 0.75f, 1f, 1.25f, 1.5f, 1.75f, 2f)
-    val controls = Controls()
 
     // Ссылка, статус, время
     var url by mutableStateOf<String?>(null)
@@ -52,8 +52,6 @@ class VideoPlayerState {
     // Масштабирование
     var isZoomed by mutableStateOf(false)
         internal set
-    var isFullscreen by mutableStateOf(false) // desktop only
-        internal set
 
     // Запасные ссылки и заголовки
     var headers by mutableStateOf<Map<String, String>>(emptyMap())
@@ -62,155 +60,214 @@ class VideoPlayerState {
         internal set
     var bufferPercentage by mutableFloatStateOf(0f)
         internal set
+}
 
-    // Триггеры и обработчик событий
-    var tracksRevision by mutableIntStateOf(0)
-        internal set
+abstract class VideoPlayer {
+    val state = VideoPlayerState()
+    val controls = VideoPlayerControls()
 
-    internal var seekTrigger by mutableStateOf<Float?>(null)
+    abstract val feature: VideoPlayerFeature
 
     internal var eventListener: ((PlayerEvent) -> Unit)? = null
 
+
+    abstract fun create()
+    abstract fun release()
+
+    protected abstract fun onLoadVideo(url: String)
+
+
+    protected abstract fun onPlay()
+    protected abstract fun onPause()
+
+    protected abstract fun onSetVolume(volume: Float)
+    protected abstract fun onSetSpeed(speed: Float)
+    protected abstract fun onSeek(millis: Float)
+
+    protected abstract fun onLoadAudioTrack(index: Int)
+    protected abstract fun onLoadSubtitleTrack(index: Int)
+
+
     fun onEvent(event: PlayerEvent) {
         when (event) {
-            PlayerEvent.Play -> isPlaying = true
-            PlayerEvent.Pause -> isPlaying = false
+            PlayerEvent.Play -> Unit
+            PlayerEvent.Pause -> Unit
+            PlayerEvent.Ended -> Unit
 
-            PlayerEvent.MarkEpisodeWatched -> Unit
-
-            is PlayerEvent.UpdateProgress -> Unit
-            is PlayerEvent.Seek -> seekTo(event.seconds)
-
-            is PlayerEvent.LoadVideo -> Unit
-            is PlayerEvent.LoadFallback -> loadUrl(event.url)
-
-            is PlayerEvent.OnAutoQualityChanged -> Unit
-            is PlayerEvent.ChangeQuality -> {
-                controls.hideQuality()
-                currentQuality = event.quality
-                seekTrigger = currentTime
-            }
+            is PlayerEvent.ChangeQuality -> controls.hideControls()
 
             is PlayerEvent.SelectEpisode -> {
-                controls.hideEpisodes()
+                state.totalTime = 0f
+                state.currentTime = 0f
+                state.bufferPercentage = 0f
+                controls.onSetSliderValue(0f)
 
-                url = null
-                seekTrigger = null
+                state.isLoading = true
+                state.isPlaying = false
+                state.isVideoEnded = false
 
-                isLoading = true
-                isPlaying = false
+                state.currentQuality = null
+
+                controls.hideControls()
             }
         }
 
         eventListener?.invoke(event)
     }
 
-    fun loadUrl(
-        newUrl: String,
-        fallback: List<String> = fallbackUrls,
-        trackIndex: Int? = audioTrackIndex,
-        subs: List<SubtitleTrack> = subtitles,
-        headerMap: Map<String, String> = headers
+
+    fun loadVideo(
+        url: String,
+        fallback: List<String> = emptyList(),
+        qualityList: List<Int> = emptyList(),
+        trackIndex: Int? = null,
+        subtitles: List<SubtitleTrack> = emptyList(),
+        headers: Map<String, String> = emptyMap()
     ) {
-        url = newUrl
-        fallbackUrls = fallback
-        headers = headerMap
-        audioTrackIndex = trackIndex
-        subtitles = subs
+        state.url = url
+        state.fallbackUrls = fallback
+        state.headers = headers
+        state.audioTrackIndex = trackIndex
+        state.subtitles = subtitles
 
-        totalTime = 0f
-        currentTime = 0f
-        bufferPercentage = 0f
+        state.totalTime = 0f
+        state.currentTime = 0f
+        state.bufferPercentage = 0f
+        controls.onSetSliderValue(0f)
 
-        isLoading = true
-        isPlaying = true
-        isVideoEnded = false
+        state.isLoading = true
+        state.isPlaying = false
+        state.isVideoEnded = false
 
-        selectedSubtitlesTrack = null
-
-        currentQuality = null
-        qualityList = emptyList()
+        state.selectedSubtitlesTrack = null
+        state.currentQuality = null
+        state.qualityList = qualityList
 
         controls.hideControls()
+
+        onLoadVideo(url)
+        onLoadSubtitleTrack(0)
+    }
+
+    fun loadVideo(url: String) {
+        controls.hideControls()
+
+        onLoadVideo(url)
+        seekTo(state.currentTime)
+    }
+
+//    fun play() {
+//        onPlay()
+//    }
+
+    fun pause() {
+        onPause()
     }
 
     fun togglePlayPause() {
-        isPlaying = !isPlaying
+        if (state.isPlaying) onPause() else onPlay()
     }
 
-    fun pause() {
-        isPlaying = false
-    }
+    fun setVolume(volume: Float) {
+        val value = volume.coerceIn(0f, 1f)
 
-    fun seekTo(seconds: Float) {
-        val target = seconds.coerceIn(0f, totalTime.takeIf { it > 0f } ?: Float.MAX_VALUE)
-        seekTrigger = target
-        currentTime = target
-    }
-
-    fun playNext() {
-        fallbackUrls.firstOrNull()?.let { nextUrl ->
-            fallbackUrls = fallbackUrls.drop(1)
-            loadUrl(nextUrl)
-        }
-    }
-
-    fun setVolume(newVolume: Float) {
-        volume = newVolume.coerceIn(0f, 1f)
+        onSetVolume(value)
     }
 
     fun toggleSpeed() {
-        val nextIndex = (speedList.indexOf(speed) + 1) % speedList.size
-        speed = speedList[nextIndex]
+        val nextIndex = (state.speedList.indexOf(state.speed) + 1) % state.speedList.size
+        val newSpeed = state.speedList[nextIndex]
 
-        controls.setSpeedLabel(speed)
+        onSetSpeed(newSpeed)
+    }
+
+    fun seekTo(seconds: Float) {
+        val target = seconds.coerceIn(0f, state.totalTime.takeIf { it > 0f } ?: Float.MAX_VALUE)
+        state.currentTime = target
+
+        onSeek(target)
+    }
+
+    fun seek(seconds: Float) {
+        seekTo(state.currentTime + seconds)
     }
 
     fun showSubtitles() {
-        if (subtitles.isEmpty()) return
+        if (state.subtitles.isEmpty()) return
 
-        val currentIndex = if (selectedSubtitlesTrack != null) {
-            subtitles.indexOfFirst { it.name == selectedSubtitlesTrack }.coerceAtLeast(0)
-        } else 0
+        val currentIndex = if (state.selectedSubtitlesTrack == null) 0
+        else state.subtitles.indexOfFirst { it.name == state.selectedSubtitlesTrack }.coerceAtLeast(0)
 
-        val nextIndex = (currentIndex + 1) % subtitles.size
+        val nextIndex = (currentIndex + 1) % state.subtitles.size
         showSubtitles(nextIndex)
     }
 
     fun showSubtitles(index: Int) {
         controls.hideSubtitles()
 
-        selectedSubtitlesTrack = if (index == 0) null else subtitles.getOrNull(index)?.name
+        onLoadSubtitleTrack(index)
     }
 
-    fun toggleFullscreen() {
-        isFullscreen = !isFullscreen
+    fun restoreSubtitles() {
+        if (state.subtitles.isEmpty() || state.selectedSubtitlesTrack == null) return
+
+        val index = state.subtitles.indexOfFirst { it.name == state.selectedSubtitlesTrack }
+        showSubtitles(index)
     }
 
-    fun toggleZoom() {
-        isZoomed = !isZoomed
+    fun scale() {
+        state.isZoomed = !state.isZoomed
     }
 
-    internal fun updateTime(current: Float, total: Float) {
-        currentTime = current
-        totalTime = total
+    fun playNext() {
+        val nextUrl = state.fallbackUrls.firstOrNull() ?: return
+
+        state.fallbackUrls = state.fallbackUrls.drop(1)
+
+        loadVideo(
+            url = nextUrl,
+            fallback = state.fallbackUrls,
+            qualityList = state.qualityList,
+            trackIndex = state.audioTrackIndex,
+            subtitles = state.subtitles,
+            headers = state.headers
+        )
     }
 
-    internal fun updateBuffer(percent: Float) {
-        bufferPercentage = percent.coerceIn(0f, 1f)
+
+    protected fun updateBuffer(percent: Float) {
+        state.bufferPercentage = percent.coerceIn(0f, 1f)
+    }
+
+    protected fun updateVolume(volume: Float) {
+        state.volume = volume.coerceIn(0f, 1f)
+    }
+
+    protected fun updateSpeed(speed: Float) {
+        state.speed = speed
+
+        controls.setSpeedLabel(speed)
+    }
+
+    protected fun updateSubtitleTrack(title: String?) {
+        state.selectedSubtitlesTrack = title
+    }
+
+    protected fun updateSubtitleTrack(index: Int) {
+        state.selectedSubtitlesTrack = if (index == 0) null
+        else state.subtitles.getOrNull(index)?.name
     }
 
     @Stable
-    inner class Controls {
-        internal val utils = VideoPlayerUtils()
-        internal val speedLabels = speedList.map { "${it}x" }
+    inner class VideoPlayerControls {
+        internal val speedLabels = state.speedList.map { "${it}x" }
 
         val sliderInteractionSource = MutableInteractionSource()
         val pointerHoverIcon: PointerIcon
-            get() = if (isControlsVisible) PointerIcon.Default else utils.pointerIcon
+            get() = if (isControlsVisible) PointerIcon.Default else feature.pointerIcon
 
         val isControlsFocusable: Boolean
-            get() = !utils.isTV || !isControlsVisible
+            get() = !feature.isTV || !isControlsVisible
 
         var isControlsVisible by mutableStateOf(false)
             private set
@@ -276,8 +333,8 @@ class VideoPlayerState {
             isVolumeDragging = false
         }
 
-        fun setSpeedLabel(newSpeed: Float) {
-            speedLabel = speedLabels[speedList.indexOf(newSpeed)]
+        internal fun setSpeedLabel(newSpeed: Float) {
+            speedLabel = speedLabels[state.speedList.indexOf(newSpeed)]
         }
 
         fun onSetSliderValue(percent: Float) {
@@ -285,10 +342,7 @@ class VideoPlayerState {
         }
 
         fun onSliderActionFinished() {
-            val target = (sliderValue * totalTime).coerceIn(0f, totalTime.takeIf { it > 0f } ?: Float.MAX_VALUE)
-
-            seekTrigger = target
-            currentTime = target
+            seekTo(sliderValue * state.totalTime)
         }
 
         fun refreshInteractionMillis() {
@@ -324,9 +378,9 @@ class VideoPlayerState {
                 }
             }
 
-            LaunchedEffect(volume) {
+            LaunchedEffect(state.volume) {
                 if (isVolumeDragging) {
-                    delay(2000.milliseconds)
+                    delay(2.seconds)
                     isVolumeDragging = false
                 }
             }
@@ -337,54 +391,38 @@ class VideoPlayerState {
                 }
             }
 
-            LaunchedEffect(isControlsVisible, isPlaying, isSliderDragging, isVolumeDragging, expandedEpisodes, interactionMillis) {
-                if (isControlsVisible && isPlaying && !isSliderDragging && !isVolumeDragging && !expandedEpisodes) {
-                    delay(utils.visibilityDelay.milliseconds)
+            LaunchedEffect(isControlsVisible, state.isPlaying, isSliderDragging, isVolumeDragging, expandedEpisodes, interactionMillis) {
+                if (isControlsVisible && state.isPlaying && !isSliderDragging && !isVolumeDragging && !expandedEpisodes) {
+                    delay(feature.visibilityDelay.milliseconds)
                     hideControls()
                 }
             }
 
-            LaunchedEffect(currentTime, totalTime, isSliderDragging) {
-                if (!isSliderDragging && totalTime > 0f) {
-                    sliderValue = (currentTime / totalTime).coerceIn(0f, 1f)
+            LaunchedEffect(state.currentTime, state.totalTime, isSliderDragging) {
+                if (!isSliderDragging && state.totalTime > 0f) {
+                    sliderValue = (state.currentTime / state.totalTime).coerceIn(0f, 1f)
                 }
             }
         }
+    }
 
-        @Composable
-        fun AutoQualityListener() = LaunchedEffect(currentQuality) {
-            currentQuality?.let {
-                onEvent(PlayerEvent.OnAutoQualityChanged(it, qualityList))
-            }
-        }
+    interface VideoPlayerFeature {
+        val isTV: Boolean
+        val pictureInPicture: VideoPlayerPictureInPicture?
+        val showPlayPause: Boolean
+        val visibilityDelay: Long
+        val pointerIcon: PointerIcon
+    }
 
-        @Composable
-        fun QualityListener(qualities: List<Int>) = LaunchedEffect(qualities) {
-            if (qualities.isNotEmpty()) {
-                qualityList = qualities
-                currentQuality = qualities.maxOrNull()
-            }
-        }
+    interface VideoPlayerPictureInPicture {
+        fun enterPIP()
     }
 }
 
-@Composable
-fun rememberVideoPlayerState(onEvent: (PlayerEvent) -> Unit): VideoPlayerState {
-    val currentEvent by rememberUpdatedState(onEvent)
-
-    return remember(::VideoPlayerState).apply {
-        eventListener = currentEvent
-    }
-}
+expect class VideoPlayerController : VideoPlayer
 
 @Composable
-expect fun VideoPlayer(state: VideoPlayerState, modifier: Modifier = Modifier)
+expect fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier = Modifier)
 
-expect class VideoPlayerUtils(context: PlatformContext) {
-    constructor()
-
-    val isTV: Boolean
-    val showPlayPause: Boolean
-    val visibilityDelay: Long
-    val pointerIcon: PointerIcon
-}
+@Composable
+expect fun rememberVideoPlayerController(onEvent: (PlayerEvent) -> Unit): VideoPlayerController

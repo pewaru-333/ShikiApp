@@ -1,26 +1,23 @@
 package org.application.shikiapp.shared.utils.ui
 
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
+import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.skiaCanvas
 import androidx.compose.ui.input.pointer.PointerIcon
-import io.ktor.client.request.get
-import io.ktor.client.request.header
-import io.ktor.http.HttpHeaders
-import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.*
-import org.application.shikiapp.shared.di.DesktopContext
-import org.application.shikiapp.shared.di.PlatformContext
-import org.application.shikiapp.shared.network.client.Network
+import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.data.CertificatesHelper
 import org.jetbrains.skia.*
 import uk.co.caprica.vlcj.factory.MediaPlayerFactory
+import uk.co.caprica.vlcj.media.MediaSlaveType
 import uk.co.caprica.vlcj.media.TrackType
-import uk.co.caprica.vlcj.player.base.AudioTrack
 import uk.co.caprica.vlcj.player.base.MediaPlayer
 import uk.co.caprica.vlcj.player.base.MediaPlayerEventAdapter
 import uk.co.caprica.vlcj.player.embedded.EmbeddedMediaPlayer
@@ -35,223 +32,309 @@ import java.awt.Point
 import java.awt.Toolkit
 import java.awt.image.BufferedImage
 import java.lang.foreign.MemorySegment
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.nio.ByteBuffer
+import java.util.concurrent.Executors
+import java.util.concurrent.ScheduledFuture
+import java.util.concurrent.TimeUnit
 import java.util.concurrent.locks.ReentrantLock
 import kotlin.concurrent.withLock
-import kotlin.time.Duration.Companion.seconds
 
-class VideoPlayerController(private val state: VideoPlayerState) {
-    private val coroutineScope = CoroutineScope(Dispatchers.Default + SupervisorJob())
+actual class VideoPlayerController : VideoPlayer() {
+    private val scheduler = Executors.newSingleThreadScheduledExecutor {
+        Thread(it).apply {
+            isDaemon = true
+        }
+    }
     private val vlcArgs = listOf(
         "--gnutls-dir-trust=${CertificatesHelper.directory.absolutePath}",
         "--http-reconnect",
-        "--network-caching=5000"
+        "--network-caching=5000",
+        "--no-stats"
     )
 
     private val factory = MediaPlayerFactory(null, vlcArgs) // vlc-4.0-25062026
     private val mediaPlayer: EmbeddedMediaPlayer = factory.mediaPlayers().newEmbeddedMediaPlayer()
     private val videoSurface = SkiaImageVideoSurface()
 
-    private val cachedSubtitles = mutableSetOf<String>()
+    internal var isFullscreen by mutableStateOf(false)
+        private set
+
+    private var videoType: VideoType? = null
 
     private var isReady = false
+    private var openingTask: ScheduledFuture<*>? = null
 
-    private var openingJob: Job? = null
 
-    internal suspend fun play() {
-        val url = state.url ?: return
-
-        try {
-            val response = Network.watchClient.get(url) {
-                header(HttpHeaders.Range, "bytes=0-0")
-            }
-
-            val status = response.status
-            if (status == HttpStatusCode.OK || status == HttpStatusCode.PartialContent) {
-                response.headers[HttpHeaders.ContentType]?.let { contentType ->
-                    if (contentType.startsWith("application/dash+xml", ignoreCase = true)) {
-                        state.playNext()
-                        return
-                    }
-                }
-            }
-        } catch (_: Exception) {
-            state.playNext()
-            return
-        }
-
-        val options = state.headers.mapNotNull { (key, value) ->
-            when (key.lowercase()) {
-                "user-agent" -> ":http-user-agent=$value"
-                "referer" -> ":http-referrer=$value"
-                else -> null
-            }
-        }
-
-        CertificatesHelper.installCertificates(url)
-        mediaPlayer.media().play(url, *options.toTypedArray())
+    override val feature = object : VideoPlayerFeature {
+        override val isTV = false
+        override val pictureInPicture = null
+        override val showPlayPause = false
+        override val visibilityDelay = 3000L
+        override val pointerIcon = PointerIcon(
+            Toolkit.getDefaultToolkit().createCustomCursor(
+                BufferedImage(1, 1, BufferedImage.TYPE_INT_ARGB),
+                Point(0, 0),
+                BLANK
+            )
+        )
     }
 
-    internal fun create() {
+
+    override fun onLoadVideo(url: String) {
+        try {
+            val httpClient = HttpClient.newHttpClient()
+            val request = HttpRequest.newBuilder()
+                .uri(URI.create(url))
+                .header("Range", "bytes=0-0")
+
+            state.headers.forEach { (key, value) ->
+                request.header(key, value)
+            }
+
+            httpClient
+                .sendAsync(request.build(), HttpResponse.BodyHandlers.discarding())
+                .thenAccept { response ->
+                    val status = response.statusCode()
+                    if (status == 200 || status == 206) {
+                        val contentType = response.headers().firstValue("Content-Type").orElse(null)
+                        videoType = contentType?.let(VideoType::getType)
+
+
+                        if (videoType == null || videoType == VideoType.DASH) {
+                            playNext()
+                            return@thenAccept
+                        }
+                    }
+
+                    CertificatesHelper.install(url)
+                    val options = state.headers.mapNotNull { (key, value) ->
+                        when (key.lowercase()) {
+                            "user-agent" -> ":http-user-agent=$value"
+                            "referer" -> ":http-referrer=$value"
+                            else -> null
+                        }
+                    }
+
+                    val stopped = !mediaPlayer.status().isPlaying || mediaPlayer.controls().stop()
+                    val prepared = mediaPlayer.media().prepare(url, *options.toTypedArray()) && stopped
+
+                    if (prepared) {
+                        for (i in 1 until state.subtitles.size) {
+                            val subtitleUrl = state.subtitles[i].url
+
+                            if (subtitleUrl.isNotEmpty()) {
+                                mediaPlayer.media().addSlave(MediaSlaveType.SUBTITLE, subtitleUrl, false)
+                            }
+                        }
+                    }
+
+                    mediaPlayer.controls().play()
+                }.exceptionally {
+                    playNext()
+                    null
+                }
+        } catch (_: Exception) {
+
+        }
+    }
+
+    override fun create() {
         mediaPlayer.videoSurface().set(videoSurface)
         mediaPlayer.events().addMediaPlayerEventListener(playerEventListener)
     }
 
-    internal fun release() {
+    override fun release() {
+        openingTask?.cancel(true)
+        scheduler.shutdownNow()
+
         mediaPlayer.release()
         factory.release()
-        coroutineScope.cancel()
     }
 
-    internal fun <R> withImage(block: (Image?) -> R): R = videoSurface.withImage(block)
-
-    internal fun togglePlayPause() {
-        if (state.isPlaying) mediaPlayer.controls().play()
-        else mediaPlayer.controls().pause()
+    override fun onPlay() {
+        mediaPlayer.controls().play()
     }
 
-    internal fun setVolume() {
-        mediaPlayer.audio().setVolume((state.volume * 100).toInt())
+    override fun onPause() {
+        mediaPlayer.controls().pause()
     }
 
-    internal fun setSpeed() {
-        mediaPlayer.controls().setRate(state.speed)
+    override fun onSetVolume(volume: Float) {
+        mediaPlayer.audio().setVolume((volume * 100).toInt())
     }
 
-    internal fun seek() {
-        state.seekTrigger?.let { seconds ->
-            if (state.totalTime > 0f) {
-                mediaPlayer.controls().setTime((seconds * 1000).toLong())
-            }
+    override fun onSetSpeed(speed: Float) {
+        val success = mediaPlayer.controls().setRate(speed)
+
+        if (success) {
+            updateSpeed(speed)
         }
     }
 
-    internal fun loadAudioTrack() {
-        val index = state.audioTrackIndex ?: return
+    override fun onSeek(millis: Float) {
+        mediaPlayer.controls().setTime((millis * 1000).toLong())
+    }
 
-        var audioTrack: AudioTrack? = null
-
+    override fun onLoadAudioTrack(index: Int) {
         for (track in mediaPlayer.tracks().audioTracks().tracks()) {
-            val description = track.name()
-            val charIndex = description.lastIndexOf('-')
+            val name = track.name()
+            val charIndex = name.lastIndexOf('-')
             if (charIndex == -1) continue
 
             var end = charIndex - 1
-            while (end >= 0 && description[end].isWhitespace()) {
+            while (end >= 0 && name[end].isWhitespace()) {
                 end--
             }
 
             var start = end
-            while (start >= 0 && description[start].isDigit()) {
+            while (start >= 0 && name[start].isDigit()) {
                 start--
             }
 
             if (start < end) {
-                val parsedIndex = description.substring(start + 1, end + 1).toIntOrNull()
+                val parsedIndex = name.substring(start + 1, end + 1).toIntOrNull()
                 if (parsedIndex == index) {
-                    audioTrack = track
-                    break
+                    mediaPlayer.tracks().selectTrack(track)
+
+                    return
                 }
             }
         }
-
-        audioTrack?.let(mediaPlayer.tracks()::selectTrack)
     }
 
-    internal fun loadSubtitles() {
-        if (state.selectedSubtitlesTrack == null) {
+    override fun onLoadSubtitleTrack(index: Int) {
+        if (index == 0) {
             mediaPlayer.tracks().deselect(TrackType.TEXT)
         } else {
-            state.subtitles
-                .find { it.name == state.selectedSubtitlesTrack }
-                ?.let { subtitleTrack ->
-                    if (cachedSubtitles.add(subtitleTrack.url)) {
-                        mediaPlayer.subpictures().setSubTitleUri(subtitleTrack.url)
-                    } else {
-                        val index = cachedSubtitles.indexOf(subtitleTrack.url)
-                        val subtitle = mediaPlayer.tracks().textTracks().tracks()[index]
-
-                        mediaPlayer.tracks().selectTrack(subtitle)
-                    }
-                }
+            val track = mediaPlayer.tracks().textTracks().tracks().getOrNull(index - 1)
+            if (track != null) {
+                mediaPlayer.tracks().selectTrack(track)
+            }
         }
+    }
+
+    internal fun <R> withImage(block: (Image?) -> R): R = videoSurface.withImage(block)
+
+    internal fun toggleFullscreen() {
+        isFullscreen = !isFullscreen
     }
 
     private val playerEventListener = object : MediaPlayerEventAdapter() {
-        override fun mediaPlayerReady(mediaPlayer: MediaPlayer) {
+        override fun mediaPlayerReady(mediaPlayer: MediaPlayer?) {
             isReady = true
-            openingJob?.cancel()
-        }
 
-        override fun opening(mediaPlayer: MediaPlayer) {
-            openingJob?.cancel()
-            openingJob = coroutineScope.launch {
-                delay(10.seconds)
-                if (!isReady) {
-                    error(mediaPlayer)
-                }
-            }
-        }
+            openingTask?.cancel(false)
+            openingTask = null
 
-        override fun finished(mediaPlayer: MediaPlayer) {
-            state.isVideoEnded = true
-            state.isPlaying = false
-        }
-
-        override fun error(mediaPlayer: MediaPlayer) {
-            openingJob?.cancel()
+            state.isPlaying = true
             state.isLoading = false
-            state.playNext()
+
+            state.audioTrackIndex?.let(::onLoadAudioTrack)
+            restoreSubtitles()
         }
 
-        override fun buffering(mediaPlayer: MediaPlayer, newCache: Float) {
+        override fun opening(mediaPlayer: MediaPlayer?) {
+            openingTask?.cancel(false)
+            openingTask = scheduler.schedule(
+                /* command = */ { if (!isReady) error(mediaPlayer) },
+                /* delay = */ 10,
+                /* unit = */ TimeUnit.SECONDS
+            )
+
+            state.isPlaying = false
+            state.isLoading = true
+        }
+
+        override fun playing(mediaPlayer: MediaPlayer?) {
+            state.isPlaying = true
+
+            onEvent(PlayerEvent.Play)
+        }
+
+        override fun paused(mediaPlayer: MediaPlayer?) {
+            state.isPlaying = false
+
+            onEvent(PlayerEvent.Pause)
+        }
+
+        override fun finished(mediaPlayer: MediaPlayer?) {
+            state.isPlaying = false
+            state.isVideoEnded = true
+
+            onEvent(PlayerEvent.Ended)
+        }
+
+        override fun error(mediaPlayer: MediaPlayer?) {
+            openingTask?.cancel(false)
+
+            state.isPlaying = false
+            playNext()
+        }
+
+        override fun buffering(mediaPlayer: MediaPlayer?, newCache: Float) {
             state.isLoading = newCache < 100f
-            state.updateBuffer(newCache / 100f)
+
+            updateBuffer(newCache / 100f)
         }
 
-        override fun timeChanged(mediaPlayer: MediaPlayer, newTime: Long) {
-            val total = mediaPlayer.status().length() / 1000f
-            if (total > 0f && mediaPlayer.status().isPlaying) {
-                state.updateTime(newTime / 1000f, total)
+        override fun timeChanged(mediaPlayer: MediaPlayer?, newTime: Long) {
+            if (mediaPlayer != null && mediaPlayer.status().isPlaying) {
+                state.currentTime = newTime / 1000f
             }
         }
 
-        override fun elementaryStreamAdded(mediaPlayer: MediaPlayer, type: TrackType, id: Int, streamId: String) {
-            if (type == TrackType.TEXT) {
-                mediaPlayer.tracks().select(type, streamId)
+        override fun volumeChanged(mediaPlayer: MediaPlayer?, volume: Float) {
+            updateVolume(volume)
+        }
+
+        override fun lengthChanged(mediaPlayer: MediaPlayer?, newLength: Long) {
+            state.totalTime = newLength / 1000f
+        }
+
+        override fun elementaryStreamSelected(mediaPlayer: MediaPlayer, type: TrackType?, unselectedStreamId: String?, selectedStreamId: String?) {
+            if (type != TrackType.TEXT) return
+
+            val subtitles = mediaPlayer.tracks().textTracks()?.tracks() ?: return
+
+            if (unselectedStreamId == subtitles.lastOrNull()?.trackId()) {
+                updateSubtitleTrack(null)
+                return
             }
+
+            if (selectedStreamId == null) {
+                return
+            }
+
+            subtitles
+                .indexOfFirst { it.trackId() == selectedStreamId }
+                .takeIf { index -> index > -1 }
+                ?.let { index -> updateSubtitleTrack(index + 1) }
         }
 
         override fun elementaryStreamUpdated(mediaPlayer: MediaPlayer, type: TrackType, id: Int, streamId: String) {
             if (type != TrackType.VIDEO) return
 
-            val videoTracks = mediaPlayer.tracks().videoTracks()
-            val currentQuality = videoTracks.tracks()
-                .firstOrNull { it.id() == mediaPlayer.tracks().selectedVideoTrack().id() }
-                ?.height()
-                ?.takeIf { it > 0 }
+            val videoTracks = mediaPlayer.tracks().videoTracks().tracks() ?: return
+            if (videoTracks.isEmpty()) return
 
-            val mergedQualities = hashSetOf<Int>().apply {
-                addAll(state.qualityList)
+            val isAdaptive = videoType == VideoType.DASH || videoType == VideoType.HLS
 
-                videoTracks.tracks().forEach { track ->
-                    val height = track.height()
-                    if (height > 0) {
-                        add(height)
-                    }
+            for (track in videoTracks) {
+                val height = track.height()
+                if (height <= 0) continue
+
+                if (isAdaptive && state.qualityList.size <= 1) {
+                    state.qualityList = listOf(height)
                 }
-            }.sortedDescending()
 
-
-            if (mergedQualities.isNotEmpty() && state.qualityList != mergedQualities) {
-                state.qualityList = mergedQualities
+                if (track.selected()) {
+                    state.currentQuality = height
+                }
             }
-
-            if (currentQuality != null && state.currentQuality != currentQuality) {
-                state.currentQuality = currentQuality
-            }
-
-            state.tracksRevision++
         }
     }
 
@@ -308,53 +391,56 @@ class VideoPlayerController(private val state: VideoPlayerState) {
 
         private inner class SkiaImageCallbackVideoSurface : CallbackVideoSurface(SkiaImageBufferFormatCallback(), SkiaImageRenderCallback(), true)
     }
+
+    private enum class VideoType {
+        MP4, HLS, DASH, UNKNOWN;
+
+        companion object {
+            fun getType(type: String): VideoType {
+                val value = type.lowercase()
+
+                return when {
+                    value.startsWith("video/mp4") -> MP4
+                    value.startsWith("application/vnd.apple.mpegurl") -> HLS
+                    value.startsWith("application/dash+xml") -> DASH
+                    else -> UNKNOWN
+                }
+            }
+        }
+    }
 }
 
 @Composable
-actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
+actual fun rememberVideoPlayerController(onEvent: (PlayerEvent) -> Unit): VideoPlayerController {
+    val currentEvent by rememberUpdatedState(onEvent)
+
+    return remember {
+        VideoPlayerController().apply {
+            eventListener = currentEvent
+        }
+    }
+}
+
+@Composable
+actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
     val windowManager = LocalWindowManager.current
-    val controller = remember(state) { VideoPlayerController(state) }
+    val zoom by animateFloatAsState(
+        targetValue = if (controller.state.isZoomed) 1f else 0f,
+        animationSpec = tween(
+            durationMillis = 300,
+            easing = FastOutSlowInEasing
+        )
+    )
 
-    LaunchedEffect(state.url) {
-        controller.play()
-    }
-
-    LaunchedEffect(state.isPlaying) {
-        controller.togglePlayPause()
-    }
-
-    LaunchedEffect(state.volume) {
-        controller.setVolume()
-    }
-
-    LaunchedEffect(state.speed) {
-        controller.setSpeed()
-    }
-
-    LaunchedEffect(state.seekTrigger, state.totalTime) {
-        controller.seek()
-    }
-
-    LaunchedEffect(state.audioTrackIndex, state.tracksRevision) {
-        controller.loadAudioTrack()
-    }
-
-    LaunchedEffect(state.selectedSubtitlesTrack) {
-        controller.loadSubtitles()
-    }
-
-    LaunchedEffect(state.isFullscreen) {
-        if (state.isFullscreen != windowManager.isFullscreen) {
+    LaunchedEffect(controller.isFullscreen) {
+        if (controller.isFullscreen != windowManager.isFullscreen) {
             windowManager.toggleFullscreen()
         }
     }
 
-    DisposableEffect(controller) {
-        controller.create()
-
+    DisposableEffect(controller.state) {
         onDispose {
             windowManager.exitFullscreen()
-            controller.release()
         }
     }
 
@@ -363,41 +449,41 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
             image?.let { img ->
                 val canvasWidth = size.width
                 val canvasHeight = size.height
+
                 val imageWidth = img.width.toFloat()
                 val imageHeight = img.height.toFloat()
 
-                val scale = minOf(canvasWidth / imageWidth, canvasHeight / imageHeight)
-                val scaledWidth = imageWidth * scale
-                val scaledHeight = imageHeight * scale
+                val fit = minOf(canvasWidth / imageWidth, canvasHeight / imageHeight)
+                val crop = maxOf(canvasWidth / imageWidth, canvasHeight / imageHeight)
+
+                val maxScale = if (fit > 0f) crop / fit else 1f
+                val scale = 1f + zoom * (maxScale - 1f)
+
+                val scaleCanvas = minOf(canvasWidth / imageWidth, canvasHeight / imageHeight)
+                val scaledWidth = imageWidth * scaleCanvas
+                val scaledHeight = imageHeight * scaleCanvas
 
                 val xOffset = (canvasWidth - scaledWidth) / 2
                 val yOffset = (canvasHeight - scaledHeight) / 2
 
-                drawIntoCanvas { canvas ->
-                    canvas.save()
-                    canvas.translate(xOffset, yOffset)
-                    canvas.scale(scale, scale)
-                    canvas.skiaCanvas.drawImage(img, 0f, 0f)
-                    canvas.restore()
-                }
+                withTransform(
+                    transformBlock = {
+                        scale(
+                            scaleX = scale,
+                            scaleY = scale
+                        )
+                    },
+                    drawBlock = {
+                        drawIntoCanvas { canvas ->
+                            canvas.save()
+                            canvas.translate(xOffset, yOffset)
+                            canvas.scale(scaleCanvas, scaleCanvas)
+                            canvas.skiaCanvas.drawImage(img, 0f, 0f)
+                            canvas.restore()
+                        }
+                    }
+                )
             }
         }
-    }
-}
-
-actual class VideoPlayerUtils actual constructor(context: PlatformContext) {
-    actual constructor() : this(DesktopContext())
-
-    actual val isTV = false
-    actual val showPlayPause = false
-    actual val visibilityDelay = 3000L
-    actual val pointerIcon by lazy {
-        val cursor = Toolkit.getDefaultToolkit().createCustomCursor(
-            /* cursor = */ BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB),
-            /* hotSpot = */ Point(0, 0),
-            /* name = */ BLANK
-        )
-
-        PointerIcon(cursor)
     }
 }

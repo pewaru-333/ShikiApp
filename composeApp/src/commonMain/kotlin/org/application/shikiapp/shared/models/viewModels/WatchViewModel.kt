@@ -7,6 +7,7 @@ import androidx.navigation.toRoute
 import io.ktor.client.call.body
 import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.*
+import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.PlayerEvent
@@ -27,7 +28,7 @@ import org.application.shikiapp.shared.network.parser.*
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.VideoSource
 import org.application.shikiapp.shared.utils.navigation.Screen
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.time.Duration.Companion.seconds
 
 class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     private val contentId = saved.toRoute<Screen.Watch>().contentId
@@ -37,8 +38,10 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         .onStart { loadData() }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), WatchState())
 
-    private var countTimeJob: Job? = null
-    private var watchedSeconds = 0
+    private val _command = Channel<PlayerEvent.Command>()
+    val command = _command.receiveAsFlow()
+
+    private var watchJob: Job? = null
     private var markedAsWatched = false
 
     fun selectSource(type: VideoSource) = _state.update {
@@ -82,48 +85,14 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
     fun onEvent(event: PlayerEvent) = when (event) {
         PlayerEvent.Play -> startWatchTimer()
-        PlayerEvent.Pause -> countTimeJob?.cancel()
-        is PlayerEvent.Seek -> Unit
-
-        is PlayerEvent.UpdateProgress -> {
-            if (event.totalTime > 0f && event.currentTime >= (event.totalTime - 2f)) {
-                setEpisodeWatched()
-            } else {
-                Unit
-            }
-        }
-
-        PlayerEvent.MarkEpisodeWatched -> setEpisodeWatched()
+        PlayerEvent.Pause -> cancelWatchTimer()
+        PlayerEvent.Ended -> setEpisodeWatched()
 
         is PlayerEvent.SelectEpisode -> selectEpisode(event.number)
-
         is PlayerEvent.ChangeQuality -> changeQuality(event.quality)
-        is PlayerEvent.OnAutoQualityChanged -> {
-            val qualities = if (event.qualityList.size > 1 || currentState.qualityList.isEmpty()) {
-                event.qualityList.ifEmpty { currentState.qualityList }
-            } else {
-                currentState.qualityList
-            }
-
-            _state.update {
-                it.copy(
-                    currentQuality = event.quality,
-                    qualityList = qualities
-                )
-            }
-        }
-
-        is PlayerEvent.LoadVideo -> loadVideo(event.episodeModel)
-        is PlayerEvent.LoadFallback -> {
-            _state.update {
-                it.copy(videoUrl = event.url)
-            }
-        }
     }
 
     private fun loadVideo(episode: EpisodeModel) {
-        resetWatchTracking()
-
         _state.update {
             it.copy(
                 currentEpisode = episode.number,
@@ -150,6 +119,21 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                     addAll(result.subtitles)
                 }
 
+                _command.send(
+                    element = PlayerEvent.Command.LoadVideo(
+                        episodeModel = EpisodeModel(
+                            number = episode.number,
+                            link = result.url,
+                            audioIndex = episode.audioIndex,
+                            screenshot = episode.screenshot,
+                            fallback = result.fallbackUrls,
+                            qualityList = qualityList,
+                            subtitles = subtitles,
+                            videoHeaders = result.headers
+                        )
+                    )
+                )
+
                 _state.update {
                     it.copy(
                         isVideoLoading = false,
@@ -166,12 +150,14 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                 _state.update {
                     it.copy(isVideoLoading = false)
                 }
+            } finally {
+                markedAsWatched = false
             }
         }
     }
 
     fun stopWatching() {
-        countTimeJob?.cancel()
+        cancelWatchTimer()
         _state.update {
             it.copy(
                 isWatching = false,
@@ -365,6 +351,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
                 val result = parser.getPlaylistLink(parseUrl, newQuality)
 
+                _command.send(PlayerEvent.Command.LoadQuality(result.url))
                 _state.update {
                     it.copy(
                         isVideoLoading = false,
@@ -399,30 +386,21 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     private fun startWatchTimer() {
-        if (countTimeJob?.isActive == true) return
+        if (markedAsWatched || watchJob?.isActive == true) return
 
-        countTimeJob = viewModelScope.launch {
-            while (isActive) {
-                delay(1000.milliseconds)
-                watchedSeconds++
-
-                if (watchedSeconds >= 30) {
-                    setEpisodeWatched()
-                }
-            }
+        watchJob = viewModelScope.launch {
+            delay(30.seconds)
+            setEpisodeWatched()
+            watchJob = null
         }
     }
 
-    private fun resetWatchTracking() {
-        countTimeJob?.cancel()
-        watchedSeconds = 0
-        markedAsWatched = false
+    private fun cancelWatchTimer() {
+        watchJob?.cancel()
+        watchJob = null
     }
 
     private fun setEpisodeWatched() {
-        if (markedAsWatched) return
-        markedAsWatched = true
-
         if (Preferences.token != null && Preferences.episodeAutoAdd) {
             viewModelScope.launch {
                 try {
@@ -439,10 +417,14 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
                         if (newRate.status == HttpStatusCode.Created) {
                             val newRate = newRate.body<UserRate>()
-                            Network.rates.increment(newRate.id)
+                            val response = Network.rates.increment(newRate.id)
+
+                            markedAsWatched = response.status == HttpStatusCode.OK
                         }
                     } else if (compareValues(animeRate.episodes, currentState.currentEpisode) < 0) {
-                        Network.rates.increment(animeRate.id)
+                        val response = Network.rates.increment(animeRate.id)
+
+                        markedAsWatched = response.status == HttpStatusCode.OK
                     }
                 } catch (_: Exception) {
                     markedAsWatched = false

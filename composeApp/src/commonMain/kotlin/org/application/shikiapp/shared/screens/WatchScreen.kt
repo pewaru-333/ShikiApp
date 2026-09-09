@@ -49,6 +49,8 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.PlayerEvent
@@ -181,6 +183,7 @@ fun WatchScreen(onBack: () -> Unit) {
     } else {
         Player(
             state = state,
+            commands = model.command,
             onEvent = model::onEvent,
             onBack = model::stopWatching
         )
@@ -410,67 +413,61 @@ private fun Episodes(episodes: List<EpisodeModel>, listState: LazyListState, onL
     }
 
 @Composable
-private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: () -> Unit) {
-    val playerState = rememberVideoPlayerState(onEvent)
+private fun Player(state: WatchState, commands: Flow<PlayerEvent.Command>, onEvent: (PlayerEvent) -> Unit, onBack: () -> Unit) {
+    val controller = rememberVideoPlayerController(onEvent)
 
     val rootFocusRequester = remember(::FocusRequester)
     val playButtonFocusRequester = remember(::FocusRequester)
     val episodeListFocusRequester = remember(::FocusRequester)
 
-    playerState.controls.AutoQualityListener()
-    playerState.controls.QualityListener(state.qualityList)
-    playerState.controls.ControlsVisibilityListener()
+    controller.controls.ControlsVisibilityListener()
 
     NavigationBackHandler(
         state = rememberNavigationEventState(NavigationEventInfo.None),
         onBackCompleted = {
             when {
-                playerState.controls.expandedEpisodes -> playerState.controls.hideEpisodes()
-                playerState.controls.expandedQuality -> playerState.controls.hideQuality()
-                playerState.controls.expandedSubtitles -> playerState.controls.hideSubtitles()
+                controller.controls.expandedEpisodes -> controller.controls.hideEpisodes()
+                controller.controls.expandedQuality -> controller.controls.hideQuality()
+                controller.controls.expandedSubtitles -> controller.controls.hideSubtitles()
                 else -> onBack()
             }
         }
     )
 
-    LaunchedEffect(state.videoUrl) {
-        state.videoUrl?.let {
-            playerState.loadUrl(
-                newUrl = it,
-                fallback = state.fallbackUrls,
-                trackIndex = state.audioTrackIndex,
-                subs = state.subtitles,
-                headerMap = state.videoHeaders
-            )
+    LaunchedEffect(controller, commands) {
+        commands.collectLatest {
+            when (it) {
+                is PlayerEvent.Command.LoadQuality -> controller.loadVideo(it.url)
+                is PlayerEvent.Command.LoadVideo -> controller.loadVideo(
+                    url = it.episodeModel.link,
+                    fallback = it.episodeModel.fallback,
+                    qualityList = it.episodeModel.qualityList,
+                    trackIndex = it.episodeModel.audioIndex,
+                    subtitles = it.episodeModel.subtitles,
+                    headers = it.episodeModel.videoHeaders
+                )
+            }
         }
     }
 
-    LaunchedEffect(playerState.isPlaying, playerState.isLoading) {
-        if (playerState.isPlaying) {
-            playerState.onEvent(PlayerEvent.Play)
-        } else {
-            playerState.onEvent(PlayerEvent.Pause)
-        }
-    }
-
-    LaunchedEffect(playerState.currentTime) {
-        if (playerState.totalTime > 0f) {
-            playerState.onEvent(PlayerEvent.UpdateProgress(playerState.currentTime, playerState.totalTime))
-        }
-    }
-
-    LaunchedEffect(playerState.controls.isControlsVisible, playerState.controls.expandedEpisodes) {
-        if (playerState.controls.expandedEpisodes) {
+    LaunchedEffect(controller.controls.isControlsVisible, controller.controls.expandedEpisodes) {
+        if (controller.controls.expandedEpisodes) {
             episodeListFocusRequester.requestFocus()
         } else {
-            if (playerState.controls.isControlsVisible) {
-                if (playerState.controls.utils.showPlayPause) {
+            if (controller.controls.isControlsVisible) {
+                if (controller.feature.showPlayPause) {
                     playButtonFocusRequester.requestFocus()
                 }
             } else {
                 rootFocusRequester.requestFocus()
             }
         }
+    }
+
+    DisposableEffect(controller) {
+        controller.create()
+
+        onDispose { controller.release() }
     }
 
     if (state.currentVoice != null) {
@@ -483,55 +480,55 @@ private fun Player(state: WatchState, onEvent: (PlayerEvent) -> Unit, onBack: ()
                 .background(Color.Black)
                 .keepScreenOn()
                 .focusRequester(rootFocusRequester)
-                .focusable(playerState.controls.isControlsFocusable)
-                .pointerHoverIcon(playerState.controls.pointerHoverIcon)
-                .playerKeyEvents(playerState)
-                .playerMouseEvents(playerState)
+                .focusable(controller.controls.isControlsFocusable)
+                .pointerHoverIcon(controller.controls.pointerHoverIcon)
+                .playerKeyEvents(controller)
+                .playerMouseEvents(controller)
                 .playerFocusRequest(rootFocusRequester::requestFocus)
         ) {
-            VideoPlayer(playerState, Modifier.fillMaxSize())
+            VideoPlayer(controller, Modifier.fillMaxSize())
 
-            if (playerState.controls.utils.showPlayPause) {
-                GestureEvents(playerState)
+            if (controller.feature.showPlayPause) {
+                GestureEvents(controller)
             }
 
             AnimatedVisibility(
-                visible = playerState.isLoading,
+                visible = controller.state.isLoading,
                 modifier = Modifier.align(Alignment.Center),
                 enter = fadeIn(),
                 exit = fadeOut(),
                 content = { CircularProgressIndicator(Modifier.size(64.dp), Color.White, 4.dp) }
             )
 
-            VideoControls(state, playerState, playButtonFocusRequester, onBack)
+            VideoControls(state, controller, playButtonFocusRequester, onBack)
 
-            VolumeScale(playerState)
+            VolumeScale(controller)
 
             EpisodeList(
                 episodesCount = state.currentVoice.episodesCount,
                 currentEpisode = state.currentEpisode ?: 0,
-                isVisible = playerState.controls.expandedEpisodes,
+                isVisible = controller.controls.expandedEpisodes,
                 focusRequester = episodeListFocusRequester,
-                onSelect = { playerState.onEvent(PlayerEvent.SelectEpisode(it)) },
-                onHide = { playerState.controls.hideEpisodes() }
+                onSelect = { controller.onEvent(PlayerEvent.SelectEpisode(it)) },
+                onHide = { controller.controls.hideEpisodes() }
             )
         }
     }
 }
 
 @Composable
-fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState, focusRequester: FocusRequester) =
+fun BoxScope.SeekPlayPauseSeek(controller: VideoPlayerController, focusRequester: FocusRequester) =
     Row(Modifier.align(Alignment.Center), Arrangement.spacedBy(48.dp), Alignment.CenterVertically) {
         IconVideoControl(
             icon = Icons.TenSecondsLeft,
-            onClick = { playerState.seekTo(playerState.currentTime - 10f) },
+            onClick = { controller.seek(-10f) },
             modifier = Modifier.size(50.dp),
             modifierI = Modifier.padding(8.dp),
         )
 
         IconVideoControl(
-            icon = if (playerState.isPlaying) Icons.PauseCircle else Icons.PlayCircle,
-            onClick = { playerState.togglePlayPause() },
+            icon = if (controller.state.isPlaying) Icons.PauseCircle else Icons.PlayCircle,
+            onClick = { controller.togglePlayPause() },
             modifierI = Modifier.padding(4.dp),
             modifier = Modifier
                 .size(64.dp)
@@ -540,16 +537,16 @@ fun BoxScope.SeekPlayPauseSeek(playerState: VideoPlayerState, focusRequester: Fo
 
         IconVideoControl(
             icon = Icons.TenSecondsRight,
-            onClick = { playerState.seekTo(playerState.currentTime + 10f) },
+            onClick = { controller.seek(10f) },
             modifier = Modifier.size(50.dp),
             modifierI = Modifier.padding(8.dp),
         )
     }
 
 @Composable
-private fun BoxScope.VolumeScale(playerState: VideoPlayerState) =
+private fun BoxScope.VolumeScale(controller: VideoPlayerController) =
     AnimatedVisibility(
-        visible = playerState.controls.isVolumeDragging,
+        visible = controller.controls.isVolumeDragging,
         enter = fadeIn(),
         exit = fadeOut(),
         modifier = Modifier
@@ -564,7 +561,7 @@ private fun BoxScope.VolumeScale(playerState: VideoPlayerState) =
                 .padding(12.dp)
         ) {
             Text(
-                text = "${(playerState.volume * 100).toInt()}%",
+                text = "${(controller.state.volume * 100).toInt()}%",
                 modifier = Modifier.defaultMinSize(minWidth = 48.dp),
                 color = Color.White,
                 fontWeight = FontWeight.Bold,
@@ -575,14 +572,13 @@ private fun BoxScope.VolumeScale(playerState: VideoPlayerState) =
             Box(
                 contentAlignment = Alignment.BottomCenter,
                 modifier = Modifier
-                    .width(12.dp)
-                    .height(120.dp)
+                    .size(12.dp, 120.dp)
                     .background(Color.White.copy(alpha = 0.2f), CircleShape)
             ) {
                 Box(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .fillMaxHeight(playerState.volume)
+                        .fillMaxHeight(controller.state.volume)
                         .background(MaterialTheme.colorScheme.primary, CircleShape)
                 )
             }
@@ -590,7 +586,7 @@ private fun BoxScope.VolumeScale(playerState: VideoPlayerState) =
             VectorIcon(
                 modifier = Modifier.size(24.dp),
                 tint = Color.White,
-                imageVector = if (playerState.volume == 0f) Icons.VolumeOff
+                imageVector = if (controller.state.volume == 0f) Icons.VolumeOff
                 else Icons.VolumeUp
             )
         }
@@ -715,7 +711,7 @@ private fun BoxScope.EpisodeList(
 }
 
 @Composable
-private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
+private fun BoxScope.TimeCurrentSliderTimeTotal(controller: VideoPlayerController) =
     Row(
         horizontalArrangement = Arrangement.spacedBy(12.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -725,28 +721,28 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
             .align(Alignment.BottomCenter)
     ) {
         Text(
-            text = Formatter.formatTime(playerState.currentTime),
+            text = Formatter.formatTime(controller.state.currentTime),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
 
-        val isFocused by playerState.controls.sliderInteractionSource.collectIsFocusedAsState()
+        val isFocused by controller.controls.sliderInteractionSource.collectIsFocusedAsState()
         val thumbColor = if (isFocused) MaterialTheme.colorScheme.primary else Color.White
         val thumbSize = if (isFocused) 20.dp else 16.dp
 
         Slider(
-            value = playerState.controls.sliderValue,
-            interactionSource = playerState.controls.sliderInteractionSource,
-            onValueChange = playerState.controls::onSetSliderValue,
-            onValueChangeFinished = playerState.controls::onSliderActionFinished,
+            value = controller.controls.sliderValue,
+            interactionSource = controller.controls.sliderInteractionSource,
+            onValueChange = controller.controls::onSetSliderValue,
+            onValueChangeFinished = controller.controls::onSliderActionFinished,
             modifier = Modifier.weight(1f),
             thumb = { sliderState ->
                 Label(
-                    interactionSource = playerState.controls.sliderInteractionSource,
+                    interactionSource = controller.controls.sliderInteractionSource,
                     isPersistent = sliderState.isDragging,
                     label = {
                         PlainTooltip {
-                            Text(Formatter.formatTime(playerState.controls.sliderValue * playerState.totalTime))
+                            Text(Formatter.formatTime(controller.controls.sliderValue * controller.state.totalTime))
                         }
                     },
                     content = {
@@ -768,7 +764,7 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
                     )
                     Box(
                         modifier = Modifier
-                            .fillMaxWidth(playerState.bufferPercentage.coerceIn(0f, 1f))
+                            .fillMaxWidth(controller.state.bufferPercentage.coerceIn(0f, 1f))
                             .height(4.dp)
                             .background(Color.White.copy(alpha = 0.6f), CircleShape)
                     )
@@ -784,24 +780,33 @@ private fun BoxScope.TimeCurrentSliderTimeTotal(playerState: VideoPlayerState) =
         )
 
         Text(
-            text = Formatter.formatTime(playerState.totalTime),
+            text = Formatter.formatTime(controller.state.totalTime),
             color = Color.White,
             style = MaterialTheme.typography.bodyMedium
         )
 
-        if (!playerState.controls.utils.isTV) {
-            ButtonFocused(
-                onClick = playerState::toggleZoom,
-                content = if (playerState.isZoomed) Icons.FullscreenExit
-                else Icons.Fullscreen
-            )
+        if (!controller.feature.isTV) {
+            Row {
+                ButtonFocused(
+                    onClick = controller::scale,
+                    content = if (controller.state.isZoomed) Icons.FullscreenExit
+                    else Icons.Fullscreen
+                )
+
+                controller.feature.pictureInPicture?.let {
+                    ButtonFocused(
+                        onClick = it::enterPIP,
+                        content = Icons.PictureInPicture
+                    )
+                }
+            }
         }
     }
 
 @Composable
-private fun VideoControls(state: WatchState, playerState: VideoPlayerState, focusRequester: FocusRequester, onBack: () -> Unit) =
+private fun VideoControls(state: WatchState, controller: VideoPlayerController, focusRequester: FocusRequester, onBack: () -> Unit) =
     AnimatedVisibility(
-        visible = playerState.controls.isControlsVisible || playerState.isVideoEnded,
+        visible = controller.controls.isControlsVisible || controller.state.isVideoEnded,
         modifier = Modifier.fillMaxSize(),
         enter = fadeIn(),
         exit = fadeOut()
@@ -836,58 +841,58 @@ private fun VideoControls(state: WatchState, playerState: VideoPlayerState, focu
                 }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    ButtonFocused(playerState.controls.speedLabel, onClick = playerState::toggleSpeed)
+                    ButtonFocused(controller.controls.speedLabel, onClick = controller::toggleSpeed)
 
-                    Quality(state, playerState)
+                    Quality(controller)
 
                     if (state.subtitles.isNotEmpty()) {
-                        Subtitles(state, playerState)
+                        Subtitles(state, controller)
                     }
 
                     state.currentVoice?.let {
                         if (it.episodesCount > 1) {
-                            ButtonFocused(Icons.List, onClick = playerState.controls::toggleEpisodes)
+                            ButtonFocused(Icons.List, onClick = controller.controls::toggleEpisodes)
                         }
                     }
                 }
             }
 
-            if (playerState.controls.utils.showPlayPause && !playerState.isVideoEnded) {
-                SeekPlayPauseSeek(playerState, focusRequester)
+            if (controller.feature.showPlayPause && !controller.state.isVideoEnded) {
+                SeekPlayPauseSeek(controller, focusRequester)
             }
 
-            TimeCurrentSliderTimeTotal(playerState)
+            TimeCurrentSliderTimeTotal(controller)
         }
     }
 
 @Composable
-private fun GestureEvents(playerState: VideoPlayerState) =
+private fun GestureEvents(controller: VideoPlayerController) =
     Box(
         modifier = Modifier
             .fillMaxSize()
             .pointerInput(Unit) {
                 detectTapGestures(
-                    onTap = { playerState.controls.toggleControls() },
-                    onDoubleTap = { playerState.toggleZoom() }
+                    onTap = { controller.controls.toggleControls() },
+                    onDoubleTap = { controller.scale() }
                 )
             }
             .pointerInput(Unit) {
                 detectVerticalDragGestures(
-                    onDragCancel = { playerState.controls.hideVolume() },
-                    onDragEnd = { playerState.controls.hideVolume() },
+                    onDragCancel = { controller.controls.hideVolume() },
+                    onDragEnd = { controller.controls.hideVolume() },
                     onDragStart = { offset ->
                         val isRightPart = offset.x >= (size.width * 0.7f)
                         val isSafeFromTop = offset.y > (size.height * 0.15f)
                         val isSafeFromBottom = offset.y < (size.height * 0.85f)
 
                         if (isRightPart && isSafeFromTop && isSafeFromBottom) {
-                            playerState.controls.showVolume()
+                            controller.controls.showVolume()
                         }
                     },
                     onVerticalDrag = { change, dragAmount ->
-                        if (playerState.controls.isVolumeDragging) {
+                        if (controller.controls.isVolumeDragging) {
                             change.consume()
-                            playerState.setVolume((playerState.volume - dragAmount / 400f))
+                            controller.setVolume((controller.state.volume - dragAmount / 400f))
                         }
                     }
                 )
@@ -895,16 +900,16 @@ private fun GestureEvents(playerState: VideoPlayerState) =
     )
 
 @Composable
-private fun Quality(state: WatchState, playerState: VideoPlayerState) = BoxWithConstraints {
-    state.currentQuality?.let { quality ->
-        ButtonFocused("${quality}p", onClick = playerState.controls::toggleQuality)
+private fun Quality(controller: VideoPlayerController) = BoxWithConstraints {
+    controller.state.currentQuality?.let { quality ->
+        ButtonFocused("${quality}p", onClick = controller.controls::toggleQuality)
     }
 
     MenuPlayerItems(
-        items = state.qualityList,
-        expanded = playerState.controls.expandedQuality,
-        onItemClick = { _, item -> playerState.onEvent(PlayerEvent.ChangeQuality(item)) },
-        itemSelected = { _, item -> playerState.currentQuality == item },
+        items = controller.state.qualityList,
+        expanded = controller.controls.expandedQuality,
+        onItemClick = { _, item -> controller.onEvent(PlayerEvent.ChangeQuality(item)) },
+        itemSelected = { _, item -> controller.state.currentQuality == item },
         itemLabel = { "${it}p" },
         modifier = Modifier.width(80.dp),
         maxHeight = maxHeight / 2
@@ -912,19 +917,19 @@ private fun Quality(state: WatchState, playerState: VideoPlayerState) = BoxWithC
 }
 
 @Composable
-private fun Subtitles(state: WatchState, playerState: VideoPlayerState) = BoxWithConstraints {
+private fun Subtitles(state: WatchState, controller: VideoPlayerController) = BoxWithConstraints {
     ButtonFocused(
         content = Icons.Subtitles,
-        onClick = playerState.controls::toggleSubtitles,
-        tint = if (playerState.selectedSubtitlesTrack == null) Color.White
+        onClick = controller.controls::toggleSubtitles,
+        tint = if (controller.state.selectedSubtitlesTrack == null) Color.White
         else MaterialTheme.colorScheme.primary
     )
 
     MenuPlayerItems(
         items = state.subtitles,
-        expanded = playerState.controls.expandedSubtitles,
-        onItemClick = { index, _ -> playerState.showSubtitles(index) },
-        itemSelected = { index, item -> index == 0 && playerState.selectedSubtitlesTrack == null || item.name == playerState.selectedSubtitlesTrack },
+        expanded = controller.controls.expandedSubtitles,
+        onItemClick = { index, _ -> controller.showSubtitles(index) },
+        itemSelected = { index, item -> index == 0 && controller.state.selectedSubtitlesTrack == null || item.name == controller.state.selectedSubtitlesTrack },
         itemLabel = SubtitleTrack::name,
         modifier = Modifier.width(140.dp),
         maxHeight = maxHeight / 2,

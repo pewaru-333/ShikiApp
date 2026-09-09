@@ -1,23 +1,35 @@
 package org.application.shikiapp.shared.utils.ui
 
+import android.app.PendingIntent
+import android.app.PictureInPictureParams
+import android.app.RemoteAction
 import android.app.UiModeManager
-import android.content.Context
+import android.content.*
 import android.content.pm.PackageManager
 import android.content.res.Configuration
+import android.graphics.drawable.Icon
 import android.webkit.MimeTypeMap
+import androidx.activity.ComponentActivity
+import androidx.activity.compose.LocalActivity
+import androidx.annotation.OptIn
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.layout.layout
+import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.viewinterop.AndroidView
+import androidx.core.app.PictureInPictureModeChangedInfo
+import androidx.core.content.ContextCompat
 import androidx.core.net.toUri
+import androidx.core.util.Consumer
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.media3.common.*
@@ -39,33 +51,77 @@ import io.github.peerless2012.ass.media.type.AssRenderType
 import io.github.peerless2012.ass.media.widget.AssSubtitleView
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
-import org.application.shikiapp.shared.di.AppContext
+import org.application.shikiapp.shared.R
+import org.application.shikiapp.shared.events.PlayerEvent
+import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.extensions.toBitmap
 import org.application.shikiapp.shared.utils.ui.subtitles.SubtitleView
-import kotlin.time.Duration.Companion.milliseconds
+import kotlin.math.roundToInt
+import kotlin.time.Duration.Companion.seconds
 
 @UnstableApi
-class VideoPlayerController(private val context: Context, private val state: VideoPlayerState) {
-    val assHandler = AssHandler(AssRenderType.EFFECTS_OPEN_GL)
+actual class VideoPlayerController(private val activity: ComponentActivity): VideoPlayer(), VideoPlayer.VideoPlayerPictureInPicture {
+    val assHandler = AssHandler(AssRenderType.OVERLAY_OPEN_GL)
     private val assParserFactory = AssSubtitleParserFactory(assHandler)
     private val extractorsFactory = DefaultExtractorsFactory().withAssMkvSupport(assParserFactory, assHandler)
-    private val renderersFactory = DefaultRenderersFactory(context).withAssSupport(assHandler)
+    private val renderersFactory = DefaultRenderersFactory(activity).withAssSupport(assHandler)
 
     private val audioAttributes = AudioAttributes.Builder()
         .setUsage(C.USAGE_MEDIA)
         .setContentType(C.AUDIO_CONTENT_TYPE_MOVIE)
         .build()
 
+    private val pipActionPlay = RemoteAction(
+        Icon.createWithBitmap(Icons.PlayCircle.toBitmap(activity)),
+        activity.getString(R.string.pip_action_play),
+        activity.getString(R.string.pip_action_play),
+        createPendingIntentPiP(EXTRA_CONTROL_PLAY)
+    )
+
+    private val pipActionPause = RemoteAction(
+        Icon.createWithBitmap(Icons.PauseCircle.toBitmap(activity)),
+        activity.getString(R.string.pip_action_pause),
+        activity.getString(R.string.pip_action_pause),
+        createPendingIntentPiP(EXTRA_CONTROL_PAUSE)
+    )
+
+    private val pipActionSeekLeft = RemoteAction(
+        Icon.createWithBitmap(Icons.TenSecondsLeft.toBitmap(activity)),
+        activity.getString(R.string.pip_action_seek_left),
+        activity.getString(R.string.pip_action_seek_left),
+        createPendingIntentPiP(EXTRA_CONTROL_SEEK_LEFT)
+    )
+
+    private val pipActionSeekRight = RemoteAction(
+        Icon.createWithBitmap(Icons.TenSecondsRight.toBitmap(activity)),
+        activity.getString(R.string.pip_action_seek_right),
+        activity.getString(R.string.pip_action_seek_right),
+        createPendingIntentPiP(EXTRA_CONTROL_SEEK_RIGHT)
+    )
+
+    private val broadcastReceiverPIP = object : BroadcastReceiver() {
+        override fun onReceive(context: Context?, intent: Intent?) {
+            if (intent == null || intent.action != PLAYER_ACTION_BROADCAST) {
+                return
+            }
+
+            when (intent.getIntExtra(EXTRA_CONTROL_TYPE, EXTRA_CONTROL_PLAY)) {
+                EXTRA_CONTROL_PLAY -> playPiP()
+                EXTRA_CONTROL_PAUSE -> pausePiP()
+                EXTRA_CONTROL_SEEK_LEFT -> seek(-10f)
+                EXTRA_CONTROL_SEEK_RIGHT -> seek(10f)
+            }
+        }
+    }
+
     internal val player: Player
-        field = ExoPlayer.Builder(context)
+        field = ExoPlayer.Builder(activity)
             .setAudioAttributes(audioAttributes, true)
             .setRenderersFactory(renderersFactory)
             .setHandleAudioBecomingNoisy(true)
             .build()
-            .apply {
-                addListener(PlayerEventListener())
-                assHandler.init(this)
-            }
+
 
     internal var cues by mutableStateOf<List<Cue>>(emptyList())
         private set
@@ -73,85 +129,66 @@ class VideoPlayerController(private val context: Context, private val state: Vid
     internal var videoSize by mutableStateOf(Size.Unspecified)
         private set
 
-    private inner class PlayerEventListener : Player.Listener {
+    override val feature = object : VideoPlayerFeature {
+        override val isTV: Boolean
+            get() {
+                val manager = activity.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+
+                return manager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION ||
+                        activity.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+            }
+
+        override val pictureInPicture = if (isTV) null else this@VideoPlayerController
+        override val showPlayPause = true
+        override val visibilityDelay = if (isTV) 6000L else 3000L
+        override val pointerIcon = PointerIcon.Default
+    }
+
+    private val playerEventListener = object : Player.Listener {
         override fun onPlaybackStateChanged(playbackState: Int) {
             state.isLoading = playbackState == Player.STATE_BUFFERING
+            state.isVideoEnded = playbackState == Player.STATE_ENDED
 
             if (playbackState == Player.STATE_ENDED) {
-                state.isVideoEnded = true
-                state.isPlaying = false
+                onEvent(PlayerEvent.Ended)
             }
         }
 
+        override fun onIsPlayingChanged(isPlaying: Boolean) {
+            state.isPlaying = isPlaying
+
+            onEvent(if (isPlaying) PlayerEvent.Play else PlayerEvent.Pause)
+        }
+
         override fun onPlayerError(error: PlaybackException) {
-            state.isLoading = false
-            state.playNext()
+            playNext()
         }
 
         override fun onCues(cueGroup: CueGroup) {
             cues = cueGroup.cues
         }
 
+        override fun onVolumeChanged(volume: Float) {
+            updateVolume(volume)
+        }
+
+        override fun onPlaybackParametersChanged(playbackParameters: PlaybackParameters) {
+            updateSpeed(playbackParameters.speed)
+        }
+
         override fun onTracksChanged(tracks: Tracks) {
-            val isAdaptive = state.url?.let {
-                val type = Util.inferContentType(it.toUri())
+            state.audioTrackIndex?.let(::onLoadAudioTrack)
 
-                type == C.CONTENT_TYPE_HLS || type == C.CONTENT_TYPE_DASH
-            }
+            if (!tracks.isTypeSelected(C.TRACK_TYPE_TEXT)) updateSubtitleTrack(null)
+            else tracks.groups
+                .find { it.type == C.TRACK_TYPE_TEXT && it.isSelected }
+                ?.let { updateSubtitleTrack(it.getTrackFormat(0).label) }
 
-            if (isAdaptive == true) {
-                val qualities = HashSet<Int>()
-                for (group in tracks.groups) {
-                    if (group.type == C.TRACK_TYPE_VIDEO) {
-                        for (i in 0 until group.length) {
-                            val height = group.getTrackFormat(i).height
-                            if (height > 0) {
-                                qualities.add(height)
-                            }
-                        }
-                    }
-                }
-
-                if (qualities.isNotEmpty() && (qualities.size > 1 || state.qualityList.isEmpty())) {
-                    state.qualityList = qualities.sortedDescending()
-                }
-            }
-
-            var quality: Int? = null
-            search@ for (group in tracks.groups) {
-                if (group.type == C.TRACK_TYPE_VIDEO) {
-                    for (i in 0 until group.length) {
-                        if (group.isTrackSelected(i)) {
-                            val trackFormat = group.getTrackFormat(i)
-
-                            val width = trackFormat.width
-                            val height = trackFormat.height
-                            val rotation = trackFormat.rotationDegrees
-
-                            videoSize = if (rotation == 90 || rotation == 270) {
-                                Size(height.toFloat(), width.toFloat())
-                            } else {
-                                Size(width.toFloat(), height.toFloat())
-                            }
-
-                            quality = height
-                            break@search
-                        }
-                    }
-                }
-            }
-
-            if (quality != null && state.currentQuality != quality) {
-                state.currentQuality = quality
-            }
-
-            state.tracksRevision++
+            getAdaptiveQuality(tracks)
         }
     }
 
-    internal fun loadVideo() {
-        val url = state.url ?: return
-
+    override fun onLoadVideo(url: String) {
         val dataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent(state.headers.getOrDefault("User-Agent", BLANK))
             .setDefaultRequestProperties(state.headers)
@@ -170,7 +207,6 @@ class VideoPlayerController(private val context: Context, private val state: Vid
                 .setId((index + 1024).toString())
                 .setMimeType(mimeType)
                 .setLabel(subtitleTrack.name)
-                .setSelectionFlags(C.SELECTION_FLAG_DEFAULT)
                 .build()
         }
 
@@ -179,86 +215,63 @@ class VideoPlayerController(private val context: Context, private val state: Vid
             .setSubtitleConfigurations(subtitleConfigs)
             .build()
 
-        val mediaSource = DefaultMediaSourceFactory(context, extractorsFactory)
+        val mediaSource = DefaultMediaSourceFactory(activity, extractorsFactory)
             .setDataSourceFactory(dataSourceFactory)
             .setSubtitleParserFactory(assParserFactory)
             .createMediaSource(mediaItem)
 
+
         player.setMediaSource(mediaSource)
         player.prepare()
-        player.playWhenReady = state.isPlaying
+        player.play()
     }
 
-    internal fun play() {
-        if (state.isPlaying) player.play() else player.pause()
+    override fun create() {
+        player.addListener(playerEventListener)
+        assHandler.init(player)
     }
 
-    internal fun pause() {
-        player.pause()
-        state.pause()
-    }
-
-    internal fun release() {
+    override fun release() {
         player.stop()
         player.clearMediaItems()
         player.release()
     }
 
-    internal fun setVolume() {
-        player.volume = state.volume
+    override fun onPlay() {
+        player.play()
     }
 
-    internal fun setSpeed() {
-        player.setPlaybackSpeed(state.speed)
+    override fun onPause() {
+        player.pause()
     }
 
-    internal fun seek() {
-        state.seekTrigger?.let { seconds ->
-            if (state.totalTime > 0f) {
-                player.seekTo((seconds * 1000).toLong())
-            }
-        }
+    override fun onSetVolume(volume: Float) {
+        player.volume = volume
     }
 
-    internal suspend fun updateBuffer() {
-        val total = player.duration.coerceAtLeast(0) / 1000f
-
-        if (total > 0f) {
-            if (player.isPlaying) {
-                val current = player.currentPosition / 1000f
-                state.updateTime(current, total)
-            }
-            state.updateBuffer(player.bufferedPercentage / 100f)
-        }
-
-        delay(if (state.isPlaying) 1000.milliseconds else 3000.milliseconds)
+    override fun onSetSpeed(speed: Float) {
+        player.setPlaybackSpeed(speed)
     }
 
-    internal fun setQuality() {
-        val quality = state.currentQuality ?: return
-
-        for (group in player.currentTracks.groups) {
-            if (group.type == C.TRACK_TYPE_VIDEO) {
-                for (i in 0 until group.length) {
-                    if (group.getTrackFormat(i).height == quality) {
-                        player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
-                            .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, i))
-                            .build()
-
-                        return
-                    }
-                }
-            }
-        }
+    override fun onSeek(millis: Float) {
+        player.seekTo((millis * 1000).toLong())
     }
 
-    internal fun setAudioTrack() {
-        val audioTrackIndex = state.audioTrackIndex ?: return
-        var index = 0
+    override fun enterPIP() {
+        if (activity.isInPictureInPictureMode) return
+
+        activity.enterPictureInPictureMode(createPipParams())
+        controls.hideControls()
+    }
+
+    override fun onLoadAudioTrack(index: Int) {
+        var searchIndex = 0
 
         for (group in player.currentTracks.groups) {
             if (group.type == C.TRACK_TYPE_AUDIO) {
-                if (index == audioTrackIndex) {
+                if (searchIndex == index) {
+                    if (group.isSelected) return
+
                     player.trackSelectionParameters = player.trackSelectionParameters.buildUpon()
                         .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
                         .build()
@@ -266,63 +279,160 @@ class VideoPlayerController(private val context: Context, private val state: Vid
                     return
                 }
 
-                index++
+                searchIndex++
             }
         }
     }
 
-    internal fun setSubtitleTrack() {
+    override fun onLoadSubtitleTrack(index: Int) {
         val builder = player.trackSelectionParameters.buildUpon()
             .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, state.selectedSubtitlesTrack == null)
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, index == 0)
 
-        if (state.selectedSubtitlesTrack != null) {
-            player.currentTracks.groups
-                .find { it.type == C.TRACK_TYPE_TEXT && it.getTrackFormat(0).label == state.selectedSubtitlesTrack }
-                ?.let { builder.setOverrideForType(TrackSelectionOverride(it.mediaTrackGroup, 0)) }
+        if (index > 0) {
+            var searchIndex = 0
+
+            for (group in player.currentTracks.groups) {
+                if (group.type == C.TRACK_TYPE_TEXT) {
+                    if (searchIndex == index) {
+                        if (group.isSelected) return
+
+                        builder.setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
+
+                        break
+                    }
+
+                    searchIndex++
+                }
+            }
         }
 
         player.trackSelectionParameters = builder.build()
+    }
+
+    internal fun playPiP() {
+        onPlay()
+        activity.setPictureInPictureParams(createPipParams())
+    }
+
+    internal fun pausePiP() {
+        onPause()
+        activity.setPictureInPictureParams(createPipParams())
+    }
+
+    internal suspend fun updateBuffer() {
+        val duration = player.duration
+        val isPlaying = player.isPlaying
+
+        if (isPlaying && duration != C.TIME_UNSET) {
+            val total = duration / 1000f
+            val current = player.currentPosition / 1000f
+
+            state.currentTime = current
+            state.totalTime = total
+        }
+
+        updateBuffer(player.bufferedPercentage / 100f)
+
+        delay(if (isPlaying) 1.seconds else 3.seconds)
+    }
+
+    internal fun registerBroadcastReceiverPIP() {
+        ContextCompat.registerReceiver(
+            activity,
+            broadcastReceiverPIP,
+            IntentFilter(PLAYER_ACTION_BROADCAST),
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+    }
+
+    internal fun unregisterBroadcastReceiverPIP() {
+        activity.unregisterReceiver(broadcastReceiverPIP)
+    }
+
+    private fun createPipParams() = PictureInPictureParams.Builder()
+        .setActions(createPipActions())
+        .build()
+
+    private fun createPipActions() = buildList {
+        add(pipActionSeekLeft)
+        add(if (state.isPlaying) pipActionPause else pipActionPlay)
+        add(pipActionSeekRight)
+    }
+
+    private fun createPendingIntentPiP(actionCode: Int) = PendingIntent.getBroadcast(
+        activity,
+        actionCode,
+        Intent(PLAYER_ACTION_BROADCAST).apply {
+            `package` = activity.packageName
+            putExtra(EXTRA_CONTROL_TYPE, actionCode)
+        },
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    private fun getAdaptiveQuality(tracks: Tracks) {
+        val url = state.url ?: return
+        val type = Util.inferContentType(url.toUri())
+        val isAdaptive = type == C.CONTENT_TYPE_HLS || type == C.CONTENT_TYPE_DASH
+
+        for (group in tracks.groups) {
+            if (group.type == C.TRACK_TYPE_VIDEO) {
+                for (i in 0 until group.length) {
+                    if (group.isTrackSelected(i)) {
+                        val trackFormat = group.getTrackFormat(i)
+
+                        val width = trackFormat.width
+                        val height = trackFormat.height
+                        val rotation = trackFormat.rotationDegrees
+
+                        videoSize = if (rotation == 90 || rotation == 270) {
+                            Size(height.toFloat(), width.toFloat())
+                        } else {
+                            Size(width.toFloat(), height.toFloat())
+                        }
+
+                        if (height <= 0) continue
+
+                        if (isAdaptive && state.qualityList.size <= 1) {
+                            state.qualityList = listOf(height)
+                        }
+
+                        if (group.isTrackSelected(i)) {
+                            state.currentQuality = height
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    companion object {
+        internal const val PLAYER_ACTION_BROADCAST = "player_action_playback_control"
+        internal const val EXTRA_CONTROL_TYPE = "control_type"
+        internal const val EXTRA_CONTROL_PLAY = 1
+        internal const val EXTRA_CONTROL_PAUSE = 2
+        internal const val EXTRA_CONTROL_SEEK_LEFT = 3
+        internal const val EXTRA_CONTROL_SEEK_RIGHT = 4
+    }
+}
+
+@OptIn(UnstableApi::class)
+@Composable
+actual fun rememberVideoPlayerController(onEvent: (PlayerEvent) -> Unit): VideoPlayerController {
+    val activity = LocalActivity.current as? ComponentActivity ?: throw ActivityNotFoundException()
+    val currentEvent by rememberUpdatedState(onEvent)
+
+    return remember(activity) {
+        VideoPlayerController(activity).apply {
+            eventListener = currentEvent
+        }
     }
 }
 
 @UnstableApi
 @Composable
-actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
-    val context = LocalContext.current
-    val controller = remember(context) { VideoPlayerController(context, state) }
-
-    LaunchedEffect(state.url) {
-        controller.loadVideo()
-    }
-
-    LaunchedEffect(state.currentQuality, state.tracksRevision) {
-        controller.setQuality()
-    }
-
-    LaunchedEffect(state.audioTrackIndex, state.tracksRevision) {
-        controller.setAudioTrack()
-    }
-
-    LaunchedEffect(state.selectedSubtitlesTrack, state.tracksRevision) {
-        controller.setSubtitleTrack()
-    }
-
-    LaunchedEffect(state.isPlaying) {
-        controller.play()
-    }
-
-    LaunchedEffect(state.volume) {
-        controller.setVolume()
-    }
-
-    LaunchedEffect(state.speed) {
-        controller.setSpeed()
-    }
-
-    LaunchedEffect(state.seekTrigger, state.totalTime) {
-        controller.seek()
-    }
+actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
+    val isPiP = rememberIsInPipMode()
 
     LaunchedEffect(controller) {
         while (isActive) {
@@ -334,30 +444,42 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
         controller.pause()
     }
 
-    DisposableEffect(controller) {
-        onDispose {
-            controller.release()
+    DisposableEffect(controller.player, isPiP) {
+        if (isPiP) {
+            controller.registerBroadcastReceiverPIP()
+
+            onDispose { controller.unregisterBroadcastReceiverPIP() }
         }
+
+        onDispose { }
     }
 
-    BoxWithConstraints(modifier) {
-        val scaleValue = remember(state.isZoomed, controller.videoSize, constraints) {
-            if (!state.isZoomed) return@remember 1f
+    BoxWithConstraints(modifier, Alignment.Center) {
+        val boxWidth = constraints.maxWidth.toFloat()
+        val boxHeight = constraints.maxHeight.toFloat()
+        val maxSize = Size(boxWidth, boxHeight)
 
-            val videoSize = controller.videoSize
-            if (videoSize == Size.Unspecified) return@remember 1f
+        val videoSize = controller.videoSize
+        val hasVideo = videoSize != Size.Unspecified && videoSize.width > 0f && videoSize.height > 0f
 
-            val maxSize = Size(constraints.maxWidth.toFloat(), constraints.maxHeight.toFloat())
-            val fit = ContentScale.Fit.computeScaleFactor(videoSize, maxSize).scaleX
+        val fitScale = if (hasVideo) ContentScale.Fit.computeScaleFactor(videoSize, maxSize).scaleX
+        else 1f
 
-            if (fit <= 0f) return@remember 1f
+        val baseWidth = if (hasVideo) (videoSize.width * fitScale).roundToInt()
+        else boxWidth.roundToInt()
 
-            val crop = ContentScale.Crop.computeScaleFactor(videoSize, maxSize).scaleX
+        val baseHeight = if (hasVideo) (videoSize.height * fitScale).roundToInt()
+        else boxHeight.roundToInt()
 
-            crop / fit
+        val scaleValue = remember(controller.state.isZoomed, controller.videoSize, constraints) {
+            if (!controller.state.isZoomed || !hasVideo || fitScale <= 0f) {
+                1f
+            } else {
+                ContentScale.Crop.computeScaleFactor(videoSize, maxSize).scaleX / fitScale
+            }
         }
 
-        val scale by animateFloatAsState(
+        val animatedScale by animateFloatAsState(
             targetValue = scaleValue,
             animationSpec = tween(
                 durationMillis = 300,
@@ -365,43 +487,62 @@ actual fun VideoPlayer(state: VideoPlayerState, modifier: Modifier) {
             )
         )
 
+        val overflowHeight = baseHeight * animatedScale - boxHeight
+        val offsetY = if (overflowHeight > 0f) -overflowHeight / 2f else 0f
+
+        val scaleModifier = Modifier.graphicsLayer {
+            scaleX = animatedScale
+            scaleY = animatedScale
+            translationY = offsetY
+        }
+
         PlayerSurface(
             player = controller.player,
-            modifier = Modifier
-                .matchParentSize()
-                .graphicsLayer {
-                    scaleX = scale
-                    scaleY = scale
+            modifier = scaleModifier.layout { measurable, _ ->
+                val placeable = measurable.measure(Constraints.fixed(baseWidth, baseHeight))
+
+                layout(placeable.width, placeable.height) {
+                    placeable.placeRelative(0, 0)
                 }
+            }
         )
 
         AndroidView(
-            modifier = Modifier.matchParentSize(),
+            modifier = scaleModifier.layout { measurable, _ ->
+                val placeable = measurable.measure(Constraints.fixed(baseWidth, baseHeight))
+
+                layout(placeable.width, placeable.height) {
+                    placeable.placeRelative(0, 0)
+                }
+            },
             update = { it.cues = controller.cues },
             factory = { context ->
                 SubtitleView(context).apply {
                     addView(AssSubtitleView(context, controller.assHandler))
                     setUserDefaultStyle()
                     setUserDefaultTextSize()
-                    viewType = SubtitleView.VIEW_TYPE_WEB
+                    viewType = SubtitleView.VIEW_TYPE_CANVAS
                 }
             }
         )
     }
 }
 
-actual class VideoPlayerUtils actual constructor(private val context: Context) {
-    actual constructor() : this(AppContext.app.context)
+@Composable
+fun rememberIsInPipMode(): Boolean {
+    val activity = LocalActivity.current as? ComponentActivity ?: throw ActivityNotFoundException()
 
-    actual val isTV: Boolean
-        get() {
-            val uiModeManager = context.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
+    var pipMode by remember { mutableStateOf(activity.isInPictureInPictureMode) }
 
-            return uiModeManager.currentModeType == Configuration.UI_MODE_TYPE_TELEVISION ||
-                    context.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
+    DisposableEffect(activity) {
+        val observer = Consumer<PictureInPictureModeChangedInfo> { info ->
+            pipMode = info.isInPictureInPictureMode
         }
 
-    actual val showPlayPause = true
-    actual val visibilityDelay = if (isTV) 6000L else 3000L
-    actual val pointerIcon = PointerIcon.Default
+        activity.addOnPictureInPictureModeChangedListener(observer)
+
+        onDispose { activity.removeOnPictureInPictureModeChangedListener(observer) }
+    }
+
+    return pipMode
 }
