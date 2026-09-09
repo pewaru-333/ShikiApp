@@ -28,12 +28,11 @@ import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
 import okio.ByteString.Companion.encodeUtf8
 import okio.Path
-import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.client.ImageInterceptor
 import org.application.shikiapp.shared.network.client.Network
-import org.application.shikiapp.shared.utils.data.DataManager
+import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
@@ -116,7 +115,7 @@ inline fun <reified T> serializableNavType(
 inline fun <reified T : Any> generateDeepLinks(
     vararg paths: String,
     typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap()
-) = (listOf(AppConfig.baseUrl) + AppConfig.urlMirrors).flatMap { domain ->
+) = Preferences.appUrlList.flatMap { domain ->
     paths.map { path ->
         navDeepLink<T>(
             basePath = "*",
@@ -159,7 +158,7 @@ expect fun isDynamicColorAvailable(): Boolean
 expect fun getFullscreenDialogProperties(): DialogProperties
 
 @Composable
-expect fun rememberDataManager(): Pair<DataManager, PermissionState>
+expect fun rememberDataManager(): Pair<IDataManager, PermissionState>
 
 @Composable
 expect fun rememberVerifiedDomain() : IDomain
