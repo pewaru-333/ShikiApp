@@ -10,7 +10,11 @@ data class EpisodeModel(
     val number: Int,
     val link: String,
     val audioIndex: Int? = null,
-    val screenshot: String? = null
+    val screenshot: String? = null,
+    val fallback: List<String> = emptyList(),
+    val qualityList: List<Int> = emptyList(),
+    val subtitles: List<SubtitleTrack> = emptyList(),
+    val videoHeaders: Map<String, String> = emptyMap()
 )
 
 data class SubtitleTrack(
