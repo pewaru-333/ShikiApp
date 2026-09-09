@@ -6,22 +6,22 @@ import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.PointerEventType
 import androidx.compose.ui.input.pointer.PointerInputChange
 import androidx.compose.ui.input.pointer.pointerInput
-import org.application.shikiapp.shared.utils.ui.VideoPlayerState
+import org.application.shikiapp.shared.utils.ui.VideoPlayerController
 
-actual fun Modifier.playerKeyEvents(playerState: VideoPlayerState) = onPreviewKeyEvent { event ->
-    if (playerState.controls.expandedEpisodes) return@onPreviewKeyEvent false
+actual fun Modifier.playerKeyEvents(controller: VideoPlayerController) = onPreviewKeyEvent { event ->
+    if (controller.controls.expandedEpisodes) return@onPreviewKeyEvent false
 
     when (event.type) {
         KeyEventType.KeyDown -> when (event.key) {
             Key.Tab -> {
-                playerState.controls.refreshInteractionMillis()
+                controller.controls.refreshInteractionMillis()
                 false
             }
 
             Key.DirectionUp, Key.DirectionDown -> {
                 val sign = if (event.key == Key.DirectionUp) 1.0f else -1.0f
-                playerState.setVolume((playerState.volume + sign * 0.05f))
-                playerState.controls.hideVolume()
+                controller.setVolume((controller.state.volume + sign * 0.05f))
+                controller.controls.showVolume()
                 true
             }
 
@@ -29,11 +29,11 @@ actual fun Modifier.playerKeyEvents(playerState: VideoPlayerState) = onPreviewKe
         }
 
         KeyEventType.KeyUp -> when (event.key) {
-            Key.J -> { playerState.showSubtitles(); true }
-            Key.F -> { playerState.toggleFullscreen(); true }
-            Key.Spacebar -> { playerState.togglePlayPause(); true }
-            Key.DirectionLeft -> { playerState.seekTo(playerState.currentTime - 10f); true }
-            Key.DirectionRight -> { playerState.seekTo(playerState.currentTime + 10f); true }
+            Key.J -> { controller.showSubtitles(); true }
+            Key.F -> { controller.toggleFullscreen(); true }
+            Key.Spacebar -> { controller.togglePlayPause(); true }
+            Key.DirectionLeft -> { controller.seek(-10f); true }
+            Key.DirectionRight -> { controller.seek(10f); true }
 
             else -> false
         }
@@ -43,17 +43,17 @@ actual fun Modifier.playerKeyEvents(playerState: VideoPlayerState) = onPreviewKe
 }
 
 
-actual fun Modifier.playerMouseEvents(playerState: VideoPlayerState) = pointerInput(Unit) {
+actual fun Modifier.playerMouseEvents(controller: VideoPlayerController) = pointerInput(Unit) {
     awaitPointerEventScope {
         while (true) {
             val event = awaitPointerEvent(PointerEventPass.Main)
 
             when (event.type) {
-                PointerEventType.Move -> playerState.controls.refreshInteractionMillis()
+                PointerEventType.Move -> controller.controls.refreshInteractionMillis()
 
                 PointerEventType.Release -> {
-                    if (event.changes.none(PointerInputChange::isConsumed)) {
-                        playerState.togglePlayPause()
+                    if (event.changes.none(PointerInputChange::isConsumed) && !controller.controls.isSliderDragging) {
+                        controller.togglePlayPause()
                         event.changes.forEach(PointerInputChange::consume)
                     }
                 }
