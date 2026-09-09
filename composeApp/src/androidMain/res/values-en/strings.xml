@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pip_action_play">Play</string>
+    <string name="pip_action_pause">Pause</string>
+    <string name="pip_action_seek_left">Seek 10 seconds back</string>
+    <string name="pip_action_seek_right">Seek 10 seconds further</string>
+</resources>

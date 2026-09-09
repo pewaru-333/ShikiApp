@@ -301,8 +301,8 @@
     <string name="preference_list_view_column">Столбец</string>
     <string name="preference_list_view_grid">Сетка</string>
 
-    <string name="preference_episode_auto_add">Автоматически добавлять эпизод в список</string>
-    <string name="preference_episode_auto_add_summary">Через 30 секунд после просмотра</string>
+    <string name="preference_episode_auto_add">Добавлять эпизод в список</string>
+    <string name="preference_episode_auto_add_summary">После 30 секунд непрерывного просмотра (или его конца)</string>
 
     <string name="preference_theme">Тема приложения</string>
     <string name="preference_theme_system">Системная</string>
@@ -324,6 +324,15 @@
     <string name="preference_language">Язык приложения</string>
 
     <string name="preference_deep_link">Ссылки приложения</string>
+    <string name="preference_deep_link_explain_disabled">Отключено при использовании пользовательских ссылок</string>
+
+    <string name="preference_network_config">Конфигурация сети</string>
+
+    <string name="preference_use_user_url_list">Использовать пользовательские ссылки</string>
+    <string name="preference_use_user_url_list_summary">В выключенном состоянии используются настройки по умолчанию</string>
+
+    <string name="preference_use_proxy">Использовать прокси-сервер</string>
+    <string name="preference_use_proxy_summary">Не распространяется на запросы при просмотре эпизодов аниме</string>
 
     <!-- Палитра -->
     <string name="palette_default">Стандартная</string>
@@ -342,18 +351,24 @@
 
     <!-- Другое -->
     <string name="blank" />
+    <string name="text_base_url_format">Формат: https://хост.домен</string>
     <string name="text_broadcast_message_club">Рассылка</string>
     <string name="text_editing">Редактирование</string>
     <string name="text_empty">Пусто</string>
     <string name="text_error">Ошибка!</string>
     <string name="text_error_comment_create">Ошибка отправки комментария!</string>
     <string name="text_error_loading">Ошибка загрузки!</string>
+    <string name="text_host">Хост</string>
+    <string name="text_links">Ссылки</string>
     <string name="text_loading">Загрузка</string>
     <string name="text_login">Вход</string>
     <string name="text_no_messages">Нет сообщений</string>
     <string name="text_offtopic">ОФФТОП</string>
     <string name="text_open_in_browser">Открыть в браузере</string>
     <string name="text_palette">Палитра</string>
+    <string name="text_password_optional">Пароль (необязательно)</string>
+    <string name="text_port">Порт</string>
+    <string name="text_proxy">Прокси</string>
     <string name="text_saved">Сохранено!</string>
     <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
@@ -363,6 +378,7 @@
     <string name="text_turned_off_short">Выкл.</string>
     <string name="text_turned_on">Включено</string>
     <string name="text_unknown">Неизвестно</string>
+    <string name="text_username_optional">Имя пользователя (необязательно)</string>
     <string name="text_year_in">в %1$d году</string>
 
     <string name="text_video_sources">Источники</string>
@@ -411,6 +427,7 @@
     <string name="text_successfully_deleted_dialog">Диалог удалён</string>
     <string name="text_unsuccessfully_deleted_dialog">Ошибка при удалении диалога</string>
 
+    <string name="text_applied_after_relaunching_app_proxy_settings">Настройки применяются после перезапуска приложения</string>
     <string name="text_applied_immediately">применяются сразу</string>
     <string name="text_repeat_the_loading">Повторить загрузку</string>
 

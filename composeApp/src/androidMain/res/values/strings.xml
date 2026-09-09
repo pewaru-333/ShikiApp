@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="pip_action_play">Воспроизведение</string>
+    <string name="pip_action_pause">Пауза</string>
+    <string name="pip_action_seek_left">Перемотка на 10 секунд назад</string>
+    <string name="pip_action_seek_right">Перемотка на 10 секунд вперёд</string>
+</resources>
