@@ -1,8 +1,6 @@
 package org.application.shikiapp.shared.utils
 
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.remember
@@ -20,8 +18,8 @@ import com.ibm.icu.text.RelativeDateTimeFormatter
 import com.sun.jna.Platform
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
-import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
+import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.HtmlParser
@@ -122,7 +120,7 @@ actual object AppLocale {
 }
 
 @Composable
-actual fun rememberDataManager(): Pair<DataManager, PermissionState> {
+actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     val dataManager = remember(::DataManagerDesktop)
     val permissionState = object : PermissionState {
         override var isGranted: Boolean
@@ -138,7 +136,7 @@ actual fun rememberDataManager(): Pair<DataManager, PermissionState> {
 
     }
 
-    return Pair(DataManager(dataManager), permissionState)
+    return Pair(dataManager, permissionState)
 }
 
 @Composable
@@ -154,9 +152,7 @@ actual fun rememberToastState() = object : IToast {
 }
 
 @Composable
-actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? =
-    if (darkTheme) darkColorScheme()
-    else lightColorScheme()
+actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? = null
 
 @Composable
 actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) = Unit
