@@ -2,12 +2,17 @@ package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.ApolloClient
 import io.ktor.client.HttpClient
+import io.ktor.client.engine.ProxyBuilder
+import io.ktor.client.engine.ProxyConfig
+import io.ktor.client.engine.http
 import io.ktor.client.plugins.*
 import io.ktor.client.plugins.auth.Auth
 import io.ktor.client.plugins.auth.providers.BearerTokens
 import io.ktor.client.plugins.auth.providers.bearer
 import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
+import io.ktor.client.request.header
+import io.ktor.http.HttpHeaders
 import io.ktor.http.HttpStatusCode
 import io.ktor.serialization.kotlinx.json.json
 import kotlinx.coroutines.Dispatchers
@@ -20,6 +25,7 @@ import org.application.shikiapp.shared.network.calls.*
 import org.application.shikiapp.shared.network.calls.shiki.IAnimeRepository
 import org.application.shikiapp.shared.network.calls.shiki.ICharacterRepository
 import org.application.shikiapp.shared.network.calls.shiki.IMangaRepository
+import kotlin.io.encoding.Base64
 
 
 object Network {
@@ -27,10 +33,26 @@ object Network {
         HttpClient {
             engine {
                 dispatcher = Dispatchers.IO
+                proxy = configureProxy()
             }
 
             install(UserAgent) {
                 agent = AppConfig.userAgent
+            }
+
+            defaultRequest {
+                if (Preferences.useProxy) {
+                    val host = Preferences.proxyHost
+                    val user = Preferences.proxyUsername
+                    val password = Preferences.proxyPassword
+
+                    val isHttpProxy = host.startsWith("http", ignoreCase = true)
+
+                    if (isHttpProxy && user.isNotBlank() && password.isNotBlank()) {
+                        val credentials = Base64.encode("$user:$password".encodeToByteArray())
+                        header(HttpHeaders.ProxyAuthorization, "Basic $credentials")
+                    }
+                }
             }
         }
     }
@@ -99,8 +121,12 @@ object Network {
             install(RateLimit)
 
             install(BaseUrlResolverPlugin) {
-                baseUrl = AppConfig.baseUrl
-                mirrors = AppConfig.urlMirrors
+                val (baseUrl, mirrors) = Preferences.appUrlPair
+
+                isUserMode = { Preferences.useUserUrlList }
+
+                baseUrlProvider = { baseUrl }
+                mirrorsProvider = { mirrors }
 
                 onNewUrl = { workingUrl ->
                     ApiRoutes.workingBaseUrl = workingUrl
@@ -142,5 +168,27 @@ object Network {
     val characterRepository by lazy {
         if (AppConfig.isShikimori) ICharacterRepository(apollo)
         else org.application.shikiapp.shared.network.calls.dark.ICharacterRepository(apollo)
+    }
+
+    internal fun configureProxy(): ProxyConfig? {
+        if (!Preferences.useProxy) return null
+
+        val host = Preferences.proxyHost
+        val port = Preferences.proxyPort
+
+        if (host.isBlank() || port.isBlank()) return null
+        val portInt = port.toIntOrNull() ?: return null // всегда число (проверка при вводе)
+
+        val isSocks = host.startsWith("socks5://", ignoreCase = true)
+        val isHttps = host.startsWith("https://", ignoreCase = true)
+
+        val cleanHost = host.substringAfter("://")
+
+        return if (isSocks) {
+            ProxyBuilder.socks(cleanHost, portInt)
+        } else {
+            val scheme = if (isHttps) "https" else "http"
+            ProxyBuilder.http("$scheme://$cleanHost:$portInt")
+        }
     }
 }

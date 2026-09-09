@@ -11,25 +11,36 @@ import io.ktor.http.Url
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import org.application.shikiapp.shared.network.client.Network.configureProxy
 import org.application.shikiapp.shared.utils.BLANK
 
 class BaseUrlResolverConfig {
-    var baseUrl: String = BLANK
-    var mirrors: List<String> = emptyList()
+    var isUserMode: suspend () -> Boolean = { false }
+    var baseUrlProvider: suspend () -> String = { BLANK }
+    var mirrorsProvider: suspend () -> List<String> = { emptyList() }
     var onNewUrl: ((String) -> Unit)? = null
 }
 
 val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUrlResolverConfig) {
-    val baseUrl = pluginConfig.baseUrl
-    val mirrors = pluginConfig.mirrors
+    val isUserModeProvider = pluginConfig.isUserMode
+    val baseUrlProvider = pluginConfig.baseUrlProvider
+    val mirrorsProvider = pluginConfig.mirrorsProvider
     val onNewUrl = pluginConfig.onNewUrl
 
-    val urls = listOf(baseUrl) + mirrors
     val mutex = Mutex()
     var workingUrl: String? = null
 
-    suspend fun resolveUrl(): String = coroutineScope {
+    suspend fun resolveUrl(baseUrl: String, mirrors: List<String>): String = coroutineScope {
+        val urls = buildList {
+            add(baseUrl)
+            addAll(mirrors)
+        }
+
         val pingClient = HttpClient {
+            engine {
+                proxy = configureProxy()
+            }
+
             expectSuccess = false
             followRedirects = false
 
@@ -71,7 +82,12 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
         if (workingUrl == null) {
             mutex.withLock {
                 if (workingUrl == null) {
-                    workingUrl = resolveUrl()
+                    val isModified = isUserModeProvider()
+                    val baseUrl = baseUrlProvider()
+
+                    workingUrl = if (isModified) baseUrl
+                    else resolveUrl(baseUrl, mirrorsProvider())
+
                     workingUrl?.let { onNewUrl?.invoke(it) }
                 }
             }
