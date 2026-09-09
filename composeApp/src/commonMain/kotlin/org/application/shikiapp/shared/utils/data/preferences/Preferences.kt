@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.combine
 import me.zhanghai.compose.preference.Preferences
+import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.models.data.Token
 import org.application.shikiapp.shared.utils.*
 import org.application.shikiapp.shared.utils.enums.*
@@ -116,6 +117,51 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
             }
         }
 
+    val useUserUrlList: Boolean
+        get() = app.getBoolean(PREF_USE_USER_URL_LIST, false)
+
+    val useUserUrlListFlow = app.getStateFlow(PREF_USE_USER_URL_LIST, false, scope)
+
+    val appUrlsString: String
+        get() = app.getString(PREF_APP_URL_LIST, getDefaultUrls())
+
+    val appUrlList: List<String>
+        get() = appUrlsString.split(',')
+
+    val appUrlPair: Pair<String, List<String>>
+        get() {
+            val list = appUrlList
+
+            return list[0] to list.drop(1)
+        }
+
+    val appUrlListFlow = app.getStateFlow(PREF_APP_URL_LIST, appUrlsString, scope)
+
+    val useProxy: Boolean
+        get() = app.getBoolean(PREF_USE_PROXY, false)
+
+    val useProxyFlow = app.getStateFlow(PREF_USE_PROXY, false, scope)
+
+    val proxyHost: String
+        get() = app.getString(PREF_PROXY_HOST, BLANK)
+
+    val proxyHostFlow = app.getStateFlow(PREF_PROXY_HOST, BLANK, scope)
+
+    val proxyPort: String
+        get() = app.getString(PREF_PROXY_PORT, BLANK)
+
+    val proxyPortFlow = app.getStateFlow(PREF_PROXY_PORT, BLANK, scope)
+
+    val proxyUsername: String
+        get() = app.getString(PREF_PROXY_USERNAME, BLANK)
+
+    val proxyUsernameFlow = app.getStateFlow(PREF_PROXY_USERNAME, BLANK, scope)
+
+    val proxyPassword: String
+        get() = app.getString(PREF_PROXY_PASSWORD, BLANK)
+
+    val proxyPasswordFlow = app.getStateFlow(PREF_PROXY_PASSWORD, BLANK, scope)
+
     fun setStartPage(page: Menu) = app.edit {
         putEnum(PREF_START_PAGE, page)
     }
@@ -190,6 +236,44 @@ class Preferences(private val app: IPreferences, private val auth: IPreferences,
         if (!value) {
             setLastCatalogOrder()
         }
+    }
+
+    fun setAppUrlList(urls: String = BLANK) = app.edit {
+        putString(PREF_APP_URL_LIST, urls.ifBlank(::getDefaultUrls))
+    }
+
+    fun setUseUserUrlList(enabled: Boolean) = app.edit {
+        putBoolean(PREF_USE_USER_URL_LIST, enabled)
+    }
+
+    fun setUseProxy(enabled: Boolean) = app.edit {
+        putBoolean(PREF_USE_PROXY, enabled)
+    }
+
+    fun setProxyHost(host: String) = app.edit {
+        putString(PREF_PROXY_HOST, host)
+    }
+
+    fun setProxyPort(port: String) = app.edit {
+        putString(PREF_PROXY_PORT, port)
+    }
+
+    fun setProxyUsername(username: String) = app.edit {
+        putString(PREF_PROXY_USERNAME, username)
+    }
+
+    fun setProxyPassword(password: String) = app.edit {
+        putString(PREF_PROXY_PASSWORD, password)
+    }
+
+    private fun getDefaultUrls(): String {
+        val stringBuilder = StringBuilder(AppConfig.baseUrl)
+        for (url in AppConfig.urlMirrors) {
+            stringBuilder.append(',')
+            stringBuilder.append(url)
+        }
+
+        return stringBuilder.toString()
     }
 }
 
