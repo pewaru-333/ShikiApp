@@ -22,8 +22,8 @@ import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
-import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerIos
+import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.permissions.PermissionState
@@ -134,11 +134,11 @@ actual object AppLocale {
 }
 
 @Composable
-actual fun rememberDataManager(): Pair<DataManager, PermissionState> {
+actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     val permissionState = rememberPermissionState("gallery")
     val dataManager = remember { DataManagerIos() }
 
-    return Pair(DataManager(dataManager), permissionState)
+    return Pair(dataManager, permissionState)
 }
 
 @Composable
@@ -226,7 +226,8 @@ actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
 }
 
 object OrientationManager {
-    var currentMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskAll
+    var currentMask: UIInterfaceOrientationMask = UIInterfaceOrientationMaskPortrait
+    var onOrientationChange: ((UIInterfaceOrientationMask) -> Unit)? = null
 }
 
 @Composable
@@ -241,11 +242,11 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) {
         }
 
         OrientationManager.currentMask = mask
-        forceOrientationUpdate(mask)
+        OrientationManager.onOrientationChange?.invoke(mask)
 
         onDispose {
             OrientationManager.currentMask = previousMask
-            forceOrientationUpdate(previousMask)
+            OrientationManager.onOrientationChange?.invoke(previousMask)
         }
     }
 }
@@ -254,32 +255,6 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) {
 suspend fun loadSubtitleContent(url: String): String = withContext(Dispatchers.Default) {
     val nsUrl = NSURL.URLWithString(url) ?: return@withContext BLANK
     NSString.stringWithContentsOfURL(nsUrl, NSUTF8StringEncoding, null).orEmpty()
-}
-
-private fun forceOrientationUpdate(mask: UIInterfaceOrientationMask) {
-    val window = UIApplication.sharedApplication.connectedScenes.firstNotNullOfOrNull { scene ->
-        (scene as? UIWindowScene)?.takeIf { it.activationState == UISceneActivationStateForegroundActive }
-    }
-
-    if (UIDevice.currentDevice.systemVersion.substringBefore('.').toInt() >= 16) {
-        if (window != null) {
-            val preferences = UIWindowSceneGeometryPreferencesIOS(mask)
-            window.requestGeometryUpdateWithPreferences(
-                geometryPreferences = preferences,
-                errorHandler = { }
-            )
-        }
-    } else {
-        val orientation = when (mask) {
-            UIInterfaceOrientationMaskPortrait -> UIInterfaceOrientationPortrait
-            UIInterfaceOrientationMaskLandscape -> UIInterfaceOrientationLandscapeRight
-            else -> UIInterfaceOrientationUnknown
-        }
-
-        UIDevice.currentDevice.setValue(orientation, "orientation")
-    }
-
-    UIViewController.attemptRotationToDeviceOrientation()
 }
 
 object SystemBarsManager {
