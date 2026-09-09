@@ -38,6 +38,7 @@
             android:configChanges="locale|layoutDirection|screenSize|smallestScreenSize|screenLayout|orientation|keyboardHidden|navigation"
             android:exported="true"
             android:launchMode="singleTask"
+            android:supportsPictureInPicture="true"
             android:windowSoftInputMode="adjustResize">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -65,10 +66,14 @@
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
+
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
 
-                <data android:scheme="ru.libapp.oauth" android:host="type" android:path="/callback" />
+                <data
+                    android:host="type"
+                    android:path="/callback"
+                    android:scheme="ru.libapp.oauth" />
             </intent-filter>
 
             <intent-filter>
