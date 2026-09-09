@@ -60,7 +60,7 @@
       buildConfiguration = "Debug">
    </AnalyzeAction>
    <ArchiveAction
-      buildConfiguration = "Release"
+      buildConfiguration = "DarkShiki Release"
       revealArchiveInOrganizer = "YES">
    </ArchiveAction>
 </Scheme>
