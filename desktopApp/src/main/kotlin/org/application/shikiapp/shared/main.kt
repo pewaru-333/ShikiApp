@@ -11,8 +11,6 @@ import androidx.compose.ui.window.Tray
 import androidx.compose.ui.window.WindowPlacement
 import androidx.compose.ui.window.application
 import androidx.compose.ui.window.v2.Window
-import androidx.compose.ui.window.v2.WindowBoundsProvider
-import androidx.compose.ui.window.v2.WindowPositionProvider
 import androidx.compose.ui.window.v2.rememberWindowState
 import coil3.compose.setSingletonImageLoaderFactory
 import okio.FileSystem
@@ -44,12 +42,7 @@ fun main(args: Array<String>) {
         AppContext.init(AppModuleInitializer(DesktopContext(), appConfig))
 
         val appIcon = rememberVectorPainter(desktopConfig.appIcon)
-        val windowState = rememberWindowState(
-            initialPlacement = WindowPlacement.Maximized,
-            initialBoundsProvider = WindowBoundsProvider(
-                positionProvider = WindowPositionProvider.CenteredOnScreen
-            )
-        )
+        val windowState = rememberWindowState()
 
         setSingletonImageLoaderFactory { context ->
             sharedImageLoader(
@@ -65,10 +58,16 @@ fun main(args: Array<String>) {
             title = stringResource(desktopConfig.appName),
             icon = appIcon,
             content = {
-                val windowManager = rememberWindowManager(windowState, window)
+                val windowManager = rememberWindowManager(windowState)
 
                 CompositionLocalProvider(LocalWindowManager provides windowManager) {
                     App()
+                }
+
+                LaunchedEffect(windowState.isInitialized) {
+                    if (windowState.isInitialized) {
+                        windowState.requestPlacement(WindowPlacement.Maximized)
+                    }
                 }
 
                 LaunchedEffect(Unit) {
