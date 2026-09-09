@@ -31,8 +31,8 @@ import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
-import org.application.shikiapp.shared.utils.data.DataManager
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
+import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.extensions.isAllDomainsVerified
 import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
@@ -95,13 +95,13 @@ actual object AppLocale {
 }
 
 @Composable
-actual fun rememberDataManager(): Pair<DataManager, PermissionState> {
+actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     val context = LocalContext.current
     val permissionState = rememberPermissionState(Manifest.permission.WRITE_EXTERNAL_STORAGE)
 
     val dataManager = remember { DataManagerAndroid(context) }
 
-    return Pair(DataManager(dataManager), permissionState)
+    return Pair(dataManager, permissionState)
 }
 
 @RequiresApi(Build.VERSION_CODES.S)

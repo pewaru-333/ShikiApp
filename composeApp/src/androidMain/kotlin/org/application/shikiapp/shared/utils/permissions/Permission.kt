@@ -2,24 +2,22 @@ package org.application.shikiapp.shared.utils.permissions
 
 import android.Manifest
 import android.app.Activity
-import android.content.Context
-import android.content.ContextWrapper
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.activity.compose.LocalActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 
 @Stable
-class Permission(private val context: Context, private val permission: String) : PermissionState {
+class Permission(private val activity: Activity?, private val permission: String) : PermissionState {
     override var showRationale by mutableStateOf(false)
     override var isGranted by mutableStateOf(hasPermission())
 
@@ -33,13 +31,12 @@ class Permission(private val context: Context, private val permission: String) :
     }
 
     override fun openSettings() {
-        val action = Settings.ACTION_APPLICATION_DETAILS_SETTINGS
+        if (activity == null) return
 
-
-        context.startActivity(
-            Intent(action).apply {
+        activity.startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
                 flags = Intent.FLAG_ACTIVITY_NEW_TASK
-                data = Uri.fromParts("package", context.packageName, null)
+                data = Uri.fromParts("package", activity.packageName, null)
             }
         )
     }
@@ -47,38 +44,25 @@ class Permission(private val context: Context, private val permission: String) :
     internal var launcher: ActivityResultLauncher<String>? = null
 
     private fun hasPermission(): Boolean {
+        if (activity == null) return false
+
         val granted = when (permission) {
             Manifest.permission.WRITE_EXTERNAL_STORAGE -> Build.VERSION.SDK_INT > Build.VERSION_CODES.TIRAMISU ||
-                    ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+                    ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
 
-            else -> ContextCompat.checkSelfPermission(context, permission) == PackageManager.PERMISSION_GRANTED
+            else -> ContextCompat.checkSelfPermission(activity, permission) == PackageManager.PERMISSION_GRANTED
         }
 
-        val activity = context.findActivity()
-
-        showRationale = !granted &&
-                activity != null &&
-                ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
+        showRationale = !granted && ActivityCompat.shouldShowRequestPermissionRationale(activity, permission)
 
         return granted
-    }
-
-    private fun Context.findActivity(): Activity? {
-        var currentContext = this
-
-        while (currentContext is ContextWrapper) {
-            if (currentContext is Activity) return currentContext
-            currentContext = currentContext.baseContext
-        }
-
-        return null
     }
 }
 
 @Composable
 actual fun rememberPermissionState(permission: String): PermissionState {
-    val context = LocalContext.current.applicationContext
-    val permissionState = remember(permission) { Permission(context, permission) }
+    val activity = LocalActivity.current
+    val permissionState = remember(permission) { Permission(activity, permission) }
     val launcher = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {
         permissionState.refresh()
     }

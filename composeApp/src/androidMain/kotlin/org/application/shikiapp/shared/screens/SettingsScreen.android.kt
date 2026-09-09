@@ -33,12 +33,14 @@ import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.*
 
-actual fun LazyListScope.deeplinkSetting(onClick: () -> Unit) =
+actual fun LazyListScope.deeplinkSetting(isEnabled: Boolean, onClick: () -> Unit) =
     if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) Unit
     else preference(
         key = PREF_DEEP_LINK_SETTINGS,
+        onClick = onClick,
+        enabled = isEnabled,
         title = { Text(stringResource(Res.string.preference_deep_link)) },
-        onClick = onClick
+        summary = { if (!isEnabled) Text(stringResource(Res.string.preference_deep_link_explain_disabled)) }
     )
 
 @RequiresApi(Build.VERSION_CODES.S)
