@@ -1,9 +1,5 @@
 package org.application.shikiapp.shared.utils.data
 
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
-import kotlinx.coroutines.withContext
 import java.io.File
 import java.net.URI
 import java.security.SecureRandom
@@ -19,37 +15,37 @@ object CertificatesHelper {
         }
     }
 
-    private val mutex = Mutex()
-
     private val bundleFile by lazy { File(directory, "ca-certificates.crt") }
     private val hostsFile by lazy { File(directory, "cached_hosts.txt") }
 
-    private val hosts: MutableSet<String> = Collections.synchronizedSet(
-        mutableSetOf<String>().apply {
-            if (hostsFile.exists()) {
-                hostsFile.forEachLine { line ->
-                    val host = line.trim().lowercase()
-                    if (host.isNotEmpty()) {
-                        add(host)
+    private val hosts: MutableSet<String> by lazy {
+        Collections.synchronizedSet(
+            mutableSetOf<String>().apply {
+                if (hostsFile.exists()) {
+                    hostsFile.forEachLine { line ->
+                        val host = line.trim().lowercase()
+                        if (host.isNotEmpty()) {
+                            add(host)
+                        }
                     }
                 }
             }
-        }
-    )
+        )
+    }
 
-    suspend fun installCertificates(urlString: String) = withContext(Dispatchers.IO) {
-        if (!urlString.startsWith("https://", ignoreCase = true)) return@withContext
+    fun install(urlString: String) {
+        if (!urlString.startsWith("https://", ignoreCase = true)) return
 
         val host = try {
-            URI.create(urlString).toURL().host?.lowercase() ?: return@withContext
+            URI.create(urlString).toURL().host?.lowercase() ?: return
         } catch (_: Exception) {
-            return@withContext
+            return
         }
 
-        if (hosts.contains(host)) return@withContext
+        if (hosts.contains(host)) return
 
-        mutex.withLock {
-            if (hosts.contains(host)) return@withContext // double check (но можно и без этого)
+        synchronized(this) {
+            if (hosts.contains(host)) return // double check (но можно и без этого)
 
             try {
                 val url = URI.create(urlString).toURL()
