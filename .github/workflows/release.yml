@@ -192,7 +192,7 @@ jobs:
           path: desktopApp/build/compose/binaries/main-release/app/${{ matrix.out_name }}-linux-portable.tar.gz
 
   build-ios:
-    runs-on: macos-15
+    runs-on: macos-26
     needs: get-version
 
     steps:
@@ -364,7 +364,7 @@ jobs:
           echo "RuStore статус: ${{ steps.rustore_publish.outputs.status }}"
 
   deploy-ios:
-    runs-on: macos-15
+    runs-on: macos-26
     needs: [ get-version, create-release ]
     steps:
       - name: 'Checkout repository'
