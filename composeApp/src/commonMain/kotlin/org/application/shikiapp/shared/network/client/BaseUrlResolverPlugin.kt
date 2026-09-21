@@ -1,6 +1,5 @@
 package org.application.shikiapp.shared.network.client
 
-import io.ktor.client.HttpClient
 import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.plugins.ResponseException
 import io.ktor.client.plugins.api.Send
@@ -11,18 +10,16 @@ import io.ktor.http.Url
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import org.application.shikiapp.shared.network.client.Network.configureProxy
+import org.application.shikiapp.shared.network.client.Network.getProxyConfig
 import org.application.shikiapp.shared.utils.BLANK
 
 class BaseUrlResolverConfig {
-    var isUserMode: suspend () -> Boolean = { false }
     var baseUrlProvider: suspend () -> String = { BLANK }
     var mirrorsProvider: suspend () -> List<String> = { emptyList() }
     var onNewUrl: ((String) -> Unit)? = null
 }
 
 val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUrlResolverConfig) {
-    val isUserModeProvider = pluginConfig.isUserMode
     val baseUrlProvider = pluginConfig.baseUrlProvider
     val mirrorsProvider = pluginConfig.mirrorsProvider
     val onNewUrl = pluginConfig.onNewUrl
@@ -36,11 +33,7 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
             addAll(mirrors)
         }
 
-        val pingClient = HttpClient {
-            engine {
-                proxy = configureProxy()
-            }
-
+        val pingClient = createHttpClient(getProxyConfig()) {
             expectSuccess = false
             followRedirects = false
 
@@ -82,11 +75,7 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
         if (workingUrl == null) {
             mutex.withLock {
                 if (workingUrl == null) {
-                    val isModified = isUserModeProvider()
-                    val baseUrl = baseUrlProvider()
-
-                    workingUrl = if (isModified) baseUrl
-                    else resolveUrl(baseUrl, mirrorsProvider())
+                    workingUrl = resolveUrl(baseUrlProvider(), mirrorsProvider())
 
                     workingUrl?.let { onNewUrl?.invoke(it) }
                 }
