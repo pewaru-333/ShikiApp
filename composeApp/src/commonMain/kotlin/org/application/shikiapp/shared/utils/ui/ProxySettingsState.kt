@@ -1,10 +1,10 @@
 package org.application.shikiapp.shared.utils.ui
 
 import androidx.compose.runtime.*
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import io.ktor.client.engine.ProxyType
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 
 private val URL_REGEX = Regex("^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/.*)?$", RegexOption.IGNORE_CASE)
 private val PROXY_HOST_REGEX = Regex("""^(https?|socks5)://(localhost|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$""", RegexOption.IGNORE_CASE)
@@ -88,14 +88,7 @@ class ProxySettingsState(
         isUserMode = false
         isProxyEnabled = false
 
-        Preferences.setUseUserUrlList(false)
-        Preferences.setAppUrlList()
-
-        Preferences.setUseProxy(false)
-        Preferences.setProxyHost(BLANK)
-        Preferences.setProxyPort(BLANK)
-        Preferences.setProxyUsername(BLANK)
-        Preferences.setProxyPassword(BLANK)
+        Preferences.clearUserNetworkSettings()
 
         onCleared()
     }
@@ -107,22 +100,8 @@ class ProxySettingsState(
         anyError = hasLinkError || hasProxyError
         if (anyError) return
 
-        if (isUserMode) {
-            Preferences.setUseUserUrlList(true)
-            Preferences.setAppUrlList(urlList.joinToString(","))
-        } else {
-            Preferences.setUseUserUrlList(false)
-        }
-
-        if (isProxyEnabled) {
-            Preferences.setUseProxy(true)
-            Preferences.setProxyHost(proxyHost)
-            Preferences.setProxyPort(proxyPort)
-            Preferences.setProxyUsername(proxyUser)
-            Preferences.setProxyPassword(proxyPass)
-        } else {
-            Preferences.setUseProxy(false)
-        }
+        Preferences.setLinksSettings(isUserMode, urlList)
+        Preferences.setProxySettings(isProxyEnabled, proxyHost, proxyPort, proxyUser, proxyPass)
 
         onSaved()
     }
@@ -135,14 +114,14 @@ class ProxySettingsState(
 
 @Composable
 fun rememberProxySettingsState(): ProxySettingsState {
-    val urls by Preferences.appUrlListFlow.collectAsStateWithLifecycle()
-    val userMode by Preferences.useUserUrlListFlow.collectAsStateWithLifecycle()
+    val urls by rememberPreference { appUrlsString }
+    val userMode by rememberPreference { useUserUrlList }
 
-    val isProxy by Preferences.useProxyFlow.collectAsStateWithLifecycle()
-    val proxyHost by Preferences.proxyHostFlow.collectAsStateWithLifecycle()
-    val proxyPort by Preferences.proxyPortFlow.collectAsStateWithLifecycle()
-    val proxyUser by Preferences.proxyUsernameFlow.collectAsStateWithLifecycle()
-    val proxyPass by Preferences.proxyPasswordFlow.collectAsStateWithLifecycle()
+    val isProxy by rememberPreference { useProxy }
+    val proxyHost by rememberPreference { proxyHost }
+    val proxyPort by rememberPreference { proxyPort }
+    val proxyUser by rememberPreference { proxyUsername }
+    val proxyPass by rememberPreference { proxyPassword }
 
     return remember(urls, userMode, isProxy, proxyHost, proxyPort, proxyUser, proxyPass) {
         ProxySettingsState(
