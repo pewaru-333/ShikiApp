@@ -5,17 +5,16 @@ import androidx.compose.material3.MaterialExpressiveTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.graphics.Color
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.utils.EdgeToEdge
+import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 import org.application.shikiapp.shared.utils.enums.Theme
 import org.application.shikiapp.shared.utils.platformColorScheme
 
 @Composable
 fun Theme(content: @Composable () -> Unit) {
-    val theme by Preferences.theme.collectAsStateWithLifecycle()
-    val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle()
-    val colorPalette by Preferences.colorPaletteFlow.collectAsStateWithLifecycle()
+    val theme by rememberPreference { theme }
+    val dynamicColors by rememberPreference { dynamicColors }
+    val colorPalette by rememberPreference { colorPalette }
 
     val darkTheme = when (theme) {
         Theme.LIGHT -> false
