@@ -1,20 +1,9 @@
 package org.application.shikiapp.shared.utils.data.preferences
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import me.zhanghai.compose.preference.MapPreferences
-import org.application.shikiapp.shared.di.AppContext
-import org.application.shikiapp.shared.di.AppModuleInitializer
 import org.application.shikiapp.shared.utils.BLANK
 import platform.Foundation.NSBundle
 import platform.Foundation.NSUserDefaults
-import me.zhanghai.compose.preference.Preferences as Prefs
 
 class PreferencesIos : IPreferences {
     private val bundleId = NSBundle.mainBundle.bundleIdentifier.orEmpty()
@@ -79,48 +68,4 @@ class PreferencesIos : IPreferences {
         .filter { it == key }
         .onStart { emit(key) }
         .map { }
-
-    fun createFlow(scope: CoroutineScope): MutableStateFlow<Prefs> {
-        val initialState = MapPreferences(getCurrentMap())
-        val stateFlow = MutableStateFlow<Prefs>(initialState)
-
-        scope.launch(Dispatchers.IO) {
-            _updates.collect {
-                stateFlow.value = MapPreferences(getCurrentMap())
-            }
-        }
-
-        return stateFlow
-    }
-
-    @Suppress("UNCHECKED_CAST")
-    private fun getCurrentMap(): Map<String, Any> {
-        val dict = prefs.dictionaryRepresentation()
-        val result = mutableMapOf<String, Any>()
-
-        for ((key, value) in dict) {
-            if (key is String && value != null) {
-                result[key] = value.toString().toTypedValue()
-            }
-        }
-        return result
-    }
-
-    private fun String.toTypedValue() = when {
-        equals("true", true) -> true
-        equals("false", true) -> false
-        toIntOrNull() != null -> toInt()
-        toLongOrNull() != null -> toLong()
-        else -> this
-    }
-}
-
-@Composable
-actual fun rememberAppPreferences(): MutableStateFlow<Prefs> {
-    val scope = rememberCoroutineScope()
-    val initializer = AppContext.app as AppModuleInitializer
-
-    return remember(initializer) {
-        initializer.preferencesIos.createFlow(scope)
-    }
 }

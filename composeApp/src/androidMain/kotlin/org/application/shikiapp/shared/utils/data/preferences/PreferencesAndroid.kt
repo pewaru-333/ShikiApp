@@ -1,17 +1,10 @@
 package org.application.shikiapp.shared.utils.data.preferences
 
-import android.content.Context
 import android.content.SharedPreferences
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.callbackFlow
-import me.zhanghai.compose.preference.Preferences
-import me.zhanghai.compose.preference.createPreferenceFlow
 
 class PreferencesAndroid(private val prefs: SharedPreferences) : IPreferences {
     override fun getBoolean(key: String, defaultValue: Boolean) = prefs.getBoolean(key, defaultValue)
@@ -40,15 +33,5 @@ class PreferencesAndroid(private val prefs: SharedPreferences) : IPreferences {
         trySend(Unit)
 
         awaitClose { prefs.unregisterOnSharedPreferenceChangeListener(listener) }
-    }
-}
-
-@Composable
-actual fun rememberAppPreferences(): MutableStateFlow<Preferences> {
-    val context = LocalContext.current
-    return remember(context) {
-        val prefs = context.getSharedPreferences("preferences_${context.packageName}", Context.MODE_PRIVATE)
-
-        createPreferenceFlow(prefs)
     }
 }

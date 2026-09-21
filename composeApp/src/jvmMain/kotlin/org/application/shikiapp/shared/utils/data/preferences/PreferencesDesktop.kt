@@ -1,21 +1,11 @@
 package org.application.shikiapp.shared.utils.data.preferences
 
-import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
-import me.zhanghai.compose.preference.MapPreferences
 import org.application.shikiapp.shared.AppConfig
-import org.application.shikiapp.shared.di.AppContext
-import org.application.shikiapp.shared.di.AppModuleInitializer
 import java.io.File
 import java.io.FileInputStream
 import java.io.FileOutputStream
 import java.util.Properties
-import me.zhanghai.compose.preference.Preferences as Prefs
 
 class PreferencesDesktop(appConfig: AppConfig) : IPreferences {
     private val userAgent = appConfig.userAgent
@@ -104,41 +94,4 @@ class PreferencesDesktop(appConfig: AppConfig) : IPreferences {
         .filter { it == key }
         .onStart { emit(key) }
         .map { }
-
-    fun createFlow(scope: CoroutineScope): MutableStateFlow<Prefs> {
-        val initialState = MapPreferences(getCurrentMap())
-        val stateFlow = MutableStateFlow<Prefs>(initialState)
-
-        scope.launch(Dispatchers.IO) {
-            _updates.collect {
-                stateFlow.value = MapPreferences(getCurrentMap())
-            }
-        }
-
-        return stateFlow
-    }
-
-    private fun getCurrentMap() = properties.entries.associate {
-        it.key.toString() to it.value.toString().toTypedValue()
-    }
-
-    private fun String.toTypedValue(): Any {
-        return when {
-            equals("true", true) -> true
-            equals("false", true) -> false
-            toIntOrNull() != null -> toInt()
-            toLongOrNull() != null -> toLong()
-            else -> this
-        }
-    }
-}
-
-@Composable
-actual fun rememberAppPreferences(): MutableStateFlow<Prefs> {
-    val scope = rememberCoroutineScope()
-    val initializer = AppContext.app as AppModuleInitializer
-
-    return remember(initializer) {
-        initializer.preferencesDesktop.createFlow(scope)
-    }
 }
