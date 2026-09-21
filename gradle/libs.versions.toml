@@ -1,16 +1,16 @@
 [versions]
 # Android
 activity = "1.13.0"
-compose-bom = "2026.08.00"
+compose-bom = "2026.09.00"
 core-ktx = "1.19.0"
-media3 = "1.11.0"
+media3 = "1.11.1"
 
 # Compose Multiplatform / JetBrains
-compose-adaptive = "1.3.0-beta02"
+compose-adaptive = "1.3.0-rc01"
 compose-lifecycle = "2.11.0"
 compose-material3 = "1.12.0-alpha03"
 compose-multiplatform = "1.12.0"
-compose-navigation = "2.10.0-alpha02"
+compose-navigation = "2.10.0-beta01"
 compose-navigation-event = "1.1.0"
 compose-paging = "3.5.1"
 
@@ -22,7 +22,7 @@ kotlinx-serialization-json = "1.11.0"
 
 # Network
 apollo-api = "5.1.0"
-ktor = "3.5.2"
+ktor = "3.6.0"
 
 # Video (desktop)
 vlcj = "5.0.0-M4"
@@ -32,13 +32,12 @@ libass = "0.5.1"
 
 # Utils
 coil = "3.6.2"
-compose-preferences = "2.2.0"
 icu = "78.3"
 ksoup = "0.2.6"
 zoomable = "2.13.0"
 
 # Build
-gradle = "9.4.0"
+gradle = "9.4.1"
 
 [libraries]
 # AndroidX
@@ -80,9 +79,8 @@ kotlinx-serialization-json = { group = "org.jetbrains.kotlinx", name = "kotlinx-
 apollo-api = { group = "com.apollographql.apollo", name = "apollo-runtime", version.ref = "apollo-api" }
 ktor-client-auth = { group = "io.ktor", name = "ktor-client-auth", version.ref = "ktor" }
 ktor-client-content-negotiation = { group = "io.ktor", name = "ktor-client-content-negotiation", version.ref = "ktor" }
+ktor-client-engines-defaults = { group = "io.ktor", name = "ktor-client-engine-defaults", version.ref = "ktor" }
 ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref = "ktor" }
-ktor-client-okhttp = { group = "io.ktor", name = "ktor-client-okhttp", version.ref = "ktor" }
-ktor-client-darwin = { group = "io.ktor", name = "ktor-client-darwin", version.ref = "ktor" }
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 # Coil
@@ -99,7 +97,6 @@ libass = { group = "io.github.peerless2012", name = "ass-media", version.ref = "
 # Utils
 icu4j = { group = "com.ibm.icu", name = "icu4j", version.ref = "icu" }
 ksoup = { group = "com.fleeksoft.ksoup", name = "ksoup", version.ref = "ksoup" }
-material-preferences = { group = "me.zhanghai.compose.preference", name = "preference", version.ref = "compose-preferences" }
 zoomable = { group = "net.engawapg.lib", name = "zoomable", version.ref = "zoomable" }
 
 [bundles]
