@@ -38,7 +38,7 @@ fun FullMessage.toDialogMessage() = Dialog(
     lastMessages = HtmlParser.parseComment(htmlBody.orEmpty()),
     lastMessage = ResourceText.StaticString(BLANK),
     lastDate = Formatter.convertDate(createdAt),
-    accountUser = from.id == Preferences.userId
+    accountUser = from.id == Preferences.userId.value
 )
 
 fun FullMessage.toNewsMessage(): Message {

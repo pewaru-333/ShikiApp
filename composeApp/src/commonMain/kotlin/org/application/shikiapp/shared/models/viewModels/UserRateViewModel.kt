@@ -4,9 +4,10 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.call.*
-import io.ktor.client.plugins.*
-import io.ktor.http.*
+import io.ktor.client.call.body
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.isSuccess
 import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
@@ -39,11 +40,11 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         )
     }.getOrNull()
 
-    private val _type = MutableStateFlow(args?.type ?: Preferences.userRatesStartType)
+    private val _type = MutableStateFlow(args?.type ?: Preferences.userRatesStartType.value)
     val type = _type.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), _type.value)
 
     val editable = args?.editable ?: false
-    val userId = if (editable) Preferences.userId else args?.id?.toLongOrNull()
+    val userId = if (editable) Preferences.userId.value else args?.id?.toLongOrNull()
 
     private val _response = MutableStateFlow<RatesResponse>(RatesResponse.Loading)
     val response = _response
@@ -150,17 +151,24 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     }
 
-    fun onSortChanged(orderType: OrderRates) = _ratesState.update {
-        if (orderType == it.order) {
-            it.copy(
-                direction = if (it.direction == OrderDirection.ASCENDING) OrderDirection.DESCENDING
-                else OrderDirection.ASCENDING
-            )
-        } else {
-            it.copy(
-                order = orderType,
-                direction = OrderDirection.ASCENDING
-            )
+    fun onSortChanged(orderType: OrderRates) {
+        _ratesState.update {
+            if (orderType == it.order) {
+                it.copy(
+                    direction = if (it.direction == OrderDirection.ASCENDING) OrderDirection.DESCENDING
+                    else OrderDirection.ASCENDING
+                )
+            } else {
+                it.copy(
+                    order = orderType,
+                    direction = OrderDirection.ASCENDING
+                )
+            }
+        }
+
+        if (Preferences.rememberRatesOrder.value) {
+            Preferences.lastListOrder.value = _ratesState.value.order
+            Preferences.lastListOrderDirection.value = _ratesState.value.direction
         }
     }
 
@@ -212,7 +220,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 with(_newRate.value) {
                     Network.rates.createRate(
                         NewRate(
-                            userId = Preferences.userId,
+                            userId = Preferences.userId.value,
                             targetId = id.toLong(),
                             targetType = targetType.name.lowercase().replaceFirstChar(Char::uppercase),
                             status = status.toString().lowercase(),
@@ -247,7 +255,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     Network.rates.updateRate(
                         id = rateId.toLong(),
                         newRate = NewRate(
-                            userId = Preferences.userId,
+                            userId = Preferences.userId.value,
                             status = status.toString().lowercase(),
                             score = score?.score.toString(),
                             chapters = chapters.toDefaultValue(),
@@ -303,7 +311,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     Network.rates.updateRate(
                         id = rateId.toLong(),
                         newRate = NewRate(
-                            userId = Preferences.userId,
+                            userId = Preferences.userId.value,
                             status = status.toString().lowercase(),
                             score = score?.score.toString(),
                             chapters = chapters,

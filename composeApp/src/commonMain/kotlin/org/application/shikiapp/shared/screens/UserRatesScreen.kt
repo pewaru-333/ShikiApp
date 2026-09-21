@@ -61,7 +61,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
 
     val scope = rememberCoroutineScope()
     val pagerState = rememberPagerState(
-        initialPage = Preferences.userRatesStartWatchStatus.ordinal,
+        initialPage = Preferences.userRatesStartWatchStatus.value.ordinal,
         pageCount = WatchStatus.entries::size
     )
 
@@ -79,7 +79,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             .pairwise()
             .collectLatest { (old, new) ->
                 if (new != old) {
-                    pagerState.requestScrollToPage(Preferences.userRatesStartWatchStatus.ordinal)
+                    pagerState.requestScrollToPage(Preferences.userRatesStartWatchStatus.value.ordinal)
                 }
             }
     }
@@ -156,7 +156,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
                                                 text = buildString {
                                                     append(stringResource(type.getWatchStatusTitle(status)))
 
-                                                    if (Preferences.showUserRateListSize) {
+                                                    if (Preferences.showUserRateListSize.value) {
                                                         rates[status]?.let {
                                                             append(" (${it.size})")
                                                         }

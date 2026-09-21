@@ -97,7 +97,7 @@ fun Navigation(navigator: NavHostController) {
 
 @Composable
 private fun AppNavHost(navigator: NavHostController) =
-    NavHost(navigator, Preferences.startPage.route) {
+    NavHost(navigator, Preferences.startPage.value.route) {
         // Bottom menu items //
         composable<Screen.Catalog>(
             typeMap = linkedTypeMap,

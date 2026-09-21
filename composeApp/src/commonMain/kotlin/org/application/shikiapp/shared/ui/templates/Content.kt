@@ -237,7 +237,7 @@ fun ContentList(
             }
 
             ContentViewType.ADAPTIVE_ITEM -> {
-                if (isCompactWindow && Preferences.listView == ListView.COLUMN) {
+                if (isCompactWindow && Preferences.listView.value == ListView.COLUMN) {
                     LazyColumn(state = listState, contentPadding = contentPadding) {
                         items(source.itemCount, source.itemKey) { index ->
                             source.itemProvider(index)?.let { item ->

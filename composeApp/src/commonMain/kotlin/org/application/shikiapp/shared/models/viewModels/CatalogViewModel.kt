@@ -235,8 +235,8 @@ class CatalogViewModel(val saved: SavedStateHandle) : ViewModel() {
                     it.copy(order = event.order)
                 }
 
-                if (Preferences.rememberCatalogOrder) {
-                    Preferences.setLastCatalogOrder(event.order)
+                if (Preferences.rememberCatalogOrder.value) {
+                    Preferences.lastCatalogOrder.value = event.order
                 }
             }
 

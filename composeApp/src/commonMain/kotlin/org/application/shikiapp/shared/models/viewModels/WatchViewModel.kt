@@ -401,7 +401,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     private fun setEpisodeWatched() {
-        if (Preferences.token != null && Preferences.episodeAutoAdd) {
+        if (Preferences.token != null && Preferences.episodeAutoAdd.value) {
             viewModelScope.launch {
                 try {
                     val animeRate = Network.rates.getAnimeRate(contentId).firstOrNull()
@@ -409,7 +409,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                     if (animeRate == null) {
                         val newRate = Network.rates.createRate(
                             newRate = NewRate(
-                                userId = Preferences.userId,
+                                userId = Preferences.userId.value,
                                 targetId = contentId.toLong(),
                                 targetType = "Anime"
                             )

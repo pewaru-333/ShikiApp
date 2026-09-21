@@ -69,7 +69,7 @@ suspend fun User.mapper(
         nickname = nickname,
         sex = sex,
         showComments = showComments,
-        showStats = Preferences.userId != id && (animeStatsSum + mangaStatsSum > 0),
+        showStats = Preferences.userId.value != id && (animeStatsSum + mangaStatsSum > 0),
         stats = Pair(
             first = Statistics(animeStatsSum, animeScores),
             second = Statistics(mangaStatsSum, mangaScores)

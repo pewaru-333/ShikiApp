@@ -9,7 +9,7 @@ import shikiapp.composeapp.generated.resources.blank
 
 data class NewRateState(
     val id: String = BLANK,
-    val userId: Long = Preferences.userId,
+    val userId: Long = Preferences.userId.value,
     val targetId: Long = 0L,
     val targetType: String = BLANK,
     val status: String? = null,

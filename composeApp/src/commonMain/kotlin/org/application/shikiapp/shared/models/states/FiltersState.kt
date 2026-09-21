@@ -6,7 +6,7 @@ import org.application.shikiapp.shared.utils.enums.Order
 import org.application.shikiapp.shared.utils.enums.PeopleFilterItem
 
 data class FiltersState(
-    val order: Order = Preferences.lastCatalogOrder,
+    val order: Order = Preferences.lastCatalogOrder.value,
     val kind: Set<String> = emptySet(),
     val status: Set<String> = emptySet(),
     val seasonYearStart: String = BLANK,

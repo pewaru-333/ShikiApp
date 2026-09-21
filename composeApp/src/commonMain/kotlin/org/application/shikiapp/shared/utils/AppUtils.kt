@@ -63,7 +63,7 @@ fun sharedImageLoader(
     .diskCachePolicy(CachePolicy.ENABLED)
     .diskCache {
         DiskCache.Builder()
-            .maxSizeBytes(Preferences.cache.toLong() * 1024 * 1024L)
+            .maxSizeBytes(Preferences.cache.value.toLong() * 1024 * 1024L)
             .directory(cacheDir)
             .build()
     }

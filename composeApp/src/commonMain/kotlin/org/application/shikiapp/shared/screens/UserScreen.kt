@@ -152,7 +152,7 @@ fun UserView(
                     }
                 },
                 navigationIcon = {
-                    if (Preferences.userId == user.id) {
+                    if (Preferences.userId.value == user.id) {
                         IconButton(onBack) { VectorIcon(Icons.ExitApp) }
                     } else {
                         NavigationIcon(onBack)
@@ -291,7 +291,7 @@ fun UserView(
 
 @Composable
 private fun TopBarActions(user: User, unread: Int, onEvent: (ContentDetailEvent) -> Unit) = when {
-    Preferences.userId == user.id -> {
+    Preferences.userId.value == user.id -> {
         IconButton(
             onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.DialogAll)) },
             content = {
@@ -330,7 +330,7 @@ private fun TopBarActions(user: User, unread: Int, onEvent: (ContentDetailEvent)
     else -> {
         IconComment { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.Comments)) }
 
-        if (Preferences.token != null && Preferences.userId != user.id) {
+        if (Preferences.token != null && Preferences.userId.value != user.id) {
             IconButton(
                 onClick = { onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.ToggleFriend)) },
                 content = {

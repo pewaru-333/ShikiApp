@@ -3,9 +3,9 @@ package org.application.shikiapp.shared.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
-import io.ktor.client.plugins.auth.*
-import io.ktor.http.*
-import io.ktor.util.network.*
+import io.ktor.client.plugins.auth.clearAuthTokens
+import io.ktor.http.HttpStatusCode
+import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -23,7 +23,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
     val args = saved.toRoute<Login>()
 
     override val userId: Long
-        get() = Preferences.userId
+        get() = Preferences.userId.value
 
     override fun loadData() {
         when {
@@ -75,7 +75,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                         Preferences.saveToken(token)
 
                         val whoAmI = Network.profile.whoAmI()
-                        Preferences.setUserId(whoAmI.id)
+                        Preferences.userId.value = whoAmI.id
 
                         emit(
                             LoginResponse.Logged(
@@ -90,7 +90,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
                         )
                     } catch (_: Exception) {
                         Preferences.saveToken(Token.empty)
-                        Preferences.setUserId(0L)
+                        Preferences.userId.value = 0L
 
                         emit(LoginResponse.NotLogged)
                     }
@@ -111,7 +111,7 @@ class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
 
                 if (request.status == HttpStatusCode.OK) {
                     Preferences.saveToken(Token.empty)
-                    Preferences.setUserId(0L)
+                    Preferences.userId.value = 0L
                     Network.client.clearAuthTokens()
 
                     emit(LoginResponse.NotLogged)

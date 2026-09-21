@@ -6,8 +6,8 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import androidx.paging.*
-import io.ktor.client.plugins.*
-import io.ktor.http.*
+import io.ktor.client.plugins.ClientRequestException
+import io.ktor.http.HttpStatusCode
 import kotlinx.coroutines.Deferred
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.async
@@ -185,7 +185,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             config = PagingConfig(pageSize = 15, enablePlaceholders = false),
             pagingSourceFactory = {
                 CommonPaging(Message::id) { page, params ->
-                    Network.profile.getMessages(Preferences.userId, MessageType.NEWS, page, params.loadSize)
+                    Network.profile.getMessages(Preferences.userId.value, MessageType.NEWS, page, params.loadSize)
                         .map(FullMessage::toNewsMessage)
                 }.also { _newsPagingSource = it }
             }
@@ -209,7 +209,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             config = PagingConfig(pageSize = 15, enablePlaceholders = false),
             pagingSourceFactory = {
                 CommonPaging(Message::id) { page, params ->
-                    Network.profile.getMessages(Preferences.userId, MessageType.NOTIFICATIONS, page, params.loadSize)
+                    Network.profile.getMessages(Preferences.userId.value, MessageType.NOTIFICATIONS, page, params.loadSize)
                         .map(FullMessage::toNewsMessage)
                 }.also { _notificationsPagingSource = it }
             }
@@ -283,14 +283,14 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                     message = MessageToSendShort(
                         body = message,
                         kind = "Private",
-                        fromId = Preferences.userId,
+                        fromId = Preferences.userId.value,
                         toId = state.value.userId
                     )
                 )
 
                 val tempMessage = Dialog(
                     id = -(_newMessages.value.size - 1).toLong(),
-                    userId = Preferences.userId,
+                    userId = Preferences.userId.value,
                     userNickname = BLANK,
                     userAvatar = BLANK,
                     lastMessages = HtmlParser.parseComment(messageToSend.message.body),
@@ -359,7 +359,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         fun getUnreadMessages() {
             viewModelScope.launch {
                 try {
-                    val unread = Network.profile.getUnreadMessages(Preferences.userId)
+                    val unread = Network.profile.getUnreadMessages(Preferences.userId.value)
 
                     with(unread) {
                         updateState {
