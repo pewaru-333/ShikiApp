@@ -1,8 +1,6 @@
 package org.application.shikiapp.shared.utils
 
 import androidx.compose.material3.ColorScheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.UriHandler
@@ -211,9 +209,7 @@ actual fun rememberToastState() = remember {
 }
 
 @Composable
-actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? =
-    if (darkTheme) darkColorScheme()
-    else lightColorScheme()
+actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? = null
 
 @Composable
 actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
