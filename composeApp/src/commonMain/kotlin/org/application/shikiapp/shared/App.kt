@@ -3,15 +3,14 @@ package org.application.shikiapp.shared
 import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.platform.UriHandler
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDeepLinkRequest
 import androidx.navigation.NavHostController
 import androidx.navigation.NavUri
 import androidx.navigation.compose.rememberNavController
 import kotlinx.coroutines.launch
-import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.ui.theme.Theme
 import org.application.shikiapp.shared.utils.AppLocale
+import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 import org.application.shikiapp.shared.utils.extensions.toFullUrl
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
@@ -26,7 +25,7 @@ fun App(navigator: NavHostController = rememberNavController()) {
     val barVisibility = rememberNavigationBarVisibility()
     val deepLinkHandler = rememberDeepLinkHandler(navigator::navigate)
 
-    val locale by Preferences.languageFlow.collectAsStateWithLifecycle(Preferences.language)
+    val locale by rememberPreference { language }
 
     DisposableEffect(Unit) {
         ExternalUriHandler.listener = { uri ->
