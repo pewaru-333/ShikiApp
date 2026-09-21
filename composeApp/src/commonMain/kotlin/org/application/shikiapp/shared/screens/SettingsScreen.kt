@@ -18,19 +18,14 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.Role
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import io.ktor.client.engine.ProxyType
-import me.zhanghai.compose.preference.*
 import org.application.shikiapp.shared.di.Preferences
-import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
-import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.*
-import org.application.shikiapp.shared.utils.data.preferences.rememberAppPreferences
+import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 import org.application.shikiapp.shared.utils.enums.*
 import org.application.shikiapp.shared.utils.extensions.getLocaleLocalizedName
 import org.application.shikiapp.shared.utils.ui.rememberProxySettingsState
@@ -40,18 +35,11 @@ import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
-    val startPage by Preferences.startPageFlow.collectAsStateWithLifecycle()
-    val listView by Preferences.listViewFlow.collectAsStateWithLifecycle()
-    val isAutoAdd by Preferences.episodeAutoAddFlow.collectAsStateWithLifecycle()
-    val rememberCatalogOrder by Preferences.rememberCatalogOrderFlow.collectAsStateWithLifecycle()
-    val showUserRatesListSize by Preferences.showUserRateListSizeFlow.collectAsStateWithLifecycle()
-    val userRatesWatchType by Preferences.userRatesStartTypeFlow.collectAsStateWithLifecycle()
-    val userRatesWatchStatus by Preferences.userRatesStartWatchStatusFlow.collectAsStateWithLifecycle()
-    val useUserAppLinks by Preferences.useUserUrlListFlow.collectAsStateWithLifecycle()
-    val cache by Preferences.cacheFlow.collectAsStateWithLifecycle()
-    val theme by Preferences.theme.collectAsStateWithLifecycle()
-    val dynamicColors by Preferences.dynamicColors.collectAsStateWithLifecycle()
-    val palette by Preferences.colorPaletteFlow.collectAsStateWithLifecycle()
+    val locale = AppLocale.current
+    val rememberListOrder by rememberPreference { rememberCatalogOrder }
+    val rememberRatesOrder by rememberPreference { rememberRatesOrder }
+    val dynamicColors by rememberPreference { dynamicColors }
+    val useUserUrlList by rememberPreference { useUserUrlList }
 
     val isCompact = rememberWindowSize().isCompact
 
@@ -59,180 +47,149 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     var showProxySettings by rememberSaveable { mutableStateOf(false) }
 
     AnimatedDialogScreen(isVisible, stringResource(Res.string.text_settings), onBack) { values ->
-        ProvidePreferenceLocals(rememberAppPreferences()) {
-            LazyColumn(Modifier.padding(values)) {
-                preferenceCategory(
-                    key = PREF_GROUP_APP_VIEW,
-                    title = { Text(stringResource(Res.string.preference_category_app_view)) }
-                )
+        LazyColumn(Modifier.padding(values)) {
+            preferenceCategory(
+                key = PREF_GROUP_APP_VIEW,
+                title = { Text(stringResource(Res.string.preference_category_app_view)) }
+            )
 
-                item {
-                    ListPreference(
-                        value = theme,
-                        onValueChange = Preferences::setTheme,
-                        values = Theme.entries,
-                        title = { Text(stringResource(Res.string.preference_theme)) },
-                        summary = { Text(stringResource(theme.title)) },
-                        valueToText = { AnnotatedString(stringResource(it.title)) }
-                    )
-                }
+            listPreference(
+                setting = Preferences.theme,
+                values = Theme.entries,
+                title = { Text(stringResource(Res.string.preference_theme)) },
+                summary = { Text(stringResource(it.title)) },
+                valueToText = { stringResource(it.title) }
+            )
 
-                item {
-                    SwitchPreference(
-                        value = dynamicColors,
-                        onValueChange = Preferences::setDynamicColors,
-                        enabled = isDynamicColorAvailable(),
-                        title = { Text(stringResource(Res.string.preference_dynamic_colors)) },
-                    )
-                }
+            switchPreference(
+                setting = Preferences.dynamicColors,
+                enabled = { isDynamicColorAvailable() },
+                title = { Text(stringResource(Res.string.preference_dynamic_colors)) },
+            )
 
-                item {
-                    ListPreference(
-                        value = palette,
-                        onValueChange = Preferences::setPalette,
-                        enabled = !dynamicColors,
-                        values = Palette.entries,
-                        title = { Text(stringResource(Res.string.text_palette)) },
-                        summary = { Text(stringResource(palette.title)) },
-                        valueToText = { AnnotatedString(stringResource(it.title)) },
-                    )
-                }
+            listPreference(
+                setting = Preferences.colorPalette,
+                values = Palette.entries,
+                enabled = { !dynamicColors },
+                title = { Text(stringResource(Res.string.text_palette)) },
+                summary = { Text(stringResource(it.title)) },
+                valueToText = { stringResource(it.title) },
+            )
 
-                preferenceCategory(
-                    key = PREF_GROUP_APP_LISTS,
-                    title = { Text(stringResource(Res.string.preference_category_lists)) }
-                )
+            preferenceCategory(
+                key = PREF_GROUP_APP_LISTS,
+                title = { Text(stringResource(Res.string.preference_category_lists)) }
+            )
 
-                item {
-                    ListPreference(
-                        value = startPage,
-                        onValueChange = Preferences::setStartPage,
-                        values = Menu.entries,
-                        title = { Text(stringResource(Res.string.preference_start_page)) },
-                        summary = { Text(stringResource(startPage.title)) },
-                        valueToText = { AnnotatedString(stringResource(it.title)) }
-                    )
-                }
+            listPreference(
+                setting = Preferences.startPage,
+                values = Menu.entries,
+                title = { Text(stringResource(Res.string.preference_start_page)) },
+                summary = { Text(stringResource(it.title)) },
+                valueToText = { stringResource(it.title) }
+            )
 
-                if (isCompact) {
-                    item {
-                        ListPreference(
-                            value = listView,
-                            onValueChange = Preferences::setListView,
-                            values = ListView.entries,
-                            title = { Text(stringResource(Res.string.preference_list_view)) },
-                            summary = { Text(stringResource(listView.title)) },
-                            valueToText = { AnnotatedString(stringResource(it.title)) }
-                        )
-                    }
-                }
-
-                item {
-                    ListPreference(
-                        value = userRatesWatchType,
-                        onValueChange = Preferences::setUserRatesStartType,
-                        values = LinkedType.userRatesType,
-                        title = { Text(stringResource(Res.string.preference_user_rates_start_type)) },
-                        summary = { Text(stringResource(userRatesWatchType.title)) },
-                        valueToText = { AnnotatedString(stringResource(it.title)) }
-                    )
-                }
-
-                item {
-                    ListPreference(
-                        value = userRatesWatchStatus,
-                        onValueChange = Preferences::setUserRatesStartWatchStatus,
-                        values = WatchStatus.entries,
-                        title = { Text(stringResource(Res.string.preference_user_rates_start_status)) },
-                        summary = {
-                            Text(
-                                text = buildString {
-                                    append(stringResource(userRatesWatchStatus.titleAnime))
-                                    userRatesWatchStatus.titleManga?.let {
-                                        append(" (${stringResource(it)})")
-                                    }
-                                }
-                            )
-                        },
-                        valueToText = {
-                            AnnotatedString(
-                                text = buildString {
-                                    append(stringResource(it.titleAnime))
-                                    it.titleManga?.let { mangaTitle ->
-                                        append(" (${stringResource(mangaTitle)})")
-                                    }
-                                }
-                            )
-                        }
-                    )
-                }
-
-                item {
-                    SwitchPreference(
-                        value = rememberCatalogOrder,
-                        onValueChange = Preferences::toggleRememberLastCatalogOrder,
-                        title = { Text(stringResource(Res.string.preference_remember_catalog_list_order)) }
-                    )
-                }
-
-                item {
-                    SwitchPreference(
-                        value = showUserRatesListSize,
-                        onValueChange = Preferences::setShowUserRatesListSize,
-                        title = { Text(stringResource(Res.string.preference_user_rates_list_size_show)) }
-                    )
-                }
-
-                item {
-                    SwitchPreference(
-                        value = isAutoAdd,
-                        onValueChange = Preferences::setAutoIncrementEpisode,
-                        enabled = Preferences.token != null,
-                        title = { Text(stringResource(Res.string.preference_episode_auto_add)) },
-                        summary = { Text(stringResource(Res.string.preference_episode_auto_add_summary)) }
-                    )
-                }
-
-                preferenceCategory(
-                    key = PREF_GROUP_APP_SYSTEM,
-                    title = { Text(stringResource(Res.string.preference_category_system)) }
-                )
-
-                item {
-                    val locale = AppLocale.current
-
-                    ListPreference(
-                        value = locale,
-                        onValueChange = Preferences::setLanguage,
-                        values = AppLanguages.list,
-                        title = { Text(stringResource(Res.string.preference_language)) },
-                        summary = { Text(locale.getLocaleLocalizedName()) },
-                        valueToText = { AnnotatedString(it.getLocaleLocalizedName()) }
-                    )
-                }
-
-                item {
-                    ListPreference(
-                        value = cache,
-                        values = CACHE_LIST,
-                        onValueChange = Preferences::setCache,
-                        title = { Text(stringResource(Res.string.preference_cache_size)) },
-                        summary = { Text(stringResource(Res.string.preference_cache_size_mb, cache)) },
-                        valueToText = { AnnotatedString(stringResource(Res.string.preference_cache_size_mb, it)) }
-                    )
-                }
-
-                deeplinkSetting(
-                    isEnabled = !useUserAppLinks,
-                    onClick = { showDeeplinkSetting = true }
-                )
-
-                preference(
-                    key = PREF_NETWORK_CONFIG_SETTINGS,
-                    title = { Text(stringResource(Res.string.preference_network_config)) },
-                    onClick = { showProxySettings = true }
+            if (isCompact) {
+                listPreference(
+                    setting = Preferences.listView,
+                    values = ListView.entries,
+                    title = { Text(stringResource(Res.string.preference_list_view)) },
+                    summary = { Text(stringResource(it.title)) },
+                    valueToText = { stringResource(it.title) }
                 )
             }
+
+            listPreference(
+                setting = Preferences.userRatesStartType,
+                values = LinkedType.userRatesType,
+                title = { Text(stringResource(Res.string.preference_user_rates_start_type)) },
+                summary = { Text(stringResource(it.title)) },
+                valueToText = { stringResource(it.title) }
+            )
+
+            listPreference(
+                setting = Preferences.userRatesStartWatchStatus,
+                values = WatchStatus.entries,
+                title = { Text(stringResource(Res.string.preference_user_rates_start_status)) },
+                summary = {
+                    Text(
+                        text = buildString {
+                            append(stringResource(it.titleAnime))
+                            it.titleManga?.let { mangaTitle ->
+                                append(" (${stringResource(mangaTitle)})")
+                            }
+                        }
+                    )
+                },
+                valueToText = {
+                    buildString {
+                        append(stringResource(it.titleAnime))
+                        it.titleManga?.let { mangaTitle ->
+                            append(" (${stringResource(mangaTitle)})")
+                        }
+                    }
+                }
+            )
+
+            item {
+                SwitchPreference(
+                    value = rememberListOrder,
+                    onValueChange = Preferences::toggleRememberLastCatalogOrder,
+                    title = { Text(stringResource(Res.string.preference_remember_catalog_list_order)) }
+                )
+            }
+
+            item {
+                SwitchPreference(
+                    value = rememberRatesOrder,
+                    onValueChange = Preferences::toggleRememberLastRatesOrder,
+                    title = { Text(stringResource(Res.string.preference_remember_rates_list_order)) }
+                )
+            }
+
+            switchPreference(
+                setting = Preferences.showUserRateListSize,
+                title = { Text(stringResource(Res.string.preference_user_rates_list_size_show)) }
+            )
+
+            switchPreference(
+                setting = Preferences.episodeAutoAdd,
+                enabled = { Preferences.token != null },
+                title = { Text(stringResource(Res.string.preference_episode_auto_add)) },
+                summary = { Text(stringResource(Res.string.preference_episode_auto_add_summary)) }
+            )
+
+            preferenceCategory(
+                key = PREF_GROUP_APP_SYSTEM,
+                title = { Text(stringResource(Res.string.preference_category_system)) }
+            )
+
+            listPreference(
+                setting = Preferences.language,
+                values = AppLanguages.list,
+                title = { Text(stringResource(Res.string.preference_language)) },
+                summary = { Text(locale.getLocaleLocalizedName()) },
+                valueToText = { it.getLocaleLocalizedName() }
+            )
+
+            listPreference(
+                setting = Preferences.cache,
+                values = CACHE_LIST,
+                title = { Text(stringResource(Res.string.preference_cache_size)) },
+                summary = { Text(stringResource(Res.string.preference_cache_size_mb, it)) },
+                valueToText = { stringResource(Res.string.preference_cache_size_mb, it) }
+            )
+
+            deeplinkSetting(
+                isEnabled = !useUserUrlList,
+                onClick = { showDeeplinkSetting = true }
+            )
+
+            preference(
+                key = PREF_NETWORK_CONFIG_SETTINGS,
+                title = { Text(stringResource(Res.string.preference_network_config)) },
+                onClick = { showProxySettings = true }
+            )
         }
     }
 
@@ -412,17 +369,15 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
                             onValueChange = { state.proxyUser = it.trim() },
                             label = { Text(stringResource(Res.string.text_username_optional)) },
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true,
-                            enabled = state.proxyType != ProxyType.SOCKS
+                            singleLine = true
                         )
 
                         OutlinedTextField(
                             value = state.proxyPass,
-                            onValueChange = { state.proxyPass = it },
+                            onValueChange = { state.proxyPass = it.trim() },
                             label = { Text(stringResource(Res.string.text_password_optional)) },
                             modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            enabled = state.proxyType != ProxyType.SOCKS,
                             visualTransformation = PasswordVisualTransformation()
                         )
                     }

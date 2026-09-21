@@ -20,9 +20,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
-import me.zhanghai.compose.preference.preference
 import org.application.shikiapp.shared.ui.templates.AnimatedDialogScreen
 import org.application.shikiapp.shared.ui.templates.VectorIcon
+import org.application.shikiapp.shared.ui.templates.preference
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.PREF_DEEP_LINK_SETTINGS
