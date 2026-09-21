@@ -62,6 +62,7 @@ platform :ios do
       automatic_release: true,
       skip_metadata: false,
       skip_screenshots: true,
+      run_precheck_before_submit: false,
       release_notes: {
         "default" => changelog_text
       }
