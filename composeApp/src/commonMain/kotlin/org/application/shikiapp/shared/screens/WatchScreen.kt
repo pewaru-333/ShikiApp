@@ -66,6 +66,7 @@ import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.HideSystemBars
 import org.application.shikiapp.shared.utils.LockScreenOrientation
+import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 import org.application.shikiapp.shared.utils.enums.PickerStep
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.enums.VideoSource
@@ -85,7 +86,7 @@ fun WatchScreen(onBack: () -> Unit) {
     val model = viewModel(::WatchViewModel)
     val state by model.state.collectAsStateWithLifecycle()
 
-    val canWatch by Preferences.canWatchFlow.collectAsStateWithLifecycle(Preferences.canWatch)
+    val canWatch by rememberPreference { canWatch }
 
     val lazyStateSources = rememberLazyListState()
     val lazyStateVoices = rememberLazyListState()
@@ -127,7 +128,10 @@ fun WatchScreen(onBack: () -> Unit) {
     }
 
     if (!canWatch) {
-        DialogAccept(Preferences::setCanWatch, onBack)
+        DialogAccept(
+            onConfirm = { Preferences.canWatch.value = true },
+            onDismiss = onBack
+        )
     }
     else if (!state.isWatching) {
         Scaffold(
@@ -206,7 +210,7 @@ private fun VideoPicker(
     onSelectVoice: (Int) -> Unit,
     onSelectEpisode: (EpisodeModel) -> Unit
 ) {
-    val libToken by Preferences.libTokenFlow.collectAsStateWithLifecycle(Preferences.libToken)
+    val libToken by rememberPreference(Preferences.libToken) { libTokenFlow }
 
     AnimatedContent(
         targetState = currentStep,
