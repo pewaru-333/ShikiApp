@@ -7,15 +7,15 @@ fun <T> List<T>.getRandomTrending(): List<T> {
     if (count == 0) return emptyList()
     if (size == count) return this
 
-    val array = IntArray(count)
+    val newList = ArrayList<T>(count)
 
     var needed = count
     var left = size
-    var found = 0
 
-    for (i in indices) {
+    for (item in this) {
         if (Random.nextInt(left) < needed) {
-            array[found++] = i
+            newList.add(item)
+
             needed--
             if (needed == 0) break
         }
@@ -23,5 +23,5 @@ fun <T> List<T>.getRandomTrending(): List<T> {
         left--
     }
 
-    return array.map { this[it] }
+    return newList
 }
