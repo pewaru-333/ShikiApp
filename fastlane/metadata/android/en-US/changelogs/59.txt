@@ -1,0 +1,2 @@
+— Added a setting to save the sort type in the lists of user ratings.
+— Fixed a bug that caused the color palette to not be applied on iOS.

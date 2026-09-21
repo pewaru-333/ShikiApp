@@ -46,7 +46,7 @@ android {
             manifestPlaceholders["authHost"] = "auth"
             manifestPlaceholders["authSuffix"] = "login"
             manifestPlaceholders["base"] = "shikimori.rip"
-            manifestPlaceholders["mirrorOne"] = "shikimori.mov"
+            manifestPlaceholders["mirrorOne"] = "shikimori.life"
             manifestPlaceholders["mirrorTwo"] = "shikimori.net"
 
             buildConfigField("String", "USER_AGENT", "\"DarkShiki\"")

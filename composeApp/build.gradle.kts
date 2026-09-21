@@ -87,6 +87,7 @@ kotlin {
                 implementation(libs.androidx.paging.compose)
 
                 // Network
+                api(libs.ktor.client.engines.defaults)
                 implementation(libs.bundles.ktor)
                 implementation(libs.apollo.api)
 
@@ -95,7 +96,6 @@ kotlin {
                 implementation(libs.coil.network.ktor)
                 implementation(libs.kotlinx.datetime)
                 implementation(libs.ksoup)
-                implementation(libs.material.preferences)
                 implementation(libs.zoomable)
             }
         }
@@ -104,16 +104,8 @@ kotlin {
             dependencies {
                 implementation(libs.androidx.activity.compose)
 
-                implementation(libs.ktor.client.okhttp)
-
                 implementation(libs.bundles.media3)
                 implementation(libs.libass) // Subtitles (.ass)
-            }
-        }
-
-        iosMain {
-            dependencies {
-                implementation(libs.ktor.client.darwin)
             }
         }
 
@@ -122,8 +114,6 @@ kotlin {
                 implementation(compose.desktop.currentOs)
 
                 implementation(libs.kotlinx.coroutines.swing)
-
-                implementation(libs.ktor.client.okhttp)
 
                 // Internalization
                 implementation(libs.icu4j)

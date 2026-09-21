@@ -1,5 +1,0 @@
-— Added settings for changing the network configuration when the application is running.
-— Added Picture-in-Picture mode to the player on supported devices.
-— Optimized the player's operation when switching the quality, changing the video time, and switching episodes.
-— Fixed an error when switching the application window on a PC to full-screen mode, added saving of previous sizes.
-— Fixed an issue where color palettes were not applied on the PC.
