@@ -6,11 +6,13 @@ import com.apollographql.apollo.api.http.HttpRequest
 import com.apollographql.apollo.api.http.HttpResponse
 import com.apollographql.apollo.exception.ApolloNetworkException
 import com.apollographql.apollo.network.http.HttpEngine
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.util.*
+import io.ktor.client.HttpClient
+import io.ktor.client.call.body
+import io.ktor.client.request.header
+import io.ktor.client.request.request
+import io.ktor.client.request.setBody
+import io.ktor.http.HttpHeaders
+import io.ktor.util.flattenEntries
 import okio.Buffer
 import kotlin.coroutines.cancellation.CancellationException
 
@@ -24,6 +26,7 @@ class KtorEngine(private val client: HttpClient) : HttpEngine {
                 method = when (request.method) {
                     HttpMethod.Get -> io.ktor.http.HttpMethod.Get
                     HttpMethod.Post -> io.ktor.http.HttpMethod.Post
+                    HttpMethod.Query -> io.ktor.http.HttpMethod.Query
                 }
 
                 request.headers.forEach {
