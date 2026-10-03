@@ -1,8 +1,8 @@
 package org.application.shikiapp.shared.network.client
 
 import com.apollographql.apollo.api.Query
-import org.application.shikiapp.generated.shikiapp.*
-import org.application.shikiapp.generated.shikiapp.type.OrderEnum
+import org.application.shikiapp.generated.common.*
+import org.application.shikiapp.generated.common.type.OrderEnum
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.models.ui.mappers.toContent
 import org.application.shikiapp.shared.utils.enums.Order
