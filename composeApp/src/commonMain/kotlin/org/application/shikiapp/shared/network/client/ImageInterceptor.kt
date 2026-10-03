@@ -9,8 +9,9 @@ object ImageInterceptor : Interceptor {
         val data = request.data as? String ?: return chain.proceed()
 
         val newData = when {
+            data.startsWith("http://[") -> data
+            data.startsWith("http://") -> "https://${data.removePrefix("http://")}"
             data.startsWith("/") -> ApiRoutes.workingBaseUrl + data
-            data.startsWith("http://") -> data.replace("http://", "https://")
             else -> data
         }
 
