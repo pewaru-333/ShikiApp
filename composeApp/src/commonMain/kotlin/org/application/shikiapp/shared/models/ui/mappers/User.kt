@@ -6,7 +6,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import org.application.shikiapp.generated.shikiapp.UsersQuery
+import org.application.shikiapp.generated.common.UsersQuery
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.ClubBasic
 import org.application.shikiapp.shared.models.data.User
