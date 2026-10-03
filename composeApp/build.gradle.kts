@@ -8,20 +8,10 @@ plugins {
 }
 
 apollo {
-    service("ShikiApp") {
-        srcDir("src/commonMain/graphql/shikiapp")
-        schemaFiles.from(file("src/commonMain/graphql/shikiapp/schema.graphqls"))
-        packageName.set("org.application.shikiapp.generated.shikiapp")
-        codegenModels.set("responseBased")
-        issueSeverity("DeprecatedUsage", "ignore")
-        generateApolloMetadata = false
-        generateOptionalOperationVariables = false
-    }
-
-    service("DarkShiki") {
-        srcDir("src/commonMain/graphql/darkshiki")
-        schemaFiles.from("src/commonMain/graphql/darkshiki/schema.graphqls")
-        packageName.set("org.application.shikiapp.generated.darkshiki")
+    service("Common") {
+        srcDir("src/commonMain/graphql/shared")
+        schemaFiles.from(file("src/commonMain/graphql/shared/schema.graphqls"))
+        packageName.set("org.application.shikiapp.generated.common")
         codegenModels.set("responseBased")
         issueSeverity("DeprecatedUsage", "ignore")
         generateApolloMetadata = false
@@ -54,12 +44,8 @@ kotlin {
         }
     }
 
-    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
-        target.binaries.framework {
-            baseName = "ComposeApp"
-            isStatic = true
-        }
-    }
+    iosArm64()
+    iosSimulatorArm64()
 
     sourceSets {
         commonMain {
@@ -87,9 +73,10 @@ kotlin {
                 implementation(libs.androidx.paging.compose)
 
                 // Network
+                api(projects.networkApi)
                 api(libs.ktor.client.engines.defaults)
+                api(libs.apollo.api)
                 implementation(libs.bundles.ktor)
-                implementation(libs.apollo.api)
 
                 // Utils
                 implementation(libs.coil.compose)
@@ -120,6 +107,7 @@ kotlin {
 
                 // Video player
                 implementation(libs.vlcj)
+                implementation(libs.jna) // VLC and Yggdrasil
             }
         }
     }
@@ -127,39 +115,4 @@ kotlin {
 
 compose.resources {
     publicResClass = true
-}
-
-val generateLanguagesList = tasks.register("genLangList") {
-    description = "Generates language list"
-
-    val resDir = file("src/commonMain/composeResources")
-    val outputFile = file("src/commonMain/kotlin/AppLanguages.kt")
-
-    inputs.dir(resDir)
-    outputs.file(outputFile)
-
-    doLast {
-        val languages = resDir.listFiles()
-            ?.mapNotNullTo(LinkedHashSet()) {
-                if (it.isDirectory && it.name.startsWith("values-")) {
-                    it.name.substringAfter("values-")
-                } else {
-                    null
-                }
-            }
-            ?.plus("ru")
-            ?: emptyList()
-
-        outputFile.writeText(
-            """
-            object AppLanguages {
-                val list = listOf(${languages.joinToString { "\"$it\"" }})
-            }
-        """.trimIndent()
-        )
-    }
-}
-
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
-    dependsOn(generateLanguagesList)
 }

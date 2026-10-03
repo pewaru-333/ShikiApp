@@ -46,7 +46,7 @@ android {
             manifestPlaceholders["authHost"] = "auth"
             manifestPlaceholders["authSuffix"] = "login"
             manifestPlaceholders["base"] = "shikimori.rip"
-            manifestPlaceholders["mirrorOne"] = "shikimori.life"
+            manifestPlaceholders["mirrorOne"] = "shikimori.live"
             manifestPlaceholders["mirrorTwo"] = "shikimori.net"
 
             buildConfigField("String", "USER_AGENT", "\"DarkShiki\"")
@@ -85,6 +85,9 @@ kotlin {
 dependencies {
     // Plugin
     implementation(projects.composeApp)
+    add("ShikiAppImplementation", projects.backendShiki)
+    add("DarkShikiImplementation", projects.backendDark)
+    add("DarkShikiImplementation", projects.yggdrasil)
 
     // Android
     implementation(project.dependencies.platform(libs.androidx.compose.bom))
