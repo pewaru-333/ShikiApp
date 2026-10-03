@@ -15,7 +15,7 @@ import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.*
 import kotlinx.serialization.builtins.nullable
-import org.application.shikiapp.generated.shikiapp.type.MangaKindEnum
+import org.application.shikiapp.generated.common.type.MangaKindEnum
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.FilterEvent
 import org.application.shikiapp.shared.models.data.Club
