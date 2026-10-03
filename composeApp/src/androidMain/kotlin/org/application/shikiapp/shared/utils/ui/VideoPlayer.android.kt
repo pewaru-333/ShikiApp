@@ -129,7 +129,7 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
     internal var videoSize by mutableStateOf(Size.Unspecified)
         private set
 
-    override val feature = object : VideoPlayerFeature {
+    actual override val feature = object : VideoPlayerFeature {
         override val isTV: Boolean
             get() {
                 val manager = activity.getSystemService(Context.UI_MODE_SERVICE) as UiModeManager
@@ -188,7 +188,7 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
         }
     }
 
-    override fun onLoadVideo(url: String) {
+    actual override fun onLoadVideo(url: String) {
         val dataSourceFactory = DefaultHttpDataSource.Factory()
             .setUserAgent(state.headers.getOrDefault("User-Agent", BLANK))
             .setDefaultRequestProperties(state.headers)
@@ -226,34 +226,34 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
         player.play()
     }
 
-    override fun create() {
+    actual override fun create() {
         player.addListener(playerEventListener)
         assHandler.init(player)
     }
 
-    override fun release() {
+    actual override fun release() {
         player.stop()
         player.clearMediaItems()
         player.release()
     }
 
-    override fun onPlay() {
+    actual override fun onPlay() {
         player.play()
     }
 
-    override fun onPause() {
+    actual override fun onPause() {
         player.pause()
     }
 
-    override fun onSetVolume(volume: Float) {
+    actual override fun onSetVolume(volume: Float) {
         player.volume = volume
     }
 
-    override fun onSetSpeed(speed: Float) {
+    actual override fun onSetSpeed(speed: Float) {
         player.setPlaybackSpeed(speed)
     }
 
-    override fun onSeek(millis: Float) {
+    actual override fun onSeek(millis: Float) {
         player.seekTo((millis * 1000).toLong())
     }
 
@@ -264,7 +264,7 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
         controls.hideControls()
     }
 
-    override fun onLoadAudioTrack(index: Int) {
+    actual override fun onLoadAudioTrack(index: Int) {
         var searchIndex = 0
 
         for (group in player.currentTracks.groups) {
@@ -284,7 +284,7 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
         }
     }
 
-    override fun onLoadSubtitleTrack(index: Int) {
+    actual override fun onLoadSubtitleTrack(index: Int) {
         val builder = player.trackSelectionParameters.buildUpon()
             .clearOverridesOfType(C.TRACK_TYPE_TEXT)
             .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, index == 0)

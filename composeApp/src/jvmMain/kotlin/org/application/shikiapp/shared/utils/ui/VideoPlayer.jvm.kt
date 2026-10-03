@@ -69,7 +69,7 @@ actual class VideoPlayerController : VideoPlayer() {
     private var openingTask: ScheduledFuture<*>? = null
 
 
-    override val feature = object : VideoPlayerFeature {
+    actual override val feature = object : VideoPlayerFeature {
         override val isTV = false
         override val pictureInPicture = null
         override val showPlayPause = false
@@ -84,7 +84,7 @@ actual class VideoPlayerController : VideoPlayer() {
     }
 
 
-    override fun onLoadVideo(url: String) {
+    actual override fun onLoadVideo(url: String) {
         try {
             val httpClient = HttpClient.newHttpClient()
             val request = HttpRequest.newBuilder()
@@ -142,12 +142,12 @@ actual class VideoPlayerController : VideoPlayer() {
         }
     }
 
-    override fun create() {
+    actual override fun create() {
         mediaPlayer.videoSurface().set(videoSurface)
         mediaPlayer.events().addMediaPlayerEventListener(playerEventListener)
     }
 
-    override fun release() {
+    actual override fun release() {
         openingTask?.cancel(true)
         scheduler.shutdownNow()
 
@@ -155,19 +155,19 @@ actual class VideoPlayerController : VideoPlayer() {
         factory.release()
     }
 
-    override fun onPlay() {
+    actual override fun onPlay() {
         mediaPlayer.controls().play()
     }
 
-    override fun onPause() {
+    actual override fun onPause() {
         mediaPlayer.controls().pause()
     }
 
-    override fun onSetVolume(volume: Float) {
+    actual override fun onSetVolume(volume: Float) {
         mediaPlayer.audio().setVolume((volume * 100).toInt())
     }
 
-    override fun onSetSpeed(speed: Float) {
+    actual override fun onSetSpeed(speed: Float) {
         val success = mediaPlayer.controls().setRate(speed)
 
         if (success) {
@@ -175,11 +175,11 @@ actual class VideoPlayerController : VideoPlayer() {
         }
     }
 
-    override fun onSeek(millis: Float) {
+    actual override fun onSeek(millis: Float) {
         mediaPlayer.controls().setTime((millis * 1000).toLong())
     }
 
-    override fun onLoadAudioTrack(index: Int) {
+    actual override fun onLoadAudioTrack(index: Int) {
         for (track in mediaPlayer.tracks().audioTracks().tracks()) {
             val name = track.name()
             val charIndex = name.lastIndexOf('-')
@@ -206,7 +206,7 @@ actual class VideoPlayerController : VideoPlayer() {
         }
     }
 
-    override fun onLoadSubtitleTrack(index: Int) {
+    actual override fun onLoadSubtitleTrack(index: Int) {
         if (index == 0) {
             mediaPlayer.tracks().deselect(TrackType.TEXT)
         } else {

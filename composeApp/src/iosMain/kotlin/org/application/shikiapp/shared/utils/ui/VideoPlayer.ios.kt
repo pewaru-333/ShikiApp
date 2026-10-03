@@ -45,7 +45,7 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
     private var fallbackJob: Job? = null
 
 
-    override val feature = object : VideoPlayerFeature {
+    actual override val feature = object : VideoPlayerFeature {
         override val pictureInPicture =
             if (AVPictureInPictureController.isPictureInPictureSupported()) this@VideoPlayerController
             else null
@@ -57,7 +57,7 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
     }
 
 
-    override fun create() {
+    actual override fun create() {
         try {
             val audioSession = AVAudioSession.sharedInstance()
             audioSession.setCategory(AVAudioSessionCategoryPlayback, null)
@@ -98,7 +98,7 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
         )
     }
 
-    override fun release() {
+    actual override fun release() {
         val center = NSNotificationCenter.defaultCenter
 
         backgroundObserver?.let { center.removeObserver(it) }
@@ -111,7 +111,7 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
         coroutineScope.cancel()
     }
 
-    override fun onLoadVideo(url: String) {
+    actual override fun onLoadVideo(url: String) {
         val nsUrl = NSURL.URLWithString(url) ?: return
 
         val options = mutableMapOf<Any?, Any?>()
@@ -143,31 +143,31 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
         }
     }
 
-    override fun onPlay() {
+    actual override fun onPlay() {
         player.play()
 
         state.isPlaying = true
     }
 
-    override fun onPause() {
+    actual override fun onPause() {
         player.pause()
 
         state.isPlaying = false
     }
 
-    override fun onSetVolume(volume: Float) {
+    actual override fun onSetVolume(volume: Float) {
         player.volume = volume
 
         updateVolume(volume)
     }
 
-    override fun onSetSpeed(speed: Float) {
+    actual override fun onSetSpeed(speed: Float) {
         player.rate = speed
 
         updateSpeed(speed)
     }
 
-    override fun onSeek(millis: Float) {
+    actual override fun onSeek(millis: Float) {
         player.seekToTime(
             time = CMTimeMakeWithSeconds(millis.toDouble(), 1000),
             toleranceBefore = kCMTimeZero.readValue(),
@@ -175,7 +175,7 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
         )
     }
 
-    override fun onLoadAudioTrack(index: Int) {
+    actual override fun onLoadAudioTrack(index: Int) {
         val currentItem = player.currentItem ?: return
         val asset = currentItem.asset
 
@@ -192,7 +192,7 @@ actual class VideoPlayerController: VideoPlayer(), VideoPlayer.VideoPlayerPictur
         }
     }
 
-    override fun onLoadSubtitleTrack(index: Int) {
+    actual override fun onLoadSubtitleTrack(index: Int) {
         val currentItem = player.currentItem ?: return
         val asset = currentItem.asset
 

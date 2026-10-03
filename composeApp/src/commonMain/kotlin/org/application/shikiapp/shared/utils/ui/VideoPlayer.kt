@@ -8,7 +8,6 @@ import androidx.compose.ui.input.pointer.PointerIcon
 import kotlinx.coroutines.delay
 import org.application.shikiapp.shared.events.PlayerEvent
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
-import kotlin.ranges.coerceIn
 import kotlin.time.Clock
 import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
@@ -419,7 +418,21 @@ abstract class VideoPlayer {
     }
 }
 
-expect class VideoPlayerController : VideoPlayer
+expect class VideoPlayerController : VideoPlayer {
+    override val feature: VideoPlayerFeature
+
+    override fun create()
+    override fun release()
+
+    override fun onLoadVideo(url: String)
+    override fun onPlay()
+    override fun onPause()
+    override fun onSetVolume(volume: Float)
+    override fun onSetSpeed(speed: Float)
+    override fun onSeek(millis: Float)
+    override fun onLoadAudioTrack(index: Int)
+    override fun onLoadSubtitleTrack(index: Int)
+}
 
 @Composable
 expect fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier = Modifier)
