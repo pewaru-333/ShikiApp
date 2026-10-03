@@ -29,7 +29,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
-import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
 import org.application.shikiapp.shared.utils.data.IDataManager
@@ -59,15 +58,12 @@ actual fun fromHtml(text: String?) =
         )
     )
 
-actual fun getDefaultLocale(context: PlatformContext): String =
-    context.resources.configuration.locales[0].toLanguageTag()
-
 @ChecksSdkIntAtLeast(api = Build.VERSION_CODES.S)
 actual fun isDynamicColorAvailable() = Build.VERSION.SDK_INT >= Build.VERSION_CODES.S
 
 actual object AppLocale {
     actual val current: String
-        @Composable get() = getDefaultLocale(LocalContext.current)
+        @Composable get() = LocalConfiguration.current.locales[0].toLanguageTag()
 
     @Composable
     actual infix fun provides(value: String?): ProvidedValue<*> {

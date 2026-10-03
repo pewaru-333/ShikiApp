@@ -28,7 +28,6 @@ import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
 import okio.ByteString.Companion.encodeUtf8
 import okio.Path
-import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.client.ImageInterceptor
 import org.application.shikiapp.shared.network.client.Network
@@ -148,8 +147,6 @@ expect object AppLocale {
 expect fun launchAuth(uriHandler: UriHandler)
 
 expect fun fromHtml(text: String?): AnnotatedString
-
-expect fun getDefaultLocale(context: PlatformContext): String
 
 expect fun formatRelativeDays(daysAgo: Int): String
 

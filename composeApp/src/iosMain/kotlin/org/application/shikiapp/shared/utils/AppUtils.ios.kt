@@ -18,7 +18,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
 import org.application.shikiapp.shared.di.AppConfig
-import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManagerIos
 import org.application.shikiapp.shared.utils.data.IDataManager
@@ -88,18 +87,6 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
 fun getCacheDirectory(): String {
     val paths = NSSearchPathForDirectoriesInDomains(NSCachesDirectory, NSUserDomainMask, true)
     return paths.firstOrNull() as? String ?: NSTemporaryDirectory()
-}
-
-fun getUserAgentValue(key: String) =
-    NSBundle.mainBundle.objectForInfoDictionaryKey(key) as String? ?: "ShikiApp"
-
-actual fun getDefaultLocale(context: PlatformContext): String {
-    val languageTag = NSLocale.preferredLanguages.firstOrNull() as? String
-    if (languageTag != null) {
-        return languageTag
-    }
-
-    return NSLocale.currentLocale.localeIdentifier.replace('_', '-')
 }
 
 actual fun isDynamicColorAvailable() = false

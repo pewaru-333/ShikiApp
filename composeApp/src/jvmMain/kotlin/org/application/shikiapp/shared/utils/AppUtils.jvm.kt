@@ -16,7 +16,6 @@ import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.ibm.icu.text.RelativeDateTimeFormatter
 import com.sun.jna.Platform
-import org.application.shikiapp.shared.di.PlatformContext
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
 import org.application.shikiapp.shared.utils.data.IDataManager
@@ -96,19 +95,17 @@ fun initVlc() {
     }
 }
 
-actual fun getDefaultLocale(context: PlatformContext): String = Locale.getDefault().language
+fun getDefaultLocale(): String = Locale.getDefault().language
 
 actual fun isDynamicColorAvailable() = false
 
 actual object AppLocale {
-    private class DesktopContext : PlatformContext()
-
-    private val defaultLocale = getDefaultLocale(DesktopContext())
+    private val defaultLocale = getDefaultLocale()
 
     private val AppLocale = staticCompositionLocalOf { defaultLocale }
 
     actual val current: String
-        @Composable get() = getDefaultLocale(DesktopContext())
+        @Composable get() = getDefaultLocale()
 
     @Composable
     actual infix fun provides(value: String?): ProvidedValue<*> {
