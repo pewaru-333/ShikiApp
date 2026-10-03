@@ -1,13 +1,28 @@
 package org.application.shikiapp.shared.utils.ui
 
 import androidx.compose.runtime.*
-import io.ktor.client.engine.ProxyType
 import org.application.shikiapp.shared.di.Preferences
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 
-private val URL_REGEX = Regex("^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/.*)?$", RegexOption.IGNORE_CASE)
-private val PROXY_HOST_REGEX = Regex("""^(https?|socks5)://(localhost|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$""", RegexOption.IGNORE_CASE)
+const val MAX_URL_COUNT = 5
+const val MAX_YGGDRASIL_PEER_COUNT = 3
+
+private val URL_REGEX = Regex(
+    pattern = "^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/.*)?$",
+    option = RegexOption.IGNORE_CASE,
+)
+
+private val PROXY_HOST_REGEX = Regex(
+    pattern = """^(https?|socks5)://(localhost|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$""",
+    option = RegexOption.IGNORE_CASE,
+)
+
+private val YGGDRASIL_PEER_REGEX = Regex(
+    pattern = """^(tcp|tls|quic|ws|wss)://\S+$""",
+    option = RegexOption.IGNORE_CASE,
+)
 
 @Stable
 class ProxySettingsState(
@@ -17,38 +32,60 @@ class ProxySettingsState(
     proxyHost: String,
     proxyPort: String,
     proxyUsername: String,
-    proxyPassword: String
+    proxyPassword: String,
+    yggdrasilEnabled: Boolean,
+    yggdrasilPeers: List<String>,
 ) {
     val urlList = mutableStateListOf<String>().apply {
-        addAll(urlList)
+        addAll(urlList.ifEmpty { listOf(BLANK) })
     }
 
-    val urlListItems: List<LinkItem>
-        get() = urlList.map {
-            LinkItem(
-                url = it,
-                isError = isUserMode && (it.isBlank() || !URL_REGEX.matches(it))
+    val peerList = mutableStateListOf<String>().apply {
+        addAll(yggdrasilPeers.ifEmpty { listOf(BLANK) })
+    }
+
+    var isUserMode by mutableStateOf(isUserMode)
+        private set
+
+    var isProxyEnabled by mutableStateOf(isProxy)
+        private set
+
+    var proxyHost by mutableStateOf(proxyHost)
+        private set
+
+    var proxyPort by mutableStateOf(proxyPort)
+        private set
+
+    var proxyUser by mutableStateOf(proxyUsername)
+        private set
+
+    var proxyPass by mutableStateOf(proxyPassword)
+        private set
+
+    var isYggdrasilEnabled by mutableStateOf(yggdrasilEnabled)
+        private set
+
+    var anyError by mutableStateOf(false)
+        private set
+
+    val urlListItems: List<InputItem>
+        get() = urlList.map { value ->
+            InputItem(
+                value = value,
+                isError = anyError && isUserMode && !isValidBaseUrl(value)
             )
         }
 
-    var isUserMode by mutableStateOf(isUserMode)
-    var isProxyEnabled by mutableStateOf(isProxy)
-    var proxyHost by mutableStateOf(proxyHost)
-    var proxyPort by mutableStateOf(proxyPort)
-    var proxyUser by mutableStateOf(proxyUsername)
-    var proxyPass by mutableStateOf(proxyPassword)
-    var anyError by mutableStateOf(false)
-
-
-    fun validateProxyHost(): Boolean = proxyHost.matches(PROXY_HOST_REGEX)
-    fun validateProxyPort(): Boolean = proxyPort.toIntOrNull() in 1..65535
-
-    val proxyType: ProxyType
-        get() = when {
-            proxyHost.startsWith("http") -> ProxyType.HTTP
-            proxyHost.startsWith("socks5") -> ProxyType.SOCKS
-            else -> ProxyType.UNKNOWN
+    val peerListItems: List<InputItem>
+        get() = peerList.map { value ->
+            InputItem(
+                value = value,
+                isError = anyError && isYggdrasilEnabled && !isValidPeer(value)
+            )
         }
+
+    val isNetworkUrl: Boolean
+        get() = !isYggdrasilEnabled
 
     val isHostError: Boolean
         get() = anyError && isProxyEnabled && !validateProxyHost()
@@ -56,37 +93,95 @@ class ProxySettingsState(
     val isPortError: Boolean
         get() = anyError && isProxyEnabled && !validateProxyPort()
 
-    fun updateUrl(index: Int, value: String) {
-        urlList[index] = value.trim()
+    fun toggleUserMode(enabled: Boolean) {
+        if (!isNetworkUrl) {
+            return
+        }
 
+        isUserMode = enabled
         anyError = false
     }
 
-    fun addUrl() {
-        if (urlList.size < 5) {
-            urlList.add(BLANK)
+    fun toggleProxy(enabled: Boolean) {
+        if (!isNetworkUrl) {
+            return
         }
+
+        isProxyEnabled = enabled
+        anyError = false
     }
 
-    fun removeLastUrl() {
-        urlList.removeLastOrNull()
+    fun toggleYggdrasil(enabled: Boolean) {
+        isYggdrasilEnabled = enabled
+        anyError = false
+    }
+
+    fun validateProxyHost() = proxyHost.matches(PROXY_HOST_REGEX)
+    fun validateProxyPort() = proxyPort.toIntOrNull() in 1..65535
+
+    fun updateUrl(index: Int, value: String) {
+        urlList[index] = value.trim()
+        anyError = false
+    }
+
+    fun updatePeer(index: Int, value: String) {
+        peerList[index] = value.trim()
+        anyError = false
     }
 
     fun updateHost(value: String) {
-        proxyHost = value.trim().lowercase()
+        proxyHost = value
+            .trim()
+            .lowercase()
 
         anyError = false
     }
 
     fun updatePort(value: String) {
-        proxyPort = value.filter(Char::isDigit).take(5)
+        proxyPort = value
+            .filter(Char::isDigit)
+            .take(5)
 
         anyError = false
+    }
+
+    fun updateProxyUser(value: String) {
+        proxyUser = value
+    }
+
+    fun updateProxyPassword(value: String) {
+        proxyPass = value
+    }
+
+    fun addUrl() {
+        if (urlList.size < MAX_URL_COUNT) {
+            urlList.add(BLANK)
+        }
+    }
+
+    fun removeLastUrl() {
+        if (urlList.size > 1) {
+            urlList.removeLast()
+        }
+    }
+
+    fun addPeer() {
+        if (peerList.size < MAX_YGGDRASIL_PEER_COUNT) {
+            peerList.add(BLANK)
+        }
+    }
+
+    fun removeLastPeer() {
+        if (peerList.size > 1) {
+            peerList.removeLast()
+        }
     }
 
     fun clear(onCleared: () -> Unit) {
         isUserMode = false
         isProxyEnabled = false
+        isYggdrasilEnabled = false
+        anyError = false
 
         Preferences.clearUserNetworkSettings()
 
@@ -94,21 +189,37 @@ class ProxySettingsState(
     }
 
     fun save(onSaved: () -> Unit) {
-        val hasLinkError = isUserMode && urlListItems.any { it.isError }
-        val hasProxyError = isProxyEnabled && (!validateProxyHost() || !validateProxyPort())
+        val hasLinkError = isNetworkUrl && isUserMode && urlList.any { !isValidBaseUrl(it) }
+        val hasProxyError = isNetworkUrl && isProxyEnabled && (!validateProxyHost() || !validateProxyPort())
+        val hasYggdrasilError = isYggdrasilEnabled && (peerList.isEmpty() || peerList.any { !isValidPeer(it) })
 
-        anyError = hasLinkError || hasProxyError
-        if (anyError) return
+        anyError = hasLinkError || hasProxyError || hasYggdrasilError
 
-        Preferences.setLinksSettings(isUserMode, urlList)
+        if (anyError) {
+            return
+        }
+
+        val urls = urlList.mapNotNull {
+            it.trim().takeIf(String::isNotEmpty)
+        }
+
+        val peers = peerList.mapNotNullTo(LinkedHashSet()) {
+            it.trim().takeIf(String::isNotEmpty)
+        }
+
+        Preferences.setLinksSettings(isUserMode, urls)
         Preferences.setProxySettings(isProxyEnabled, proxyHost, proxyPort, proxyUser, proxyPass)
+        Preferences.setYggdrasilSettings(isYggdrasilEnabled, peers.toList())
 
         onSaved()
     }
 
-    data class LinkItem(
-        val url: String,
-        val isError: Boolean
+    private fun isValidBaseUrl(value: String) = value.isNotBlank() && URL_REGEX.matches(value)
+    private fun isValidPeer(value: String) = value.isNotBlank() && YGGDRASIL_PEER_REGEX.matches(value)
+
+    data class InputItem(
+        val value: String,
+        val isError: Boolean,
     )
 }
 
@@ -123,15 +234,20 @@ fun rememberProxySettingsState(): ProxySettingsState {
     val proxyUser by rememberPreference { proxyUsername }
     val proxyPass by rememberPreference { proxyPassword }
 
-    return remember(urls, userMode, isProxy, proxyHost, proxyPort, proxyUser, proxyPass) {
+    val yggdrasilEnabled by rememberPreference { yggdrasilEnabled }
+    val yggdrasilPeers by rememberPreference { yggdrasilPeers }
+
+    return remember(urls, userMode, isProxy, proxyHost, proxyPort, proxyUser, proxyPass, yggdrasilEnabled, yggdrasilPeers) {
         ProxySettingsState(
-            urlList = urls.split(','),
+            urlList = urls.split(',').ifEmpty { listOf(BLANK) },
             isUserMode = userMode,
             isProxy = isProxy,
             proxyHost = proxyHost,
             proxyPort = proxyPort,
             proxyUsername = proxyUser,
             proxyPassword = proxyPass,
+            yggdrasilEnabled = Network.isYggdrasilAvailable && yggdrasilEnabled,
+            yggdrasilPeers = yggdrasilPeers.split(',').ifEmpty { listOf(BLANK) },
         )
     }
 }
