@@ -22,14 +22,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.application.shikiapp.shared.di.Preferences
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.*
 import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 import org.application.shikiapp.shared.utils.enums.*
 import org.application.shikiapp.shared.utils.extensions.getLocaleLocalizedName
-import org.application.shikiapp.shared.utils.ui.rememberProxySettingsState
-import org.application.shikiapp.shared.utils.ui.rememberWindowSize
+import org.application.shikiapp.shared.utils.ui.*
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.*
 
@@ -204,11 +204,140 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
         val isCompact = rememberWindowSize().isCompact
         val horizontalPadding = if (isCompact) 16.dp else 32.dp
 
+        @Composable
+        fun SettingsSectionTitle(text: String) = Text(
+            text = text,
+            style = MaterialTheme.typography.labelLarge,
+            color = MaterialTheme.colorScheme.secondary,
+        )
+
+        @Composable
+        fun SettingsToggleRow(
+            title: String,
+            summary: String? = null,
+            checked: Boolean,
+            onCheckedChange: (Boolean) -> Unit,
+            enabled: Boolean = true
+        ) = Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp)
+                .toggleable(
+                    value = checked,
+                    enabled = enabled,
+                    role = Role.Switch,
+                    onValueChange = onCheckedChange
+                )
+        ) {
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(end = 16.dp)
+            ) {
+                Text(
+                    text = title,
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = if (enabled) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                    }
+                )
+
+                if (summary != null) {
+                    Text(
+                        text = summary,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = if (enabled) {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
+                        }
+                    )
+                }
+            }
+
+            Switch(
+                checked = checked,
+                onCheckedChange = null,
+                enabled = enabled
+            )
+        }
+
+        @Composable
+        fun ProxyInputRow(
+            index: Int,
+            item: ProxySettingsState.InputItem,
+            itemCount: Int,
+            maxItemCount: Int,
+            onValueChange: (String) -> Unit,
+            onAdd: () -> Unit,
+            onRemove: () -> Unit,
+            modifier: Modifier = Modifier,
+            placeholder: String? = null,
+            errorText: String? = null,
+            enabled: Boolean = true
+        ) = Row(
+            modifier = modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top
+        ) {
+            OutlinedTextField(
+                value = item.value,
+                onValueChange = onValueChange,
+                modifier = Modifier.weight(1f),
+                singleLine = true,
+                enabled = enabled,
+                isError = item.isError,
+                leadingIcon = { Text("${index + 1}") },
+                placeholder = placeholder?.let {
+                    {
+                        Text(
+                            text = it,
+                            maxLines = 1,
+                            softWrap = false
+                        )
+                    }
+                },
+                supportingText = if (!item.isError || errorText == null) null else {
+                    {
+                        Text(
+                            text = errorText,
+                            color = MaterialTheme.colorScheme.error
+                        )
+                    }
+                }
+            )
+
+            Box(
+                contentAlignment = Alignment.Center,
+                modifier = Modifier
+                    .padding(start = 8.dp)
+                    .size(48.dp, 56.dp)
+            ) {
+                when (index) {
+                    0 if itemCount < maxItemCount -> FilledTonalIconButton(
+                        onClick = onAdd,
+                        enabled = enabled,
+                        content = { VectorIcon(Icons.Add) }
+                    )
+
+                    itemCount - 1 if itemCount > 1 -> FilledTonalIconButton(
+                        onClick = onRemove,
+                        enabled = enabled,
+                        content = { VectorIcon(Icons.Remove) }
+                    )
+                }
+            }
+        }
+
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(values)
+                .consumeWindowInsets(values)
+                .imePadding()
                 .verticalScroll(rememberScrollState())
         ) {
             Column(
@@ -218,127 +347,45 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
             ) {
                 Spacer(Modifier.height(16.dp))
 
-                Text(
-                    text = stringResource(Res.string.text_links),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                SettingsSectionTitle(stringResource(Res.string.text_links))
+
+                SettingsToggleRow(
+                    title = stringResource(Res.string.preference_use_user_url_list),
+                    summary = stringResource(Res.string.preference_use_user_url_list_summary),
+                    checked = state.isUserMode,
+                    onCheckedChange = state::toggleUserMode,
+                    enabled = state.isNetworkUrl
                 )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                        .toggleable(
-                            role = Role.Switch,
-                            value = state.isUserMode,
-                            onValueChange = { state.isUserMode = it }
-                        )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 16.dp)
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.preference_use_user_url_list),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = stringResource(Res.string.preference_use_user_url_list_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-
-                    Switch(state.isUserMode, null)
-                }
 
                 AnimatedVisibility(state.isUserMode) {
                     Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
                         state.urlListItems.forEachIndexed { index, item ->
-                            Row(Modifier.fillMaxWidth()) {
-                                OutlinedTextField(
-                                    value = item.url,
-                                    onValueChange = { state.updateUrl(index, it) },
-                                    singleLine = true,
-                                    enabled = state.isUserMode,
-                                    isError = item.isError,
-                                    leadingIcon = { Text("${index + 1}") },
-                                    supportingText = {
-                                        if (item.isError) {
-                                            Text(
-                                                text = stringResource(Res.string.text_base_url_format),
-                                                color = MaterialTheme.colorScheme.error
-                                            )
-                                        }
-                                    }
-                                )
-
-                                Box(
-                                    contentAlignment = Alignment.Center,
-                                    modifier = Modifier
-                                        .padding(start = 8.dp)
-                                        .height(56.dp)
-                                ) {
-                                    if (index == 0 && state.urlList.size < 5) {
-                                        FilledTonalIconButton(
-                                            onClick = state::addUrl,
-                                            enabled = state.isUserMode,
-                                            content = { VectorIcon(Icons.Add) }
-                                        )
-                                    } else if (index == state.urlList.size - 1) {
-                                        FilledTonalIconButton(
-                                            onClick = state::removeLastUrl,
-                                            enabled = state.isUserMode,
-                                            content = { VectorIcon(Icons.Remove) }
-                                        )
-                                    }
-                                }
-                            }
+                            ProxyInputRow(
+                                index = index,
+                                item = item,
+                                itemCount = state.urlList.size,
+                                maxItemCount = MAX_URL_COUNT,
+                                errorText = stringResource(Res.string.text_base_url_format),
+                                onValueChange = { state.updateUrl(index, it) },
+                                onAdd = state::addUrl,
+                                onRemove = state::removeLastUrl,
+                                enabled = state.isNetworkUrl
+                            )
                         }
                     }
                 }
 
                 Spacer(Modifier.height(24.dp))
 
-                Text(
-                    text = stringResource(Res.string.text_proxy),
-                    style = MaterialTheme.typography.labelLarge,
-                    color = MaterialTheme.colorScheme.secondary
+                SettingsSectionTitle(stringResource(Res.string.text_proxy))
+
+                SettingsToggleRow(
+                    title = stringResource(Res.string.preference_use_proxy),
+                    summary = stringResource(Res.string.preference_use_proxy_summary),
+                    checked = state.isProxyEnabled,
+                    onCheckedChange = state::toggleProxy,
+                    enabled = state.isNetworkUrl
                 )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 12.dp)
-                        .toggleable(
-                            role = Role.Switch,
-                            value = state.isProxyEnabled,
-                            onValueChange = { state.isProxyEnabled = it }
-                        )
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(end = 16.dp)
-                    ) {
-                        Text(
-                            text = stringResource(Res.string.preference_use_proxy),
-                            style = MaterialTheme.typography.bodyLarge,
-                            color = MaterialTheme.colorScheme.onSurface,
-                        )
-                        Text(
-                            text = stringResource(Res.string.preference_use_proxy_summary),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-
-                    Switch(state.isProxyEnabled, null)
-                }
 
                 AnimatedVisibility(state.isProxyEnabled) {
                     Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
@@ -348,38 +395,70 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
                                 onValueChange = state::updateHost,
                                 label = { Text(stringResource(Res.string.text_host)) },
                                 placeholder = { Text("HTTP, HTTPS, SOCKS5") },
-                                modifier = Modifier.weight(0.65f),
                                 singleLine = true,
-                                isError = state.isHostError
+                                enabled = state.isNetworkUrl,
+                                isError = state.isHostError,
+                                modifier = Modifier.weight(0.65f)
                             )
 
                             OutlinedTextField(
                                 value = state.proxyPort,
                                 onValueChange = state::updatePort,
                                 label = { Text(stringResource(Res.string.text_port)) },
-                                modifier = Modifier.weight(0.35f),
                                 singleLine = true,
+                                enabled = state.isNetworkUrl,
+                                isError = state.isPortError,
                                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                                isError = state.isPortError
+                                modifier = Modifier.weight(0.35f)
                             )
                         }
 
                         OutlinedTextField(
                             value = state.proxyUser,
-                            onValueChange = { state.proxyUser = it.trim() },
+                            onValueChange = state::updateProxyUser,
                             label = { Text(stringResource(Res.string.text_username_optional)) },
+                            singleLine = true,
+                            enabled = state.isNetworkUrl,
                             modifier = Modifier.fillMaxWidth(),
-                            singleLine = true
                         )
 
                         OutlinedTextField(
                             value = state.proxyPass,
-                            onValueChange = { state.proxyPass = it.trim() },
+                            onValueChange = state::updateProxyPassword,
                             label = { Text(stringResource(Res.string.text_password_optional)) },
-                            modifier = Modifier.fillMaxWidth(),
                             singleLine = true,
-                            visualTransformation = PasswordVisualTransformation()
+                            visualTransformation = PasswordVisualTransformation(),
+                            enabled = state.isNetworkUrl,
+                            modifier = Modifier.fillMaxWidth()
                         )
+                    }
+                }
+
+                if (Network.isYggdrasilAvailable) {
+                    Spacer(Modifier.height(24.dp))
+
+                    SettingsToggleRow(
+                        title = stringResource(Res.string.preference_use_yggdrasil),
+                        summary = stringResource(Res.string.preference_use_yggdrasil_summary),
+                        checked = state.isYggdrasilEnabled,
+                        onCheckedChange = state::toggleYggdrasil
+                    )
+
+                    AnimatedVisibility(state.isYggdrasilEnabled) {
+                        Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
+                            state.peerListItems.forEachIndexed { index, item ->
+                                ProxyInputRow(
+                                    index = index,
+                                    item = item,
+                                    itemCount = state.peerList.size,
+                                    maxItemCount = MAX_YGGDRASIL_PEER_COUNT,
+                                    placeholder = stringResource(Res.string.text_yggdrasil_peer_format),
+                                    onValueChange = { state.updatePeer(index, it) },
+                                    onAdd = state::addPeer,
+                                    onRemove = state::removeLastPeer
+                                )
+                            }
+                        }
                     }
                 }
 
@@ -395,6 +474,7 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
                             imageVector = Icons.Settings,
                             tint = MaterialTheme.colorScheme.onSecondaryContainer
                         )
+
                         Text(
                             text = stringResource(Res.string.text_applied_after_relaunching_app_proxy_settings),
                             style = MaterialTheme.typography.bodyMedium,

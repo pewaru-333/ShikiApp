@@ -7,6 +7,23 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 
 class PreferencesAndroid(private val prefs: SharedPreferences) : IPreferences {
+    internal fun migrateFrom(previous: SharedPreferences): Boolean {
+        val editor = prefs.edit()
+        previous.all.forEach { (key, value) ->
+            if (!prefs.contains(key)) {
+                when (value) {
+                    is String -> editor.putString(key, value)
+                    is Int -> editor.putInt(key, value)
+                    is Long -> editor.putLong(key, value)
+                    is Boolean -> editor.putBoolean(key, value)
+                    is Float -> editor.putFloat(key, value)
+                    is Set<*> -> @Suppress("UNCHECKED_CAST") editor.putStringSet(key, value as Set<String>)
+                }
+            }
+        }
+        return editor.commit()
+    }
+
     override fun getBoolean(key: String, defaultValue: Boolean) = prefs.getBoolean(key, defaultValue)
     override fun putBoolean(key: String, value: Boolean) = prefs.edit { putBoolean(key, value) }
 
