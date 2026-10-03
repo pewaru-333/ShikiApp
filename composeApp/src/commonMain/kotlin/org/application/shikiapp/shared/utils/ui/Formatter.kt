@@ -175,9 +175,9 @@ object Formatter {
         fun String.toHttps() = when {
             isEmpty() -> BLANK
             startsWith("//") -> "https:$this"
+            startsWith("http://[") -> this
             startsWith("http://") -> replace("http://", "https://")
             else -> if (startsWith("http")) this else "https://$this"
-
         }
 
         val ytRegex = "img\\.youtube\\.com(?:%2F|/)vi(?:%2F|/)([a-zA-Z0-9_-]+)".toRegex()
