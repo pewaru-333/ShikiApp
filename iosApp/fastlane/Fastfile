@@ -1,7 +1,7 @@
 default_platform(:ios)
 
 def read_gradle_property(property_name)
-  file_path = "../../gradle.properties"
+  file_path = File.expand_path("../../gradle.properties", __dir__)
   if File.exist?(file_path)
     File.readlines(file_path).each do |line|
       if line.strip.start_with?(property_name + "=") || line.strip.start_with?(property_name + " =")
@@ -22,30 +22,30 @@ platform :ios do
 
     UI.message("Applying Version: #{clean_version_name} and Build: #{version_code} to iOS project...")
 
-    increment_version_number(version_number: clean_version_name, xcodeproj: "iosApp.xcodeproj")
-    increment_build_number(build_number: version_code, xcodeproj: "iosApp.xcodeproj")
+    increment_version_number(version_number: clean_version_name, xcodeproj: File.expand_path("../iosApp.xcodeproj", __dir__))
+    increment_build_number(build_number: version_code, xcodeproj: File.expand_path("../iosApp.xcodeproj", __dir__))
 
     build_app(
-      project: "iosApp.xcodeproj",
+      project: File.expand_path("../iosApp.xcodeproj", __dir__),
       scheme: "iosApp",
       configuration: "DarkShiki Release",
       export_method: "app-store",
       codesigning_identity: "Apple Distribution",
-      xcargs: "CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242' PROVISIONING_PROFILE_SPECIFIER='appstore release2'",
+      xcargs: "APP_USER_AGENT=DarkShiki CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242' PROVISIONING_PROFILE_SPECIFIER='appstore release2'",
       export_options: {
         provisioningProfiles: {
           "rip.shiki.app" => "appstore release2"
         }
       },
-      output_directory: "build",
-      output_name: "ShikiApp.ipa"
+      output_directory: File.expand_path("../build", __dir__),
+      output_name: "ShikiRip.ipa"
     )
   end
 
   desc "Phase 3: Deploy the pre-built .ipa to App Store Connect"
   lane :deploy_ios_release do
     version_code = read_gradle_property("APP_VERSION_CODE")
-    changelog_path = "../../fastlane/metadata/android/ru/changelogs/#{version_code}.txt"
+    changelog_path = File.expand_path("../../fastlane/metadata/android/ru/changelogs/#{version_code}.txt", __dir__)
     changelog_text = File.exist?(changelog_path) ? File.read(changelog_path) : "— Это техническое обновление без изменений в интерфейсе."
 
     app_store_connect_api_key(
@@ -56,7 +56,8 @@ platform :ios do
     )
 
     upload_to_app_store(
-      ipa: "build/ShikiApp.ipa",
+      ipa: File.expand_path("../build/ShikiRip.ipa", __dir__),
+      app_identifier: "rip.shiki.app",
       submit_for_review: true,
       force: true,
       automatic_release: true,

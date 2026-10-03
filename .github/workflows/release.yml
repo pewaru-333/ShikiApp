@@ -17,7 +17,7 @@ jobs:
       - name: 'Checkout repository'
         uses: actions/checkout@v7
 
-      - name: 'Extract versions from androidApp/build.gradle.kts'
+      - name: 'Extract versions from gradle.properties'
         id: extract_version
         run: |
           VERSION_CODE=$(grep "APP_VERSION_CODE" gradle.properties | cut -d '=' -f 2)
@@ -246,7 +246,14 @@ jobs:
           mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
           cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
 
-      - name: 'Build iOS App via Fastlane'
+      - name: 'Validate iOS release configuration'
+        run: |
+          ruby -c iosApp/fastlane/Fastfile
+          plutil -lint iosApp/iosApp/Info.plist
+
+      - name: 'Build ShikiRip iOS App via Fastlane'
+        env:
+          APP_USER_AGENT: DarkShiki
         run: |
           cd iosApp
           fastlane build_ios_release
@@ -254,8 +261,9 @@ jobs:
       - name: 'Upload iOS IPA as artifact'
         uses: actions/upload-artifact@v7
         with:
-          name: ShikiApp-ipa
-          path: iosApp/build/ShikiApp.ipa
+          name: ShikiRip-ipa
+          path: iosApp/build/ShikiRip.ipa
+          if-no-files-found: error
 
   create-release:
     runs-on: ubuntu-latest
@@ -280,24 +288,29 @@ jobs:
           name: ShikiRip-apk
 
       - name: 'Download ShikiApp Windows Zip'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ShikiApp-windows-zip
 
       - name: 'Download ShikiRip Windows Zip'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ShikiRip-windows-zip
 
       - name: 'Download ShikiApp Linux Tar'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ShikiApp-linux-portable
 
       - name: 'Download ShikiRip Linux Tar'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: ShikiRip-linux-portable
+
+      - name: 'Download ShikiRip IPA'
+        uses: actions/download-artifact@v8
+        with:
+          name: ShikiRip-ipa
 
       - name: 'Push Tag'
         run: |
@@ -311,9 +324,11 @@ jobs:
         with:
           tag_name: ${{ needs.get-version.outputs.version_name }}
           body: ${{ needs.prepare-changelog.outputs.release_body }}
+          fail_on_unmatched_files: true
           files: |
             ShikiApp.apk
             ShikiRip.apk
+            ShikiRip.ipa
             *-portable.zip
             *-portable.tar.gz
 
@@ -379,9 +394,9 @@ jobs:
         run: gem install fastlane
 
       - name: 'Download iOS IPA'
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
-          name: ShikiApp-ipa
+          name: ShikiRip-ipa
           path: iosApp/build
 
       - name: 'Deploy iOS App via Fastlane'
