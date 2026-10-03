@@ -17,18 +17,31 @@ import kotlinx.coroutines.IO
 import kotlinx.io.IOException
 import kotlinx.serialization.json.Json
 import org.application.shikiapp.shared.di.AppConfig
+import org.application.shikiapp.shared.di.AppServices
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.calls.*
-import org.application.shikiapp.shared.network.calls.shiki.IAnimeRepository
-import org.application.shikiapp.shared.network.calls.shiki.ICharacterRepository
-import org.application.shikiapp.shared.network.calls.shiki.IMangaRepository
 
 
 object Network {
-    val baseClient: HttpClient by lazy {
-        val proxy = getProxyConfig()
+    val isYggdrasilAvailable: Boolean
+        get() = AppServices.yggdrasilTransport != null && AppConfig.yggdrasilAddress != null
 
-        createHttpClient(proxy) {
+    private val yggdrasil by lazy {
+        YggdrasilConfig(
+            enabled = isYggdrasilAvailable && Preferences.yggdrasilEnabled.value,
+            peers = Preferences.yggdrasilPeerList,
+            privateKeyPem = Preferences.yggdrasilPrivateKey.value.takeIf(String::isNotBlank)
+        )
+    }
+
+    val baseClient: HttpClient by lazy {
+        val proxy = if (yggdrasil.enabled) {
+            null
+        } else {
+            getProxyConfig()
+        }
+
+        createHttpClient(proxy, yggdrasil) {
             engine {
                 dispatcher = Dispatchers.IO
             }
@@ -109,10 +122,18 @@ object Network {
             install(RateLimit)
 
             install(BaseUrlResolverPlugin) {
-                val (baseUrl, mirrors) = Preferences.appUrlPair
+                if (yggdrasil.enabled) {
+                    val address = AppConfig.yggdrasilAddress
+                    if (address != null) {
+                        baseUrlProvider = { address }
+                        isYggdrasil = { true }
+                    }
+                } else {
+                    val (baseUrl, mirrors) = Preferences.appUrlPair
 
-                baseUrlProvider = { baseUrl }
-                mirrorsProvider = { mirrors }
+                    baseUrlProvider = { baseUrl }
+                    mirrorsProvider = { mirrors }
+                }
 
                 onNewUrl = { workingUrl ->
                     ApiRoutes.workingBaseUrl = workingUrl
@@ -141,20 +162,11 @@ object Network {
     val topics by lazy { Topics(client) }
     val content by lazy { Content(client) }
 
-    val animeRepository by lazy {
-        if (AppConfig.isShikimori) IAnimeRepository(apollo)
-        else org.application.shikiapp.shared.network.calls.dark.IAnimeRepository(apollo)
-    }
+    val animeRepository get() = AppServices.animeRepository
 
-    val mangaRepository by lazy {
-        if (AppConfig.isShikimori) IMangaRepository(apollo)
-        else org.application.shikiapp.shared.network.calls.dark.IMangaRepository(apollo)
-    }
+    val mangaRepository get() = AppServices.mangaRepository
 
-    val characterRepository by lazy {
-        if (AppConfig.isShikimori) ICharacterRepository(apollo)
-        else org.application.shikiapp.shared.network.calls.dark.ICharacterRepository(apollo)
-    }
+    val characterRepository get() = AppServices.characterRepository
 
     internal fun getProxyConfig() = ProxyConfig.create(
         enabled = Preferences.useProxy.value,

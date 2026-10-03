@@ -10,8 +10,11 @@ import java.net.PasswordAuthentication
 import java.net.Proxy
 import java.util.concurrent.TimeUnit
 
-internal actual fun createHttpClient(proxyConfig: ProxyConfig?, block: HttpClientConfig<*>.() -> Unit) =
-    HttpClient(OkHttp) {
+internal actual fun createPlatformHttpClient(
+    proxyConfig: ProxyConfig?,
+    block: HttpClientConfig<*>.() -> Unit
+): HttpClient {
+    return HttpClient(OkHttp) {
         block()
 
         engine {
@@ -35,6 +38,7 @@ internal actual fun createHttpClient(proxyConfig: ProxyConfig?, block: HttpClien
             }
         }
     }
+}
 
 internal class ProxyAuthenticator(private val proxyConfig: ProxyConfig) : Authenticator() {
     override fun getPasswordAuthentication(): PasswordAuthentication? {
