@@ -2,7 +2,7 @@ package org.application.shikiapp.shared.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.generated.shikiapp.PeopleQuery
+import org.application.shikiapp.generated.common.PeopleQuery
 import org.application.shikiapp.shared.models.data.Person
 import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.Related

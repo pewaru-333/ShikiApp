@@ -1,6 +1,8 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
 import kotlinx.serialization.json.decodeFromJsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.FullMessage
@@ -44,6 +46,7 @@ fun FullMessage.toDialogMessage() = Dialog(
 fun FullMessage.toNewsMessage(): Message {
     val anime = try {
         if (linked == null || !(linkedType == "Topic" || linkedType == "Anime")) null
+        else if (linked.jsonObject["type"]?.jsonPrimitive?.content?.startsWith("Topic") == true) null
         else linked.let { basicJson.decodeFromJsonElement<AnimeBasic>(it) }
     } catch (_: Exception) {
         null

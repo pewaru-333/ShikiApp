@@ -1,0 +1,304 @@
+query AnimeList(
+    $page: PositiveInt!,
+    $limit: PositiveInt!,
+    $order: OrderEnum,
+    $kind: AnimeKindString,
+    $status: AnimeStatusString,
+    $season: SeasonString,
+    $score: Int,
+    $duration: DurationString,
+    $rating: RatingString,
+    $genre: String,
+    $studio: String,
+    # $franchise: String,
+    # $censored: Boolean,
+    # $mylist: MylistString,
+    $search: String
+) {
+    animes(
+        page: $page,
+        limit: $limit,
+        order: $order,
+        kind: $kind,
+        status: $status,
+        season: $season,
+        score: $score,
+        duration: $duration,
+        rating: $rating,
+        genre: $genre,
+        censored: false,
+        studio: $studio,
+        search: $search
+    ) {
+        ...AnimeContent
+        airedOn {
+            date
+        }
+    }
+}
+
+query AnimeAiring($season: SeasonString) {
+    animes(kind: "tv", status: "ongoing", season: $season, order: popularity, limit: 12) {
+        ...AnimeBasic
+        score
+    }
+}
+
+query AnimeRandom {
+    animes(kind: "tv,movie,ona", status: "released", order: random, limit: 12, censored: true) {
+        ...AnimeBasic
+        score
+    }
+}
+
+query AnimeMain($id: String!) {
+    animes(ids: $id) {
+        ...AnimeContent
+        airedOn {
+            date
+        }
+        descriptionHtml
+        duration
+        episodes
+        episodesAired
+        externalLinks {
+            ...Link
+        }
+        fandubbers
+        fansubbers
+        franchise
+        genres {
+            ...Genres
+        }
+        licenseNameRu
+        licensors
+        nextEpisodeAt
+        origin
+        rating
+        releasedOn {
+            date
+        }
+        screenshots {
+            originalUrl
+        }
+        studios {
+            id
+            name
+            imageUrl
+        }
+        topic {
+            id
+        }
+        userRate {
+            ...UserRateFragment
+        }
+        url
+        videos {
+            id # для сортировки в списке
+            url
+            name
+            kind
+            imageUrl
+        }
+    }
+}
+
+query AnimeGenres {
+    genres(entryType: Anime) {
+        ...Genres
+    }
+}
+
+query MangaList(
+    $page: PositiveInt!,
+    $limit: PositiveInt!,
+    $order: OrderEnum,
+    $kind: MangaKindString,
+    $status: MangaStatusString,
+    $season: SeasonString,
+    $score: Int,
+    $genre: String,
+    $publisher: String,
+    # $franchise: String,
+    # $censored: Boolean,
+    # $mylist: MylistString,
+    $search: String
+) {
+    mangas(
+        page: $page,
+        limit: $limit,
+        order: $order,
+        kind: $kind,
+        status: $status,
+        season: $season,
+        score: $score,
+        genre: $genre,
+        publisher: $publisher,
+        censored: false,
+        search: $search
+    ) {
+        ...MangaContent
+        airedOn {
+            date
+        }
+    }
+}
+
+query MangaMain($id: String!) {
+    mangas(ids: $id) {
+        ...MangaContent
+        airedOn {
+            date
+        }
+        chapters
+        descriptionHtml
+        externalLinks {
+            ...Link
+        }
+        franchise
+        genres {
+            ...Genres
+        }
+        licenseNameRu
+        licensors
+        publishers {
+            id
+            name
+        }
+        releasedOn {
+            date
+        }
+        topic {
+            id
+        }
+        userRate {
+            ...UserRateFragment
+        }
+        url
+        volumes
+    }
+}
+
+query MangaGenres {
+    genres(entryType: Manga) {
+        ...Genres
+    }
+}
+
+query CharacterList($page: PositiveInt, $limit: PositiveInt, $search: String) {
+    characters(page: $page, limit: $limit, search: $search) {
+        ...CharacterBasic
+    }
+}
+
+query People(
+    $page: PositiveInt,
+    $limit: PositiveInt,
+    $search: String,
+    $isSeyu: Boolean,
+    $isProducer: Boolean,
+    $isMangaka: Boolean
+) {
+    people(
+        page: $page,
+        limit: $limit,
+        search: $search,
+        isSeyu: $isSeyu,
+        isProducer: $isProducer,
+        isMangaka: $isMangaka
+    ) {
+        ...PersonBasic
+    }
+}
+
+query Users(
+    $page: PositiveInt,
+    $limit: PositiveInt,
+    $search: String
+) {
+    users(
+        page: $page,
+        limit: $limit,
+        search: $search
+    ) {
+        id
+        nickname
+        avatarUrl
+    }
+}
+
+fragment AnimeBasic on Anime {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment AnimeContent on Anime {
+    ...AnimeBasic
+    kind
+    season
+    status
+    score
+}
+
+fragment MangaBasic on Manga {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment MangaContent on Manga {
+    ...MangaBasic
+    kind
+    status
+    score
+}
+
+fragment CharacterBasic on Character {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment PersonBasic on Person {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment Genres on Genre {
+    id
+    russian
+}
+
+fragment Link on ExternalLink {
+    kind
+    url
+}
+
+fragment UserRateFragment on UserRate {
+    id
+    status
+    chapters
+    episodes
+    volumes
+    score
+    rewatches
+    text
+}

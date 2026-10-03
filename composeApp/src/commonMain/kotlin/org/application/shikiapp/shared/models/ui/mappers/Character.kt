@@ -2,8 +2,7 @@ package org.application.shikiapp.shared.models.ui.mappers
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.generated.shikiapp.CharacterListQuery
-import org.application.shikiapp.generated.shikiapp.fragment.CharacterRole
+import org.application.shikiapp.generated.common.CharacterListQuery
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.BasicInfo
 import org.application.shikiapp.shared.models.data.Character
@@ -71,12 +70,6 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toContent() = Conte
     season = Formatter.getSeason(airedOn, kind),
     status = Enum.safeValueOf<Status>(status),
     title = russian.takeUnless(String?::isNullOrEmpty) ?: name
-)
-
-fun CharacterRole.toBasicContent() = BasicContent(
-    id = character.id,
-    title = character.russian.takeUnless(String?::isNullOrEmpty) ?: character.name,
-    poster = character.poster?.originalUrl.orEmpty()
 )
 
 fun CharacterListQuery.Data.Character.mapper() = BasicContent(

@@ -1,0 +1,164 @@
+query AnimeExtra($id: String!) {
+    animes(ids: $id) {
+        characterRoles {
+            ...CharacterRole
+        }
+        chronology {
+            ...AnimeContent
+            airedOn {
+                date
+            }
+            rating
+            releasedOn {
+                date
+            }
+        }
+        personRoles {
+            ...PersonRole
+        }
+        related {
+            ...RelatedFragment
+        }
+        scoresStats {
+            ...Scores
+        }
+        statusesStats {
+            ...Stats
+        }
+    }
+}
+
+query MangaExtra($id: String!) {
+    mangas(ids: $id) {
+        characterRoles {
+            ...CharacterRole
+        }
+        chronology {
+            ...MangaContent
+            airedOn {
+                date
+            }
+            releasedOn {
+                date
+            }
+        }
+        personRoles {
+            ...PersonRole
+        }
+        related {
+            ...RelatedFragment
+        }
+        scoresStats {
+            ...Scores
+        }
+        statusesStats {
+            ...Stats
+        }
+    }
+}
+
+query Character($ids: String) {
+    characters(ids: $ids) {
+        poster {
+            originalUrl
+        }
+        topic {
+            id
+        }
+    }
+}
+
+fragment AnimeBasic on Anime {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment AnimeContent on Anime {
+    ...AnimeBasic
+    kind
+    season
+    status
+    score
+}
+
+fragment MangaBasic on Manga {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment MangaContent on Manga {
+    ...MangaBasic
+    kind
+    status
+    score
+}
+
+fragment CharacterBasic on Character {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment CharacterRole on CharacterRole {
+    rolesRu
+    character {
+        ...CharacterBasic
+    }
+}
+
+fragment PersonBasic on Person {
+    id
+    name
+    russian
+    poster {
+        originalUrl
+        mainUrl
+    }
+}
+
+fragment PersonRole on PersonRole {
+    rolesRu
+    person {
+        ...PersonBasic
+    }
+}
+
+fragment RelatedFragment on Related {
+    anime {
+        ...AnimeContent
+        airedOn {
+            date
+        }
+    }
+    manga {
+        ...MangaContent
+        airedOn {
+            date
+        }
+    }
+    relationText
+}
+
+fragment Scores on ScoreStat {
+    score
+    count
+}
+
+fragment Stats on StatusStat {
+    status
+    count
+}

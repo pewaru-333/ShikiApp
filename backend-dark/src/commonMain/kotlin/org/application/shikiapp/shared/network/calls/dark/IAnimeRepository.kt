@@ -5,7 +5,7 @@ import com.apollographql.apollo.ApolloClient
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import org.application.shikiapp.generated.darkshiki.AnimeExtraQuery
-import org.application.shikiapp.generated.shikiapp.AnimeMainQuery
+import org.application.shikiapp.generated.common.AnimeMainQuery
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.AnimeT

@@ -1,0 +1,186 @@
+package org.application.shikiapp.shared.models.ui.mappers.dark
+
+import androidx.paging.PagingData
+import kotlinx.coroutines.flow.Flow
+import org.application.shikiapp.generated.darkshiki.AnimeExtraQuery
+import org.application.shikiapp.generated.darkshiki.fragment.PersonRole
+import org.application.shikiapp.generated.darkshiki.fragment.RelatedFragment
+import org.application.shikiapp.generated.common.AnimeMainQuery
+import org.application.shikiapp.shared.models.data.AnimeBasic
+import org.application.shikiapp.shared.models.data.Franchise
+import org.application.shikiapp.shared.models.ui.*
+import org.application.shikiapp.shared.models.ui.list.Content
+import org.application.shikiapp.shared.models.ui.mappers.mapper
+import org.application.shikiapp.shared.models.ui.mappers.toContent
+import org.application.shikiapp.shared.models.ui.mappers.toMappedList
+import org.application.shikiapp.shared.models.ui.mappers.toStatistics
+import org.application.shikiapp.shared.network.response.AsyncData
+import org.application.shikiapp.shared.utils.*
+import org.application.shikiapp.shared.utils.enums.*
+import org.application.shikiapp.shared.utils.extensions.safeValueOf
+import org.application.shikiapp.shared.utils.ui.Formatter
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.text_minutes_short
+import shikiapp.composeapp.generated.resources.text_unknown
+import kotlin.time.Clock
+
+object AnimeMapper {
+    fun create(
+        main: AnimeMainQuery.Data.Anime,
+        extra: AnimeExtraQuery.Data.Anime,
+        franchise: Franchise,
+        similar: List<AnimeBasic>,
+        comments: Flow<PagingData<Comment>>,
+        reviews: Flow<PagingData<Review>>,
+        favoured: Boolean,
+    ): Anime {
+        val video = main.videos
+            .distinctBy { it.url }
+            .sortedBy { it.id.toLongOrNull() }
+            .map {
+                Video(
+                    url = it.url,
+                    imageUrl = "https:${it.imageUrl}",
+                    kind = it.kind.rawValue,
+                    name = it.name
+                )
+            }
+
+        return Anime(
+            airedOn = Formatter.convertDate(main.airedOn?.date, false),
+            charactersAll = extra.characterRoles.orEmpty()
+                .map(AnimeExtraQuery.Data.Anime.CharacterRole::toBasicContent),
+            charactersMain = extra.characterRoles.orEmpty()
+                .mapNotNull { if (it.rolesRu.contains("Main")) it.toBasicContent() else null },
+            chronology = extra.chronology.orEmpty().map {
+                Content(
+                    id = it.id,
+                    title = it.russian?.takeIf(String::isNotEmpty) ?: it.name,
+                    poster = it.poster?.mainUrl.orEmpty(),
+                    kind = Enum.safeValueOf<Kind>(it.kind?.rawValue),
+                    status = Enum.safeValueOf<Status>(it.status?.rawValue),
+                    season = Formatter.getSeason(it.airedOn?.date, it.kind?.rawValue),
+                    score = it.score?.let(Formatter::convertScore)
+                )
+            },
+            comments = comments,
+            description = fromHtml(main.descriptionHtml),
+            duration = if (main.duration == null || main.duration == 0) null
+            else ResourceText.MultiString(
+                value = listOf(
+                    ResourceText.StaticString("${main.duration} "),
+                    ResourceText.StringResource(Res.string.text_minutes_short)
+                )
+            ),
+            episodes = when (Enum.safeValueOf<Status>(main.status?.rawValue)) {
+                Status.ONGOING -> "${main.episodesAired} / ${Formatter.getFullEpisodes(main.episodes)}"
+                Status.RELEASED -> "${main.episodes} / ${main.episodes}"
+                else -> "${main.episodesAired} / ${main.episodes}"
+            },
+            fandubbers = main.fandubbers.sorted(),
+            fansubbers = main.fansubbers.sorted(),
+            favoured = AsyncData.Success(favoured),
+            franchise = main.franchise.orEmpty(),
+            franchiseList = franchise.toMappedList(),
+            genres = main.genres?.map { Genre(it.id, it.russian) },
+            id = main.id,
+            kind = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
+            licenseName = main.licenseNameRu.orEmpty(),
+            licensors = main.licensors.orEmpty(),
+            links = main.externalLinks.orEmpty()
+                .mapNotNull { if (it.kind.rawValue in EXTERNAL_LINK_KINDS) it.mapper() else null },
+            nextEpisodeAt = Formatter.getNextEpisode(main.nextEpisodeAt),
+            origin = Enum.safeValueOf<Origin>(main.origin?.rawValue).title,
+            personAll = extra.personRoles.orEmpty()
+                .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
+            personMain = extra.personRoles.orEmpty()
+                .mapNotNull { role -> if (role.rolesRu.any { it in ROLES_RUSSIAN }) role.toContent() else null },
+            poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
+            rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
+            related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
+            releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
+            reviews = reviews,
+            score = main.score.let(Formatter::convertScore),
+            screenshots = main.screenshots.map(AnimeMainQuery.Data.Anime.Screenshot::originalUrl),
+            similar = similar.map(AnimeBasic::toContent),
+            stats = Pair(
+                first = extra.scoresStats?.let { scores ->
+                    val (sum, map) = scores.toStatistics(
+                        countSelector = AnimeExtraQuery.Data.Anime.ScoresStat::count,
+                        keySelector = { ResourceText.StaticString(it.score.toString()) }
+                    )
+
+                    Statistics(sum, map)
+                },
+                second = extra.statusesStats?.let { statuses ->
+                    val (sum, map) = statuses.toStatistics(
+                        countSelector = AnimeExtraQuery.Data.Anime.StatusesStat::count,
+                        keySelector = { ResourceText.StringResource(Formatter.getWatchStatus(it.status.rawValue, LinkedType.ANIME)) }
+                    )
+
+                    Statistics(sum, map)
+                }
+            ),
+            status = Enum.safeValueOf<Status>(main.status?.rawValue).animeTitle ?: Res.string.text_unknown,
+            studio = main.studios.firstOrNull()?.let {
+                Studio(
+                    id = it.id,
+                    title = it.name,
+                    poster = it.imageUrl.orEmpty()
+                )
+            },
+            title = main.russian?.let { "$it / ${main.name}" } ?: main.name,
+            userRate = AsyncData.Success(
+                main.userRate?.let {
+                    UserRate(
+                        id = it.id.toLong(),
+                        contentId = main.id,
+                        title = main.russian ?: main.name,
+                        poster = main.poster?.originalUrl.orEmpty(),
+                        kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
+                        kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
+                        score = it.score,
+                        scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
+                        status = it.status.rawValue,
+                        text = it.text,
+                        episodesSorting = 0,
+                        episodes = it.episodes,
+                        fullEpisodes = Formatter.getFullEpisodes(main.episodes, main.status?.rawValue),
+                        volumes = it.volumes,
+                        chapters = it.chapters,
+                        rewatches = it.rewatches,
+                        rewatchExists = it.rewatches > 0,
+                        fullChapters = BLANK,
+                        createdAt = Clock.System.now(),
+                        updatedAt = Clock.System.now()
+                    )
+                }
+            ),
+            url = main.url,
+            video = video.take(3),
+            videoGrouped = VideoKind.group(video)
+        )
+    }
+}
+
+fun PersonRole.toContent() = Content(
+    id = person.id,
+    title = person.russian?.takeIf(String::isNotEmpty) ?: person.name,
+    poster = person.poster?.originalUrl.orEmpty(),
+    kind = Kind.SPECIAL,
+    season = ResourceText.StaticString(rolesRu.joinToString()),
+    score = null,
+    status = Status.RELEASED
+)
+
+fun RelatedFragment.mapper() = Related(
+    id = anime?.id ?: manga?.id.orEmpty(),
+    title = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name.orEmpty(),
+    poster = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl.orEmpty(),
+    kind = Enum.safeValueOf<Kind>(anime?.kind?.rawValue ?: manga?.kind?.rawValue),
+    status = Enum.safeValueOf<Status>(anime?.status?.rawValue ?: manga?.status?.rawValue),
+    season = Formatter.getSeason(anime?.airedOn?.date ?: manga?.airedOn?.date, anime?.kind?.rawValue ?: manga?.kind?.rawValue),
+    score = Formatter.convertScore(anime?.score ?: manga?.score),
+    relationText = relationText,
+    linkedType = if (anime != null) LinkedType.ANIME else LinkedType.MANGA
+)

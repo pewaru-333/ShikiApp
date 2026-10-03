@@ -1,11 +1,11 @@
-package org.application.shikiapp.shared.models.ui.mappers.dark
+package org.application.shikiapp.shared.models.ui.mappers.shiki
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.generated.darkshiki.AnimeExtraQuery
-import org.application.shikiapp.generated.darkshiki.fragment.PersonRole
-import org.application.shikiapp.generated.darkshiki.fragment.RelatedFragment
-import org.application.shikiapp.generated.shikiapp.AnimeMainQuery
+import org.application.shikiapp.generated.common.AnimeMainQuery
+import org.application.shikiapp.generated.shikiapp.AnimeExtraQuery
+import org.application.shikiapp.generated.shikiapp.fragment.PersonRole
+import org.application.shikiapp.generated.shikiapp.fragment.RelatedFragment
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.*
@@ -165,7 +165,7 @@ object AnimeMapper {
 
 fun PersonRole.toContent() = Content(
     id = person.id,
-    title = person.russian?.takeIf(String::isNotEmpty) ?: person.name,
+    title = person.russian.takeUnless(String?::isNullOrEmpty) ?: person.name,
     poster = person.poster?.originalUrl.orEmpty(),
     kind = Kind.SPECIAL,
     season = ResourceText.StaticString(rolesRu.joinToString()),
@@ -176,7 +176,7 @@ fun PersonRole.toContent() = Content(
 fun RelatedFragment.mapper() = Related(
     id = anime?.id ?: manga?.id.orEmpty(),
     title = anime?.russian ?: anime?.name ?: manga?.russian ?: manga?.name.orEmpty(),
-    poster = anime?.poster?.originalUrl ?: manga?.poster?.originalUrl.orEmpty(),
+    poster = Formatter.replaceMissingAnimePoster(anime?.poster?.originalUrl ?: manga?.poster?.originalUrl, anime?.id ?: manga?.id),
     kind = Enum.safeValueOf<Kind>(anime?.kind?.rawValue ?: manga?.kind?.rawValue),
     status = Enum.safeValueOf<Status>(anime?.status?.rawValue ?: manga?.status?.rawValue),
     season = Formatter.getSeason(anime?.airedOn?.date ?: manga?.airedOn?.date, anime?.kind?.rawValue ?: manga?.kind?.rawValue),
@@ -184,3 +184,4 @@ fun RelatedFragment.mapper() = Related(
     relationText = relationText,
     linkedType = if (anime != null) LinkedType.ANIME else LinkedType.MANGA
 )
+
