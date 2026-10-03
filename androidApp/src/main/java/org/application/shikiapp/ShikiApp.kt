@@ -7,19 +7,15 @@ import coil3.SingletonImageLoader
 import coil3.gif.AnimatedImageDecoder
 import coil3.gif.GifDecoder
 import okio.Path.Companion.toOkioPath
-import org.application.shikiapp.shared.AppConfig
-import org.application.shikiapp.shared.di.AppContext
-import org.application.shikiapp.shared.di.AppModuleInitializer
+import org.application.shikiapp.shared.di.AppModule
+import org.application.shikiapp.shared.di.Module
 import org.application.shikiapp.shared.utils.sharedImageLoader
 
 class ShikiApp : Application(), SingletonImageLoader.Factory {
-
     override fun onCreate() {
         super.onCreate()
 
-        val config = AppConfig.createFlavorConfig(BuildConfig.USER_AGENT)
-        val app = AppModuleInitializer(applicationContext, config)
-        AppContext.init(app)
+        AppModule.init(Module(applicationContext, ProductServices.create()))
     }
 
     override fun newImageLoader(context: PlatformContext) = sharedImageLoader(
