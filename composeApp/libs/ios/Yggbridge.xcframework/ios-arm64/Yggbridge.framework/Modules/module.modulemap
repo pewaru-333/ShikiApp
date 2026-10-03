@@ -1,0 +1,8 @@
+framework module "Yggbridge" {
+	header "ref.h"
+    header "Yggbridge.objc.h"
+    header "Universe.objc.h"
+    header "Yggbridge.h"
+
+    export *
+}
