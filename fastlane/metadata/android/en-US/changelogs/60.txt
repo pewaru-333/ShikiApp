@@ -1,0 +1,2 @@
+— Added a new network configuration setting (only for ShikiRip).
+— Fixed an issue where some forum news was not displayed in notifications.
