@@ -15,18 +15,17 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import platform.Foundation.NSData
 import platform.Foundation.NSError
 import platform.Foundation.create
 import platform.Foundation.getBytes
+import yggbridge.ShikiYggbridgeRequest
+import yggbridge.ShikiYggbridgeStart
+import yggbridge.ShikiYggbridgeStop
 import yggbridge.YggbridgeAddress
 import yggbridge.YggbridgeIsStarted
 import yggbridge.YggbridgePrivateKeyPEM
-import yggbridge.YggbridgeRequest
-import yggbridge.YggbridgeStart
-import yggbridge.YggbridgeStop
 
 internal object IosYggdrasilClient : YggdrasilClient {
     private val mutex = Mutex()
@@ -57,11 +56,14 @@ internal object IosYggdrasilClient : YggdrasilClient {
                     val nativeError = alloc<ObjCObjectVar<NSError?>>()
                     nativeError.value = null
 
-                    YggbridgeStart(
+                    val started = ShikiYggbridgeStart(
                         peersJSON = peersJson,
                         savedPrivateKeyPEM = privateKeyPem.orEmpty(),
                         error = nativeError.ptr,
                     )
+                    check(started) {
+                        nativeError.value?.localizedDescription ?: "Failed to start Yggdrasil"
+                    }
                 }
             }
 
@@ -81,14 +83,14 @@ internal object IosYggdrasilClient : YggdrasilClient {
             val nativeError = alloc<ObjCObjectVar<NSError?>>()
             nativeError.value = null
 
-            val response = YggbridgeRequest(
+            val response = ShikiYggbridgeRequest(
                 method = method,
                 url = url,
                 headersJSON = headersJson,
                 body = body.toNSDataOrNull(),
                 timeoutMillis = timeoutMillis,
                 error = nativeError.ptr,
-            )
+            ) ?: error(nativeError.value?.localizedDescription ?: "Yggdrasil request failed")
 
             val responseBody = response.body
                 ?.toByteArray()
@@ -115,7 +117,9 @@ internal object IosYggdrasilClient : YggdrasilClient {
                     val nativeError = alloc<ObjCObjectVar<NSError?>>()
                     nativeError.value = null
 
-                    YggbridgeStop(error = nativeError.ptr)
+                    check(ShikiYggbridgeStop(error = nativeError.ptr)) {
+                        nativeError.value?.localizedDescription ?: "Failed to stop Yggdrasil"
+                    }
                 }
             }
 

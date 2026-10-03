@@ -4,6 +4,9 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+// Only this module has native interop to expose to the IDE.
+extra["kotlin.mpp.enableCInteropCommonization"] = "true"
+
 kotlin {
     android {
         namespace = "org.application.shikiapp.yggdrasil"
@@ -35,7 +38,7 @@ kotlin {
             (target as org.jetbrains.kotlin.gradle.plugin.mpp.KotlinNativeTarget)
                 .compilations.getByName("main").cinterops.create("Yggbridge") {
                     definitionFile.set(project.file("src/nativeInterop/cinterop/Yggbridge.def"))
-                    compilerOpts("-framework", "Yggbridge", "-F$framework/$slice")
+                    compilerOpts("-fmodules", "-framework", "Yggbridge", "-F$framework/$slice")
                 }
         }
     }

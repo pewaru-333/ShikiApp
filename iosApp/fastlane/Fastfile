@@ -5,7 +5,7 @@ def read_gradle_property(property_name)
   if File.exist?(file_path)
     File.readlines(file_path).each do |line|
       if line.strip.start_with?(property_name + "=") || line.strip.start_with?(property_name + " =")
-        return line.split('=')[1].strip
+        return line.split('=', 2).last.strip
       end
     end
   end
@@ -16,6 +16,8 @@ platform :ios do
 
   desc "Phase 1: Build the iOS app and generate an .ipa file"
   lane :build_ios_release do
+    ENV["APP_USER_AGENT"] = "DarkShiki"
+    profile_name = ENV.fetch("IOS_PROVISIONING_PROFILE_NAME", "appstore release2")
     raw_version_name = read_gradle_property("APP_VERSION_NAME")
     version_code = read_gradle_property("APP_VERSION_CODE")
     clean_version_name = raw_version_name.include?("-") ? raw_version_name.split("-").last : raw_version_name
@@ -29,12 +31,21 @@ platform :ios do
       project: File.expand_path("../iosApp.xcodeproj", __dir__),
       scheme: "iosApp",
       configuration: "DarkShiki Release",
+      clean: true,
       export_method: "app-store",
       codesigning_identity: "Apple Distribution",
-      xcargs: "APP_USER_AGENT=DarkShiki CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM='2AN324X242' PROVISIONING_PROFILE_SPECIFIER='appstore release2'",
+      xcargs: {
+        "APP_USER_AGENT" => "DarkShiki",
+        "CODE_SIGN_STYLE" => "Manual",
+        "DEVELOPMENT_TEAM" => "2AN324X242",
+        "PROVISIONING_PROFILE_SPECIFIER" => profile_name
+      },
       export_options: {
+        signingStyle: "manual",
+        signingCertificate: "Apple Distribution",
+        teamID: "2AN324X242",
         provisioningProfiles: {
-          "rip.shiki.app" => "appstore release2"
+          "rip.shiki.app" => profile_name
         }
       },
       output_directory: File.expand_path("../build", __dir__),

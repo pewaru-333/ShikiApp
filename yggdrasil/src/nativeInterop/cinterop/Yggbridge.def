@@ -1,3 +1,27 @@
 language = Objective-C
 modules = Yggbridge
 package = yggbridge
+
+---
+// NSError** in gomobile free functions cannot be imported by Kotlin/Native.
+// Keep the error slot opaque at the C boundary and retain the original API.
+static inline BOOL ShikiYggbridgeStart(NSString *peersJSON, NSString *savedPrivateKeyPEM, void *error) {
+    NSError *nativeError = nil;
+    BOOL result = YggbridgeStart(peersJSON, savedPrivateKeyPEM, &nativeError);
+    if (error) *((NSError * __unsafe_unretained *)error) = nativeError;
+    return result;
+}
+
+static inline YggbridgeResponse *ShikiYggbridgeRequest(NSString *method, NSString *url, NSString *headersJSON, NSData *body, int64_t timeoutMillis, void *error) {
+    NSError *nativeError = nil;
+    YggbridgeResponse *result = YggbridgeRequest(method, url, headersJSON, body, timeoutMillis, &nativeError);
+    if (error) *((NSError * __unsafe_unretained *)error) = nativeError;
+    return result;
+}
+
+static inline BOOL ShikiYggbridgeStop(void *error) {
+    NSError *nativeError = nil;
+    BOOL result = YggbridgeStop(&nativeError);
+    if (error) *((NSError * __unsafe_unretained *)error) = nativeError;
+    return result;
+}

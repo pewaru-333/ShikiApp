@@ -243,8 +243,32 @@ jobs:
           security import $CERTIFICATE_PATH -P "$P12_PASSWORD" -A -t cert -f pkcs12 -k $KEYCHAIN_PATH
           security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k "$KEYCHAIN_PASSWORD" $KEYCHAIN_PATH
           
-          mkdir -p ~/Library/MobileDevice/Provisioning\ Profiles
-          cp $PP_PATH ~/Library/MobileDevice/Provisioning\ Profiles
+          security cms -D -i "$PP_PATH" > "$RUNNER_TEMP/profile.plist"
+          python3 - <<'PY'
+          import datetime
+          import os
+          import pathlib
+          import plistlib
+          import shutil
+
+          with open(pathlib.Path(os.environ["RUNNER_TEMP"]) / "profile.plist", "rb") as stream:
+              profile = plistlib.load(stream)
+          team = "2AN324X242"
+          assert team in profile["TeamIdentifier"], "Wrong provisioning team"
+          assert profile["Entitlements"]["application-identifier"] == f"{team}.rip.shiki.app", "Profile must target ShikiRip"
+          assert not profile["Entitlements"].get("get-task-allow", False), "Development profile cannot sign an App Store release"
+          assert not profile.get("ProvisionedDevices") and not profile.get("ProvisionsAllDevices"), "Expected an App Store profile"
+          assert profile["ExpirationDate"] > datetime.datetime.now(datetime.timezone.utc).replace(tzinfo=None), "Provisioning profile has expired"
+          name = profile["Name"]
+          assert "\n" not in name and "\r" not in name, "Invalid profile name"
+          source = pathlib.Path(os.environ["RUNNER_TEMP"]) / "build_pp.mobileprovision"
+          for relative in ["Library/MobileDevice/Provisioning Profiles", "Library/Developer/Xcode/UserData/Provisioning Profiles"]:
+              destination = pathlib.Path.home() / relative
+              destination.mkdir(parents=True, exist_ok=True)
+              shutil.copyfile(source, destination / f"{profile['UUID']}.mobileprovision")
+          with open(os.environ["GITHUB_ENV"], "a") as stream:
+              stream.write(f"IOS_PROVISIONING_PROFILE_NAME={name}\n")
+          PY
 
       - name: 'Validate iOS release configuration'
         run: |

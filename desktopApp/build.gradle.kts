@@ -99,7 +99,11 @@ compose.desktop {
 
             appResourcesRootDir.set(appResources)
 
-            targetFormats(TargetFormat.AppImage, TargetFormat.Exe)
+            val hostOs = System.getProperty("os.name")
+            when {
+                hostOs.startsWith("Windows", ignoreCase = true) -> targetFormats(TargetFormat.Exe)
+                hostOs.startsWith("Linux", ignoreCase = true) -> targetFormats(TargetFormat.AppImage)
+            }
 
             modules(
                 "java.instrument",

@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.composeCompiler)
+    alias(libs.plugins.composeMultiplatform)
 }
 
 kotlin {
@@ -42,6 +43,7 @@ kotlin {
                 implementation(projects.backendShiki)
             }
             implementation(libs.compose.ui)
+            implementation(libs.compose.resources)
             implementation(libs.compose.runtime)
             implementation(libs.coil.compose)
             implementation(libs.kotlin.library)
