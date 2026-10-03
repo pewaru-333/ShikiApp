@@ -1,30 +1,21 @@
 package org.application.shikiapp.shared.di
 
-import org.application.shikiapp.shared.AppConfig
+import org.application.shikiapp.shared.AppServices
 import org.application.shikiapp.shared.utils.data.preferences.Preferences
 
 interface AppModule {
-    val context: PlatformContext
-    val config: AppConfig
     val preferences: Preferences
-}
+    val services: AppServices
 
-object AppContext {
-    private var _app: AppModule? = null
+    companion object {
+        private var _instance: AppModule? = null
+        internal val instance: AppModule
+            get() = checkNotNull(_instance)
 
-    val app: AppModule
-        get() = _app ?: throw NullPointerException()
-
-    fun init(module: AppModule) {
-        if (_app == null) {
-            _app = module
+        fun init(module: AppModule) {
+            if (_instance == null) {
+                _instance = module
+            }
         }
     }
 }
-
-val AppConfig: AppConfig get() = AppContext.app.config
-val Preferences: Preferences get() = AppContext.app.preferences
-
-expect abstract class PlatformContext
-
-expect class AppModuleInitializer(context: PlatformContext, appConfig: AppConfig) : AppModule
