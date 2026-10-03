@@ -1,11 +1,9 @@
 # --- Gradle & Kotlin ---
 .gradle/
 build/
-/build
 .kotlin/
 .history/
 .lh/
-*.sh
 bin/
 
 # --- IDE ---
@@ -16,30 +14,28 @@ bin/
 local.properties
 *.jks
 *.apk
+*.aab
 *.ap_
 *.dex
 output.json
+output-metadata.json
 captures/
-/captures
-.externalNativeBuild
-.cxx
+.externalNativeBuild/
+.cxx/
 signing.properties
 
 # --- iOS (Xcode & CocoaPods) ---
 iosApp/Pods/
-iosApp/Podfile.lock
-iosApp/Flare.xcworkspace/*
-iosApp/Flare.xcodeproj/*
-!iosApp/Flare.xcodeproj/project.pbxproj
-shared/shared.podspec
 DerivedData/
+xcuserdata/
 *.moved-aside
 *.xcuserstate
+*.ipa
+*.xcarchive/
+*.dSYM/
+*.xcresult/
 
 # --- DESKTOP (Compose for Desktop / JVM) ---
-/composeApp/build/compose/binaries/
-/composeApp/build/compose/tmp/
-
 *.exe
 *.msi
 *.dmg
@@ -48,11 +44,18 @@ DerivedData/
 *.rpm
 
 *.jar
+!/gradle/wrapper/gradle-wrapper.jar
 *.jlink
+
+# --- Fastlane generated reports ---
+**/fastlane/report.xml
+**/fastlane/Preview.html
 
 # --- СЕРТИФИКАТЫ ---
 .env
 *.p12
+*.p8
+*.mobileprovision
 *.crt
 *.pem
 
