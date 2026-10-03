@@ -17,12 +17,14 @@ class BaseUrlResolverConfig {
     var baseUrlProvider: suspend () -> String = { BLANK }
     var mirrorsProvider: suspend () -> List<String> = { emptyList() }
     var onNewUrl: ((String) -> Unit)? = null
+    var isYggdrasil: () -> Boolean = { false }
 }
 
 val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUrlResolverConfig) {
     val baseUrlProvider = pluginConfig.baseUrlProvider
     val mirrorsProvider = pluginConfig.mirrorsProvider
     val onNewUrl = pluginConfig.onNewUrl
+    val isYggdrasil = pluginConfig.isYggdrasil
 
     val mutex = Mutex()
     var workingUrl: String? = null
@@ -33,7 +35,7 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
             addAll(mirrors)
         }
 
-        val pingClient = createHttpClient(getProxyConfig()) {
+        val pingClient = createHttpClient(getProxyConfig(), YggdrasilConfig(false, emptyList(), null)) {
             expectSuccess = false
             followRedirects = false
 
@@ -75,7 +77,8 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
         if (workingUrl == null) {
             mutex.withLock {
                 if (workingUrl == null) {
-                    workingUrl = resolveUrl(baseUrlProvider(), mirrorsProvider())
+                    workingUrl = if (isYggdrasil()) baseUrlProvider()
+                    else resolveUrl(baseUrlProvider(), mirrorsProvider())
 
                     workingUrl?.let { onNewUrl?.invoke(it) }
                 }
