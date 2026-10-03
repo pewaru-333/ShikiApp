@@ -48,7 +48,7 @@ import androidx.navigationevent.compose.rememberNavigationEventState
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
-import org.application.shikiapp.generated.shikiapp.fragment.Genres
+import org.application.shikiapp.generated.common.fragment.Genres
 import org.application.shikiapp.shared.events.FilterEvent
 import org.application.shikiapp.shared.events.FilterEvent.*
 import org.application.shikiapp.shared.models.states.*
