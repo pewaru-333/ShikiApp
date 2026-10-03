@@ -336,6 +336,9 @@
     <string name="preference_use_proxy">Использовать прокси-сервер</string>
     <string name="preference_use_proxy_summary">Не распространяется на запросы при просмотре эпизодов аниме</string>
 
+    <string name="preference_use_yggdrasil">Использовать Yggdrasil</string>
+    <string name="preference_use_yggdrasil_summary">Используются пользовательские пиры</string>
+
     <!-- Палитра -->
     <string name="palette_default">Стандартная</string>
     <string name="palette_sakura">Сакура</string>
@@ -354,6 +357,7 @@
     <!-- Другое -->
     <string name="blank" />
     <string name="text_base_url_format">Формат: https://хост.домен</string>
+    <string name="text_yggdrasil_peer_format">протокол://хост.домен:порт</string>
     <string name="text_broadcast_message_club">Рассылка</string>
     <string name="text_editing">Редактирование</string>
     <string name="text_empty">Пусто</string>

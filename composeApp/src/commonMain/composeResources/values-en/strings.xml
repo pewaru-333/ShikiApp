@@ -309,6 +309,9 @@
     <string name="preference_use_proxy">Enable proxy server</string>
     <string name="preference_use_proxy_summary">Not applicable to requests when watching anime episodes</string>
 
+    <string name="preference_use_yggdrasil">Enable Yggdrasil</string>
+    <string name="preference_use_yggdrasil_summary">User peers are used</string>
+
     <!-- Палитра -->
     <string name="palette_default">Default</string>
     <string name="palette_sakura">Sakura</string>
@@ -327,6 +330,7 @@
     <!-- Другое -->
     <string name="blank" />
     <string name="text_base_url_format">Format: https://host.domain</string>
+    <string name="text_yggdrasil_peer_format">protocol://host.domain:port</string>
     <string name="text_broadcast_message_club">Broadcast</string>
     <string name="text_editing">Editing</string>
     <string name="text_empty">Empty</string>
