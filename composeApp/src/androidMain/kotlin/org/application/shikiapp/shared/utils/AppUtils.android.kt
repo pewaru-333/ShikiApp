@@ -2,6 +2,7 @@ package org.application.shikiapp.shared.utils
 
 import android.Manifest
 import android.app.LocaleManager
+import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.icu.text.RelativeDateTimeFormatter
@@ -19,7 +20,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.window.DialogProperties
@@ -29,7 +29,6 @@ import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
-import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
 import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
@@ -100,27 +99,31 @@ actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     return Pair(dataManager, permissionState)
 }
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
 actual fun rememberVerifiedDomain(): IDomain {
     val context = LocalContext.current
+    val verified = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || rememberDomainVerification(context)
 
-    var verified by remember { mutableStateOf(context.isAllDomainsVerified()) }
+    return remember(context, verified) {
+        object : IDomain {
+            override val isVerified = verified
+            override fun onSettingsLaunch() = context.openAppLinksSettings()
+        }
+    }
+}
 
-    LifecycleResumeEffect(Unit) {
+@RequiresApi(Build.VERSION_CODES.S)
+@Composable
+private fun rememberDomainVerification(context: Context): Boolean {
+    var verified by remember(context) { mutableStateOf(context.isAllDomainsVerified()) }
+
+    LifecycleResumeEffect(context) {
         verified = context.isAllDomainsVerified()
 
         onPauseOrDispose { }
     }
 
-    return remember(verified) {
-        object : IDomain {
-            override val isVerified: Boolean
-                get() = verified
-
-            override fun onSettingsLaunch() = context.openAppLinksSettings()
-        }
-    }
+    return verified
 }
 
 @Composable
@@ -238,8 +241,6 @@ actual fun formatRelativeDays(daysAgo: Int): String {
         else -> formatter.format(daysAgo.toDouble(), RelativeDateTimeFormatter.Direction.LAST, RelativeDateTimeFormatter.RelativeUnit.DAYS)
     }
 }
-
-actual fun launchAuth(uriHandler: UriHandler) = uriHandler.openUri(ApiRoutes.authUri)
 
 actual fun getFullscreenDialogProperties() = DialogProperties(
     usePlatformDefaultWidth = false,

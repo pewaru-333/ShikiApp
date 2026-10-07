@@ -6,7 +6,6 @@ import androidx.compose.runtime.ProvidedValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.window.DialogProperties
@@ -16,7 +15,6 @@ import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.ibm.icu.text.RelativeDateTimeFormatter
 import com.sun.jna.Platform
-import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
 import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
@@ -172,8 +170,6 @@ actual fun formatRelativeDays(daysAgo: Int): String {
         else -> formatter.format(daysAgo.toDouble(), RelativeDateTimeFormatter.Direction.LAST, RelativeDateTimeFormatter.RelativeUnit.DAYS)
     }
 }
-
-actual fun launchAuth(uriHandler: UriHandler) = uriHandler.openUri(ApiRoutes.authUri)
 
 actual fun getFullscreenDialogProperties() = DialogProperties(
     usePlatformDefaultWidth = false

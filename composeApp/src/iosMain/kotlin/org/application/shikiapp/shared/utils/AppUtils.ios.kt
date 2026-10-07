@@ -3,7 +3,6 @@ package org.application.shikiapp.shared.utils
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.window.DialogProperties
@@ -12,17 +11,13 @@ import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.readValue
 import kotlinx.cinterop.useContents
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.withContext
-import org.application.shikiapp.shared.di.AppConfig
-import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.utils.data.DataManagerIos
 import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
-import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.permissions.rememberPermissionState
 import org.application.shikiapp.shared.utils.ui.HtmlParser
@@ -31,11 +26,8 @@ import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
 import platform.CoreGraphics.CGRectMake
-import platform.CoreGraphics.CGRectZero
 import platform.Foundation.*
 import platform.UIKit.*
-import platform.WebKit.*
-import platform.darwin.NSObject
 import platform.darwin.dispatch_async
 import platform.darwin.dispatch_get_main_queue
 
@@ -272,72 +264,6 @@ actual fun formatRelativeDays(daysAgo: Int): String {
         day = -daysAgo.toLong()
     }
     return formatter.localizedStringFromDateComponents(components)
-}
-
-private class AuthWebViewController : UIViewController(null, null) {
-    @OptIn(ExperimentalForeignApi::class)
-    private val webView = WKWebView(
-        frame = CGRectZero.readValue(),
-        configuration = WKWebViewConfiguration().apply {
-            websiteDataStore = WKWebsiteDataStore.nonPersistentDataStore()
-        }
-    )
-
-    private val delegate = object : NSObject(), WKNavigationDelegateProtocol {
-        override fun webView(
-            webView: WKWebView,
-            decidePolicyForNavigationAction: WKNavigationAction,
-            decisionHandler: (WKNavigationActionPolicy) -> Unit
-        ) {
-            val requestUrl = decidePolicyForNavigationAction.request.URL?.absoluteString
-
-            if (requestUrl != null && requestUrl.startsWith(AppConfig.redirectUri)) {
-                decisionHandler(WKNavigationActionPolicy.WKNavigationActionPolicyCancel)
-
-                dismissViewControllerAnimated(true) {
-                    ExternalUriHandler.onNewUri(requestUrl)
-                }
-
-                return
-            }
-
-            decisionHandler(WKNavigationActionPolicy.WKNavigationActionPolicyAllow)
-        }
-    }
-
-    override fun loadView() {
-        this.view = webView
-    }
-
-    override fun viewDidLoad() {
-        super.viewDidLoad()
-
-        webView.navigationDelegate = delegate
-    }
-
-    fun loadUrl(url: String) {
-        webView.loadRequest(NSURLRequest(NSURL(string = url)))
-    }
-}
-
-actual fun launchAuth(uriHandler: UriHandler) {
-    val window = UIApplication.sharedApplication.windows
-        .filterIsInstance<UIWindow>()
-        .find(UIWindow::isKeyWindow)
-        ?: UIApplication.sharedApplication.keyWindow
-
-    var controller = window?.rootViewController
-    while (controller?.presentedViewController != null) {
-        controller = controller.presentedViewController
-    }
-
-    controller?.presentViewController(
-        animated = true,
-        completion = null,
-        viewControllerToPresent = AuthWebViewController().apply {
-            loadUrl(ApiRoutes.authUri)
-        }
-    )
 }
 
 actual fun getFullscreenDialogProperties() = DialogProperties(

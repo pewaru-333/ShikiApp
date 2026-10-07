@@ -3,7 +3,6 @@ package org.application.shikiapp.shared.utils
 import androidx.compose.material3.ColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.ProvidedValue
-import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.SavedStateHandle
@@ -21,7 +20,6 @@ import coil3.annotation.ExperimentalCoilApi
 import coil3.disk.DiskCache
 import coil3.memory.MemoryCache
 import coil3.network.ktor3.KtorNetworkFetcherFactory
-import coil3.request.CachePolicy
 import coil3.request.crossfade
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.nullable
@@ -53,13 +51,11 @@ fun sharedImageLoader(
         components()
     }
     .crossfade(200)
-    .memoryCachePolicy(CachePolicy.ENABLED)
     .memoryCache {
         MemoryCache.Builder()
             .maxSizePercent(context, 0.25)
             .build()
     }
-    .diskCachePolicy(CachePolicy.ENABLED)
     .diskCache {
         DiskCache.Builder()
             .maxSizeBytes(Preferences.cache.value.toLong() * 1024 * 1024L)
@@ -143,8 +139,6 @@ expect object AppLocale {
     @Composable
     infix fun provides(value: String?): ProvidedValue<*>
 }
-
-expect fun launchAuth(uriHandler: UriHandler)
 
 expect fun fromHtml(text: String?): AnnotatedString
 
