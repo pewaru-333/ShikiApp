@@ -31,12 +31,16 @@ dependencyResolutionManagement {
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "ShikiApp"
-include(":network-api")
-include(":yggdrasil")
-include(":yggdrasil:android-bridge")
 include(":composeApp")
-include(":backend-shiki")
-include(":backend-dark")
 include(":androidApp")
 include(":desktopApp")
 include(":iosApp")
+
+include(":network-api")
+include(":backend-shiki")
+include(":backend-dark")
+
+include(":yggdrasil")
+include(":yggdrasil:android-bridge")
+
+include(":auth-webview-desktop")
