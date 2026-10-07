@@ -1,5 +1,6 @@
 package org.application.shikiapp.shared.utils.ui
 
+import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
@@ -20,30 +21,36 @@ import shikiapp.composeapp.generated.resources.text_no_browser
 
 private class AndroidLinkHandler(private val context: Context) : IAction {
     override fun onOpenLink(url: String) {
-        val intent = Intent(Intent.ACTION_VIEW, ApiRoutes.workingBaseUrl.toUri())
-        val resolveInfo = context.packageManager.run {
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                resolveActivity(intent, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))
-            } else {
-                resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
-            }
-        }
-
-        if (resolveInfo != null) {
-            try {
-                val intent = Intent(Intent.ACTION_VIEW, url.toFullUrl().toUri())
-                    .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    .setPackage(resolveInfo.activityInfo.packageName)
-
-                context.startActivity(intent)
-            } catch (_: Exception) {
-                context.asyncScope.launch {
-                    context.showToast(getString(Res.string.text_error_open_link))
+        try {
+            val intent = Intent(Intent.ACTION_VIEW, ApiRoutes.workingBaseUrl.toUri())
+            val resolveInfo = context.packageManager.run {
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                    resolveActivity(intent, PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_DEFAULT_ONLY.toLong()))
+                } else {
+                    resolveActivity(intent, PackageManager.MATCH_DEFAULT_ONLY)
                 }
             }
-        } else {
+
+            if (resolveInfo == null) {
+                context.asyncScope.launch {
+                    context.showToast(getString(Res.string.text_no_browser))
+                }
+
+                return
+            }
+
+            val browserIntent = Intent(Intent.ACTION_VIEW, url.toFullUrl().toUri())
+                .setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                .setPackage(resolveInfo.activityInfo.packageName)
+
+            context.startActivity(browserIntent)
+        } catch (_: ActivityNotFoundException) {
             context.asyncScope.launch {
                 context.showToast(getString(Res.string.text_no_browser))
+            }
+        } catch (_: Exception) {
+            context.asyncScope.launch {
+                context.showToast(getString(Res.string.text_error_open_link))
             }
         }
     }
