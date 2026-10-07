@@ -20,6 +20,7 @@ import org.application.shikiapp.shared.utils.initVlc
 import org.application.shikiapp.shared.utils.navigation.DesktopDeepLink
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.sharedImageLoader
+import org.application.shikiapp.shared.utils.ui.LocalAuthWebView
 import org.application.shikiapp.shared.utils.ui.LocalWindowManager
 import org.application.shikiapp.shared.utils.ui.rememberWindowManager
 import org.jetbrains.compose.resources.stringResource
@@ -57,7 +58,10 @@ fun main(args: Array<String>) {
             content = {
                 val windowManager = rememberWindowManager(windowState)
 
-                CompositionLocalProvider(LocalWindowManager provides windowManager) {
+                CompositionLocalProvider(
+                    LocalWindowManager provides windowManager,
+                    LocalAuthWebView provides ProductServices.authWebView
+                ) {
                     App()
                 }
 
