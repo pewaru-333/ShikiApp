@@ -1,0 +1,2 @@
+— Added login support for all address options.
+— Fixed a bug that made it impossible to log in to your account on some Android TV devices.
