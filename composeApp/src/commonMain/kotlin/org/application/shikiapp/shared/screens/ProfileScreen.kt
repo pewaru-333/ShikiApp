@@ -1,4 +1,4 @@
-@file:OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterial3ExpressiveApi::class)
+@file:OptIn(ExperimentalMaterial3ExpressiveApi::class)
 
 package org.application.shikiapp.shared.screens
 
@@ -22,10 +22,11 @@ import org.application.shikiapp.shared.network.response.LoginResponse
 import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.ui.theme.Icons
-import org.application.shikiapp.shared.utils.launchAuth
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
+import org.application.shikiapp.shared.utils.rememberToastState
 import org.application.shikiapp.shared.utils.rememberVerifiedDomain
+import org.application.shikiapp.shared.utils.ui.rememberAuthLauncher
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.stringResource
@@ -96,7 +97,9 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
 @Composable
 private fun LoginScreen(onClick: () -> Unit) {
     val uriHandler = LocalUriHandler.current
+    val authLauncher = rememberAuthLauncher(uriHandler)
     val domainHelper = rememberVerifiedDomain()
+    val toast = rememberToastState()
 
     Box(
         modifier = Modifier
@@ -105,7 +108,7 @@ private fun LoginScreen(onClick: () -> Unit) {
     ) {
         IconButtonSettings(onClick)
 
-        if (domainHelper.isVerified) {
+        if (authLauncher.usesWebView || domainHelper.isVerified) {
             Column(
                 modifier = Modifier
                     .align(Alignment.Center)
@@ -113,17 +116,29 @@ private fun LoginScreen(onClick: () -> Unit) {
             ) {
                 Button(
                     modifier = Modifier.fillMaxWidth(),
-                    onClick = { launchAuth(uriHandler) }
+                    enabled = authLauncher.isAvailable && !authLauncher.isLaunching,
+                    onClick = {
+                        try {
+                            authLauncher.launch()
+                        } catch (_: Exception) {
+                            toast.onShow(Res.string.text_error_open_link)
+                        }
+                    }
                 ) {
                     Text(stringResource(Res.string.text_login))
                     VectorIcon(Icons.KeyboardArrowRight)
                 }
 
-                Text(
-                    text = stringResource(Res.string.text_forward_to_browser),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodySmall
-                )
+                if (!authLauncher.isAvailable || !authLauncher.usesWebView) {
+                    Text(
+                        style = MaterialTheme.typography.bodySmall,
+                        textAlign = TextAlign.Center,
+                        text = stringResource(
+                            if (authLauncher.isAvailable) Res.string.text_forward_to_browser
+                            else Res.string.text_forward_to_yggdrasil
+                        )
+                    )
+                }
             }
         } else {
             Column(
