@@ -1,58 +1,77 @@
 <div align="center">
 
-<img src="androidApp/src/main/ic_launcher-playstore.png" width=256px height=256px alt="App icon">
+<img src="androidApp/src/main/ic_launcher-playstore.png" width="160" alt="Логотип ShikiApp">
 
 # ShikiApp
 
-![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/pewaru-333/ShikiApp/total?style=plastic&label=%D0%97%D0%B0%D0%B3%D1%80%D1%83%D0%B7%D0%BA%D0%B8)
-
-Неофициальное мобильное приложение для сайта shikimori.io
+Неофициальный клиент Shikimori
 
 </div>
 
-<div align="center">
+## Скачать
 
-[<img src="RuStore.svg" align="top" alt="Get it on RuStore" height=80px/>](https://www.rustore.ru/catalog/app/org.application.shikiapp)
-[<img src="AppStore.svg" align="top" alt="Get it on AppStore" height=80px/>](https://apps.apple.com/ng/app/shikirip/id6780174945)
+<table>
+  <thead>
+    <tr>
+      <th>Версия</th>
+      <th>Платформы</th>
+      <th>Загрузка</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>
+        <strong>ShikiApp</strong><br>
+        Клиент для <a href="https://shikimori.io">shikimori.io</a>
+      </td>
+      <td>Android<br>Windows<br>Linux</td>
+      <td>
+        <a href="https://www.rustore.ru/catalog/app/org.application.shikiapp"><img src="RuStore.svg" width="111" height="40" align="middle" alt="Скачать в RuStore"></a>&nbsp;<a href="https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp"><img src="IzzyOnDroid.svg" width="136" height="40" align="middle" alt="Скачать в IzzyOnDroid"></a>&nbsp;<a href="https://f-droid.org/packages/org.application.shikiapp/"><img src="F-Droid.svg" width="134" height="40" align="middle" alt="Скачать в F-Droid"></a>
+        <br><br>
+        <a href="https://github.com/pewaru-333/ShikiApp/releases"><img src="Github.svg" height="40" align="middle" alt="Скачать с GitHub Releases"></a>
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <strong>ShikiRip</strong><br>
+        Клиент для <a href="https://shikimori.rip">shikimori.rip</a>
+      </td>
+      <td>Android<br>iOS<br>Windows<br>Linux</td>
+      <td>
+        <a href="https://apps.apple.com/ng/app/shikirip/id6780174945"><img src="AppStore.svg" width="120" height="40" align="middle" alt="Скачать в App Store"></a> <a href="https://github.com/pewaru-333/ShikiApp/releases"><img src="Github.svg" height="40" align="middle" alt="Скачать с GitHub Releases"></a>
+      </td>
+    </tr>
+  </tbody>
+</table>
 
-<br>
+## Возможности
 
-[<img src="IzzyOnDroid.svg" align="top" alt="Get it on IzzyOnDroid" height=80px/>](https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp)
-[<img src="F-Droid.svg" align="top" alt="Get it on F-Droid" height="80px">](https://f-droid.org/packages/org.application.shikiapp/)
-
-</div>
-
-## Функции
-
-* Поиск и просмотр информации об аниме, манге и ранобэ.
-* Поиск и просмотр информации о персонажах и людях.
-* Просмотр расписания выхода серий аниме.
-* Просмотр доступных серий аниме (демонстрационный просмотр).
-* Просмотр и чтение новостей и тем.
-* Просмотр профилей пользователей, клубов и друзей.
-* Просмотр своих диалогов и отправка сообщений другим пользователям.
-* Отправка комментариев, их изменение и удаление.
-* Добавление аниме, манги и ранобэ в свой список и в избранное.
-* Добавление персонажей и людей в избранное.
-* Возможность вступать или выходить в/из клубы (-ов).
+- **Каталог:** поиск и просмотр информации об аниме, манге, ранобэ, персонажах и людях.
+- **Календарь:** расписание выхода серий аниме.
+- **Личные списки:** добавление аниме, манги и ранобэ в свой список, управление избранным.
+- **Сообщество:** просмотр профилей, друзей и клубов, вступление в клубы и выход из них.
+- **Общение:** просмотр диалогов, отправка сообщений, создание, редактирование и удаление комментариев.
+- **Новости:** чтение новостей и тем.
+- **Просмотр:** доступные эпизоды аниме (демонстрационный просмотр).
 
 ## Скриншоты
 
 <div>
 
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.jpg" width="180px" height="360px" alt="Screenshot 1">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.jpg" width="180px" height="360px" alt="Screenshot 2">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.jpg" width="180px" height="360px" alt="Screenshot 3">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04.jpg" width="180px" height="360px" alt="Screenshot 4">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.jpg" width="180px" height="360px" alt="Screenshot 5">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06.jpg" width="180px" height="360px" alt="Screenshot 6">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07.jpg" width="180px" height="360px" alt="Screenshot 7">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/08.jpg" width="180px" height="360px" alt="Screenshot 8">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/09.jpg" width="180px" height="360px" alt="Screenshot 9">
-<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/10.jpg" width="180px" height="360px" alt="Screenshot 10">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/01.jpg" width="180" alt="Скриншот ShikiApp 1">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/02.jpg" width="180" alt="Скриншот ShikiApp 2">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/03.jpg" width="180" alt="Скриншот ShikiApp 3">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/04.jpg" width="180" alt="Скриншот ShikiApp 4">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/05.jpg" width="180" alt="Скриншот ShikiApp 5">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/06.jpg" width="180" alt="Скриншот ShikiApp 6">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/07.jpg" width="180" alt="Скриншот ShikiApp 7">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/08.jpg" width="180" alt="Скриншот ShikiApp 8">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/09.jpg" width="180" alt="Скриншот ShikiApp 9">
+<img src="fastlane/metadata/android/en-US/images/phoneScreenshots/10.jpg" width="180" alt="Скриншот ShikiApp 10">
 
 </div>
 
 ## Покрытие API
 
-Все возможности приложения можно отслеживать здесь — [Покрытие API](https://github.com/users/pewaru-333/projects/7)
+Реализованные возможности API можно отслеживать на
+[доске проекта](https://github.com/users/pewaru-333/projects/7).
