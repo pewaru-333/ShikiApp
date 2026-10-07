@@ -7,6 +7,9 @@ interface YggdrasilClient {
     suspend fun start(peers: List<String>, privateKeyPem: String?)
     suspend fun stop()
 
+    suspend fun startProxy(): Int
+    suspend fun stopProxy()
+
     suspend fun request(
         method: String,
         url: String,
@@ -15,9 +18,3 @@ interface YggdrasilClient {
         timeoutMillis: Long = 60_000L
     ): YggResponse
 }
-
-class YggResponse(
-    val statusCode: Int,
-    val headersJson: String,
-    val body: ByteArray
-)

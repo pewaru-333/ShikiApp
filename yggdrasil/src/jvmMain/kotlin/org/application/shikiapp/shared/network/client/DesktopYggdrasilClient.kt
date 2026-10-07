@@ -51,12 +51,22 @@ internal object DesktopYggdrasilClient : YggdrasilClient {
         }
     }
 
+    override suspend fun startProxy(): Int = withContext(Dispatchers.IO) {
+        native.YggStartProxy().consumeNativeString()?.let { throw IOException(it) }
+        native.YggProxyPort()
+    }
+
+    override suspend fun stopProxy() = withContext(Dispatchers.IO) {
+        native.YggStopProxy().consumeNativeString()?.let { throw IOException(it) }
+        Unit
+    }
+
     override suspend fun request(
         method: String,
         url: String,
         headersJson: String,
         body: ByteArray,
-        timeoutMillis: Long,
+        timeoutMillis: Long
     ): YggResponse = withContext(Dispatchers.IO) {
         body.withNativeMemory { bodyPointer ->
             val responsePointer = native.YggRequest(

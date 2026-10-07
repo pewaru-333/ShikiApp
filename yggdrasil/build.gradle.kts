@@ -4,7 +4,6 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
-// Only this module has native interop to expose to the IDE.
 extra["kotlin.mpp.enableCInteropCommonization"] = "true"
 
 kotlin {

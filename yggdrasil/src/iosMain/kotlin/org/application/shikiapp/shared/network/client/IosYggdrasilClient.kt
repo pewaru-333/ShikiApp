@@ -23,6 +23,9 @@ import platform.Foundation.getBytes
 import yggbridge.ShikiYggbridgeRequest
 import yggbridge.ShikiYggbridgeStart
 import yggbridge.ShikiYggbridgeStop
+import yggbridge.ShikiYggbridgeStartProxy
+import yggbridge.ShikiYggbridgeStopProxy
+import yggbridge.YggbridgeProxyPort
 import yggbridge.YggbridgeAddress
 import yggbridge.YggbridgeIsStarted
 import yggbridge.YggbridgePrivateKeyPEM
@@ -59,7 +62,7 @@ internal object IosYggdrasilClient : YggdrasilClient {
                     val started = ShikiYggbridgeStart(
                         peersJSON = peersJson,
                         savedPrivateKeyPEM = privateKeyPem.orEmpty(),
-                        error = nativeError.ptr,
+                        error = nativeError.ptr
                     )
                     check(started) {
                         nativeError.value?.localizedDescription ?: "Failed to start Yggdrasil"
@@ -72,12 +75,35 @@ internal object IosYggdrasilClient : YggdrasilClient {
     }
 
     @OptIn(BetaInteropApi::class)
+    override suspend fun startProxy(): Int = withContext(Dispatchers.Default) {
+        memScoped {
+            val nativeError = alloc<ObjCObjectVar<NSError?>>()
+            nativeError.value = null
+            check(ShikiYggbridgeStartProxy(nativeError.ptr)) {
+                nativeError.value?.localizedDescription ?: "Failed to start login proxy"
+            }
+            YggbridgeProxyPort().toInt()
+        }
+    }
+
+    @OptIn(BetaInteropApi::class)
+    override suspend fun stopProxy() = withContext(Dispatchers.Default) {
+        memScoped {
+            val nativeError = alloc<ObjCObjectVar<NSError?>>()
+            nativeError.value = null
+            check(ShikiYggbridgeStopProxy(nativeError.ptr)) {
+                nativeError.value?.localizedDescription ?: "Failed to stop login proxy"
+            }
+        }
+    }
+
+    @OptIn(BetaInteropApi::class)
     override suspend fun request(
         method: String,
         url: String,
         headersJson: String,
         body: ByteArray,
-        timeoutMillis: Long,
+        timeoutMillis: Long
     ) = withContext(Dispatchers.Default) {
         memScoped {
             val nativeError = alloc<ObjCObjectVar<NSError?>>()
@@ -89,7 +115,7 @@ internal object IosYggdrasilClient : YggdrasilClient {
                 headersJSON = headersJson,
                 body = body.toNSDataOrNull(),
                 timeoutMillis = timeoutMillis,
-                error = nativeError.ptr,
+                error = nativeError.ptr
             ) ?: error(nativeError.value?.localizedDescription ?: "Yggdrasil request failed")
 
             val responseBody = response.body
@@ -99,7 +125,7 @@ internal object IosYggdrasilClient : YggdrasilClient {
             YggResponse(
                 statusCode = response.statusCode.toInt(),
                 headersJson = response.headers,
-                body = responseBody,
+                body = responseBody
             )
         }
     }
@@ -136,7 +162,7 @@ internal object IosYggdrasilClient : YggdrasilClient {
         return usePinned { pinned ->
             NSData.create(
                 bytes = pinned.addressOf(0),
-                length = size.toULong(),
+                length = size.toULong()
             )
         }
     }
@@ -151,7 +177,7 @@ internal object IosYggdrasilClient : YggdrasilClient {
             result.usePinned { pinned ->
                 getBytes(
                     buffer = pinned.addressOf(0),
-                    length = length,
+                    length = length
                 )
             }
         }

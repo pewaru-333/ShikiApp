@@ -8,6 +8,10 @@ internal interface YggbridgeNative : Library {
 
     fun YggStop(): Pointer?
 
+    fun YggStartProxy(): Pointer?
+    fun YggProxyPort(): Int
+    fun YggStopProxy(): Pointer?
+
     fun YggIsStarted(): Int
 
     fun YggAddress(): Pointer?

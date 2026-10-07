@@ -7,17 +7,29 @@ object BridgeYggdrasilTransport : YggdrasilTransport {
     override fun createClient(
         config: YggdrasilConfig,
         onPrivateKeyGenerated: (String) -> Unit,
-        block: HttpClientConfig<*>.() -> Unit,
+        block: HttpClientConfig<*>.() -> Unit
     ): HttpClient = HttpClient(
         YggdrasilEngine(
             yggdrasil = platformYggdrasilClient(),
             peers = config.peers,
             privateKeyPem = config.privateKeyPem,
-            onPrivateKeyGenerated = onPrivateKeyGenerated,
+            onPrivateKeyGenerated = onPrivateKeyGenerated
         )
     ) {
         block()
     }
-}
 
-internal expect fun platformYggdrasilClient(): YggdrasilClient
+    override suspend fun startProxy(config: YggdrasilConfig, onPrivateKeyGenerated: (String) -> Unit): Int {
+        val client = platformYggdrasilClient()
+        client.start(config.peers, config.privateKeyPem)
+
+        val privateKey = client.privateKeyPem()
+        if (privateKey.isNotBlank() && privateKey != config.privateKeyPem) {
+            onPrivateKeyGenerated(privateKey)
+        }
+
+        return client.startProxy()
+    }
+
+    override suspend fun stopProxy() = platformYggdrasilClient().stopProxy()
+}

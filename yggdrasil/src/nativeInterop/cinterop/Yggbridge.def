@@ -19,6 +19,20 @@ static inline YggbridgeResponse *ShikiYggbridgeRequest(NSString *method, NSStrin
     return result;
 }
 
+static inline BOOL ShikiYggbridgeStartProxy(void *error) {
+    NSError *nativeError = nil;
+    BOOL result = YggbridgeStartProxy(&nativeError);
+    if (error) *((NSError * __unsafe_unretained *)error) = nativeError;
+    return result;
+}
+
+static inline BOOL ShikiYggbridgeStopProxy(void *error) {
+    NSError *nativeError = nil;
+    BOOL result = YggbridgeStopProxy(&nativeError);
+    if (error) *((NSError * __unsafe_unretained *)error) = nativeError;
+    return result;
+}
+
 static inline BOOL ShikiYggbridgeStop(void *error) {
     NSError *nativeError = nil;
     BOOL result = YggbridgeStop(&nativeError);

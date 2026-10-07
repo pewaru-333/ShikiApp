@@ -38,19 +38,28 @@ internal object AndroidYggdrasilClient : YggdrasilClient {
         }
     }
 
+    override suspend fun startProxy(): Int = withContext(Dispatchers.IO) {
+        Yggbridge.startProxy()
+        Yggbridge.proxyPort().toInt()
+    }
+
+    override suspend fun stopProxy() = withContext(Dispatchers.IO) {
+        Yggbridge.stopProxy()
+    }
+
     override suspend fun request(
         method: String,
         url: String,
         headersJson: String,
         body: ByteArray,
-        timeoutMillis: Long,
+        timeoutMillis: Long
     ) = withContext(Dispatchers.IO) {
         val response = Yggbridge.request(method, url, headersJson, body, timeoutMillis)
 
         YggResponse(
             statusCode = response.statusCode.toInt(),
             headersJson = response.headers.orEmpty(),
-            body = response.body ?: byteArrayOf(),
+            body = response.body ?: byteArrayOf()
         )
     }
 
