@@ -18,28 +18,31 @@ import org.jetbrains.compose.resources.getString
 import shikiapp.composeapp.generated.resources.Res
 import shikiapp.composeapp.generated.resources.text_error
 
-@RequiresApi(Build.VERSION_CODES.S)
 fun Context.openAppLinksSettings() {
-    try {
-        val intent = Intent(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S &&
+        openSettings(Settings.ACTION_APP_OPEN_BY_DEFAULT_SETTINGS)
+    ) return
 
+    if (openSettings(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)) return
+
+    asyncScope.launch {
+        showToast(getString(Res.string.text_error))
+    }
+}
+
+private fun Context.openSettings(action: String): Boolean {
+    val intent = Intent(action).apply {
+        data = Uri.fromParts("package", packageName, null)
+        flags = Intent.FLAG_ACTIVITY_NEW_TASK
+    }
+
+    return try {
         startActivity(intent)
-    } catch (_: Exception) {
-        val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-            data = Uri.fromParts("package", packageName, null)
-            flags = Intent.FLAG_ACTIVITY_NEW_TASK
-        }
-
-        try {
-            startActivity(intent)
-        } catch (_: ActivityNotFoundException) {
-            asyncScope.launch {
-                showToast(getString(Res.string.text_error))
-            }
-        }
+        true
+    } catch (_: ActivityNotFoundException) {
+        false
+    } catch (_: SecurityException) {
+        false
     }
 }
 
@@ -51,16 +54,18 @@ private val Context.domainVerificationState: DomainVerificationUserState?
 @RequiresApi(Build.VERSION_CODES.S)
 fun Context.isAllDomainsVerified(): Boolean {
     val state = domainVerificationState ?: return false
+    val domains = state.hostToStateMap
 
-    return state.isLinkHandlingAllowed &&
-            state.hostToStateMap.values.all { it == DomainVerificationUserState.DOMAIN_STATE_SELECTED }
+    return state.isLinkHandlingAllowed && domains.isNotEmpty() && domains.values.all {
+        it == DomainVerificationUserState.DOMAIN_STATE_SELECTED || it == DomainVerificationUserState.DOMAIN_STATE_VERIFIED
+    }
 }
 
 @RequiresApi(Build.VERSION_CODES.S)
-fun Context.getLinkDomains() = domainVerificationState?.hostToStateMap.orEmpty()
+fun Context.getLinkDomains(): Map<String, Int> = domainVerificationState?.hostToStateMap.orEmpty()
 
 @RequiresApi(Build.VERSION_CODES.S)
-fun Context.isLinkHandlingAllowed() = domainVerificationState?.isLinkHandlingAllowed ?: false
+fun Context.isLinkHandlingAllowed(): Boolean = domainVerificationState?.isLinkHandlingAllowed ?: false
 
 fun Context.showToast(text: String, length: Int = Toast.LENGTH_SHORT) =
     Toast.makeText(this, text, length).show()
