@@ -11,7 +11,7 @@ import org.application.shikiapp.shared.network.client.YggdrasilTransport
 object ProductServices {
     private val config = AppConfig(
         baseUrl = "https://shikimori.rip",
-        urlMirrors = listOf("https://shikimori.live", "https://shikimori.net"),
+        urlMirrors = listOf("https://shikimori.online", "https://shikimori.net"),
         userAgent = "DarkShiki",
         clientId = "d8W9rjFLuEZKx_dYXzJ42nGvsUckx4vfhMu5Liyr7MY",
         clientSecret = "Sog_CyJs19eCuFbIvg06Gb8zu8AMXZE8VI2CKLN1td4",
