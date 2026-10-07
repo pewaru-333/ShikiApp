@@ -1,7 +1,8 @@
 package org.application.shikiapp.shared.screens
 
+import android.content.pm.verify.domain.DomainVerificationUserState.DOMAIN_STATE_SELECTED
+import android.content.pm.verify.domain.DomainVerificationUserState.DOMAIN_STATE_VERIFIED
 import android.os.Build
-import androidx.annotation.RequiresApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
@@ -43,148 +44,148 @@ actual fun LazyListScope.deeplinkSetting(isEnabled: Boolean, onClick: () -> Unit
         summary = { if (!isEnabled) Text(stringResource(Res.string.preference_deep_link_explain_disabled)) }
     )
 
-@RequiresApi(Build.VERSION_CODES.S)
 @Composable
-actual fun DeeplinkScreen(isVisible: Boolean, onBack: () -> Unit) =
-    AnimatedDialogScreen(isVisible, BLANK, onBack) { values ->
-        val context = LocalContext.current
-        val isCompact = rememberWindowSize().isCompact
+actual fun DeeplinkScreen(isVisible: Boolean, onBack: () -> Unit) {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+        AnimatedDialogScreen(isVisible, BLANK, onBack) { values ->
+            val context = LocalContext.current
+            val isCompact = rememberWindowSize().isCompact
 
-        var links by remember(context) { mutableStateOf(context.getLinkDomains()) }
-        var isAllowed by remember(context) { mutableStateOf(context.isLinkHandlingAllowed()) }
+            var links by remember(context) { mutableStateOf(context.getLinkDomains()) }
+            var isAllowed by remember(context) { mutableStateOf(context.isLinkHandlingAllowed()) }
 
-        LifecycleResumeEffect(Unit) {
-            links = context.getLinkDomains()
-            isAllowed = context.isLinkHandlingAllowed()
+            LifecycleResumeEffect(context) {
+                links = context.getLinkDomains()
+                isAllowed = context.isLinkHandlingAllowed()
 
-            onPauseOrDispose { }
-        }
+                onPauseOrDispose { }
+            }
 
-        @Composable
-        fun LocalChip(enabled: Boolean) {
-            val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
+            @Composable
+            fun LocalChip(enabled: Boolean) {
+                val isDark = MaterialTheme.colorScheme.surface.luminance() < 0.5f
 
-            val greenContainer = if (isDark) Color(0xFF0D5322) else Color(0xFFC4EED0)
-            val onGreenContainer = if (isDark) Color(0xFFC4EED0) else Color(0xFF043914)
+                val greenContainer = if (isDark) Color(0xFF0D5322) else Color(0xFFC4EED0)
+                val onGreenContainer = if (isDark) Color(0xFFC4EED0) else Color(0xFF043914)
 
-            val label = stringResource(
-                resource = if (enabled) Res.string.text_turned_on
-                else Res.string.text_turned_off
-            )
+                val label = stringResource(
+                    resource = if (enabled) Res.string.text_turned_on
+                    else Res.string.text_turned_off
+                )
 
-            val colors = SuggestionChipDefaults.suggestionChipColors(
-                containerColor = if (enabled) greenContainer
-                else MaterialTheme.colorScheme.errorContainer,
-                labelColor = if (enabled) onGreenContainer
-                else MaterialTheme.colorScheme.onErrorContainer,
-            )
+                val colors = SuggestionChipDefaults.suggestionChipColors(
+                    containerColor = if (enabled) greenContainer
+                    else MaterialTheme.colorScheme.errorContainer,
+                    labelColor = if (enabled) onGreenContainer
+                    else MaterialTheme.colorScheme.onErrorContainer,
+                )
 
-            SuggestionChip(
-                border = null,
-                onClick = {},
-                label = { Text(label) },
-                colors = colors
-            )
-        }
+                SuggestionChip(
+                    border = null,
+                    onClick = {},
+                    label = { Text(label) },
+                    colors = colors
+                )
+            }
 
-        Box(
-            contentAlignment = Alignment.Center,
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(values)
-        ) {
-            Column(
+            Box(
+                contentAlignment = Alignment.Center,
                 modifier = Modifier
-                    .fillMaxHeight()
-                    .widthIn(max = 800.dp)
-                    .padding(horizontal = if (isCompact) 16.dp else 32.dp)
+                    .fillMaxSize()
+                    .padding(values)
             ) {
                 Column(
-                    horizontalAlignment = Alignment.CenterHorizontally,
                     modifier = Modifier
-                        .weight(1f)
-                        .verticalScroll(rememberScrollState())
+                        .fillMaxHeight()
+                        .widthIn(max = 800.dp)
+                        .padding(horizontal = if (isCompact) 16.dp else 32.dp)
                 ) {
-                    Box(
-                        contentAlignment = Alignment.Center,
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .size(80.dp)
-                            .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                            .weight(1f)
+                            .verticalScroll(rememberScrollState())
                     ) {
-                        VectorIcon(
-                            imageVector = Icons.Website,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(56.dp)
-                        )
-                    }
-
-                    Spacer(Modifier.height(16.dp))
-
-                    Text(
-                        text = stringResource(Res.string.text_app_links_support),
-                        style = MaterialTheme.typography.titleLarge.copy(
-                            fontWeight = FontWeight.Bold
-                        )
-                    )
-
-                    Spacer(Modifier.height(8.dp))
-
-                    LocalChip(isAllowed)
-
-                    Spacer(Modifier.height(32.dp))
-
-                    Text(
-                        text = stringResource(Res.string.text_app_links_domain_status),
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.align(Alignment.Start)
-                    )
-
-                    Spacer(Modifier.height(12.dp))
-
-                    Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
-                        links.entries.forEachIndexed { index, (key, value) ->
-                            ListItem(
-                                colors = ListItemDefaults.colors(
-                                    containerColor = Color.Transparent
-                                ),
-                                modifier = Modifier
-                                    .clip(MaterialTheme.shapes.medium)
-                                    .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
-                                headlineContent = {
-                                    Text(
-                                        text = key,
-                                        maxLines = 1,
-                                        overflow = TextOverflow.Ellipsis
-                                    )
-                                },
-                                leadingContent = {
-                                    Text(
-                                        text = "${index + 1}",
-                                        style = MaterialTheme.typography.labelLarge,
-                                        color = MaterialTheme.colorScheme.outline
-                                    )
-                                },
-                                trailingContent = {
-                                    LocalChip(value == 1)
-                                }
+                        Box(
+                            contentAlignment = Alignment.Center,
+                            modifier = Modifier
+                                .size(80.dp)
+                                .border(1.dp, MaterialTheme.colorScheme.outlineVariant, CircleShape)
+                        ) {
+                            VectorIcon(
+                                imageVector = Icons.Website,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(56.dp)
                             )
                         }
-                    }
-                }
 
-                Box(
-                    contentAlignment = if (isCompact) Alignment.Center else Alignment.CenterEnd,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 16.dp)
-                ) {
-                    FilledTonalButton(
-                        onClick = context::openAppLinksSettings,
-                        modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier,
-                        content = { Text(stringResource(Res.string.text_to_settings)) }
-                    )
+                        Spacer(Modifier.height(16.dp))
+
+                        Text(
+                            text = stringResource(Res.string.text_app_links_support),
+                            style = MaterialTheme.typography.titleLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            )
+                        )
+
+                        Spacer(Modifier.height(8.dp))
+
+                        LocalChip(isAllowed)
+
+                        Spacer(Modifier.height(32.dp))
+
+                        Text(
+                            text = stringResource(Res.string.text_app_links_domain_status),
+                            style = MaterialTheme.typography.titleMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.align(Alignment.Start)
+                        )
+
+                        Spacer(Modifier.height(12.dp))
+
+                        Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(12.dp)) {
+                            links.entries.forEachIndexed { index, (key, value) ->
+                                ListItem(
+                                    colors = ListItemDefaults.colors(Color.Transparent),
+                                    modifier = Modifier
+                                        .clip(MaterialTheme.shapes.medium)
+                                        .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium),
+                                    headlineContent = {
+                                        Text(
+                                            text = key,
+                                            maxLines = 1,
+                                            overflow = TextOverflow.Ellipsis
+                                        )
+                                    },
+                                    leadingContent = {
+                                        Text(
+                                            text = "${index + 1}",
+                                            style = MaterialTheme.typography.labelLarge,
+                                            color = MaterialTheme.colorScheme.outline
+                                        )
+                                    },
+                                    trailingContent = {
+                                        LocalChip(value == DOMAIN_STATE_SELECTED || value == DOMAIN_STATE_VERIFIED)
+                                    }
+                                )
+                            }
+                        }
+                    }
+
+                    Box(
+                        contentAlignment = if (isCompact) Alignment.Center else Alignment.CenterEnd,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 16.dp)
+                    ) {
+                        FilledTonalButton(
+                            onClick = context::openAppLinksSettings,
+                            modifier = if (isCompact) Modifier.fillMaxWidth() else Modifier,
+                            content = { Text(stringResource(Res.string.text_to_settings)) }
+                        )
+                    }
                 }
             }
         }
     }
+}
