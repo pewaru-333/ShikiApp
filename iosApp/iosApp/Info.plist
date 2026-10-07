@@ -27,6 +27,18 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Yggdrasil encrypts transport; its login endpoint uses HTTP on this IPv6 address. -->
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSExceptionDomains</key>
+		<dict>
+			<key>201:601c:da30:ddb7:77a0:9bb0:135f:b1e2</key>
+			<dict>
+				<key>NSExceptionAllowsInsecureHTTPLoads</key>
+				<true/>
+			</dict>
+		</dict>
+	</dict>
 	<key>ITSAppUsesNonExemptEncryption</key>
 	<false/>
 	<key>UIBackgroundModes</key>
