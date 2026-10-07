@@ -178,7 +178,7 @@ jobs:
       - run: chmod +x gradlew
 
       - name: 'Build Linux files'
-        run: ./gradlew :desktopApp:createReleaseDistributable -PuserAgent=${{ matrix.flavor }}
+        run: ./gradlew :desktopApp:createReleaseDistributable -PuserAgent=${{ matrix.flavor }} --refresh-dependencies
 
       - name: 'Package Portable Linux Build'
         run: |
