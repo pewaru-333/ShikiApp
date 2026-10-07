@@ -377,6 +377,7 @@
 
     <string name="text_add_app_links">To enable login, add supported links in the settings</string>
     <string name="text_forward_to_browser">You will be redirected to the login page in your browser</string>
+    <string name="text_forward_to_yggdrasil">Yggdrasil login requires at least iOS 17</string>
     <string name="text_login_to_modify_lists">To manage your lists, you need to log in</string>
     <string name="text_login_to_animelib">To use AnimeLib source, you need to log in</string>
 

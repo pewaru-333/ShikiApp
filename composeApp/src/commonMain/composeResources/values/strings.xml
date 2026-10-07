@@ -404,6 +404,7 @@
 
     <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
+    <string name="text_forward_to_yggdrasil">Вход с использованием Yggdrasil возможен только с iOS 17</string>
     <string name="text_login_to_modify_lists">Для работы со списками необходимо осуществить вход в приложение</string>
     <string name="text_login_to_animelib">Для просмотра аниме из AnimeLib необходимо авторизоваться</string>
 
