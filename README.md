@@ -27,7 +27,7 @@
       <td>Android<br>Windows<br>Linux</td>
       <td>
         <a href="https://www.rustore.ru/catalog/app/org.application.shikiapp"><img src="RuStore.svg" width="111" height="40" align="middle" alt="Скачать в RuStore"></a>&nbsp;<a href="https://apt.izzysoft.de/fdroid/index/apk/org.application.shikiapp"><img src="IzzyOnDroid.svg" width="136" height="40" align="middle" alt="Скачать в IzzyOnDroid"></a>&nbsp;<a href="https://f-droid.org/packages/org.application.shikiapp/"><img src="F-Droid.svg" width="134" height="40" align="middle" alt="Скачать в F-Droid"></a>
-        <a href="https://github.com/pewaru-333/ShikiApp/releases"><img src="Github.svg" height="120" align="middle" alt="Скачать с GitHub Releases"></a>
+        <a href="https://github.com/pewaru-333/ShikiApp/releases"><img src="Github.svg" width="40" height="40" align="middle" alt="Скачать с GitHub Releases"></a>
       </td>
     </tr>
     <tr>
@@ -37,7 +37,7 @@
       </td>
       <td>Android<br>iOS<br>Windows<br>Linux</td>
       <td>
-        <a href="https://apps.apple.com/ng/app/shikirip/id6780174945"><img src="AppStore.svg" width="120" height="40" align="middle" alt="Скачать в App Store"></a> <a href="https://github.com/pewaru-333/ShikiApp/releases"><img src="Github.svg" height="120" align="middle" alt="Скачать с GitHub Releases"></a>
+        <a href="https://apps.apple.com/ng/app/shikirip/id6780174945"><img src="AppStore.svg" width="120" height="40" align="middle" alt="Скачать в App Store"></a> <a href="https://github.com/pewaru-333/ShikiApp/releases"><img src="Github.svg" width="40" height="40" align="middle" alt="Скачать с GitHub Releases"></a>
       </td>
     </tr>
   </tbody>
@@ -72,5 +72,4 @@
 
 ## Покрытие API
 
-Реализованные возможности API можно отслеживать на
-[доске проекта](https://github.com/users/pewaru-333/projects/7).
+Реализованные возможности API можно отслеживать на [доске проекта](https://github.com/users/pewaru-333/projects/7).
