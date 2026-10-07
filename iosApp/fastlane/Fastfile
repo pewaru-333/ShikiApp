@@ -57,7 +57,8 @@ platform :ios do
   lane :deploy_ios_release do
     version_code = read_gradle_property("APP_VERSION_CODE")
     changelog_path = File.expand_path("../../fastlane/metadata/android/ru/changelogs/#{version_code}.txt", __dir__)
-    changelog_text = File.exist?(changelog_path) ? File.read(changelog_path) : "— Это техническое обновление без изменений в интерфейсе."
+    changelog_text = File.exist?(changelog_path) ? File.read(changelog_path).strip : ""
+    changelog_text = "— Это техническое обновление без изменений в интерфейсе." if changelog_text.empty()
 
     app_store_connect_api_key(
       key_id: ENV["APP_STORE_CONNECT_API_KEY_KEY_ID"],
@@ -76,7 +77,8 @@ platform :ios do
       skip_screenshots: true,
       run_precheck_before_submit: false,
       release_notes: {
-        "default" => changelog_text
+        "ru" => changelog_text,
+        "en-US" => changelog_text
       }
     )
   end
