@@ -1,0 +1,21 @@
+language = Objective-C
+modules = WebKit
+package = org.application.shikiapp.shared.webviewproxy
+linkerOpts = -framework WebKit -framework Network
+
+---
+#import <WebKit/WebKit.h>
+#import <Network/Network.h>
+#include <stdio.h>
+
+static inline BOOL ShikiConfigureWebViewProxy(WKWebViewConfiguration *configuration, int port) {
+    if (@available(iOS 17.0, *)) {
+        char portString[6];
+        snprintf(portString, sizeof(portString), "%d", port);
+        nw_endpoint_t endpoint = nw_endpoint_create_host("127.0.0.1", portString);
+        nw_proxy_config_t proxy = nw_proxy_config_create_http_connect(endpoint, NULL);
+        configuration.websiteDataStore.proxyConfigurations = @[(id)proxy];
+        return YES;
+    }
+    return NO;
+}

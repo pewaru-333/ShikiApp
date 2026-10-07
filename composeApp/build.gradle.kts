@@ -7,6 +7,8 @@ plugins {
     alias(libs.plugins.kotlinSerialization)
 }
 
+extra["kotlin.mpp.enableCInteropCommonization"] = "true"
+
 apollo {
     service("Common") {
         srcDir("src/commonMain/graphql/shared")
@@ -44,8 +46,14 @@ kotlin {
         }
     }
 
-    iosArm64()
-    iosSimulatorArm64()
+    listOf(iosArm64(), iosSimulatorArm64()).forEach { target ->
+        if (System.getProperty("os.name").startsWith("Mac")) {
+            target.compilations.getByName("main").cinterops.create("WebViewProxy") {
+                definitionFile.set(project.file("src/nativeInterop/cinterop/WebViewProxy.def"))
+                compilerOpts("-fmodules")
+            }
+        }
+    }
 
     sourceSets {
         commonMain {
@@ -90,6 +98,7 @@ kotlin {
         androidMain {
             dependencies {
                 implementation(libs.androidx.activity.compose)
+                implementation(libs.androidx.webkit)
 
                 implementation(libs.bundles.media3)
                 implementation(libs.libass) // Subtitles (.ass)

@@ -34,6 +34,9 @@ object Network {
         )
     }
 
+    val isYggdrasilEnabled: Boolean
+        get() = yggdrasil.enabled
+
     val baseClient: HttpClient by lazy {
         val proxy = if (yggdrasil.enabled) {
             null
@@ -161,9 +164,7 @@ object Network {
     val profile by lazy { Profile(client) }
     val topics by lazy { Topics(client) }
     val content by lazy { Content(client) }
-
     val animeRepository get() = AppServices.animeRepository
-
     val mangaRepository get() = AppServices.mangaRepository
 
     val characterRepository get() = AppServices.characterRepository
@@ -175,4 +176,23 @@ object Network {
         user = Preferences.proxyUsername.value,
         pass = Preferences.proxyPassword.value
     )
+
+    suspend fun startAuthProxy(): Int? {
+        if (!isYggdrasilEnabled) return null
+
+        val transport = checkNotNull(AppServices.yggdrasilTransport) // точно не null по конфигурации
+        val port = transport.startProxy(yggdrasil) { privateKey ->
+            Preferences.yggdrasilPrivateKey.value = privateKey
+        }
+
+        ApiRoutes.workingBaseUrl = checkNotNull(AppConfig.yggdrasilAddress) // точно не null по конфигурации
+
+        return port
+    }
+
+    suspend fun stopAuthProxy() {
+        if (isYggdrasilEnabled) {
+            AppServices.yggdrasilTransport?.stopProxy()
+        }
+    }
 }

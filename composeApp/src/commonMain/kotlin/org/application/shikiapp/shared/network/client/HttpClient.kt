@@ -8,13 +8,13 @@ import org.application.shikiapp.shared.di.Preferences
 internal fun createHttpClient(
     proxyConfig: ProxyConfig?,
     yggdrasilConfig: YggdrasilConfig,
-    block: HttpClientConfig<*>.() -> Unit,
+    block: HttpClientConfig<*>.() -> Unit
 ): HttpClient {
     if (!yggdrasilConfig.enabled) {
         return createPlatformHttpClient(proxyConfig, block)
     }
 
-    val transport = checkNotNull(AppServices.yggdrasilTransport)
+    val transport = checkNotNull(AppServices.yggdrasilTransport) // точно не null по конфигурации
     return transport.createClient(
         config = yggdrasilConfig,
         onPrivateKeyGenerated = { Preferences.yggdrasilPrivateKey.value = it },
@@ -24,5 +24,5 @@ internal fun createHttpClient(
 
 internal expect fun createPlatformHttpClient(
     proxyConfig: ProxyConfig?,
-    block: HttpClientConfig<*>.() -> Unit,
+    block: HttpClientConfig<*>.() -> Unit
 ): HttpClient

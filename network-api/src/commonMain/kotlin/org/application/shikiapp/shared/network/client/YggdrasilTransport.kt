@@ -7,12 +7,9 @@ interface YggdrasilTransport {
     fun createClient(
         config: YggdrasilConfig,
         onPrivateKeyGenerated: (String) -> Unit,
-        block: HttpClientConfig<*>.() -> Unit,
+        block: HttpClientConfig<*>.() -> Unit
     ): HttpClient
-}
 
-data class YggdrasilConfig(
-    val enabled: Boolean,
-    val peers: List<String>,
-    val privateKeyPem: String?,
-)
+    suspend fun startProxy(config: YggdrasilConfig, onPrivateKeyGenerated: (String) -> Unit): Int
+    suspend fun stopProxy()
+}

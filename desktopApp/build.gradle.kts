@@ -22,8 +22,13 @@ kotlin {
 
 dependencies {
     implementation(projects.composeApp)
-    if (isShikiRip) { implementation(projects.backendDark); implementation(projects.yggdrasil) }
-    else implementation(projects.backendShiki)
+    if (isShikiRip) {
+        implementation(projects.backendDark)
+        implementation(projects.yggdrasil)
+        implementation(projects.authWebviewDesktop)
+    } else {
+        implementation(projects.backendShiki)
+    }
 
     implementation(libs.compose.resources)
     implementation(compose.desktop.currentOs)
@@ -113,18 +118,19 @@ compose.desktop {
                 "jdk.unsupported"
             )
 
-            windows {
-                val icon = if (appName == "ShikiApp") "src/main/resources/icons/icon.ico"
-                else "src/main/resources/icons/icon_rip.ico"
+            if (isShikiRip) {
+                modules("jdk.jsobject", "jdk.xml.dom", "jdk.unsupported.desktop")
+            }
 
-                iconFile.set(project.file(icon))
+            val sourceSet = if (isShikiRip) "DarkShiki" else "ShikiApp"
+            val icons = layout.projectDirectory.dir("src/$sourceSet/packaging/icons")
+
+            windows {
+                iconFile.set(icons.file("icon.ico"))
             }
 
             linux {
-                val icon = if (appName == "ShikiApp") "src/main/resources/icons/icon.png"
-                else "src/main/resources/icons/icon_rip.png"
-
-                iconFile.set(project.file(icon))
+                iconFile.set(icons.file("icon.png"))
             }
         }
 

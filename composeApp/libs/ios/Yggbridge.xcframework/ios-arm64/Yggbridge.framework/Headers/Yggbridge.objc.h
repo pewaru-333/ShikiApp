@@ -30,6 +30,8 @@ FOUNDATION_EXPORT BOOL YggbridgeIsStarted(void);
 
 FOUNDATION_EXPORT NSString* _Nonnull YggbridgePrivateKeyPEM(void);
 
+FOUNDATION_EXPORT long YggbridgeProxyPort(void);
+
 /**
  * Request performs one complete buffered HTTP request.
 
@@ -57,6 +59,14 @@ across the Java/Go boundary.
  */
 FOUNDATION_EXPORT BOOL YggbridgeStart(NSString* _Nullable peersJSON, NSString* _Nullable savedPrivateKeyPEM, NSError* _Nullable* _Nullable error);
 
+/**
+ * StartProxy starts a loopback-only HTTP proxy using the embedded network.
+It forwards HTTP and tunnels HTTPS without terminating the browser's TLS.
+ */
+FOUNDATION_EXPORT BOOL YggbridgeStartProxy(NSError* _Nullable* _Nullable error);
+
 FOUNDATION_EXPORT BOOL YggbridgeStop(NSError* _Nullable* _Nullable error);
+
+FOUNDATION_EXPORT BOOL YggbridgeStopProxy(NSError* _Nullable* _Nullable error);
 
 #endif
