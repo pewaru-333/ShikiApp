@@ -24,6 +24,7 @@ import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.async
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.client.Network
@@ -607,8 +608,10 @@ private fun TorrentSettings(isVisible: Boolean, onBack: () -> Unit) =
                             testResultTorrServer = null
                             scope.launch {
                                 val parser = TorrServerParser.getInstance()
-                                testResultTorrServer = parser.testTorrServer(torrServerUrl)
-                                testResultJackett = parser.testJackett(jackettUrl, jackettApiKey)
+                                val tsDef = async { parser.testTorrServer(torrServerUrl) }
+                                val jkDef = async { parser.testJackett(jackettUrl, jackettApiKey) }
+                                testResultTorrServer = tsDef.await()
+                                testResultJackett = jkDef.await()
                                 isTesting = false
                             }
                         },

@@ -1,6 +1,7 @@
 package org.application.shikiapp.shared.network.parser
 
 import io.ktor.client.*
+import io.ktor.client.plugins.*
 import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
@@ -8,6 +9,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.withTimeoutOrNull
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.ui.EpisodeModel
 import org.application.shikiapp.shared.models.ui.PlaylistResult
@@ -100,15 +102,22 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
         }
     }
 
-    suspend fun getTorrentEpisodes(torrentLink: String): List<EpisodeModel> {
+    suspend fun getTorrentEpisodes(torrentLink: String): List<EpisodeModel> = withTimeoutOrNull(20_000L) {
         val torrServerBase = fixUrl(Preferences.torrServerUrl.value, "http")
-        if (torrServerBase.isBlank() || torrentLink.isBlank()) return emptyList()
+        if (torrServerBase.isBlank() || torrentLink.isBlank()) return@withTimeoutOrNull emptyList()
 
         val normalizedLink = normalizeLink(torrentLink)
 
         val statUrl = "$torrServerBase/stream?link=${normalizedLink.encodeURLParameter()}&stat"
-        val response = runCatching { client.get(statUrl) }.getOrNull() ?: return emptyList()
-        if (response.status != HttpStatusCode.OK) return emptyList()
+        val response = runCatching {
+            client.get(statUrl) {
+                timeout {
+                    requestTimeoutMillis = 15_000
+                    connectTimeoutMillis = 5_000
+                }
+            }
+        }.getOrNull() ?: return@withTimeoutOrNull emptyList()
+        if (response.status != HttpStatusCode.OK) return@withTimeoutOrNull emptyList()
         val responseText = response.bodyAsText()
         val status = basicJson.decodeFromString<TorrServerStatus>(responseText)
 
@@ -131,7 +140,7 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
             }
         } else videoFiles
 
-        if (effectiveVideoFiles.isEmpty()) return emptyList()
+        if (effectiveVideoFiles.isEmpty()) return@withTimeoutOrNull emptyList()
 
         val subFiles = status.fileStats.filter { file ->
             val ext = file.path.substringAfterLast('.', BLANK).lowercase()
@@ -162,7 +171,7 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
             sortedFiles
         }
 
-        return finalEpisodes.map { pf ->
+        finalEpisodes.map { pf ->
             val cleanName = pf.fileName.replace('_', ' ').trim()
             val streamUrl = "$torrServerBase/stream/${pf.file.path.substringAfterLast('/').encodeURLPath()}?link=$hash&index=${pf.file.id}&play"
 
@@ -185,7 +194,7 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
                 subtitles = matchingSubs
             )
         }
-    }
+    } ?: emptyList()
 
     private data class ParsedFile(
         val file: TorrServerFileStat,
@@ -193,7 +202,7 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
         val episodeNumber: Int
     )
 
-    private suspend fun queryJackett(baseUrlInput: String, apiKey: String, query: String): List<JackettTorrentItem> {
+    private suspend fun queryJackett(baseUrlInput: String, apiKey: String, query: String): List<JackettTorrentItem> = withTimeoutOrNull(12_000L) {
         val baseUrl = fixUrl(baseUrlInput, "https")
         val baseVariants = if (baseUrl.startsWith("http://") && !baseUrl.contains("127.0.0.1") && !baseUrl.contains("192.168.")) {
             listOf(baseUrl.replace("http://", "https://"), baseUrl)
@@ -211,19 +220,27 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
         }
 
         for (url in paths) {
-            val response = runCatching { client.get(url) }.getOrNull() ?: continue
+            val response = runCatching {
+                client.get(url) {
+                    timeout {
+                        requestTimeoutMillis = 6_000
+                        connectTimeoutMillis = 4_000
+                    }
+                }
+            }.getOrNull() ?: continue
             if (response.status == HttpStatusCode.OK) {
                 val text = response.bodyAsText()
                 val parsed = basicJson.decodeFromString<JackettSearchResponse>(text)
-                return parsed.results
+                return@withTimeoutOrNull parsed.results
             }
         }
-        return emptyList()
-    }
+        emptyList()
+    } ?: emptyList()
 
-    suspend fun testJackett(baseUrlInput: String, apiKey: String): Boolean {
+    suspend fun testJackett(baseUrlInput: String, apiKey: String): Boolean = withTimeoutOrNull(6_000L) {
         val baseUrl = fixUrl(baseUrlInput, "https")
         val key = apiKey.trim()
+        if (baseUrl.isBlank() || key.isBlank()) return@withTimeoutOrNull false
         val baseVariants = if (baseUrl.startsWith("http://") && !baseUrl.contains("127.0.0.1") && !baseUrl.contains("192.168.")) {
             listOf(baseUrl.replace("http://", "https://"), baseUrl)
         } else if (baseUrl.startsWith("https://")) {
@@ -239,17 +256,34 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
             )
         }
         for (url in paths) {
-            val res = runCatching { client.get(url) }.getOrNull() ?: continue
-            if (res.status == HttpStatusCode.OK) return true
+            val res = runCatching {
+                client.get(url) {
+                    timeout {
+                        requestTimeoutMillis = 4_000
+                        connectTimeoutMillis = 3_000
+                        socketTimeoutMillis = 3_000
+                    }
+                }
+            }.getOrNull() ?: continue
+            if (res.status == HttpStatusCode.OK) return@withTimeoutOrNull true
         }
-        return false
-    }
+        false
+    } ?: false
 
-    suspend fun testTorrServer(baseUrlInput: String): Boolean {
+    suspend fun testTorrServer(baseUrlInput: String): Boolean = withTimeoutOrNull(5_000L) {
         val cleanUrl = fixUrl(baseUrlInput, "http")
-        val res = runCatching { client.get("$cleanUrl/echo") }.getOrNull() ?: return false
-        return res.status == HttpStatusCode.OK
-    }
+        if (cleanUrl.isBlank()) return@withTimeoutOrNull false
+        val res = runCatching {
+            client.get("$cleanUrl/echo") {
+                timeout {
+                    requestTimeoutMillis = 4_000
+                    connectTimeoutMillis = 3_000
+                    socketTimeoutMillis = 3_000
+                }
+            }
+        }.getOrNull() ?: return@withTimeoutOrNull false
+        res.status == HttpStatusCode.OK
+    } ?: false
 
     companion object {
         private val VIDEO_EXTENSIONS = setOf("mkv", "mp4", "avi", "ts", "mov", "webm", "m4v")

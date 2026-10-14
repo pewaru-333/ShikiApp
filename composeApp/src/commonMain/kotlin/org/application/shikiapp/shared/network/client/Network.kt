@@ -67,6 +67,12 @@ object Network {
                 dispatcher = Dispatchers.IO
             }
 
+            install(HttpTimeout) {
+                requestTimeoutMillis = 15_000
+                connectTimeoutMillis = 5_000
+                socketTimeoutMillis = 10_000
+            }
+
             BrowserUserAgent()
         }
     }
