@@ -33,7 +33,7 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
     }
 
     suspend fun searchTorrents(queries: List<String>): List<VideoVoice> {
-        val jackettBaseUrl = Preferences.jackettUrl.value.trim().trimEnd('/')
+        val jackettBaseUrl = fixUrl(Preferences.jackettUrl.value, "https")
         val apiKey = Preferences.jackettApiKey.value.trim()
 
         if (jackettBaseUrl.isBlank() || apiKey.isBlank() || queries.isEmpty()) {
@@ -101,13 +101,15 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
     }
 
     suspend fun getTorrentEpisodes(torrentLink: String): List<EpisodeModel> {
-        val torrServerBase = Preferences.torrServerUrl.value.trim().trimEnd('/')
+        val torrServerBase = fixUrl(Preferences.torrServerUrl.value, "http")
         if (torrServerBase.isBlank() || torrentLink.isBlank()) return emptyList()
 
         val normalizedLink = normalizeLink(torrentLink)
 
         val statUrl = "$torrServerBase/stream?link=${normalizedLink.encodeURLParameter()}&stat"
-        val responseText = client.get(statUrl).bodyAsText()
+        val response = runCatching { client.get(statUrl) }.getOrNull() ?: return emptyList()
+        if (response.status != HttpStatusCode.OK) return emptyList()
+        val responseText = response.bodyAsText()
         val status = basicJson.decodeFromString<TorrServerStatus>(responseText)
 
         val hash = status.hash.ifEmpty {
@@ -191,11 +193,22 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
         val episodeNumber: Int
     )
 
-    private suspend fun queryJackett(baseUrl: String, apiKey: String, query: String): List<JackettTorrentItem> {
-        val paths = listOf(
-            "$baseUrl/api/v2.0/indexers/all/results?apikey=$apiKey&Query=${query.encodeURLParameter()}",
-            "$baseUrl/jackett/api/v2.0/indexers/all/results?apikey=$apiKey&Query=${query.encodeURLParameter()}"
-        )
+    private suspend fun queryJackett(baseUrlInput: String, apiKey: String, query: String): List<JackettTorrentItem> {
+        val baseUrl = fixUrl(baseUrlInput, "https")
+        val baseVariants = if (baseUrl.startsWith("http://") && !baseUrl.contains("127.0.0.1") && !baseUrl.contains("192.168.")) {
+            listOf(baseUrl.replace("http://", "https://"), baseUrl)
+        } else if (baseUrl.startsWith("https://")) {
+            listOf(baseUrl, baseUrl.replace("https://", "http://"))
+        } else {
+            listOf(baseUrl)
+        }
+
+        val paths = baseVariants.flatMap { base ->
+            listOf(
+                "$base/api/v2.0/indexers/all/results?apikey=$apiKey&Query=${query.encodeURLParameter()}",
+                "$base/jackett/api/v2.0/indexers/all/results?apikey=$apiKey&Query=${query.encodeURLParameter()}"
+            )
+        }
 
         for (url in paths) {
             val response = runCatching { client.get(url) }.getOrNull() ?: continue
@@ -208,13 +221,23 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
         return emptyList()
     }
 
-    suspend fun testJackett(baseUrl: String, apiKey: String): Boolean {
-        val cleanUrl = baseUrl.trim().trimEnd('/')
+    suspend fun testJackett(baseUrlInput: String, apiKey: String): Boolean {
+        val baseUrl = fixUrl(baseUrlInput, "https")
         val key = apiKey.trim()
-        val paths = listOf(
-            "$cleanUrl/api/v2.0/indexers/all/results?apikey=$key&Query=test",
-            "$cleanUrl/jackett/api/v2.0/indexers/all/results?apikey=$key&Query=test"
-        )
+        val baseVariants = if (baseUrl.startsWith("http://") && !baseUrl.contains("127.0.0.1") && !baseUrl.contains("192.168.")) {
+            listOf(baseUrl.replace("http://", "https://"), baseUrl)
+        } else if (baseUrl.startsWith("https://")) {
+            listOf(baseUrl, baseUrl.replace("https://", "http://"))
+        } else {
+            listOf(baseUrl)
+        }
+
+        val paths = baseVariants.flatMap { base ->
+            listOf(
+                "$base/api/v2.0/indexers/all/results?apikey=$key&Query=test",
+                "$base/jackett/api/v2.0/indexers/all/results?apikey=$key&Query=test"
+            )
+        }
         for (url in paths) {
             val res = runCatching { client.get(url) }.getOrNull() ?: continue
             if (res.status == HttpStatusCode.OK) return true
@@ -222,8 +245,8 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
         return false
     }
 
-    suspend fun testTorrServer(baseUrl: String): Boolean {
-        val cleanUrl = baseUrl.trim().trimEnd('/')
+    suspend fun testTorrServer(baseUrlInput: String): Boolean {
+        val cleanUrl = fixUrl(baseUrlInput, "http")
         val res = runCatching { client.get("$cleanUrl/echo") }.getOrNull() ?: return false
         return res.status == HttpStatusCode.OK
     }
@@ -255,9 +278,22 @@ class TorrServerParser private constructor(client: HttpClient) : BaseParser(clie
             }
         }
 
+        fun fixUrl(input: String, defaultScheme: String): String {
+            var url = input.trim().trimEnd('/')
+            if (url.isBlank()) return url
+            if (!url.startsWith("http://", ignoreCase = true) && !url.startsWith("https://", ignoreCase = true)) {
+                url = "$defaultScheme://$url"
+            }
+            return url
+        }
+
         fun normalizeLink(link: String): String {
             // Fix Jackett bug where port is missing after colon: "tech:/jackett" -> "tech/jackett"
-            return link.replace(Regex("""(:/)([^/])"""), "/$2")
+            var result = link.replace(Regex("""(:/)([^/])"""), "/$2")
+            if (result.startsWith("http://lampa.sa05.tech", ignoreCase = true)) {
+                result = result.replace("http://lampa.sa05.tech", "https://lampa.sa05.tech")
+            }
+            return result
         }
 
         private fun isVideoTorrent(item: JackettTorrentItem): Boolean {
