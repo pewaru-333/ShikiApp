@@ -22,6 +22,7 @@ import org.application.shikiapp.shared.models.ui.VideoVoice
 import org.application.shikiapp.shared.models.ui.mappers.toEpisodeVoices
 import org.application.shikiapp.shared.models.ui.mappers.toVideoVoice
 import org.application.shikiapp.shared.models.ui.mappers.toVideoVoices
+import org.application.shikiapp.generated.common.AnimeMainQuery
 import org.application.shikiapp.shared.network.client.AnimeLibAuth
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.parser.*
@@ -67,9 +68,48 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     fun selectVoice(id: Int) {
         if (currentState.isLib) {
             loadAnimeLibVideo(id)
+        } else if (currentState.currentSource?.type == VideoSource.TORRENT) {
+            val voice = currentState.currentSource?.voices?.find { it.id == id } ?: return
+            loadTorrentEpisodes(voice)
         } else {
             _state.update { state ->
                 state.copy(currentVoice = state.currentSource?.voices?.find { it.id == id })
+            }
+        }
+    }
+
+    private fun loadTorrentEpisodes(voice: VideoVoice) {
+        val link = voice.torrentLink
+        if (link.isNullOrBlank()) {
+            _state.update { it.copy(currentVoice = voice) }
+            return
+        }
+
+        _state.update {
+            it.copy(
+                isEpisodesLoading = true,
+                currentVoice = voice
+            )
+        }
+
+        viewModelScope.launch {
+            try {
+                val parser = TorrServerParser.getInstance()
+                val episodes = parser.getTorrentEpisodes(link)
+                val updatedVoice = voice.copy(
+                    episodes = episodes,
+                    lastEpisode = episodes.maxOfOrNull { it.number } ?: voice.lastEpisode
+                )
+                _state.update {
+                    it.copy(
+                        isEpisodesLoading = false,
+                        currentVoice = updatedVoice
+                    )
+                }
+            } catch (_: Exception) {
+                _state.update {
+                    it.copy(isEpisodesLoading = false)
+                }
             }
         }
     }
@@ -108,6 +148,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                     VideoSource.COLLAPS -> CollapsParser.getInstance()
                     VideoSource.CVH -> CvhParser.getInstance()
                     VideoSource.ANIMELIB -> AnimeLibParser.getInstance()
+                    VideoSource.TORRENT -> TorrServerParser.getInstance()
                     null -> return@launch
                 }
 
@@ -184,17 +225,26 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                 val collaps = CollapsParser.getInstance()
                 val cvh = CvhParser.getInstance()
                 val animeLib = AnimeLibParser.getInstance()
+                val torrServer = TorrServerParser.getInstance()
 
                 val kodikResult = kodik.searchById(contentId)
-                if (kodikResult.isEmpty()) {
+                val animeDetail = runCatching {
+                    Network.apollo.query(AnimeMainQuery(contentId)).execute().data?.animes?.firstOrNull()
+                }.getOrNull()
+
+                if (kodikResult.isEmpty() && animeDetail == null) {
                     _state.update { it.copy(isLoading = false) }
                     return@launch
                 }
 
-                val firstItem = kodikResult.first()
-                val imdbId = firstItem.imdbId
-                val titleOrig = "${firstItem.titleOrig}/${firstItem.otherTitle}"
-                val targetSeason = firstItem.lastSeason ?: 1
+                val firstItem = kodikResult.firstOrNull()
+                val imdbId = firstItem?.imdbId.orEmpty()
+                val titleOrig = if (firstItem != null) {
+                    "${firstItem.titleOrig}/${firstItem.otherTitle}"
+                } else {
+                    "${animeDetail?.name}/${animeDetail?.russian}"
+                }
+                val targetSeason = firstItem?.lastSeason ?: 1
 
                 launch {
                     if (!AnimeLibAuth.validateToken()) {
@@ -237,7 +287,20 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                         }
                     }
 
-                    listOf(collapsDef, kodikDef, cvhDef, libDef).mapNotNull { deferred ->
+                    val torrentDef = async {
+                        if (!Preferences.torrentEnabled.value) return@async null
+                        val queries = mutableListOf<String>()
+                        firstItem?.otherTitle?.takeIf { it.isNotBlank() }?.let { queries.add(it) }
+                        firstItem?.titleOrig?.takeIf { it.isNotBlank() }?.let { queries.add(it) }
+                        animeDetail?.russian?.takeIf { it.isNotBlank() && !queries.contains(it) }?.let { queries.add(it) }
+                        animeDetail?.name?.takeIf { it.isNotBlank() && !queries.contains(it) }?.let { queries.add(it) }
+
+                        torrServer.searchTorrents(queries)
+                            .takeIf { it.isNotEmpty() }
+                            ?.let { VideoSourceData(VideoSource.TORRENT, it) }
+                    }
+
+                    listOf(collapsDef, kodikDef, cvhDef, libDef, torrentDef).mapNotNull { deferred ->
                         runCatching { deferred.await() }.getOrNull()
                     }
                 }
@@ -331,7 +394,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
         _state.update { it.copy(currentQuality = newQuality) }
 
-        if (selectedSource.type == VideoSource.COLLAPS) return
+        if (selectedSource.type == VideoSource.COLLAPS || selectedSource.type == VideoSource.TORRENT) return
 
         _state.update { it.copy(isVideoLoading = false) }
 
@@ -401,6 +464,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     private fun setEpisodeWatched() {
+        val currentEp = currentState.currentEpisode ?: return
         if (Preferences.token != null && Preferences.episodeAutoAdd.value) {
             viewModelScope.launch {
                 try {
@@ -411,20 +475,26 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                             newRate = NewRate(
                                 userId = Preferences.userId.value,
                                 targetId = contentId.toLong(),
-                                targetType = "Anime"
+                                targetType = "Anime",
+                                status = "watching",
+                                episodes = currentEp.toString()
                             )
                         )
 
                         if (newRate.status == HttpStatusCode.Created) {
-                            val newRate = newRate.body<UserRate>()
-                            val response = Network.rates.increment(newRate.id)
-
+                            markedAsWatched = true
+                        }
+                    } else if (compareValues(animeRate.episodes, currentEp) < 0) {
+                        if (currentEp == (animeRate.episodes ?: 0) + 1) {
+                            val response = Network.rates.increment(animeRate.id)
+                            markedAsWatched = response.status == HttpStatusCode.OK
+                        } else {
+                            val response = Network.rates.updateRate(
+                                id = animeRate.id,
+                                newRate = NewRate(episodes = currentEp.toString())
+                            )
                             markedAsWatched = response.status == HttpStatusCode.OK
                         }
-                    } else if (compareValues(animeRate.episodes, currentState.currentEpisode) < 0) {
-                        val response = Network.rates.increment(animeRate.id)
-
-                        markedAsWatched = response.status == HttpStatusCode.OK
                     }
                 } catch (_: Exception) {
                     markedAsWatched = false

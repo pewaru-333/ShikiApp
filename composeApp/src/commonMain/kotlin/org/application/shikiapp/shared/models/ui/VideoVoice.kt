@@ -14,7 +14,8 @@ data class EpisodeModel(
     val fallback: List<String> = emptyList(),
     val qualityList: List<Int> = emptyList(),
     val subtitles: List<SubtitleTrack> = emptyList(),
-    val videoHeaders: Map<String, String> = emptyMap()
+    val videoHeaders: Map<String, String> = emptyMap(),
+    val title: String? = null
 )
 
 data class SubtitleTrack(
@@ -36,7 +37,8 @@ data class VideoVoice(
     val hasSubtitles: Boolean,
     val episodes: List<EpisodeModel>,
     val quality: ResourceText?,
-    val lastEpisode: Int
+    val lastEpisode: Int,
+    val torrentLink: String? = null
 ) {
     val episodesCount: Int
         get() = episodes.size

@@ -231,6 +231,10 @@ private fun VideoPicker(
             PickerStep.EPISODES -> {
                 if (state.currentSource?.type == VideoSource.ANIMELIB && libToken == null) {
                     AnimeLibAuth()
+                } else if (state.isEpisodesLoading) {
+                    Box(Modifier.fillMaxSize(), Alignment.Center) {
+                        CircularProgressIndicator()
+                    }
                 } else {
                     Episodes(state.episodes, lazyEpisodes, onSelectEpisode)
                 }
@@ -394,27 +398,34 @@ private fun Voices(
 }
 
 @Composable
-private fun Episodes(episodes: List<EpisodeModel>, listState: LazyListState, onLoadVideo: (EpisodeModel) -> Unit) =
-    LazyColumn(Modifier.fillMaxSize(), listState) {
-        items(episodes, { Pair(it.number, it.link) }) {
-            ListItem(
-                modifier = Modifier.clickable { onLoadVideo(it) },
-                headlineContent = { Text(stringResource(Res.string.text_episode_holder, it.number)) },
-                trailingContent = { VectorIcon(Icons.KeyboardArrowRight) },
-                leadingContent = {
-                    AnimatedAsyncImage(
-                        model = it.screenshot,
-                        contentScale = ContentScale.Crop,
-                        modifier = Modifier
-                            .width(120.dp)
-                            .aspectRatio(16f / 9f)
-                            .clip(MaterialTheme.shapes.small)
-                            .border(Dp.Hairline, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.small)
-                    )
-                }
-            )
+private fun Episodes(episodes: List<EpisodeModel>, listState: LazyListState, onLoadVideo: (EpisodeModel) -> Unit) {
+    if (episodes.isNotEmpty()) {
+        LazyColumn(Modifier.fillMaxSize(), listState) {
+            items(episodes, { Pair(it.number, it.link) }) {
+                ListItem(
+                    modifier = Modifier.clickable { onLoadVideo(it) },
+                    headlineContent = { Text(it.title ?: stringResource(Res.string.text_episode_holder, it.number)) },
+                    trailingContent = { VectorIcon(Icons.KeyboardArrowRight) },
+                    leadingContent = {
+                        AnimatedAsyncImage(
+                            model = it.screenshot,
+                            contentScale = ContentScale.Crop,
+                            modifier = Modifier
+                                .width(120.dp)
+                                .aspectRatio(16f / 9f)
+                                .clip(MaterialTheme.shapes.small)
+                                .border(Dp.Hairline, MaterialTheme.colorScheme.onSurface, MaterialTheme.shapes.small)
+                        )
+                    }
+                )
+            }
+        }
+    } else {
+        Box(Modifier.fillMaxSize(), Alignment.Center) {
+            Text(stringResource(Res.string.text_empty))
         }
     }
+}
 
 @Composable
 private fun Player(state: WatchState, commands: Flow<PlayerEvent.Command>, onEvent: (PlayerEvent) -> Unit, onBack: () -> Unit) {

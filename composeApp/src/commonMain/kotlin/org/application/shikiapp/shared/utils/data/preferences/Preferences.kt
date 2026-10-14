@@ -25,6 +25,10 @@ class Preferences(private val app: IPreferences) {
     val rememberCatalogOrder = PreferenceBoolean(PREF_REMEMBER_CATALOG_LAST_ORDER, false)
     val rememberRatesOrder = PreferenceBoolean(PREF_REMEMBER_RATES_LAST_ORDER, false)
     val episodeAutoAdd = PreferenceBoolean(PREF_EPISODE_AUTO_ADD, false)
+    val torrentEnabled = PreferenceBoolean(PREF_TORRENT_ENABLED, false)
+    val jackettUrl = PreferenceString(PREF_JACKETT_URL, BLANK)
+    val jackettApiKey = PreferenceString(PREF_JACKETT_API_KEY, BLANK)
+    val torrServerUrl = PreferenceString(PREF_TORRSERVER_URL, DEFAULT_TORRSERVER_URL)
 
     val theme = PreferenceEnum(PREF_APP_THEME, Theme.SYSTEM)
     val dynamicColors = PreferenceBoolean(PREF_DYNAMIC_COLORS, false)

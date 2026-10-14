@@ -232,3 +232,40 @@ data class AnimeLibSubtitle(
     val name: String,
     val src: String
 )
+
+// =================================== Jackett & TorrServer ===================================
+
+@Serializable
+data class JackettSearchResponse(
+    @SerialName("Results") val results: List<JackettTorrentItem> = emptyList()
+)
+
+@Serializable
+data class JackettTorrentItem(
+    @SerialName("Title") val title: String = "",
+    @SerialName("Tracker") val tracker: String? = null,
+    @SerialName("TrackerId") val trackerId: String? = null,
+    @SerialName("CategoryDesc") val categoryDesc: String? = null,
+    @SerialName("Link") val link: String? = null,
+    @SerialName("MagnetUri") val magnetUri: String? = null,
+    @SerialName("InfoHash") val infoHash: String? = null,
+    @SerialName("Size") val size: Long = 0L,
+    @SerialName("Seeders") val seeders: Int = 0,
+    @SerialName("Peers") val peers: Int = 0,
+    @SerialName("PublishDate") val publishDate: String? = null,
+    @SerialName("Files") val files: Int? = null
+)
+
+@Serializable
+data class TorrServerStatus(
+    val title: String = "",
+    val hash: String = "",
+    @SerialName("file_stats") val fileStats: List<TorrServerFileStat> = emptyList()
+)
+
+@Serializable
+data class TorrServerFileStat(
+    val id: Int = 0,
+    val path: String = "",
+    val length: Long = 0L
+)

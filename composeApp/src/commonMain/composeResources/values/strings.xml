@@ -353,6 +353,22 @@
     <string name="video_source_collapse">Collaps</string>
     <string name="video_source_videohub">ВидеоХаб</string>
     <string name="video_source_animelib">AnimeLib</string>
+    <string name="video_source_torrent">Торренты</string>
+
+    <!-- Настройки Торрентов -->
+    <string name="preference_category_torrents">Торренты (Jackett / TorrServer)</string>
+    <string name="preference_torrent_enable">Включить поиск торрентов</string>
+    <string name="preference_torrent_enable_summary">Поиск торрентов через Jackett и стриминг через TorrServer</string>
+    <string name="preference_torrent_settings">Настройки Jackett и TorrServer</string>
+    <string name="text_jackett_url">URL Jackett</string>
+    <string name="text_jackett_api_key">API-ключ Jackett</string>
+    <string name="text_torrserver_url">URL TorrServer</string>
+    <string name="text_test_connection">Проверить подключение</string>
+    <string name="text_jackett_ok">Jackett: доступен</string>
+    <string name="text_jackett_error">Jackett: ошибка подключения</string>
+    <string name="text_torrserver_ok">TorrServer: доступен</string>
+    <string name="text_torrserver_error">TorrServer: ошибка подключения</string>
+    <string name="text_reset_defaults">Сбросить по умолчанию</string>
 
     <!-- Другое -->
     <string name="blank" />

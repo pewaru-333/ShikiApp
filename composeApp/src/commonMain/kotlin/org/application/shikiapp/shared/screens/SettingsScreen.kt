@@ -2,6 +2,7 @@ package org.application.shikiapp.shared.screens
 
 import AppLanguages
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListScope
@@ -13,16 +14,20 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
+import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.client.Network
+import org.application.shikiapp.shared.network.parser.TorrServerParser
 import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.*
@@ -45,6 +50,7 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
 
     var showDeeplinkSetting by rememberSaveable { mutableStateOf(false) }
     var showProxySettings by rememberSaveable { mutableStateOf(false) }
+    var showTorrentSettings by rememberSaveable { mutableStateOf(false) }
 
     AnimatedDialogScreen(isVisible, stringResource(Res.string.text_settings), onBack) { values ->
         LazyColumn(Modifier.padding(values)) {
@@ -190,11 +196,29 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                 title = { Text(stringResource(Res.string.preference_network_config)) },
                 onClick = { showProxySettings = true }
             )
+
+            preferenceCategory(
+                key = PREF_GROUP_APP_TORRENTS,
+                title = { Text(stringResource(Res.string.preference_category_torrents)) }
+            )
+
+            switchPreference(
+                setting = Preferences.torrentEnabled,
+                title = { Text(stringResource(Res.string.preference_torrent_enable)) },
+                summary = { Text(stringResource(Res.string.preference_torrent_enable_summary)) }
+            )
+
+            preference(
+                key = PREF_TORRENT_SETTINGS,
+                title = { Text(stringResource(Res.string.preference_torrent_settings)) },
+                onClick = { showTorrentSettings = true }
+            )
         }
     }
 
     DeeplinkScreen(showDeeplinkSetting) { showDeeplinkSetting = false }
     ProxySettings(showProxySettings) { showProxySettings = false }
+    TorrentSettings(showTorrentSettings) { showTorrentSettings = false }
 }
 
 @Composable
@@ -498,6 +522,167 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
                         onClick = { state.save(onBack) },
                         content = { Text(stringResource(Res.string.text_save)) }
                     )
+                }
+            }
+        }
+    }
+
+@Composable
+private fun TorrentSettings(isVisible: Boolean, onBack: () -> Unit) =
+    AnimatedDialogScreen(isVisible, stringResource(Res.string.preference_torrent_settings), onBack) { values ->
+        val scope = rememberCoroutineScope()
+        val isCompact = rememberWindowSize().isCompact
+        val horizontalPadding = if (isCompact) 16.dp else 32.dp
+
+        var jackettUrl by rememberSaveable { mutableStateOf(Preferences.jackettUrl.value) }
+        var jackettApiKey by rememberSaveable { mutableStateOf(Preferences.jackettApiKey.value) }
+        var torrServerUrl by rememberSaveable { mutableStateOf(Preferences.torrServerUrl.value) }
+
+        var isTesting by rememberSaveable { mutableStateOf(false) }
+        var testResultJackett by rememberSaveable { mutableStateOf<Boolean?>(null) }
+        var testResultTorrServer by rememberSaveable { mutableStateOf<Boolean?>(null) }
+
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(values)
+                .verticalScroll(rememberScrollState())
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = horizontalPadding, vertical = 16.dp)
+            ) {
+                OutlinedTextField(
+                    value = torrServerUrl,
+                    onValueChange = {
+                        torrServerUrl = it
+                        testResultTorrServer = null
+                    },
+                    label = { Text(stringResource(Res.string.text_torrserver_url)) },
+                    placeholder = { Text("http://127.0.0.1:8090") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = jackettUrl,
+                    onValueChange = {
+                        jackettUrl = it
+                        testResultJackett = null
+                    },
+                    label = { Text(stringResource(Res.string.text_jackett_url)) },
+                    placeholder = { Text("http://127.0.0.1:9117") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(16.dp))
+
+                OutlinedTextField(
+                    value = jackettApiKey,
+                    onValueChange = {
+                        jackettApiKey = it
+                        testResultJackett = null
+                    },
+                    label = { Text(stringResource(Res.string.text_jackett_api_key)) },
+                    placeholder = { Text("API Key") },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Spacer(Modifier.height(20.dp))
+
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    FilledTonalButton(
+                        onClick = {
+                            isTesting = true
+                            testResultJackett = null
+                            testResultTorrServer = null
+                            scope.launch {
+                                val parser = TorrServerParser.getInstance()
+                                testResultTorrServer = parser.testTorrServer(torrServerUrl)
+                                testResultJackett = parser.testJackett(jackettUrl, jackettApiKey)
+                                isTesting = false
+                            }
+                        },
+                        enabled = !isTesting
+                    ) {
+                        if (isTesting) {
+                            CircularProgressIndicator(modifier = Modifier.size(16.dp), strokeWidth = 2.dp)
+                            Spacer(Modifier.width(8.dp))
+                        }
+                        Text(stringResource(Res.string.text_test_connection))
+                    }
+
+                    TextButton(
+                        onClick = {
+                            jackettUrl = BLANK
+                            jackettApiKey = BLANK
+                            torrServerUrl = DEFAULT_TORRSERVER_URL
+                            testResultJackett = null
+                            testResultTorrServer = null
+                        }
+                    ) {
+                        Text(stringResource(Res.string.text_reset_defaults))
+                    }
+                }
+
+                if (testResultTorrServer != null || testResultJackett != null) {
+                    Spacer(Modifier.height(12.dp))
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .background(
+                                MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                                MaterialTheme.shapes.small
+                            )
+                            .padding(12.dp),
+                        verticalArrangement = Arrangement.spacedBy(6.dp)
+                    ) {
+                        testResultTorrServer?.let { ok ->
+                            Text(
+                                text = if (ok) stringResource(Res.string.text_torrserver_ok) else stringResource(Res.string.text_torrserver_error),
+                                color = if (ok) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                        testResultJackett?.let { ok ->
+                            Text(
+                                text = if (ok) stringResource(Res.string.text_jackett_ok) else stringResource(Res.string.text_jackett_error),
+                                color = if (ok) Color(0xFF4CAF50) else MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+
+                Spacer(Modifier.height(32.dp))
+
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    TextButton(onClick = onBack) {
+                        Text(stringResource(Res.string.text_dismiss))
+                    }
+
+                    Button(
+                        onClick = {
+                            Preferences.jackettUrl.value = jackettUrl.trim()
+                            Preferences.jackettApiKey.value = jackettApiKey.trim()
+                            Preferences.torrServerUrl.value = torrServerUrl.trim()
+                            onBack()
+                        }
+                    ) {
+                        Text(stringResource(Res.string.text_save))
+                    }
                 }
             }
         }

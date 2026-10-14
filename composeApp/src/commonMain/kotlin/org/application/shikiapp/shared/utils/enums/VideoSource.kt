@@ -7,5 +7,6 @@ enum class VideoSource(val title: StringResource) {
     KODIK(Res.string.video_source_kodik),
     COLLAPS(Res.string.video_source_collapse),
     CVH(Res.string.video_source_videohub),
-    ANIMELIB(Res.string.video_source_animelib)
+    ANIMELIB(Res.string.video_source_animelib),
+    TORRENT(Res.string.video_source_torrent)
 }

@@ -26,6 +26,15 @@ const val PREF_START_PAGE = "start_page"
 const val PREF_USER_RATES_START_TYPE = "user_rates_start_type"
 const val PREF_USER_RATES_START_WATCH_STATUS = "user_rates_start_watch_status"
 
+const val PREF_GROUP_APP_TORRENTS = "app_torrents"
+const val PREF_TORRENT_SETTINGS = "app_torrent_settings"
+const val PREF_TORRENT_ENABLED = "app_torrent_enabled"
+const val PREF_JACKETT_URL = "app_jackett_url"
+const val PREF_JACKETT_API_KEY = "app_jackett_api_key"
+const val PREF_TORRSERVER_URL = "app_torrserver_url"
+
+const val DEFAULT_TORRSERVER_URL = "http://127.0.0.1:8090"
+
 const val PREF_NETWORK_CONFIG_SETTINGS = "app_network_config_settings"
 const val PREF_APP_URL_LIST = "app_api_url_list"
 const val PREF_USE_USER_URL_LIST = "app_use_user_url_list"
