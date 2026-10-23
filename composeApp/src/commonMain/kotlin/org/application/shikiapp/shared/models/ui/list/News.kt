@@ -5,5 +5,6 @@ data class News(
     val title: String,
     val poster: String?,
     val date: String,
-    val author: String
+    val author: String,
+    val commentsCount: Int
 )

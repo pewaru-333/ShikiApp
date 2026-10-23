@@ -6,10 +6,10 @@ import org.application.shikiapp.shared.utils.ui.CommentContent
 import org.application.shikiapp.shared.utils.ui.Formatter
 
 suspend fun News.mapper(): org.application.shikiapp.shared.models.ui.list.News {
-    val (_, _, poster) = Formatter.getLinks(htmlFooter)
+    val (_, _, poster) = Formatter.getLinks("$htmlBody\n$htmlFooter")
     val posterUrl = when (poster) {
         is CommentContent.VideoContent -> poster.previewUrl
-        is CommentContent.ImageContent -> poster.fullUrl
+        is CommentContent.ImageContent -> poster.previewUrl
         else -> BLANK
     }
 
@@ -18,6 +18,7 @@ suspend fun News.mapper(): org.application.shikiapp.shared.models.ui.list.News {
         title = topicTitle,
         poster = posterUrl,
         date = Formatter.convertDate(createdAt),
-        author = user.nickname
+        author = user.nickname,
+        commentsCount = commentsCount
     )
 }

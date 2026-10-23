@@ -169,8 +169,10 @@ object Formatter {
         }
     }
 
-    suspend fun getLinks(text: String?): Triple<List<String>, List<CommentContent.VideoContent>, CommentContent?> = withContext(Dispatchers.Default) {
-        if (text.isNullOrBlank()) return@withContext Triple(emptyList(), emptyList(), null)
+    suspend fun getLinks(text: String?, baseUrl: String = ApiRoutes.workingBaseUrl): Triple<List<String>, List<CommentContent.VideoContent>, CommentContent?> = withContext(Dispatchers.Default) {
+        if (text.isNullOrBlank()) {
+            return@withContext Triple(emptyList(), emptyList(), null)
+        }
 
         fun String.toHttps() = when {
             isEmpty() -> BLANK
@@ -180,71 +182,73 @@ object Formatter {
             else -> if (startsWith("http")) this else "https://$this"
         }
 
-        val ytRegex = "img\\.youtube\\.com(?:%2F|/)vi(?:%2F|/)([a-zA-Z0-9_-]+)".toRegex()
-        val body = Ksoup.parse(text, ApiRoutes.workingBaseUrl)
+        val ytRegex = Regex("""img\.youtube\.com(?:%2F|/)vi(?:%2F|/)([a-zA-Z0-9_-]+)""")
+        val videoRegex = Regex("""(?:youtu\.be/|youtube(?:-nocookie)?\.com/(?:embed/|watch\?v=|shorts/))([a-zA-Z0-9_-]+)""")
+        val body = Ksoup.parse(text, baseUrl)
+        val videos = LinkedHashMap<String, CommentContent.VideoContent>()
+        val images = LinkedHashMap<String, String>()
 
-        val videos = body.select(".b-video").mapNotNullTo(ArrayList()) { element ->
-            val videoUrl = element.select("a").attr("abs:href").toHttps()
+        for (element in body.select(".b-video")) {
+            val link = element.selectFirst("a")
+            val videoUrl = link?.attr("abs:href").orEmpty()
+                .ifEmpty { link?.attr("abs:data-href").orEmpty() }
+                .toHttps()
+
             val previewUrl = element.select("img").attr("abs:src").toHttps()
-            if (videoUrl.isNotEmpty()) CommentContent.VideoContent(previewUrl, videoUrl, "YouTube") else null
+            val youtubeId = videoRegex.find(videoUrl)?.groupValues?.get(1) ?: ytRegex.find(previewUrl)?.groupValues?.get(1)
+            val url = if (youtubeId == null) videoUrl else "https://youtu.be/$youtubeId"
+
+            if (url.isNotEmpty() && url !in videos) {
+                val source = element.select(".marker").text().ifBlank { "Video" }
+                videos[url] = CommentContent.VideoContent(previewUrl, url, source)
+            }
+
+            element.remove()
         }
 
-        if (videos.isEmpty()) {
-            body.select(".b-image").forEach { element ->
-                val imageUrl = element.attr("abs:href").ifEmpty { element.selectFirst("img")?.attr("abs:src") }.orEmpty()
-                val match = ytRegex.find(imageUrl)
+        for (element in body.select(".b-image, img:not(.smiley), a[href*=/original/], a[href*=%2Foriginal%2F], a[href*=/uploads/]")) {
+            if (element.parent()?.closest(".b-image") != null) continue
 
-                if (match != null) {
-                    val fullVideoUrl = "https://youtu.be/${match.groupValues[1]}"
-                    if (videos.none { it.videoUrl == fullVideoUrl }) {
-                        videos.add(
-                            CommentContent.VideoContent(
-                                previewUrl = imageUrl,
-                                videoUrl = fullVideoUrl,
-                                source = "YouTube"
-                            )
-                        )
-                    }
+            val image = if (element.tagName() == "img") element else element.selectFirst("img")
+            val link = if (element.tagName() == "a") element else element.closest("a")
+            val imageUrl = link?.attr("abs:href").orEmpty()
+                .ifEmpty { image?.attr("abs:src").orEmpty() }
+                .toHttps()
+
+            if (imageUrl.isEmpty()) continue
+
+            val previewUrl = image?.attr("abs:src").orEmpty().ifEmpty { imageUrl }.toHttps()
+            val youtubeId = ytRegex.find(imageUrl)?.groupValues?.get(1) ?: ytRegex.find(previewUrl)?.groupValues?.get(1)
+
+            if (youtubeId != null) {
+                val videoUrl = "https://youtu.be/$youtubeId"
+                if (videoUrl !in videos) {
+                    videos[videoUrl] = CommentContent.VideoContent(previewUrl, videoUrl, "YouTube")
                 }
+            } else if (imageUrl !in images) {
+                images[imageUrl] = previewUrl
             }
         }
 
-        val cssQuery = buildString {
-            append("a[href*=/original/], img[src*=/original/], ")
-            append("a[href*=%2Foriginal%2F], img[src*=%2Foriginal%2F], ")
-            append("a[href*=/uploads/], img[src*=/uploads/]")
-        }
-
-        val images = body.select(cssQuery).mapNotNullTo(LinkedHashSet()) { element ->
-            element.attr("abs:href")
-                .ifEmpty { element.attr("abs:src") }
-                .takeIf(String::isNotEmpty)
-        }.toList()
-
-        val poster: CommentContent?
-        val finalVideos: List<CommentContent.VideoContent>
-        val finalImages: List<String>
+        val videoList = videos.values.toList()
+        val imageList = images.keys.toList()
 
         when {
-            videos.isNotEmpty() -> {
-                poster = videos.first()
-                finalVideos = videos.drop(1)
-                finalImages = images
-            }
-            images.isNotEmpty() -> {
-                val image = images.first()
-                poster = CommentContent.ImageContent(image, image, 0f, 0f)
-                finalVideos = emptyList()
-                finalImages = images.drop(1)
-            }
-            else -> {
-                poster = null
-                finalVideos = emptyList()
-                finalImages = emptyList()
-            }
-        }
+            videoList.isNotEmpty() -> Triple(imageList, videoList.drop(1), videoList.first())
+            imageList.isNotEmpty() -> {
+                val image = imageList.first()
 
-        Triple(finalImages, finalVideos, poster)
+                Triple(imageList.drop(1), emptyList(), CommentContent.ImageContent(images.getValue(image), image, 0f, 0f))
+            }
+            else -> Triple(emptyList(), emptyList(), null)
+        }
+    }
+
+    fun getNewsText(text: String): String {
+        val body = Ksoup.parse(text)
+        body.select(".b-video, .b-image, img:not(.smiley)").remove()
+
+        return body.body().html()
     }
 
     fun replaceMissingAnimePoster(poster: String?, id: Any?) = poster?.takeIf { it.isNotBlank() && "missing" !in it }

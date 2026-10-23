@@ -5,32 +5,31 @@ import androidx.lifecycle.viewModelScope
 import androidx.paging.Pager
 import androidx.paging.PagingConfig
 import androidx.paging.cachedIn
-import io.ktor.client.plugins.*
 import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.flow.retryWhen
 import org.application.shikiapp.shared.models.ui.list.News
 import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.paging.CommonPaging
 
 class NewsViewModel : ViewModel() {
+    private val pageSize = 15
+
     val newsList = Pager(
         config = PagingConfig(
-            pageSize = 10,
+            pageSize = pageSize,
+            initialLoadSize = pageSize,
             enablePlaceholders = false
         ),
         pagingSourceFactory = {
-            CommonPaging(News::id) { page, params ->
-                val news = Network.topics.getNewsList(page, params.loadSize)
+            CommonPaging(News::id) { page, _ ->
+                val news = Network.topics.getNewsList(page, pageSize)
 
                 coroutineScope {
                     news.map { async { it.mapper() } }.awaitAll()
                 }
             }
         }
-    ).flow
-        .cachedIn(viewModelScope)
-        .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
+    ).flow.cachedIn(viewModelScope)
 }

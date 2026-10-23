@@ -9,14 +9,14 @@ import org.application.shikiapp.shared.utils.fromHtml
 import org.application.shikiapp.shared.utils.ui.Formatter
 
 suspend fun News.mapper(comments: Flow<PagingData<Comment>>): NewsDetail {
-    val (images, videos, poster) = Formatter.getLinks(htmlFooter)
+    val (images, videos, poster) = Formatter.getLinks("$htmlBody\n$htmlFooter")
 
     return NewsDetail(
         comments = comments,
         commentsCount = commentsCount,
         date = Formatter.convertDate(createdAt),
         images = images,
-        newsBody = fromHtml(htmlBody),
+        newsBody = fromHtml(Formatter.getNewsText(htmlBody)),
         poster = poster,
         title = topicTitle,
         userId = user.id,
