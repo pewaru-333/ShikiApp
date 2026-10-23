@@ -13,6 +13,6 @@ sealed interface PlayerEvent {
 
     sealed interface Command {
         data class LoadVideo(val episodeModel: EpisodeModel) : Command
-        data class LoadQuality(val url: String) : Command
+        data class LoadQuality(val url: String, val headers: Map<String, String>) : Command
     }
 }

@@ -12,6 +12,7 @@ data class WatchState(
     val isWatching: Boolean = false,
     val isEpisodesLoading: Boolean = false,
     val isVideoLoading: Boolean = false,
+    val isVideoError: Boolean = false,
     val showLogoutDialog: Boolean = false,
     val sources: List<VideoSourceData> = emptyList(),
     val episodeVoices: List<VideoVoice>? = null,

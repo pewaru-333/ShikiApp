@@ -19,7 +19,7 @@ class VideoPlayerState {
     // Ссылка, статус, время
     var url by mutableStateOf<String?>(null)
         internal set
-    var isPlaying by mutableStateOf(true)
+    var isPlaying by mutableStateOf(false)
         internal set
     var isLoading by mutableStateOf(true)
         internal set
@@ -148,11 +148,19 @@ abstract class VideoPlayer {
         onLoadSubtitleTrack(0)
     }
 
-    fun loadVideo(url: String) {
+    fun loadVideo(url: String, headers: Map<String, String> = state.headers) {
+        val position = state.currentTime
+
+        state.url = url
+        state.headers = headers
+        state.isLoading = true
+        state.isPlaying = false
+        state.isVideoEnded = false
+        state.bufferPercentage = 0f
         controls.hideControls()
 
         onLoadVideo(url)
-        seekTo(state.currentTime)
+        seekTo(position)
     }
 
 //    fun play() {
@@ -207,25 +215,21 @@ abstract class VideoPlayer {
         onLoadSubtitleTrack(index)
     }
 
-    fun restoreSubtitles() {
-        if (state.subtitles.isEmpty() || state.selectedSubtitlesTrack == null) return
-
-        val index = state.subtitles.indexOfFirst { it.name == state.selectedSubtitlesTrack }
-        showSubtitles(index)
-    }
-
     fun scale() {
         state.isZoomed = !state.isZoomed
     }
 
     fun playNext() {
-        val nextUrl = state.fallbackUrls.firstOrNull() ?: return
-
-        state.fallbackUrls = state.fallbackUrls.drop(1)
+        val nextUrl = state.fallbackUrls.firstOrNull()
+        if (nextUrl == null) {
+            state.isPlaying = false
+            state.isLoading = false
+            return
+        }
 
         loadVideo(
             url = nextUrl,
-            fallback = state.fallbackUrls,
+            fallback = state.fallbackUrls.drop(1),
             qualityList = state.qualityList,
             trackIndex = state.audioTrackIndex,
             subtitles = state.subtitles,
@@ -246,10 +250,6 @@ abstract class VideoPlayer {
         state.speed = speed
 
         controls.setSpeedLabel(speed)
-    }
-
-    protected fun updateSubtitleTrack(title: String?) {
-        state.selectedSubtitlesTrack = title
     }
 
     protected fun updateSubtitleTrack(index: Int) {
@@ -409,6 +409,7 @@ abstract class VideoPlayer {
         val isTV: Boolean
         val pictureInPicture: VideoPlayerPictureInPicture?
         val showPlayPause: Boolean
+        val doubleTapToSeek: Boolean
         val visibilityDelay: Long
         val pointerIcon: PointerIcon
     }
