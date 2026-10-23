@@ -10,6 +10,7 @@ import io.ktor.http.Url
 import kotlinx.coroutines.*
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
+import kotlinx.io.IOException
 import org.application.shikiapp.shared.network.client.Network.getProxyConfig
 import org.application.shikiapp.shared.utils.BLANK
 
@@ -48,8 +49,7 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
 
         pingClient.use { client ->
             val winner = CompletableDeferred<String>()
-
-            urls.forEach { url ->
+            val probes = urls.map { url ->
                 launch {
                     try {
                         val response = client.get(url)
@@ -66,10 +66,16 @@ val BaseUrlResolverPlugin = createClientPlugin("BaseUrlResolverPlugin", ::BaseUr
                 }
             }
 
-            val result = winner.await()
-            coroutineContext.cancelChildren()
+            launch {
+                probes.joinAll()
+                winner.completeExceptionally(IOException())
+            }
 
-            return@coroutineScope result
+            try {
+                return@coroutineScope winner.await()
+            } finally {
+                coroutineContext.cancelChildren()
+            }
         }
     }
 

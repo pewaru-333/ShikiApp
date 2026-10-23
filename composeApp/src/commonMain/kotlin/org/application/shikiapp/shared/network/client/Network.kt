@@ -73,12 +73,6 @@ object Network {
 
     val client: HttpClient by lazy {
         baseClient.config {
-            install(HttpTimeout) {
-                requestTimeoutMillis = 60_000
-                connectTimeoutMillis = 30_000
-                socketTimeoutMillis = 15_000
-            }
-
             install(Auth) {
                 bearer {
                     loadTokens {
@@ -118,6 +112,12 @@ object Network {
                 retryIf { _, response -> response.status == HttpStatusCode.TooManyRequests }
 
                 retryOnExceptionIf { _, throwable -> throwable is IOException }
+            }
+
+            install(HttpTimeout) {
+                requestTimeoutMillis = 60_000
+                connectTimeoutMillis = 30_000
+                socketTimeoutMillis = 15_000
             }
 
             install(HttpCache)
