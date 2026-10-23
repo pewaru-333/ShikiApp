@@ -9,7 +9,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import org.application.shikiapp.shared.utils.ui.VideoPlayerController
 
 actual fun Modifier.playerKeyEvents(controller: VideoPlayerController) = onPreviewKeyEvent { event ->
-    if (controller.controls.expandedEpisodes) return@onPreviewKeyEvent false
+    if (controller.controls.expandedEpisodes || event.isCtrlPressed ||
+        event.isAltPressed || event.isMetaPressed
+    ) return@onPreviewKeyEvent false
 
     when (event.type) {
         KeyEventType.KeyDown -> when (event.key) {
@@ -25,11 +27,16 @@ actual fun Modifier.playerKeyEvents(controller: VideoPlayerController) = onPrevi
                 true
             }
 
+            Key.J, Key.F, Key.Spacebar, Key.DirectionLeft, Key.DirectionRight -> true
             else -> false
         }
 
         KeyEventType.KeyUp -> when (event.key) {
-            Key.J -> { controller.showSubtitles(); true }
+            Key.J -> {
+                controller.controls.refreshInteractionMillis()
+                controller.showSubtitles()
+                true
+            }
             Key.F -> { controller.toggleFullscreen(); true }
             Key.Spacebar -> { controller.togglePlayPause(); true }
             Key.DirectionLeft -> { controller.seek(-10f); true }
