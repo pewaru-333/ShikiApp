@@ -5,16 +5,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.*
 import androidx.compose.ui.text.style.TextDecoration
+import androidx.compose.ui.uikit.LocalUIViewController
 import androidx.compose.ui.window.DialogProperties
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
-import kotlinx.cinterop.ExperimentalForeignApi
-import kotlinx.cinterop.useContents
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.utils.data.DataManagerIos
 import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
@@ -25,11 +22,8 @@ import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
-import platform.CoreGraphics.CGRectMake
 import platform.Foundation.*
 import platform.UIKit.*
-import platform.darwin.dispatch_async
-import platform.darwin.dispatch_get_main_queue
 
 actual fun fromHtml(text: String?) = buildAnnotatedString {
     Ksoup.parse(text.orEmpty()).body().childNodes().forEach { parseNode(it, this) }
@@ -126,59 +120,72 @@ actual fun rememberVerifiedDomain() = remember {
     }
 }
 
-@OptIn(ExperimentalForeignApi::class)
 @Composable
-actual fun rememberToastState() = remember {
-    object : IToast {
-        override fun onShow(resource: StringResource) {
-            val message = runBlocking { getString(resource) }
-            showToast(message)
-        }
+actual fun rememberToastState(): IToast {
+    val controller = LocalUIViewController.current
+    val scope = rememberCoroutineScope()
 
-        override fun onShow(text: String) {
-            showToast(text)
-        }
+    return remember(controller, scope) {
+        object : IToast {
+            override fun onShow(resource: StringResource) {
+                scope.launch {
+                    showToast(getString(resource))
+                }
+            }
 
-        private fun showToast(message: String) {
-            dispatch_async(dispatch_get_main_queue()) {
-                val window = UIApplication.sharedApplication.windows
-                    .firstOrNull { (it as UIWindow).isKeyWindow() } as? UIWindow
-                    ?: return@dispatch_async
+            override fun onShow(text: String) {
+                scope.launch {
+                    showToast(text)
+                }
+            }
 
-                val width = UIScreen.mainScreen.bounds.useContents { size.width }
-                val height = UIScreen.mainScreen.bounds.useContents { size.height }
+            private fun showToast(message: String) {
+                if (message.isBlank()) return
 
-                val toastLabel = UILabel(
-                    frame = CGRectMake(
-                        x = (width - 250.0) / 2,
-                        y = height - 120.0,
-                        width = 250.0,
-                        height = 50.0
-                    )
-                ).apply {
+                val window = controller.view.window ?: return
+                val toastView = UIView().apply {
+                    translatesAutoresizingMaskIntoConstraints = false
                     backgroundColor = UIColor.blackColor.colorWithAlphaComponent(0.8)
+                    alpha = 0.0
+                    layer.cornerRadius = 10.0
+                    clipsToBounds = true
+                }
+                val label = UILabel().apply {
+                    translatesAutoresizingMaskIntoConstraints = false
                     textColor = UIColor.whiteColor
                     textAlignment = NSTextAlignmentCenter
                     font = UIFont.systemFontOfSize(15.0)
                     text = message
-                    alpha = 0.0
-                    layer.cornerRadius = 10.0
-                    clipsToBounds = true
                     numberOfLines = 0
                 }
 
-                window.addSubview(toastLabel)
+                toastView.addSubview(label)
+                window.addSubview(toastView)
+
+                NSLayoutConstraint.activateConstraints(
+                    listOf(
+                        toastView.centerXAnchor.constraintEqualToAnchor(window.safeAreaLayoutGuide.centerXAnchor),
+                        toastView.bottomAnchor.constraintEqualToAnchor(window.safeAreaLayoutGuide.bottomAnchor, -32.0),
+                        toastView.widthAnchor.constraintLessThanOrEqualToConstant(320.0),
+                        toastView.leadingAnchor.constraintGreaterThanOrEqualToAnchor(window.safeAreaLayoutGuide.leadingAnchor, 16.0),
+                        toastView.trailingAnchor.constraintLessThanOrEqualToAnchor(window.safeAreaLayoutGuide.trailingAnchor, -16.0),
+                        label.leadingAnchor.constraintEqualToAnchor(toastView.leadingAnchor, 12.0),
+                        label.trailingAnchor.constraintEqualToAnchor(toastView.trailingAnchor, -12.0),
+                        label.topAnchor.constraintEqualToAnchor(toastView.topAnchor, 8.0),
+                        label.bottomAnchor.constraintEqualToAnchor(toastView.bottomAnchor, -8.0)
+                    )
+                )
 
                 UIView.animateWithDuration(
                     duration = 0.3,
-                    animations = { toastLabel.alpha = 1.0 },
+                    animations = { toastView.alpha = 1.0 },
                     completion = {
                         UIView.animateWithDuration(
                             duration = 0.3,
                             delay = 2.0,
                             options = UIViewAnimationOptionCurveEaseOut,
-                            animations = { toastLabel.alpha = 0.0 },
-                            completion = { toastLabel.removeFromSuperview() }
+                            animations = { toastView.alpha = 0.0 },
+                            completion = { toastView.removeFromSuperview() }
                         )
                     }
                 )
@@ -191,13 +198,8 @@ actual fun rememberToastState() = remember {
 actual fun platformColorScheme(darkTheme: Boolean, dynamicColor: Boolean): ColorScheme? = null
 
 @Composable
-actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) {
-    LaunchedEffect(darkTheme) {
-        val statusBarStyle = if (darkTheme) UIStatusBarStyleLightContent
-        else UIStatusBarStyleDarkContent
-
-        UIApplication.sharedApplication.setStatusBarStyle(statusBarStyle, true)
-    }
+actual fun EdgeToEdge(darkTheme: Boolean, isAmoled: Boolean) = SideEffect {
+    SystemBarsManager.isDarkTheme = darkTheme
 }
 
 object OrientationManager {
@@ -226,29 +228,32 @@ actual fun LockScreenOrientation(orientation: ScreenOrientation) {
     }
 }
 
-@OptIn(ExperimentalForeignApi::class)
-suspend fun loadSubtitleContent(url: String): String = withContext(Dispatchers.Default) {
-    val nsUrl = NSURL.URLWithString(url) ?: return@withContext BLANK
-    NSString.stringWithContentsOfURL(nsUrl, NSUTF8StringEncoding, null).orEmpty()
-}
-
 object SystemBarsManager {
-    var onVisibilityChanged: ((Boolean) -> Unit)? = null
+    var onAppearanceChanged: (() -> Unit)? = null
+
+    var isDarkTheme: Boolean = false
+        set(value) {
+            if (field == value) return
+            field = value
+            onAppearanceChanged?.invoke()
+        }
 
     var isHidden: Boolean = false
         set(value) {
+            if (field == value) return
             field = value
-            onVisibilityChanged?.invoke(value)
+            onAppearanceChanged?.invoke()
         }
 }
 
 @Composable
 actual fun HideSystemBars() {
     DisposableEffect(Unit) {
+        val wasHidden = SystemBarsManager.isHidden
         SystemBarsManager.isHidden = true
 
         onDispose {
-            SystemBarsManager.isHidden = false
+            SystemBarsManager.isHidden = wasHidden
         }
     }
 }
@@ -259,6 +264,7 @@ actual fun DialogSystemBarColors() = Unit
 actual fun formatRelativeDays(daysAgo: Int): String {
     val formatter = NSRelativeDateTimeFormatter().apply {
         dateTimeStyle = NSRelativeDateTimeFormatterStyleNamed
+        locale = NSLocale(AppLocale.getLocale())
     }
     val components = NSDateComponents().apply {
         day = -daysAgo.toLong()

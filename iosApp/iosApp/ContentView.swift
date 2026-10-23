@@ -1,108 +1,89 @@
-import SwiftUI
+import UIKit
 import ComposeApp
 
-struct ComposeView: UIViewControllerRepresentable {
-    func makeUIViewController(context: Context) -> UIViewController {
-        Main_iosKt.MainViewController()
+class ComposeViewController: UIViewController {
+    override var preferredStatusBarStyle: UIStatusBarStyle {
+        SystemBarsManager.shared.isDarkTheme ? .lightContent : .darkContent
     }
 
-    func updateUIViewController(_ uiViewController: UIViewController, context: Context) {}
-}
-
-struct ContentView: View {
-    @StateObject private var systemBars = SystemBarsState()
-
-    var body: some View {
-        ComposeView()
-            .ignoresSafeArea(.all)
-            .statusBarHidden(systemBars.isHidden)
+    override var prefersStatusBarHidden: Bool {
+        SystemBarsManager.shared.isHidden
     }
-}
 
-class AppDelegate: NSObject, UIApplicationDelegate {
-    func application(
-        _ application: UIApplication,
-        didFinishLaunchingWithOptions launchOptions: [UIApplication.LaunchOptionsKey: Any]? = nil
-    ) -> Bool {
-        OrientationManager.shared.onOrientationChange = { maskRaw in
+    override var prefersHomeIndicatorAutoHidden: Bool {
+        SystemBarsManager.shared.isHidden
+    }
+
+    override var supportedInterfaceOrientations: UIInterfaceOrientationMask {
+        UIInterfaceOrientationMask(rawValue: UInt(OrientationManager.shared.currentMask))
+    }
+
+    override func viewDidLoad() {
+        super.viewDidLoad()
+
+        let controller = Main_iosKt.MainViewController()
+        addChild(controller)
+        controller.view.frame = view.bounds
+        controller.view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+        view.addSubview(controller.view)
+        controller.didMove(toParent: self)
+
+        SystemBarsManager.shared.onAppearanceChanged = { [weak self] in
             DispatchQueue.main.async {
-                let mask = UIInterfaceOrientationMask(
-                    rawValue: UInt(truncating: maskRaw as? NSNumber ?? 0)
-                )
-                
-                Self.forceOrientationUpdate(mask)
+                self?.setNeedsStatusBarAppearanceUpdate()
+                self?.setNeedsUpdateOfHomeIndicatorAutoHidden()
             }
         }
 
-        return true
+        OrientationManager.shared.onOrientationChange = { [weak self] _ in
+            DispatchQueue.main.async {
+                self?.updateOrientation()
+            }
+        }
     }
 
-    func application(
-        _ application: UIApplication,
-        supportedInterfaceOrientationsFor window: UIWindow?
-    ) -> UIInterfaceOrientationMask {
-        let mask = OrientationManager.shared.currentMask
-        return UIInterfaceOrientationMask(rawValue: UInt(mask))
+    override func viewDidAppear(_ animated: Bool) {
+        super.viewDidAppear(animated)
+        setNeedsStatusBarAppearanceUpdate()
+        setNeedsUpdateOfHomeIndicatorAutoHidden()
+        updateOrientation()
     }
 
-    private static func forceOrientationUpdate(_ mask: UIInterfaceOrientationMask) {
-        guard let windowScene = UIApplication.shared.connectedScenes
-            .compactMap({ $0 as? UIWindowScene })
-            .first else {
+    private func updateOrientation() {
+        guard let windowScene = viewIfLoaded?.window?.windowScene else {
             return
         }
 
+        let mask = supportedInterfaceOrientations
+        let current = UIInterfaceOrientationMask(rawValue: 1 << windowScene.interfaceOrientation.rawValue)
+
         if #available(iOS 16.0, *) {
-            updateOrientation(windowScene: windowScene, mask: mask)
-        } else {
-            updateOrientation(mask)
-        }
-    }
+            setNeedsUpdateOfSupportedInterfaceOrientations()
 
-    @available(iOS 16.0, *)
-    private static func updateOrientation(
-        windowScene: UIWindowScene,
-        mask: UIInterfaceOrientationMask
-    ) {
-        windowScene.windows
-            .first(where: { $0.isKeyWindow })?
-            .rootViewController?
-            .setNeedsUpdateOfSupportedInterfaceOrientations()
-
-        let preferences = UIWindowScene.GeometryPreferences.iOS(
-            interfaceOrientations: mask
-        )
-
-        windowScene.requestGeometryUpdate(preferences) { error in
-            print(error.localizedDescription)
-        }
-    }
-
-    private static func updateOrientation(_ mask: UIInterfaceOrientationMask) {
-        let orientation: UIInterfaceOrientation
-
-        if mask.contains(.portrait) {
-            orientation = .portrait
-        } else if mask.contains(.landscapeRight) {
-            orientation = .landscapeRight
-        } else if mask.contains(.landscapeLeft) {
-            orientation = .landscapeLeft
-        } else {
-            orientation = .portrait
-        }
-
-        UIDevice.current.setValue(orientation.rawValue, forKey: "orientation")
-    }
-}
-
-class SystemBarsState: ObservableObject {
-    @Published var isHidden: Bool = false
-
-    init() {
-        SystemBarsManager.shared.onVisibilityChanged = { [weak self] hidden in
-            DispatchQueue.main.async {
-                self?.isHidden = hidden == true
+            if mask.contains(current) {
+                return
             }
+
+            let preferences = UIWindowScene.GeometryPreferences.iOS(interfaceOrientations: mask)
+            windowScene.requestGeometryUpdate(preferences) { error in
+                print(error.localizedDescription)
+            }
+        } else {
+            if !mask.contains(current) {
+                let orientation: UIInterfaceOrientation
+
+                if mask.contains(.portrait) {
+                    orientation = .portrait
+                } else if mask.contains(.landscapeRight) {
+                    orientation = .landscapeRight
+                } else {
+                    orientation = .landscapeLeft
+                }
+
+                UIDevice.current.setValue(orientation.rawValue, forKey: "orientation")
+            }
+
+            UIViewController.attemptRotationToDeviceOrientation()
         }
     }
 }
