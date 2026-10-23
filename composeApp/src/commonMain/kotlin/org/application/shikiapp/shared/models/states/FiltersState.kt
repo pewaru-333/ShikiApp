@@ -24,4 +24,16 @@ data class FiltersState(
     val myList: String? = null,
     val roles: Set<PeopleFilterItem> = emptySet(),
     val title: String = BLANK
-)
+) {
+    val activeFilters: Boolean
+        get() = kind.isNotEmpty() ||
+                status.isNotEmpty() ||
+                seasonSet.isNotEmpty() ||
+                score > 1f ||
+                duration.isNotEmpty() ||
+                rating.isNotEmpty() ||
+                genres.isNotEmpty() ||
+                !studio.isNullOrBlank() ||
+                !publisher.isNullOrBlank() ||
+                roles.isNotEmpty()
+}

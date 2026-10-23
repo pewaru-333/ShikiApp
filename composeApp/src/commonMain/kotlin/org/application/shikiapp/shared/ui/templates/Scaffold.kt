@@ -3,8 +3,8 @@
 package org.application.shikiapp.shared.ui.templates
 
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.text.input.clearText
 import androidx.compose.foundation.text.input.rememberTextFieldState
+import androidx.compose.foundation.text.input.setTextAndPlaceCursorAtEnd
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -45,8 +45,8 @@ fun ScaffoldSearchBar(
     }
 
     LaunchedEffect(search) {
-        if (search.isEmpty()) {
-            textFieldState.clearText()
+        if (textFieldState.text.toString() != search) {
+            textFieldState.setTextAndPlaceCursorAtEnd(search)
         }
     }
 

@@ -2,6 +2,7 @@ package org.application.shikiapp.shared.network.paging
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
+import kotlin.coroutines.cancellation.CancellationException
 
 class CommonPaging<T : Any>(
     private val getId: (T) -> Any,
@@ -25,6 +26,8 @@ class CommonPaging<T : Any>(
         val nextKey = if (response.isEmpty()) null else page + 1
 
         LoadResult.Page(newData, prevKey, nextKey)
+    } catch (e: CancellationException) {
+        throw e
     } catch (e: Exception) {
         LoadResult.Error(e)
     }

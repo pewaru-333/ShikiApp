@@ -5,6 +5,9 @@
 package org.application.shikiapp.shared.screens
 
 import androidx.compose.animation.*
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.awaitLongPressOrCancellation
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -31,11 +34,17 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.input.pointer.PointerEventPass
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastForEach
@@ -45,12 +54,15 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigationevent.NavigationEventInfo
 import androidx.navigationevent.compose.NavigationBackHandler
 import androidx.navigationevent.compose.rememberNavigationEventState
+import androidx.paging.LoadState
 import androidx.paging.compose.collectAsLazyPagingItems
 import kotlinx.coroutines.flow.collectLatest
+import kotlinx.coroutines.flow.drop
+import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.launch
 import org.application.shikiapp.generated.common.fragment.Genres
 import org.application.shikiapp.shared.events.FilterEvent
-import org.application.shikiapp.shared.events.FilterEvent.*
+import org.application.shikiapp.shared.events.FilterEvent.SetSeason
 import org.application.shikiapp.shared.models.states.*
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.asSource
@@ -63,7 +75,6 @@ import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.*
 import org.application.shikiapp.shared.utils.extensions.isDigitsOnly
-import org.application.shikiapp.shared.utils.extensions.pairwise
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.rememberWindowSize
@@ -75,12 +86,14 @@ import shikiapp.composeapp.generated.resources.*
 @Composable
 fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     val barVisibility = LocalBarVisibility.current
+    val focusManager = LocalFocusManager.current
     val scope = rememberCoroutineScope()
     val drawerState = rememberDrawerState(DrawerValue.Closed)
 
     val model = viewModel(::CatalogViewModel)
     val state by model.state.collectAsStateWithLifecycle()
-    val filters by model.currentFilters.collectAsStateWithLifecycle()
+    val filterStates by model.filters.collectAsStateWithLifecycle()
+    val filters = filterStates.getValue(state.menu)
     val genres by model.genres.collectAsStateWithLifecycle()
 
     val listStates = CatalogItem.entries.associateWith { rememberLazyListState() }
@@ -96,6 +109,10 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
 
     LaunchedEffect(state.dialogFilter) {
         barVisibility.toggle(state.isFiltersVisible)
+    }
+
+    LaunchedEffect(state.menu) {
+        focusManager.clearFocus(true)
     }
 
     val menuRow: @Composable (() -> Unit)? = if (isCompact) null else {
@@ -120,7 +137,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
     val scaffoldContent = @Composable {
         ScaffoldSearchBar(
             search = state.search,
-            onSearch = { model.onEvent(SetTitle(it)) },
+            onSearch = { model.onEvent(FilterEvent.SetTitle(it)) },
             menuRow = menuRow,
             navigationIcon = {
                 if (isCompact) {
@@ -133,7 +150,7 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
                         onClick = { model.showFilters(state.menu) },
                         content = {
                             BadgedBox(
-                                badge = { if (filters != FiltersState()) Badge() },
+                                badge = { if (filters.activeFilters) Badge() },
                                 content = { VectorIcon(Icons.Filter) }
                             )
                         }
@@ -142,27 +159,27 @@ fun CatalogScreen(onNavigate: (Screen) -> Unit) {
             },
             content = {
                 key(state.menu) {
+                    val menu = state.menu
                     val catalogList = model.list.collectAsLazyPagingItems()
 
-                    ContentList(
-                        mode = state.menu.viewType,
-                        isCompactWindow = isCompact,
-                        source = catalogList.asSource(BasicContent::id),
-                        listState = listStates.getValue(state.menu),
-                        gridState = gridStates.getValue(state.menu),
-                        onItemClick = { id, _ -> onNavigate(state.menu.navigateTo(id)) }
-                    )
-
-                    LaunchedEffect(Unit) {
-                        snapshotFlow { filters }
-                            .pairwise()
-                            .collectLatest { (old, new) ->
-                                if (old != new) {
-                                    listStates[state.menu]?.requestScrollToItem(0)
-                                    gridStates[state.menu]?.requestScrollToItem(0)
-                                }
+                    LaunchedEffect(catalogList) {
+                        snapshotFlow { catalogList.loadState.refresh }
+                            .filterIsInstance<LoadState.NotLoading>()
+                            .drop(1)
+                            .collect {
+                                listStates.getValue(menu).requestScrollToItem(0)
+                                gridStates.getValue(menu).requestScrollToItem(0)
                             }
                     }
+
+                    ContentList(
+                        mode = menu.viewType,
+                        isCompactWindow = isCompact,
+                        source = catalogList.asSource(BasicContent::id),
+                        listState = listStates.getValue(menu),
+                        gridState = gridStates.getValue(menu),
+                        onItemClick = { id, _ -> onNavigate(menu.navigateTo(id)) }
+                    )
                 }
             }
         )
@@ -255,7 +272,7 @@ private fun DialogFilters(
             item {
                 Sorting(
                     order = filters.order,
-                    onClick = { onFilterEvent(SetOrder(it)) }
+                    onClick = { onFilterEvent(FilterEvent.SetOrder(it)) }
                 )
             }
             item {
@@ -270,8 +287,9 @@ private fun DialogFilters(
                     content = {
                         FlexBoxRow(
                             entries = filteredStatuses,
-                            selected = { it.name.lowercase() in filters.status },
-                            onClick = { onFilterEvent(SetStatus(it.name.lowercase())) },
+                            getValue = { it.name.lowercase() },
+                            selected = filters.status,
+                            onClick = { onFilterEvent(FilterEvent.SetStatus(it)) },
                             getLabel = { ResourceText.StringResource(it.getTitle(type)) }
                         )
                     }
@@ -290,8 +308,9 @@ private fun DialogFilters(
                         FlexBoxRow(
                             entries = linkedKinds,
                             getLabel = { ResourceText.StringResource(it.title) },
-                            selected = { it.name.lowercase() in filters.kind },
-                            onClick = { onFilterEvent(FilterEvent.SetKind(it.name.lowercase())) }
+                            getValue = { it.name.lowercase() },
+                            selected = filters.kind,
+                            onClick = { onFilterEvent(FilterEvent.SetKind(it)) }
                         )
                     }
                 )
@@ -302,7 +321,7 @@ private fun DialogFilters(
                     seasonYF = filters.seasonYearFinal,
                     isExpanded = ExpandedFilters.Season in state.expandedFilters,
                     onExpandedChange = { onExpandedChange(ExpandedFilters.Season) },
-                    seasonSelected = { it in filters.seasonYearSeason },
+                    selectedSeasons = filters.seasonYearSeason,
                     onEvent = onFilterEvent
                 )
             }
@@ -325,8 +344,9 @@ private fun DialogFilters(
                             FlexBoxRow(
                                 entries = Duration.entries,
                                 getLabel = { ResourceText.StringResource(it.title) },
-                                selected = { it.name.lowercase() in filters.duration },
-                                onClick = { onFilterEvent(SetDuration(it.name.lowercase())) }
+                                getValue = { it.name },
+                                selected = filters.duration,
+                                onClick = { onFilterEvent(FilterEvent.SetDuration(it)) }
                             )
                         }
                     )
@@ -340,8 +360,9 @@ private fun DialogFilters(
                             FlexBoxRow(
                                 entries = Rating.entries,
                                 getLabel = { ResourceText.StringResource(it.title) },
-                                selected = { it.name.lowercase() in filters.rating },
-                                onClick = { onFilterEvent(SetRating(it.name.lowercase())) }
+                                getValue = { it.name.lowercase() },
+                                selected = filters.rating,
+                                onClick = { onFilterEvent(FilterEvent.SetRating(it)) }
                             )
                         }
                     )
@@ -357,8 +378,9 @@ private fun DialogFilters(
                         FlexBoxRow(
                             entries = genres,
                             getLabel = { ResourceText.StaticString(it.russian) },
-                            selected = { it.id in filters.genres },
-                            onClick = { onFilterEvent(SetGenre(it.id)) }
+                            getValue = Genres::id,
+                            selected = filters.genres,
+                            onClick = { onFilterEvent(FilterEvent.SetGenre(it)) }
                         )
                     }
                 )
@@ -388,7 +410,7 @@ private fun DialogFilters(
                     TopAppBar(
                         navigationIcon = { NavigationIcon(onHide) },
                         title = { Text(stringResource(Res.string.text_filters)) },
-                        subtitle = { Text(stringResource(Res.string.text_applied_immediately)) },
+                        subtitle = { Text(stringResource(Res.string.text_filter_inversion_hint)) },
                         actions = {
                             IconButton(
                                 onClick = { onFilterEvent(FilterEvent.ClearFilters) },
@@ -420,7 +442,7 @@ private fun DialogFilters(
                             style = MaterialTheme.typography.headlineSmall
                         )
                         Text(
-                            text = stringResource(Res.string.text_applied_immediately),
+                            text = stringResource(Res.string.text_filter_inversion_hint),
                             style = MaterialTheme.typography.bodyMedium.copy(
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -546,7 +568,7 @@ private fun Season(
     seasonYF: String,
     isExpanded: Boolean,
     onExpandedChange: () -> Unit,
-    seasonSelected: (String) -> Boolean,
+    selectedSeasons: Set<String>,
     onEvent: (SetSeason) -> Unit
 ) {
 
@@ -629,14 +651,14 @@ private fun Season(
             Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(16.dp)) {
                 LocalTextField(
                     text = seasonYS,
-                    onValueChange = { onEvent(SetSeason.SetStartYear(it)) },
+                    onValueChange = { onEvent(FilterEvent.SetSeason.SetStartYear(it)) },
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Next,
                     label = Res.string.text_start_year
                 )
                 LocalTextField(
                     text = seasonYF,
-                    onValueChange = { onEvent(SetSeason.SetFinalYear(it)) },
+                    onValueChange = { onEvent(FilterEvent.SetSeason.SetFinalYear(it)) },
                     modifier = Modifier.weight(1f),
                     imeAction = ImeAction.Done,
                     label = Res.string.text_end_year
@@ -644,12 +666,12 @@ private fun Season(
             }
 
             Row(Modifier.fillMaxWidth(), Arrangement.SpaceBetween) {
-                Season.entries.fastForEach {
-                    FilterChip(
-                        modifier = Modifier.height(36.dp),
-                        selected = seasonSelected(it.name.lowercase()),
-                        onClick = { onEvent(SetSeason.ToggleSeasonYear(it.name.lowercase())) },
-                        label = { Text(stringResource(it.title)) }
+                Season.entries.fastForEach { season ->
+                    CatalogFilterChip(
+                        value = season.name.lowercase(),
+                        selected = selectedSeasons,
+                        label = stringResource(season.title),
+                        onClick = { onEvent(FilterEvent.SetSeason.ToggleSeasonYear(it)) }
                     )
                 }
             }
@@ -705,11 +727,61 @@ private fun Score(
 }
 
 @Composable
+private fun CatalogFilterChip(
+    value: String,
+    selected: Set<String>,
+    label: String,
+    onClick: (String) -> Unit
+) {
+    val haptic = LocalHapticFeedback.current
+    val isExcluded = "!$value" in selected
+    val invert by rememberUpdatedState {
+        haptic.performHapticFeedback(HapticFeedbackType.LongPress)
+        onClick(if (isExcluded) value else "!$value")
+    }
+
+    FilterChip(
+        selected = value in selected || isExcluded,
+        onClick = { onClick(if (isExcluded) "!$value" else value) },
+        colors = if (isExcluded) {
+            FilterChipDefaults.filterChipColors(
+                selectedContainerColor = MaterialTheme.colorScheme.errorContainer,
+                selectedLabelColor = MaterialTheme.colorScheme.onErrorContainer
+            )
+        } else FilterChipDefaults.filterChipColors(),
+        label = {
+            Text(
+                text = label,
+                textDecoration = if (isExcluded) TextDecoration.LineThrough else TextDecoration.None
+            )
+        },
+        modifier = Modifier
+            .height(36.dp)
+            .pointerInput(Unit) {
+                awaitEachGesture {
+                    val down = awaitFirstDown(false, PointerEventPass.Initial)
+                    awaitPointerEvent(PointerEventPass.Final)
+
+                    val press = awaitLongPressOrCancellation(down.id) ?: return@awaitEachGesture
+                    press.consume()
+                    invert()
+
+                    do {
+                        val event = awaitPointerEvent(PointerEventPass.Initial)
+                        event.changes.fastForEach { it.consume() }
+                    } while (event.changes.any { it.pressed })
+                }
+            }
+    )
+}
+
+@Composable
 private fun <T> FlexBoxRow(
     entries: List<T>,
     getLabel: (T) -> ResourceText,
-    selected: (T) -> Boolean,
-    onClick: (T) -> Unit
+    getValue: (T) -> String,
+    selected: Set<String>,
+    onClick: (String) -> Unit
 ) {
     FlexBox(
         config = {
@@ -719,11 +791,11 @@ private fun <T> FlexBoxRow(
         },
         content = {
             entries.fastForEach {
-                FilterChip(
-                    modifier = Modifier.height(36.dp),
-                    selected = selected(it),
-                    onClick = { onClick(it) },
-                    label = { Text(getLabel(it).asComposableString()) }
+                CatalogFilterChip(
+                    value = getValue(it),
+                    selected = selected,
+                    onClick = onClick,
+                    label = getLabel(it).asComposableString()
                 )
             }
         }

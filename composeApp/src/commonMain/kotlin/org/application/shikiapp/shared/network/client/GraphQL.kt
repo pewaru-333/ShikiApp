@@ -9,7 +9,6 @@ import org.application.shikiapp.shared.utils.enums.Order
 import org.application.shikiapp.shared.utils.extensions.getRandomTrending
 import org.application.shikiapp.shared.utils.extensions.mapToResult
 import org.application.shikiapp.shared.utils.ui.Formatter
-import kotlin.coroutines.cancellation.CancellationException
 
 object GraphQL {
 
@@ -128,15 +127,11 @@ object GraphQL {
         )
     )
 
-    private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>) = try {
+    private suspend fun <T : Query.Data, R> getList(query: Query<T>, mapper: (T) -> List<R>): List<R> {
         val response = Network.apollo.query(query)
             .execute()
             .dataAssertNoErrors
 
-        mapper(response)
-    } catch (e: Exception) {
-        if (e is CancellationException) throw e
-
-        emptyList()
+        return mapper(response)
     }
 }
