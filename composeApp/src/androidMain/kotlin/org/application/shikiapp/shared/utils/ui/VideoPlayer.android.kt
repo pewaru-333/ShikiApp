@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.PointerIcon
@@ -36,7 +37,6 @@ import androidx.media3.common.*
 import androidx.media3.common.text.Cue
 import androidx.media3.common.text.CueGroup
 import androidx.media3.common.util.UnstableApi
-import androidx.media3.common.util.Util
 import androidx.media3.datasource.DefaultHttpDataSource
 import androidx.media3.exoplayer.DefaultRenderersFactory
 import androidx.media3.exoplayer.ExoPlayer
@@ -138,8 +138,10 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
                         activity.packageManager.hasSystemFeature(PackageManager.FEATURE_LEANBACK)
             }
 
-        override val pictureInPicture = if (isTV) null else this@VideoPlayerController
+        override val pictureInPicture = if (isTV || !activity.packageManager.hasSystemFeature(PackageManager.FEATURE_PICTURE_IN_PICTURE)) null
+        else this@VideoPlayerController
         override val showPlayPause = true
+        override val doubleTapToSeek = true
         override val visibilityDelay = if (isTV) 6000L else 3000L
         override val pointerIcon = PointerIcon.Default
     }
@@ -158,6 +160,9 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
             state.isPlaying = isPlaying
 
             onEvent(if (isPlaying) PlayerEvent.Play else PlayerEvent.Pause)
+            if (activity.isInPictureInPictureMode) {
+                activity.setPictureInPictureParams(createPipParams())
+            }
         }
 
         override fun onPlayerError(error: PlaybackException) {
@@ -179,12 +184,21 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
         override fun onTracksChanged(tracks: Tracks) {
             state.audioTrackIndex?.let(::onLoadAudioTrack)
 
-            if (!tracks.isTypeSelected(C.TRACK_TYPE_TEXT)) updateSubtitleTrack(null)
-            else tracks.groups
-                .find { it.type == C.TRACK_TYPE_TEXT && it.isSelected }
-                ?.let { updateSubtitleTrack(it.getTrackFormat(0).label) }
+            val index = state.subtitles
+                .indexOfFirst { it.name == state.selectedSubtitlesTrack }
+                .coerceAtLeast(0)
 
-            getAdaptiveQuality(tracks)
+            onLoadSubtitleTrack(index)
+        }
+
+        override fun onVideoSizeChanged(size: VideoSize) {
+            videoSize = if (size.width <= 0 || size.height <= 0) Size.Unspecified
+            else Size(size.width * size.pixelWidthHeightRatio, size.height.toFloat())
+
+            if (size.height <= 0) return
+
+            if (state.qualityList.size <= 1) state.qualityList = listOf(size.height)
+            state.currentQuality = size.height
         }
     }
 
@@ -194,8 +208,10 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
             .setDefaultRequestProperties(state.headers)
             .setAllowCrossProtocolRedirects(true)
 
-        val subtitleConfigs = state.subtitles.mapIndexed { index, subtitleTrack ->
-            val mimeType = when (MimeTypeMap.getFileExtensionFromUrl(subtitleTrack.url)) {
+        val subtitleConfigs = state.subtitles.mapIndexedNotNull { index, subtitleTrack ->
+            if (index == 0) return@mapIndexedNotNull null
+
+            val mimeType = when (MimeTypeMap.getFileExtensionFromUrl(subtitleTrack.url).lowercase()) {
                 "vtt" -> MimeTypes.TEXT_VTT
                 "ssa", "ass" -> MimeTypes.TEXT_SSA
                 "srt" -> MimeTypes.APPLICATION_SUBRIP
@@ -232,9 +248,15 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
     }
 
     actual override fun release() {
-        player.stop()
-        player.clearMediaItems()
-        player.release()
+        player.removeListener(playerEventListener)
+        player.removeListener(assHandler)
+        assHandler.videoTimeCallback = null
+
+        try {
+            player.release()
+        } finally {
+            assHandler.release()
+        }
     }
 
     actual override fun onPlay() {
@@ -258,10 +280,11 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
     }
 
     override fun enterPIP() {
-        if (activity.isInPictureInPictureMode) return
+        if (feature.pictureInPicture == null || activity.isInPictureInPictureMode) return
 
-        activity.enterPictureInPictureMode(createPipParams())
-        controls.hideControls()
+        if (activity.enterPictureInPictureMode(createPipParams())) {
+            controls.hideControls()
+        }
     }
 
     actual override fun onLoadAudioTrack(index: Int) {
@@ -285,24 +308,28 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
     }
 
     actual override fun onLoadSubtitleTrack(index: Int) {
+        if (index != 0 && index !in state.subtitles.indices) return
+
+        updateSubtitleTrack(index)
+
         val builder = player.trackSelectionParameters.buildUpon()
             .clearOverridesOfType(C.TRACK_TYPE_TEXT)
-            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, index == 0)
+            .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, true)
 
         if (index > 0) {
-            var searchIndex = 0
+            val id = (index + 1024).toString()
 
-            for (group in player.currentTracks.groups) {
-                if (group.type == C.TRACK_TYPE_TEXT) {
-                    if (searchIndex == index) {
-                        if (group.isSelected) return
+            tracks@ for (group in player.currentTracks.groups) {
+                if (group.type != C.TRACK_TYPE_TEXT) continue
 
-                        builder.setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, 0))
+                for (trackIndex in 0 until group.length) {
+                    if (group.getTrackFormat(trackIndex).id?.substringAfterLast(':') != id) continue
 
-                        break
-                    }
+                    builder
+                        .setTrackTypeDisabled(C.TRACK_TYPE_TEXT, false)
+                        .setOverrideForType(TrackSelectionOverride(group.mediaTrackGroup, trackIndex))
 
-                    searchIndex++
+                    break@tracks
                 }
             }
         }
@@ -322,19 +349,15 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
 
     internal suspend fun updateBuffer() {
         val duration = player.duration
-        val isPlaying = player.isPlaying
 
-        if (isPlaying && duration != C.TIME_UNSET) {
-            val total = duration / 1000f
-            val current = player.currentPosition / 1000f
-
-            state.currentTime = current
-            state.totalTime = total
+        state.currentTime = player.currentPosition.coerceAtLeast(0) / 1000f
+        if (duration != C.TIME_UNSET) {
+            state.totalTime = duration.coerceAtLeast(0) / 1000f
         }
 
         updateBuffer(player.bufferedPercentage / 100f)
 
-        delay(if (isPlaying) 1.seconds else 3.seconds)
+        delay(if (player.isPlaying) 1.seconds else 3.seconds)
     }
 
     internal fun registerBroadcastReceiverPIP() {
@@ -356,7 +379,7 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
 
     private fun createPipActions() = buildList {
         add(pipActionSeekLeft)
-        add(if (state.isPlaying) pipActionPause else pipActionPlay)
+        add(if (player.playWhenReady) pipActionPause else pipActionPlay)
         add(pipActionSeekRight)
     }
 
@@ -369,42 +392,6 @@ actual class VideoPlayerController(private val activity: ComponentActivity): Vid
         },
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
     )
-
-    private fun getAdaptiveQuality(tracks: Tracks) {
-        val url = state.url ?: return
-        val type = Util.inferContentType(url.toUri())
-        val isAdaptive = type == C.CONTENT_TYPE_HLS || type == C.CONTENT_TYPE_DASH
-
-        for (group in tracks.groups) {
-            if (group.type == C.TRACK_TYPE_VIDEO) {
-                for (i in 0 until group.length) {
-                    if (group.isTrackSelected(i)) {
-                        val trackFormat = group.getTrackFormat(i)
-
-                        val width = trackFormat.width
-                        val height = trackFormat.height
-                        val rotation = trackFormat.rotationDegrees
-
-                        videoSize = if (rotation == 90 || rotation == 270) {
-                            Size(height.toFloat(), width.toFloat())
-                        } else {
-                            Size(width.toFloat(), height.toFloat())
-                        }
-
-                        if (height <= 0) continue
-
-                        if (isAdaptive && state.qualityList.size <= 1) {
-                            state.qualityList = listOf(height)
-                        }
-
-                        if (group.isTrackSelected(i)) {
-                            state.currentQuality = height
-                        }
-                    }
-                }
-            }
-        }
-    }
 
     companion object {
         internal const val PLAYER_ACTION_BROADCAST = "player_action_playback_control"
@@ -424,7 +411,7 @@ actual fun rememberVideoPlayerController(onEvent: (PlayerEvent) -> Unit): VideoP
 
     return remember(activity) {
         VideoPlayerController(activity).apply {
-            eventListener = currentEvent
+            eventListener = { currentEvent(it) }
         }
     }
 }
@@ -444,17 +431,17 @@ actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
         controller.pause()
     }
 
-    DisposableEffect(controller.player, isPiP) {
+    DisposableEffect(controller, isPiP) {
         if (isPiP) {
             controller.registerBroadcastReceiverPIP()
-
-            onDispose { controller.unregisterBroadcastReceiverPIP() }
         }
 
-        onDispose { }
+        onDispose {
+            if (isPiP) controller.unregisterBroadcastReceiverPIP()
+        }
     }
 
-    BoxWithConstraints(modifier, Alignment.Center) {
+    BoxWithConstraints(modifier.clipToBounds(), Alignment.Center) {
         val boxWidth = constraints.maxWidth.toFloat()
         val boxHeight = constraints.maxHeight.toFloat()
         val maxSize = Size(boxWidth, boxHeight)
@@ -471,13 +458,8 @@ actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
         val baseHeight = if (hasVideo) (videoSize.height * fitScale).roundToInt()
         else boxHeight.roundToInt()
 
-        val scaleValue = remember(controller.state.isZoomed, controller.videoSize, constraints) {
-            if (!controller.state.isZoomed || !hasVideo || fitScale <= 0f) {
-                1f
-            } else {
-                ContentScale.Crop.computeScaleFactor(videoSize, maxSize).scaleX / fitScale
-            }
-        }
+        val scaleValue = if (!controller.state.isZoomed || !hasVideo || fitScale <= 0f) 1f
+        else ContentScale.Crop.computeScaleFactor(videoSize, maxSize).scaleX / fitScale
 
         val animatedScale by animateFloatAsState(
             targetValue = scaleValue,
@@ -487,34 +469,23 @@ actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
             )
         )
 
-        val overflowHeight = baseHeight * animatedScale - boxHeight
-        val offsetY = if (overflowHeight > 0f) -overflowHeight / 2f else 0f
-
-        val scaleModifier = Modifier.graphicsLayer {
-            scaleX = animatedScale
-            scaleY = animatedScale
-            translationY = offsetY
-        }
-
         PlayerSurface(
             player = controller.player,
-            modifier = scaleModifier.layout { measurable, _ ->
-                val placeable = measurable.measure(Constraints.fixed(baseWidth, baseHeight))
-
-                layout(placeable.width, placeable.height) {
-                    placeable.placeRelative(0, 0)
+            modifier = Modifier
+                .graphicsLayer {
+                    scaleX = animatedScale
+                    scaleY = animatedScale
                 }
-            }
+                .layout { measurable, _ ->
+                    val placeable = measurable.measure(Constraints.fixed(baseWidth, baseHeight))
+
+                    this.layout(placeable.width, placeable.height) {
+                        placeable.placeRelative(0, 0)
+                    }
+                }
         )
 
         AndroidView(
-            modifier = scaleModifier.layout { measurable, _ ->
-                val placeable = measurable.measure(Constraints.fixed(baseWidth, baseHeight))
-
-                layout(placeable.width, placeable.height) {
-                    placeable.placeRelative(0, 0)
-                }
-            },
             update = { it.cues = controller.cues },
             factory = { context ->
                 SubtitleView(context).apply {
@@ -522,6 +493,22 @@ actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
                     setUserDefaultStyle()
                     setUserDefaultTextSize()
                     viewType = SubtitleView.VIEW_TYPE_CANVAS
+                }
+            },
+            modifier = Modifier.layout { measurable, constraints ->
+                val placeable = measurable.measure(
+                    constraints = Constraints.fixed(
+                        width = (baseWidth * animatedScale)
+                            .roundToInt()
+                            .coerceAtMost(constraints.maxWidth),
+                        height = (baseHeight * animatedScale)
+                            .roundToInt()
+                            .coerceAtMost(constraints.maxHeight)
+                    )
+                )
+
+                layout(placeable.width, placeable.height) {
+                    placeable.placeRelative(0, 0)
                 }
             }
         )
@@ -532,7 +519,7 @@ actual fun VideoPlayer(controller: VideoPlayerController, modifier: Modifier) {
 fun rememberIsInPipMode(): Boolean {
     val activity = LocalActivity.current as? ComponentActivity ?: throw ActivityNotFoundException()
 
-    var pipMode by remember { mutableStateOf(activity.isInPictureInPictureMode) }
+    var pipMode by remember(activity) { mutableStateOf(activity.isInPictureInPictureMode) }
 
     DisposableEffect(activity) {
         val observer = Consumer<PictureInPictureModeChangedInfo> { info ->
