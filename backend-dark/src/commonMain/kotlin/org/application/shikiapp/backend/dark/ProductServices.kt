@@ -11,13 +11,13 @@ import org.application.shikiapp.shared.network.client.YggdrasilTransport
 object ProductServices {
     private val config = AppConfig(
         baseUrl = "https://shikimori.rip",
-        urlMirrors = listOf("https://shikimori.online", "https://shikimori.net"),
+        urlMirrors = listOf("https://shikimori.club", "https://shikimori.net"),
         userAgent = "DarkShiki",
         clientId = "d8W9rjFLuEZKx_dYXzJ42nGvsUckx4vfhMu5Liyr7MY",
         clientSecret = "Sog_CyJs19eCuFbIvg06Gb8zu8AMXZE8VI2CKLN1td4",
         redirectUri = "darkshiki://auth/login",
         yggdrasilAddress = "http://[201:601c:da30:ddb7:77a0:9bb0:135f:b1e2]",
-        authScopes = setOf("user_rates", "messages", "comments", "topics", "clubs", "friends", "ignores"),
+        authScopes = setOf("user_rates", "messages", "comments", "topics", "clubs", "friends", "ignores")
     )
 
     fun create(yggdrasilTransport: YggdrasilTransport? = null) = AppServices(
