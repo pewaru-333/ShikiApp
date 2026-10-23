@@ -352,6 +352,7 @@
     <string name="video_source_kodik">Кодик</string>
     <string name="video_source_collapse">Collaps</string>
     <string name="video_source_videohub">ВидеоХаб</string>
+    <string name="video_source_aksor">Aksor</string>
     <string name="video_source_animelib">AnimeLib</string>
 
     <!-- Другое -->
@@ -392,6 +393,7 @@
     <string name="text_video_voice">Озвучка</string>
 
     <string name="text_minutes_short">мин.</string>
+    <string name="text_seek_seconds">%1$s с</string>
 
     <string name="text_quality_adaptive">Адаптивное</string>
 
@@ -435,7 +437,7 @@
     <string name="text_unsuccessfully_deleted_dialog">Ошибка при удалении диалога</string>
 
     <string name="text_applied_after_relaunching_app_proxy_settings">Настройки применяются после перезапуска приложения</string>
-    <string name="text_applied_immediately">применяются сразу</string>
+    <string name="text_filter_inversion_hint">долгое нажатие — исключить</string>
     <string name="text_repeat_the_loading">Повторить загрузку</string>
 
     <string name="text_error_open_link">Не удалось открыть ссылку</string>
