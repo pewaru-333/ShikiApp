@@ -52,6 +52,11 @@ kotlin {
                 definitionFile.set(project.file("src/nativeInterop/cinterop/WebViewProxy.def"))
                 compilerOpts("-fmodules")
             }
+
+            target.compilations.getByName("main").cinterops.create("PlayerObserver") {
+                definitionFile.set(project.file("src/nativeInterop/cinterop/PlayerObserver.def"))
+                compilerOpts("-fmodules")
+            }
         }
     }
 

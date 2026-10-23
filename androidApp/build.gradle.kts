@@ -46,7 +46,7 @@ android {
             manifestPlaceholders["authHost"] = "auth"
             manifestPlaceholders["authSuffix"] = "login"
             manifestPlaceholders["base"] = "shikimori.rip"
-            manifestPlaceholders["mirrorOne"] = "shikimori.online"
+            manifestPlaceholders["mirrorOne"] = "shikimori.club"
             manifestPlaceholders["mirrorTwo"] = "shikimori.net"
 
             buildConfigField("String", "USER_AGENT", "\"DarkShiki\"")
@@ -64,10 +64,9 @@ android {
 
     buildTypes {
         release {
-            isMinifyEnabled = false
-            proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro"
-            )
+            optimization {
+                enable = true
+            }
         }
     }
     compileOptions {

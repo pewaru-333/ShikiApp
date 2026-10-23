@@ -114,6 +114,7 @@ compose.desktop {
                 "java.instrument",
                 "java.management",
                 "java.net.http",
+                "jdk.httpserver",
                 "jdk.localedata",
                 "jdk.unsupported"
             )
