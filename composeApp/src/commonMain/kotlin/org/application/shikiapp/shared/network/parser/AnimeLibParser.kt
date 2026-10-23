@@ -1,9 +1,12 @@
 package org.application.shikiapp.shared.network.parser
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.header
+import io.ktor.client.request.headers
+import io.ktor.client.request.parameter
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
@@ -45,6 +48,7 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
     override suspend fun searchById(id: String): AnimeLibEpisodesList {
         val response = client.get("$API_HOST/episodes") {
             parameter("anime_id", id)
+            header("Referer", "$ORIGIN/")
         }
 
         return basicJson.decodeFromString<AnimeLibEpisodesList>(response.bodyAsText())
@@ -96,14 +100,18 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
         )
     }
 
-    suspend fun searchByTitle(id: String, title: String): AnimeLibResultItem? {
-        val titles = title.split('/').map(String::trim)
-        val search = channelFlow {
-            titles.forEach { title ->
+    suspend fun searchByTitle(id: String, titles: String): AnimeLibResultItem? {
+        val queries = titles
+            .splitToSequence('/')
+            .mapNotNullTo(HashSet()) { it.trim().ifEmpty { null } }
+
+        return channelFlow {
+            queries.forEach { title ->
                 launch {
                     runCatching {
                         val responseText = client.get("$API_HOST/anime") {
                             parameter("q", title)
+                            header("Referer", "$ORIGIN/")
                         }
 
                         basicJson.decodeFromString<AnimeLibSearchResult>(responseText.bodyAsText())
@@ -115,20 +123,22 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
                 }
             }
         }.firstOrNull()
+    }
 
-        if (search == null) return null
-
-        val anime = client.get("$API_HOST/anime/${search.slugUrl}") {
+    suspend fun getTeams(slugUrl: String): List<AnimeLibTeamItem> {
+        val response = client.get("$API_HOST/anime/$slugUrl") {
             parameter("fields[]", "teams")
+            header("Referer", "$ORIGIN/")
         }
 
-        return basicJson.decodeFromString<AnimeLibSearchResultItem>(anime.bodyAsText()).data
+        return basicJson.decodeFromString<AnimeLibSearchResultItem>(response.bodyAsText()).data.teams
     }
 
     suspend fun getEpisodeDetails(episodeId: String): AnimeLibEpisodeDetailResponse {
         val response = client.get("$API_HOST/episodes/$episodeId") {
             headers {
                 append(HttpHeaders.Authorization, "Bearer $token")
+                append("Referer", "$ORIGIN/")
             }
         }
         return basicJson.decodeFromString<AnimeLibEpisodeDetailResponse>(response.bodyAsText())

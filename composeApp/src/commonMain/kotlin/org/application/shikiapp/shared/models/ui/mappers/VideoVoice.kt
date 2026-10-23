@@ -19,6 +19,7 @@ fun KodikResultItem.toVideoVoice(): VideoVoice {
                 EpisodeModel(
                     number = epNum,
                     link = data.link,
+                    title = data.title?.trim()?.takeIf(String::isNotEmpty),
                     screenshot = data.screenshots.firstOrNull()
                 )
             )
@@ -37,7 +38,7 @@ fun KodikResultItem.toVideoVoice(): VideoVoice {
     }
 
     return VideoVoice(
-        id = translation.id,
+        id = id,
         title = ResourceText.StaticString(translation.title),
         hasSubtitles = translation.type == "subtitles",
         hasDubbers = translation.type == "voice",
@@ -60,7 +61,7 @@ fun CollapsTitleDetails.toVideoVoices(targetSeason: Int): List<VideoVoice> {
             )
 
             VideoVoice(
-                id = index,
+                id = index.toString(),
                 title = ResourceText.StaticString(voiceName),
                 hasSubtitles = !subtitle.isNullOrEmpty(),
                 hasDubbers = true,
@@ -82,6 +83,7 @@ fun CollapsTitleDetails.toVideoVoices(targetSeason: Int): List<VideoVoice> {
             EpisodeModel(
                 number = episode.episode,
                 link = episode.iframeUrl,
+                title = episode.name?.trim()?.takeIf(String::isNotEmpty),
                 audioIndex = trackIndex,
                 screenshot = episode.iframePoster
             )
@@ -90,7 +92,7 @@ fun CollapsTitleDetails.toVideoVoices(targetSeason: Int): List<VideoVoice> {
         if (availableEpisodes.isEmpty()) return@mapIndexedNotNull null
 
         VideoVoice(
-            id = index,
+            id = index.toString(),
             title = ResourceText.StaticString(voiceName),
             hasDubbers = true,
             hasSubtitles = season.episodes.any { !it.subtitle.isNullOrEmpty() },
@@ -112,7 +114,7 @@ fun CvhPlaylistResponse.toVideoVoices(targetSeason: Int): List<VideoVoice> {
             .sortedBy { it.number }
 
         VideoVoice(
-            id = index,
+            id = index.toString(),
             title = if (!studio.isNullOrBlank()) ResourceText.StaticString(studio)
             else ResourceText.StringResource(Res.string.origin_original),
             hasDubbers = !studio.isNullOrBlank(),
@@ -131,7 +133,8 @@ fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<Vide
         .map {
             EpisodeModel(
                 number = it.number.toIntOrNull() ?: it.itemNumber,
-                link = it.id.toString()
+                link = it.id.toString(),
+                title = it.name?.trim()?.takeIf(String::isNotEmpty)
             )
         }
         .distinctBy { it.number }
@@ -140,7 +143,7 @@ fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<Vide
     return buildList(maxOf(1, teams.size)) {
         add(
             VideoVoice(
-                id = 0,
+                id = "0",
                 title = ResourceText.StaticString("AnimeLib"),
                 hasDubbers = true,
                 hasSubtitles = false,
@@ -153,7 +156,7 @@ fun AnimeLibEpisodesList.toVideoVoices(teams: List<AnimeLibTeamItem>): List<Vide
         for (i in 1 until teams.size) {
             add(
                 VideoVoice(
-                    id = i,
+                    id = i.toString(),
                     title = ResourceText.StaticString(teams[i].name),
                     hasDubbers = true,
                     hasSubtitles = false,
@@ -194,13 +197,41 @@ fun AnimeLibEpisodeDetailResponse.toEpisodeVoices(episodeNumber: Int) = data.pla
             ?: ResourceText.StringResource(Res.string.text_quality_adaptive)
 
         VideoVoice(
-            id = player.team?.id?.toInt() ?: index,
+            id = player.team?.id?.toString() ?: index.toString(),
             title = teamName,
             hasDubbers = !isSubtitles,
             hasSubtitles = isSubtitles,
             episodes = emptyList(),
             quality = quality,
             lastEpisode = episodeNumber
+        )
+    }
+
+fun AksorPlaylistResponse.toVideoVoices(): List<VideoVoice> = response
+    .groupBy { it.data.dubbing.trim() }
+    .mapNotNull { (title, items) ->
+        val episodes = items.mapNotNull { item ->
+            val number = item.number.toIntOrNull() ?: return@mapNotNull null
+            if (number <= 0) return@mapNotNull null
+
+            EpisodeModel(number = number, link = item.iframeUrl)
+        }.distinctBy(EpisodeModel::number).sortedBy(EpisodeModel::number)
+
+        if (episodes.isEmpty()) return@mapNotNull null
+
+        val isSubtitles = title.contains("субтит", ignoreCase = true) ||
+                title.contains("subtitle", ignoreCase = true)
+        val name = title.removePrefix("Озвучка ").removePrefix("Субтитры ").trim()
+
+        VideoVoice(
+            id = title,
+            title = if (name.isBlank()) ResourceText.StringResource(Res.string.origin_original)
+            else ResourceText.StaticString(name),
+            hasDubbers = !isSubtitles,
+            hasSubtitles = isSubtitles,
+            episodes = episodes,
+            quality = ResourceText.StringResource(Res.string.text_quality_adaptive),
+            lastEpisode = episodes.last().number
         )
     }
 

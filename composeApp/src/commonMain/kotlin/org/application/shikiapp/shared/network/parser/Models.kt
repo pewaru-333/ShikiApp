@@ -53,6 +53,7 @@ data class KodikSeason(
 @Serializable
 data class KodikEpisode(
     val link: String,
+    val title: String? = null,
     val screenshots: List<String> = emptyList()
 )
 
@@ -85,6 +86,7 @@ data class CollapsSeason(
 @Serializable
 data class CollapsEpisode(
     val episode: Int,
+    val name: String? = null,
     @SerialName("iframe_url")
     val iframeUrl: String? = null,
     @SerialName("iframe_poster")
@@ -231,4 +233,46 @@ data class AnimeLibSubtitle(
     val format: String,
     val name: String,
     val src: String
+)
+
+@Serializable
+data class AksorSearchResponse(
+    val response: List<AksorAnime>
+)
+
+@Serializable
+data class AksorAnime(
+    @SerialName("anime_id")
+    val id: Int,
+    @SerialName("remote_ids")
+    val remoteIds: AksorRemoteIds
+)
+
+@Serializable
+data class AksorRemoteIds(
+    @SerialName("shikimori_id")
+    val shikimoriId: Int
+)
+
+@Serializable
+data class AksorPlaylistResponse(
+    val response: List<AksorPlaylistItem> = emptyList()
+)
+
+@Serializable
+data class AksorPlaylistItem(
+    val number: String,
+    @SerialName("iframe_url")
+    val iframeUrl: String,
+    val data: AksorTranslation
+)
+
+@Serializable
+data class AksorTranslation(
+    val dubbing: String
+)
+
+@Serializable
+data class AksorVideoResponse(
+    val qualities: Map<String, String?>
 )

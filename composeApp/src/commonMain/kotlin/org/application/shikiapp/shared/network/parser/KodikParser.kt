@@ -15,6 +15,7 @@ import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
 import kotlin.concurrent.Volatile
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.encoding.Base64
 
 class KodikParser private constructor(override val token: String, client: HttpClient) : BaseParser(client) {
@@ -86,6 +87,8 @@ class KodikParser private constructor(override val token: String, client: HttpCl
             val obj = basicJson.parseToJsonElement(text).jsonObject
 
             obj["error"]?.jsonPrimitive?.content != "Отсутствует или неверный токен"
+        } catch (e: CancellationException) {
+            throw e
         } catch (_: Exception) {
             false
         }

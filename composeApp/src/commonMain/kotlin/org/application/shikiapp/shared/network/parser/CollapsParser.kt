@@ -1,9 +1,10 @@
 package org.application.shikiapp.shared.network.parser
 
 import com.fleeksoft.ksoup.Ksoup
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.jsonPrimitive
@@ -17,7 +18,7 @@ class CollapsParser private constructor(client: HttpClient) : BaseParser(client)
 
     companion object {
         private const val API_HOST_ENC = "uggcf://ncvpbyyncf.pp"
-        private const val TOKEN_ENC = "rrqrso541nron871qpsp756r6o31p02r"
+        private const val TOKEN_ENC = "4p250s7np0n8p8n658p789186o9n58n5"
 
         private val API_HOST by lazy { cypher13(API_HOST_ENC) }
         private val DECRYPTED_TOKEN by lazy { cypher13(TOKEN_ENC) }
@@ -91,7 +92,7 @@ class CollapsParser private constructor(client: HttpClient) : BaseParser(client)
             else SubtitleTrack(subName, subUrl)
         }
 
-        val mediaList = listOfNotNull(episode.dasha, episode.hls, episode.dash).map { url ->
+        val mediaList = listOfNotNull(episode.hls, episode.dasha, episode.dash).map { url ->
             url.replace("\\/", "/").let { if (it.startsWith("//")) "https:$it" else it }
         }
 

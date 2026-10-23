@@ -4,6 +4,7 @@ import io.ktor.client.request.*
 import io.ktor.client.statement.*
 import io.ktor.http.*
 import kotlinx.serialization.json.*
+import kotlin.coroutines.cancellation.CancellationException
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.parser.AnimeLibParser
 import org.application.shikiapp.shared.utils.BLANK
@@ -45,6 +46,8 @@ object AnimeLibAuth {
         } else {
             false
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (_: Exception) {
         false
     }
@@ -81,17 +84,23 @@ object AnimeLibAuth {
         } else {
             Preferences.saveTokenLib(BLANK, BLANK)
         }
+    } catch (e: CancellationException) {
+        throw e
     } catch (_: Exception) {
         Preferences.saveTokenLib(BLANK, BLANK)
     }
 
     suspend fun validateToken(): Boolean = try {
-        val response = Network.watchClient.get("${AnimeLibParser.API_HOST}/auth/me").bodyAsText()
+        val response = Network.watchClient.get("${AnimeLibParser.API_HOST}/auth/me") {
+            header(HttpHeaders.Authorization, "Bearer ${Preferences.libToken?.accessToken.orEmpty()}")
+        }.bodyAsText()
 
         basicJson.parseToJsonElement(response)
             .jsonObject["data"]
             ?.jsonObject
             ?.containsKey("id") == true
+    } catch (e: CancellationException) {
+        throw e
     } catch (_: Exception) {
         false
     }

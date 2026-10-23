@@ -9,6 +9,7 @@ import shikiapp.composeapp.generated.resources.text_turned_off_short
 data class EpisodeModel(
     val number: Int,
     val link: String,
+    val title: String? = null,
     val audioIndex: Int? = null,
     val screenshot: String? = null,
     val fallback: List<String> = emptyList(),
@@ -30,7 +31,7 @@ data class SubtitleTrack(
 }
 
 data class VideoVoice(
-    val id: Int,
+    val id: String,
     val title: ResourceText,
     val hasDubbers: Boolean,
     val hasSubtitles: Boolean,
