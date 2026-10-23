@@ -1,21 +1,23 @@
-package org.application.shikiapp.shared.utils.ui.subtitles
+package org.application.shikiapp.shared.utils.ui.subtitles.parsers
 
-object WebVttParser {
+import org.application.shikiapp.shared.utils.ui.subtitles.models.SubtitleCue
+
+object ParserWEBVTT {
     private const val WEBVTT_HEADER = "WEBVTT"
     private val TIME_PATTERN_WITH_HOURS = Regex("(\\d{2}):(\\d{2}):(\\d{2})\\.(\\d{3})")
     private val TIME_PATTERN_WITHOUT_HOURS = Regex("(\\d{2}):(\\d{2})\\.(\\d{3})")
     private val CUE_TIMING_PATTERN = Regex("(\\d{2}:\\d{2}:\\d{2}\\.\\d{3}|\\d{2}:\\d{2}\\.\\d{3}) --> (\\d{2}:\\d{2}:\\d{2}\\.\\d{3}|\\d{2}:\\d{2}\\.\\d{3})")
 
-    fun parse(content: String): SubtitleCueList {
+    fun parse(content: String): List<SubtitleCue> {
         if (!content.trim().startsWith(WEBVTT_HEADER)) {
-            return SubtitleCueList()
+            return emptyList()
         }
 
         val lines = content.lines()
         val cues = mutableListOf<SubtitleCue>()
         var i = 0
 
-        while (i < lines.size && !CUE_TIMING_PATTERN.matches(lines[i])) {
+        while (i < lines.size && !CUE_TIMING_PATTERN.containsMatchIn(lines[i])) {
             i++
         }
 
@@ -33,7 +35,7 @@ object WebVttParser {
                 i++
                 val textBuilder = StringBuilder()
 
-                while (i < lines.size && lines[i].isNotEmpty()) {
+                while (i < lines.size && lines[i].isNotBlank()) {
                     if (textBuilder.isNotEmpty()) {
                         textBuilder.append("\n")
                     }
@@ -50,7 +52,7 @@ object WebVttParser {
             }
         }
 
-        return SubtitleCueList(cues)
+        return cues
     }
 
     private fun parseTimeToMillis(timeStr: String): Long {

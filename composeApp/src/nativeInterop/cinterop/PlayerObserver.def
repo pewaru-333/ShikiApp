@@ -1,0 +1,13 @@
+language = Objective-C
+modules = Foundation
+package = org.application.shikiapp.shared.player
+
+---
+#import <Foundation/Foundation.h>
+
+@protocol ShikiPlayerObserver <NSObject>
+- (void)observeValueForKeyPath:(NSString *)keyPath
+                     ofObject:(id)object
+                       change:(NSDictionary<NSKeyValueChangeKey, id> *)change
+                      context:(void *)context;
+@end

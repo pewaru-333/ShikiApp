@@ -1,10 +1,12 @@
-package org.application.shikiapp.shared.utils.ui.subtitles
+package org.application.shikiapp.shared.utils.ui.subtitles.parsers
 
-object SrtParser {
+import org.application.shikiapp.shared.utils.ui.subtitles.models.SubtitleCue
+
+object ParserSRT {
     private val TIME_PATTERN = Regex("(\\d{2}):(\\d{2}):(\\d{2}),(\\d{3})")
     private val CUE_TIMING_PATTERN = Regex("(\\d{2}:\\d{2}:\\d{2},\\d{3}) --> (\\d{2}:\\d{2}:\\d{2},\\d{3})")
 
-    fun parse(content: String): SubtitleCueList {
+    fun parse(content: String): List<SubtitleCue> {
         val lines = content.lines()
         val cues = mutableListOf<SubtitleCue>()
         var i = 0
@@ -56,7 +58,7 @@ object SrtParser {
             }
         }
 
-        return SubtitleCueList(cues)
+        return cues
     }
 
     private fun parseTimeToMillis(timeStr: String): Long {
