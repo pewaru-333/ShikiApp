@@ -80,6 +80,8 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
             .collectLatest { (old, new) ->
                 if (new != old) {
                     pagerState.requestScrollToPage(Preferences.userRatesStartWatchStatus.value.ordinal)
+                    listStates.forEach { it.requestScrollToItem(0) }
+                    gridStates.forEach { it.requestScrollToItem(0) }
                 }
             }
     }
@@ -88,9 +90,7 @@ fun UserRates(onNavigate: (Screen) -> Unit, onBack: () -> Unit) {
         snapshotFlow { ratesState }
             .pairwise()
             .collectLatest { (old, new) ->
-                if (new != old) {
-                    if (new.showDialog != old.showDialog) return@collectLatest
-
+                if (new.search != old.search || new.order != old.order || new.direction != old.direction) {
                     listStates.forEach { it.requestScrollToItem(0) }
                     gridStates.forEach { it.requestScrollToItem(0) }
                 }
@@ -262,21 +262,27 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
     val isIncrementing = rateState.isIncrementing(rate.id)
 
     val current = if (type == LinkedType.ANIME) rate.episodes else rate.chapters
-    val maximum = (if (type == LinkedType.ANIME) rate.fullEpisodes else rate.fullChapters).toIntOrNull()
+    val maximum = (if (type == LinkedType.ANIME) rate.fullEpisodes else rate.fullChapters)
+        .toIntOrNull()
+        ?.takeIf { it > 0 }
 
-    val progressText = "$current / ${maximum ?: "?"}"
-    val progressValue = maximum?.let { if (it > 0) current.toFloat() / it else 0f }
+    val progressValue = if (maximum == null) 0f else (current.toFloat() / maximum).coerceIn(0f, 1f)
+    val progressText = buildString {
+        append("$current / ${maximum ?: "?"}")
+        if (type == LinkedType.ANIME && rate.episodesAired != null) {
+            append(" (${rate.episodesAired})")
+        }
+    }
 
     Column {
         Row(Modifier.fillMaxWidth(), Arrangement.spacedBy(4.dp), Alignment.CenterVertically) {
             Text(
+                modifier = Modifier.weight(1f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
                 text = stringResource(if (type == LinkedType.ANIME) Res.string.text_episodes else Res.string.text_rate_chapters),
                 style = MaterialTheme.typography.bodySmall
             )
-
-            Spacer(Modifier.weight(1f))
 
             Text(
                 maxLines = 1,
@@ -292,7 +298,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
 
         Row(Modifier, Arrangement.spacedBy(8.dp), Alignment.CenterVertically) {
             LinearProgressIndicator(
-                progress = { progressValue?.coerceIn(0f, 1f) ?: 0.05f },
+                progress = { progressValue },
                 drawStopIndicator = {},
                 modifier = Modifier
                     .weight(1f)
@@ -307,6 +313,7 @@ private fun Progress(rate: UserRate, type: LinkedType, editable: Boolean, rateSt
                     } else {
                         FilledTonalIconButton(
                             modifier = Modifier.size(32.dp),
+                            enabled = maximum == null || current < maximum,
                             onClick = { onIncrement(rate.id) },
                             content = { VectorIcon(Icons.Add) }
                         )
@@ -336,7 +343,7 @@ private fun UserRateCard(
             .combinedClickable(
                 enabled = !rateState.isEditing(rate.id),
                 onClick = { onNavigate(type.navigateTo(rate.contentId)) },
-                onLongClick = { if (editable) onGetRate(rate) }
+                onLongClick = if (editable) { { onGetRate(rate) } } else null
             )
             .padding(12.dp)
     ) {
@@ -467,7 +474,7 @@ private fun UserRateList(
                 onIncrement = increment
             )
 
-            if (rate != rates.lastOrNull()) {
+            if (rate.id != rates.last().id) {
                 HorizontalDivider(Modifier.padding(horizontal = 12.dp))
             }
         }
