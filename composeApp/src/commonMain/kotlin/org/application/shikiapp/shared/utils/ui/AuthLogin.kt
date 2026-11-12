@@ -16,21 +16,22 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.UriHandler
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import io.ktor.http.URLBuilder
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import org.application.shikiapp.shared.di.AppConfig
+import org.application.shikiapp.shared.network.client.AnimeLibAuth
 import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.network.client.Network
+import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.getFullscreenDialogProperties
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.rememberToastState
+import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.stringResource
-import shikiapp.composeapp.generated.resources.Res
-import shikiapp.composeapp.generated.resources.text_dismiss
-import shikiapp.composeapp.generated.resources.text_error_open_link
-import shikiapp.composeapp.generated.resources.text_login
+import shikiapp.composeapp.generated.resources.*
 
 @Composable
 fun rememberAuthLauncher(uriHandler: UriHandler): AuthLauncher {
@@ -39,6 +40,8 @@ fun rememberAuthLauncher(uriHandler: UriHandler): AuthLauncher {
     val toast = rememberToastState()
     val isWebView = preferAuthWebView()
 
+    var preparing by remember { mutableStateOf(false) }
+    var authUri by remember { mutableStateOf(BLANK) }
     var active by remember { mutableStateOf(false) }
     var ready by remember { mutableStateOf(false) }
     var proxyPort by remember { mutableStateOf<Int?>(null) }
@@ -67,14 +70,14 @@ fun rememberAuthLauncher(uriHandler: UriHandler): AuthLauncher {
                 throw error
             } catch (_: Exception) {
                 active = false
-                toast.onShow(Res.string.text_error_open_link)
+                toast.onShow(Res.string.text_error_login_page)
             } finally {
                 ready = false
                 withContext(NonCancellable) {
                     try {
                         Network.stopAuthProxy()
                     } catch (_: Exception) {
-                        toast.onShow(Res.string.text_error_open_link)
+
                     }
                 }
             }
@@ -124,7 +127,7 @@ fun rememberAuthLauncher(uriHandler: UriHandler): AuthLauncher {
                     ) {
                         if (ready) {
                             AuthWebView(
-                                url = ApiRoutes.authUri,
+                                url = authUri,
                                 proxyPort = proxyPort,
                                 onCallback = { url ->
                                     scope.launch {
@@ -138,7 +141,7 @@ fun rememberAuthLauncher(uriHandler: UriHandler): AuthLauncher {
                                     scope.launch {
                                         if (active) {
                                             active = false
-                                            toast.onShow(Res.string.text_error_open_link)
+                                            toast.onShow(Res.string.text_error_login_page)
                                         }
                                     }
                                 }
@@ -153,15 +156,62 @@ fun rememberAuthLauncher(uriHandler: UriHandler): AuthLauncher {
     }
 
     return object : AuthLauncher {
-        override val usesWebView = isWebView
+        override val usesWebView get() = isWebView || Network.requiresAuthProxy
         override val isAvailable = isAuthLoginAvailable()
-        override val isLaunching get() = active || dialogVisible
+        override val isLaunching get() = preparing || active || dialogVisible
 
         override fun launch() {
-            if (!isAvailable || active || dialogVisible) return
-            if (isWebView) active = true
-            else uriHandler.openUri(ApiRoutes.authUri)
+            if (!isAvailable || isLaunching) return
+            preparing = true
+
+            scope.launch {
+                try {
+                    authUri = ApiRoutes.authUri(Network.baseUrlResolver.resolve())
+
+                    if (!isAuthLoginAvailable()) {
+                        toast.onShow(Res.string.text_error_login_page)
+                        return@launch
+                    }
+                    if (usesWebView) active = true
+                    else uriHandler.openUri(authUri)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
+                    toast.onShow(Res.string.text_error_login_page)
+                } finally {
+                    preparing = false
+                }
+            }
         }
+    }
+}
+
+@Composable
+fun AnimeLibLoginScreen(code: String?, state: String?, error: String?, onBack: () -> Unit) {
+    val toast = rememberToastState()
+
+    Box(Modifier.fillMaxSize(), Alignment.Center) {
+        LoadingIndicator()
+    }
+
+    LaunchedEffect(code, state, error) {
+        val builder = URLBuilder(ApiRoutes.REDIRECT_URI_LIB)
+        val parameters = builder.parameters
+
+        if (code != null) parameters.append("code", code)
+        if (state != null) parameters.append("state", state)
+        if (error != null) parameters.append("error", error)
+
+        if (AnimeLibAuth.handleCallback(builder.buildString()) == false) {
+            toast.onShow(
+                text = getString(
+                    resource = if (error == "access_denied") Res.string.text_login_cancelled
+                    else Res.string.text_error_login
+                )
+            )
+        }
+
+        onBack()
     }
 }
 
