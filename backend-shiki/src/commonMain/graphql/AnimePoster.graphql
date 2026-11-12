@@ -1,0 +1,8 @@
+query AnimePoster($id: String!) {
+    animes(ids: $id, limit: 1) {
+        id
+        poster {
+            originalUrl
+        }
+    }
+}
