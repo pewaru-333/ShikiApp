@@ -11,20 +11,27 @@ data class UserRate(
     val contentId: String,
     val createdAt: Instant,
     val episodes: Int,
+    val episodesAired: Int? = null,
     val episodesSorting: Int,
     val fullChapters: String,
     val fullEpisodes: String,
     val id: Long,
     val kindEnum: Kind,
-    val kindString: StringResource,
     val poster: String,
     val rewatches: Int,
-    val rewatchExists: Boolean,
     val score: Int,
-    val scoreString: String,
     val status: String,
     val text: String?,
     val title: String,
     val updatedAt: Instant,
     val volumes: Int
-)
+) {
+    val kindString: StringResource
+        get() = kindEnum.title
+
+    val rewatchExists: Boolean
+        get() = rewatches > 0
+
+    val scoreString: String
+        get() = if (score == 0) "-" else score.toString()
+}
