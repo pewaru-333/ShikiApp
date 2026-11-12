@@ -7,6 +7,5 @@ data class AppConfig(
     val clientId: String,
     val clientSecret: String,
     val redirectUri: String,
-    val yggdrasilAddress: String?,
-    val authScopes: Set<String>,
+    val authScopes: Set<String>
 )
