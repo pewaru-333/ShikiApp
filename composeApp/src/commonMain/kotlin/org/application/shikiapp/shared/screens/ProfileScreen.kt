@@ -14,21 +14,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.paging.compose.collectAsLazyPagingItems
+import org.application.shikiapp.shared.di.AppServices
 import org.application.shikiapp.shared.events.ContentDetailEvent
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.showDialogs
 import org.application.shikiapp.shared.models.viewModels.ProfileViewModel
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.LoginResponse
+import org.application.shikiapp.shared.network.response.Response
 import org.application.shikiapp.shared.ui.templates.Comments
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.navigation.LocalBarVisibility
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.rememberToastState
-import org.application.shikiapp.shared.utils.rememberVerifiedDomain
 import org.application.shikiapp.shared.utils.ui.rememberAuthLauncher
 import org.application.shikiapp.shared.utils.ui.rememberCommentListState
+import org.application.shikiapp.shared.utils.ui.rememberWindowSize
 import org.application.shikiapp.shared.utils.viewModel
+import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.*
 
@@ -42,8 +46,14 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
 
     when (val data = loginState) {
         is LoginResponse.NotLogged -> LoginScreen { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
-        is LoginResponse.Logging -> LoadingScreen { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
-        is LoginResponse.NetworkError -> ErrorScreen(model::loadData) { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+        LoginResponse.Logging, Response.Loading -> LoadingScreen { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+        is LoginResponse.Error -> {
+            if (data.canRetry) {
+                ErrorScreen(data.message, model::loadData) { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+            } else {
+                LoginScreen(data.message) { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
+            }
+        }
         is LoginResponse.Logged -> {
             UserView(data.user, state, model.mailManager, model::onEvent, onNavigate, model::onShowSignOut, barVisibility)
 
@@ -70,7 +80,7 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
             )
         }
 
-        else -> Unit
+        else -> ErrorScreen(Res.string.text_error_profile, model::loadData) { model.onEvent(ContentDetailEvent.ToggleDialog(BaseDialogState.User.Settings)) }
     }
 
     LaunchedEffect(state.dialogState, state.showDialogs) {
@@ -95,11 +105,12 @@ fun ProfileScreen(onNavigate: (Screen) -> Unit) {
 }
 
 @Composable
-private fun LoginScreen(onClick: () -> Unit) {
+private fun LoginScreen(message: StringResource? = null, onClick: () -> Unit) {
     val uriHandler = LocalUriHandler.current
     val authLauncher = rememberAuthLauncher(uriHandler)
-    val domainHelper = rememberVerifiedDomain()
     val toast = rememberToastState()
+    val isCompact = rememberWindowSize().isCompact
+    val isResolving by Network.baseUrlResolver.isResolving.collectAsStateWithLifecycle()
 
     Box(
         modifier = Modifier
@@ -108,61 +119,59 @@ private fun LoginScreen(onClick: () -> Unit) {
     ) {
         IconButtonSettings(onClick)
 
-        if (authLauncher.usesWebView || domainHelper.isVerified) {
-            Column(
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .width(240.dp)
-            ) {
-                Button(
-                    modifier = Modifier.fillMaxWidth(),
-                    enabled = authLauncher.isAvailable && !authLauncher.isLaunching,
-                    onClick = {
-                        try {
-                            authLauncher.launch()
-                        } catch (_: Exception) {
-                            toast.onShow(Res.string.text_error_open_link)
-                        }
-                    }
-                ) {
-                    Text(stringResource(Res.string.text_login))
-                    VectorIcon(Icons.KeyboardArrowRight)
-                }
-
-                if (!authLauncher.isAvailable || !authLauncher.usesWebView) {
-                    Text(
-                        style = MaterialTheme.typography.bodySmall,
-                        textAlign = TextAlign.Center,
-                        text = stringResource(
-                            if (authLauncher.isAvailable) Res.string.text_forward_to_browser
-                            else Res.string.text_forward_to_yggdrasil
-                        )
-                    )
-                }
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(horizontal = 24.dp)
+                .width(if (isCompact) 240.dp else 320.dp)
+        ) {
+            if (message != null) {
+                Text(
+                    text = stringResource(message),
+                    color = MaterialTheme.colorScheme.error,
+                    textAlign = TextAlign.Center
+                )
             }
-        } else {
-            Column(
-                verticalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterVertically),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                modifier = Modifier
-                    .align(Alignment.Center)
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp)
+
+            Button(
+                modifier = Modifier.fillMaxWidth(),
+                enabled = authLauncher.isAvailable && !authLauncher.isLaunching && !isResolving,
+                onClick = {
+                    try {
+                        authLauncher.launch()
+                    } catch (_: Exception) {
+                        toast.onShow(Res.string.text_error_open_link)
+                    }
+                }
             ) {
                 Text(
-                    text = stringResource(Res.string.text_pay_attention),
-                    textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.titleLarge
+                    text = stringResource(Res.string.text_login),
+                    modifier = Modifier.weight(1f),
+                    textAlign = TextAlign.Center
                 )
+
+                if (isResolving || authLauncher.isLaunching) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(24.dp),
+                        color = LocalContentColor.current,
+                        strokeWidth = 2.dp
+                    )
+                } else VectorIcon(Icons.KeyboardArrowRight)
+            }
+
+            val loginHint = when {
+                !authLauncher.isAvailable -> AppServices.networkExtension?.authUnavailableMessage
+                !authLauncher.usesWebView -> Res.string.text_forward_to_browser
+                else -> null
+            }
+            if (loginHint != null) {
                 Text(
-                    text = stringResource(Res.string.text_add_app_links),
+                    text = stringResource(loginHint),
                     textAlign = TextAlign.Center,
-                    style = MaterialTheme.typography.bodyLarge
+                    style = MaterialTheme.typography.bodySmall
                 )
-                FilledTonalButton(domainHelper::onSettingsLaunch) {
-                    Text(stringResource(Res.string.text_to_settings))
-                    VectorIcon(Icons.KeyboardArrowRight)
-                }
             }
         }
     }
@@ -181,7 +190,7 @@ private fun LoadingScreen(onClick: () -> Unit) =
     }
 
 @Composable
-private fun ErrorScreen(onReload: () -> Unit, onClick: () -> Unit) =
+private fun ErrorScreen(message: StringResource, onReload: () -> Unit, onClick: () -> Unit) =
     Box(
         modifier = Modifier
             .fillMaxSize()
@@ -189,11 +198,22 @@ private fun ErrorScreen(onReload: () -> Unit, onClick: () -> Unit) =
     ) {
         IconButtonSettings(onClick)
 
-        FilledTonalButton(
-            onClick = onReload,
-            modifier = Modifier.align(Alignment.Center),
-            content = { Text(stringResource(Res.string.text_repeat_the_loading)) }
-        )
+        Column(
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            modifier = Modifier
+                .align(Alignment.Center)
+                .padding(24.dp)
+        ) {
+            Text(
+                text = stringResource(message),
+                textAlign = TextAlign.Center
+            )
+            FilledTonalButton(
+                onClick = onReload,
+                content = { Text(stringResource(Res.string.text_repeat_the_loading)) }
+            )
+        }
     }
 
 @Composable
