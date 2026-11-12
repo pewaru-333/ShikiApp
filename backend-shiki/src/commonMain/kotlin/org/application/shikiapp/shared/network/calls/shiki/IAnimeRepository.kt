@@ -2,20 +2,33 @@ package org.application.shikiapp.shared.network.calls.shiki
 
 import androidx.paging.PagingData
 import com.apollographql.apollo.ApolloClient
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
-import org.application.shikiapp.generated.shikiapp.AnimeExtraQuery
+import kotlinx.coroutines.withContext
 import org.application.shikiapp.generated.common.AnimeMainQuery
+import org.application.shikiapp.generated.shikiapp.AnimeExtraQuery
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.AnimeT
 import org.application.shikiapp.shared.models.ui.Comment
 import org.application.shikiapp.shared.models.ui.Review
 import org.application.shikiapp.shared.models.ui.mappers.shiki.AnimeMapper
+import org.application.shikiapp.shared.models.ui.mappers.shiki.parseReviews
+import org.application.shikiapp.shared.models.ui.mappers.shiki.parseReviewsNextPage
 import org.application.shikiapp.shared.network.calls.repository.AnimeRepository
+import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.extensions.cachedFlow
 
 class IAnimeRepository(private val apollo: ApolloClient) : AnimeRepository {
+    override suspend fun getReviews(id: String, url: String, page: Int): Pair<List<Review>, Int?> {
+        val response = Network.anime.getReviews(url, page)
+
+        return withContext(Dispatchers.Default) {
+            Pair(parseReviews(response), parseReviewsNextPage(response.postloader))
+        }
+    }
+
     override fun getAnimeRawData(id: String) = combine(
         transform = ::ShikiAnimeT,
         flow = apollo.cachedFlow(
