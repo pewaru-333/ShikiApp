@@ -8,21 +8,21 @@ import androidx.navigation.toRoute
 import androidx.paging.*
 import io.ktor.client.plugins.ClientRequestException
 import io.ktor.http.HttpStatusCode
-import kotlinx.coroutines.Deferred
-import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.async
+import kotlinx.coroutines.*
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.*
-import kotlinx.coroutines.launch
+import kotlinx.io.IOException
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.events.ContentDetailEvent
-import org.application.shikiapp.shared.models.data.*
+import org.application.shikiapp.shared.models.data.FullMessage
+import org.application.shikiapp.shared.models.data.MessageToSend
+import org.application.shikiapp.shared.models.data.MessageToSendShort
+import org.application.shikiapp.shared.models.data.UserBasic
 import org.application.shikiapp.shared.models.states.BaseDialogState
 import org.application.shikiapp.shared.models.states.UserMessagesState
 import org.application.shikiapp.shared.models.states.UserState
 import org.application.shikiapp.shared.models.ui.History
 import org.application.shikiapp.shared.models.ui.User
-import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Dialog
 import org.application.shikiapp.shared.models.ui.list.Message
 import org.application.shikiapp.shared.models.ui.mappers.*
@@ -33,7 +33,6 @@ import org.application.shikiapp.shared.network.response.Response
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.ResourceText
 import org.application.shikiapp.shared.utils.enums.CommentableType
-import org.application.shikiapp.shared.utils.enums.FavouriteItem
 import org.application.shikiapp.shared.utils.enums.MessageType
 import org.application.shikiapp.shared.utils.navigation.Screen
 import org.application.shikiapp.shared.utils.ui.Formatter
@@ -44,44 +43,71 @@ import shikiapp.composeapp.generated.resources.text_successfully_deleted_dialog
 import shikiapp.composeapp.generated.resources.text_unsuccessfully_deleted_dialog
 
 open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailViewModel<User, UserState>() {
+    private val _userId = MutableStateFlow<Long?>(null)
+
     open val userId: Long
-        get() = saved.toRoute<Screen.User>().id
+        get() = _userId.value ?: saved.toRoute<Screen.User>().id
 
-    val mailManager by lazy(::MailManager)
+    var mailManager = MailManager()
+        private set
 
-    protected val friends = Pager(
-        config = PagingConfig(
-            pageSize = 10,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = {
-            CommonPaging(UserBasic::id) { page, params ->
-                Network.user.getFriends(userId, page, params.loadSize)
+    protected val friends = _userId.flatMapLatest { id ->
+        if (id == null) flowOf(PagingData.empty())
+        else Pager(
+            config = PagingConfig(
+                pageSize = 10,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                CommonPaging(UserBasic::id) { page, params ->
+                    Network.user.getFriends(id, page, params.loadSize)
+                }
             }
-        }
-    ).flow.cachedIn(viewModelScope)
+        ).flow.onStart { emit(PagingData.empty()) }
+    }.cachedIn(viewModelScope)
 
-    protected val history = Pager(
-        config = PagingConfig(
-            pageSize = 20,
-            enablePlaceholders = false
-        ),
-        pagingSourceFactory = {
-            CommonPaging(History::id) { page, params ->
-                Network.user.getHistory(userId, page, params.loadSize)
-                    .map(org.application.shikiapp.shared.models.data.History::mapper)
+    protected val history = _userId.flatMapLatest { id ->
+        if (id == null) flowOf(PagingData.empty())
+        else Pager(
+            config = PagingConfig(
+                pageSize = 20,
+                enablePlaceholders = false
+            ),
+            pagingSourceFactory = {
+                CommonPaging(History::id) { page, params ->
+                    Network.user.getHistory(id, page, params.loadSize)
+                        .map(org.application.shikiapp.shared.models.data.History::mapper)
+                }
             }
-        }
-    ).flow.cachedIn(viewModelScope)
+        ).flow.onStart { emit(PagingData.empty()) }
+    }.cachedIn(viewModelScope)
 
-    protected val user: Deferred<org.application.shikiapp.shared.models.data.User>
-        get() = viewModelScope.async { Network.user.getUser(userId) }
+    protected fun setUserParams(id: Long) {
+        _userId.value = id
+        setCommentParams(id, CommentableType.USER)
+    }
 
-    protected val clubs: Deferred<List<ClubBasic>>
-        get() = viewModelScope.async { Network.user.getClubs(userId) }
+    protected fun resetUserData() {
+        _userId.value = null
+        setCommentParams(null, CommentableType.USER)
+        mailManager.close()
+        mailManager = MailManager()
+        updateState { UserState() }
+    }
 
-    protected val favourites: Deferred<Map<FavouriteItem, List<BasicContent>>>
-        get() = viewModelScope.async { Network.user.getFavourites(userId).toBasicContentMap() }
+    protected suspend fun loadUser(id: Long, profile: org.application.shikiapp.shared.models.data.User? = null): User = coroutineScope {
+        val user = async { profile ?: Network.user.getUser(id.toString()) }
+        val clubs = async { Network.user.getClubs(id) }
+        val favourites = async { Network.user.getFavourites(id).toBasicContentMap() }
+
+        user.await().mapper(
+            clubs = clubs.await(),
+            comments = comments,
+            friends = friends,
+            history = history,
+            favourites = favourites.await()
+        )
+    }
 
     override val contentId = Any()
 
@@ -94,27 +120,28 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
             }
 
             try {
-                val userLoaded = user.await()
+                val currentId = userId
+                val profile = if (currentId > 0L) null
+                else {
+                    val nickname = saved.toRoute<Screen.User>().nickname ?: throw IOException()
+                    Network.user.getUser(nickname, isNickname = true)
+                }
 
-                setCommentParams(userId, CommentableType.USER)
+                val id = profile?.id ?: currentId
+                if (id <= 0L) throw IOException()
+
+                setUserParams(id)
+                val userLoaded = loadUser(id, profile)
 
                 updateState {
                     it.copy(
-                        isFriend = userLoaded.inFriends == true
+                        isFriend = userLoaded.inFriends
                     )
                 }
 
-                emit(
-                    Response.Success(
-                        userLoaded.mapper(
-                            clubs = clubs.await(),
-                            comments = comments,
-                            friends = friends,
-                            history = history,
-                            favourites = favourites.await()
-                        )
-                    )
-                )
+                emit(Response.Success(userLoaded))
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: Exception) {
                 emit(Response.Error(e))
             }
@@ -150,13 +177,15 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
     }
 
     inner class MailManager {
+        private val scope = CoroutineScope(viewModelScope.coroutineContext + SupervisorJob(viewModelScope.coroutineContext[Job]))
+
         private val _updatingNotificationMap = MutableStateFlow<Map<Long, NotificationUpdateType>>(emptyMap())
 
         private val _dialogs = MutableStateFlow<Response<List<Dialog>, Exception>>(Response.Loading)
-        val dialogs = _dialogs.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), Response.Loading)
+        val dialogs = _dialogs.stateIn(scope, SharingStarted.WhileSubscribed(5000L), Response.Loading)
 
         private val _state = MutableStateFlow(UserMessagesState())
-        val state = _state.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UserMessagesState())
+        val state = _state.stateIn(scope, SharingStarted.WhileSubscribed(5000L), UserMessagesState())
 
         private val _newMessages = MutableStateFlow<List<Dialog>>(emptyList())
         val newMessages = _newMessages.asStateFlow()
@@ -176,7 +205,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                 }
             ).flow
                 .onStart { _newMessages.emit(emptyList()) }
-                .cachedIn(viewModelScope)
+                .cachedIn(scope)
                 .retryWhen { cause, attempt -> cause is ClientRequestException || attempt <= 3 }
         }
 
@@ -190,7 +219,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                 }.also { _newsPagingSource = it }
             }
         ).flow
-            .cachedIn(viewModelScope)
+            .cachedIn(scope)
             .combine(_updatingNotificationMap) { pagingData, map ->
                 if (map.isEmpty()) return@combine pagingData
 
@@ -202,7 +231,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                     }
                 }.filter { it.isDeleting.getValue() != true }
             }
-            .cachedIn(viewModelScope)
+            .cachedIn(scope)
 
         private var _notificationsPagingSource: CommonPaging<*>? = null
         val notifications = Pager(
@@ -214,7 +243,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                 }.also { _notificationsPagingSource = it }
             }
         ).flow
-            .cachedIn(viewModelScope)
+            .cachedIn(scope)
             .combine(_updatingNotificationMap) { pagingData, map ->
                 if (map.isEmpty()) return@combine pagingData
 
@@ -226,10 +255,12 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                     }
                 }.filter { it.isDeleting.getValue() != true }
             }
-            .cachedIn(viewModelScope)
+            .cachedIn(scope)
+
+        fun close() = scope.cancel()
 
         fun loadData() {
-            viewModelScope.launch {
+            scope.launch {
                 if (dialogs.value !is Response.Success) {
                    _dialogs.emit(Response.Loading)
                 }
@@ -248,7 +279,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         fun getDialog(userId: Long, isFromList: Boolean = false) {
             updateState { it.copy(dialogState = BaseDialogState.User.DialogUser(userId)) }
 
-            viewModelScope.launch {
+            scope.launch {
                 _state.update {
                     it.copy(
                         userId = userId,
@@ -259,7 +290,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                 }
 
                 try {
-                    val (userNickname, userAvatar, lastOnline) = with(Network.user.getUser(userId)) {
+                    val (userNickname, userAvatar, lastOnline) = with(Network.user.getUser(userId.toString())) {
                         Triple(nickname, avatar, lastOnline)
                     }
 
@@ -277,7 +308,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         }
 
         fun sendMessage(message: String) {
-            viewModelScope.launch {
+            scope.launch {
                 val messageToSend = MessageToSend(
                     frontend = "false",
                     message = MessageToSendShort(
@@ -338,7 +369,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         fun removeDialog() {
             updateState { it.copy(showDeleteUserDialog = false) }
 
-            viewModelScope.launch {
+            scope.launch {
                 try {
                     val request = Network.profile.deleteUserDialog(state.value.userId)
 
@@ -357,9 +388,13 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         }
 
         fun getUnreadMessages() {
-            viewModelScope.launch {
+            val id = Preferences.userId.value
+            if (id <= 0L) return
+
+            scope.launch {
                 try {
-                    val unread = Network.profile.getUnreadMessages(Preferences.userId.value)
+                    val unread = Network.profile.getUnreadMessages(id)
+                    if (Preferences.userId.value != id || mailManager !== this@MailManager) return@launch
 
                     with(unread) {
                         updateState {
@@ -372,6 +407,8 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
                             )
                         }
                     }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (_: Exception) {
 
                 }
@@ -379,7 +416,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         }
 
         fun deleteMessage(id: Long) {
-            viewModelScope.launch {
+            scope.launch {
                 _updatingNotificationMap.update {
                     it + (id to NotificationUpdateType.Deleting(AsyncData.Loading))
                 }
@@ -403,7 +440,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         fun deleteAllMessages() {
             _state.update { it.copy(showDeleteAll = false) }
 
-            viewModelScope.launch {
+            scope.launch {
                 try {
                     val request = Network.profile.deleteAllMessages(_state.value.messageType)
 
@@ -421,7 +458,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         }
 
         fun markRead(id: Long, isRead: Int) {
-            viewModelScope.launch {
+            scope.launch {
                 _updatingNotificationMap.update {
                     it + (id to NotificationUpdateType.MarkingRead(AsyncData.Loading))
                 }
@@ -443,7 +480,7 @@ open class UserViewModel(private val saved: SavedStateHandle) : ContentDetailVie
         }
 
         fun markAllRead(items: List<Message>) {
-            viewModelScope.launch {
+            scope.launch {
                 _updatingNotificationMap.value = items
                     .mapNotNull { if (it.read.getValue() == false) it.id else null }
                     .associateWith { NotificationUpdateType.MarkingRead(AsyncData.Loading) }

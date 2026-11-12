@@ -3,123 +3,146 @@ package org.application.shikiapp.shared.models.viewModels
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import io.ktor.client.plugins.ClientRequestException
 import io.ktor.client.plugins.auth.clearAuthTokens
 import io.ktor.http.HttpStatusCode
-import io.ktor.util.network.UnresolvedAddressException
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.*
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.data.Token
 import org.application.shikiapp.shared.models.states.BaseDialogState
-import org.application.shikiapp.shared.models.ui.mappers.mapper
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.response.LoginResponse
-import org.application.shikiapp.shared.utils.enums.CommentableType
 import org.application.shikiapp.shared.utils.navigation.Screen.Login
+import shikiapp.composeapp.generated.resources.*
 
-class ProfileViewModel(saved: SavedStateHandle) : UserViewModel(saved) {
-    private val mutex = Mutex()
+class ProfileViewModel(private val saved: SavedStateHandle) : UserViewModel(saved) {
+    private var loadJob: Job? = null
     val args = saved.toRoute<Login>()
 
     override val userId: Long
         get() = Preferences.userId.value
 
     override fun loadData() {
-        when {
-            Preferences.token != null -> getProfile()
-            args.code != null -> login(args.code)
-            else -> viewModelScope.launch { emit(LoginResponse.NotLogged) }
-        }
-    }
+        if (loadJob?.isActive == true) return
 
-    private fun getProfile() {
-        viewModelScope.launch {
-            if (response.value !is LoginResponse.Logged) {
+        val handled = saved.get<Boolean>("loginHandled") == true
+        val code = if (handled) null else args.code
+        val error = if (handled) null else args.error
+
+        if (code != null || error != null) {
+            saved["loginHandled"] = true
+        }
+
+        if (error != null) {
+            tryEmit(
+                LoginResponse.Error(
+                    message = if (error == "access_denied") Res.string.text_login_cancelled else Res.string.text_error_login,
+                    canRetry = false
+                )
+            )
+            return
+        }
+
+        if (code == null && Preferences.token == null) {
+            if (_response.value !is LoginResponse.Error) {
+                tryEmit(LoginResponse.NotLogged)
+            }
+            return
+        }
+
+        loadJob = viewModelScope.launch {
+            if (code != null || _response.value !is LoginResponse.Logged) {
                 emit(LoginResponse.Logging)
             }
 
+            if (code != null && !login(code)) return@launch
+
             try {
-                setCommentParams(userId, CommentableType.USER)
-
-                emit(
-                    LoginResponse.Logged(
-                        user.await().mapper(
-                            clubs = clubs.await(),
-                            comments = comments,
-                            friends = friends,
-                            history = history,
-                            favourites = favourites.await()
-                        )
-                    )
-                )
-
-                mailManager.getUnreadMessages()
-            } catch (e: Exception) {
-                when (e) {
-                    is UnresolvedAddressException -> emit(LoginResponse.NetworkError)
-                    else -> emit(LoginResponse.NotLogged)
+                getProfile()
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: ClientRequestException) {
+                if (e.response.status == HttpStatusCode.Unauthorized) {
+                    clearSession()
+                    emit(LoginResponse.Error(Res.string.text_login_expired, false))
+                } else {
+                    emit(LoginResponse.Error(Res.string.text_error_profile, true))
                 }
+            } catch (_: Exception) {
+                emit(LoginResponse.Error(Res.string.text_error_profile, true))
             }
         }
     }
 
-    private fun login(code: String) {
-        viewModelScope.launch {
-            emit(LoginResponse.Logging)
+    private suspend fun getProfile() {
+        val id = Network.profile.whoAmI().id
+        currentCoroutineContext().ensureActive()
 
-            try {
-                mutex.withLock(this@ProfileViewModel) {
-                    try {
-                        val token = Network.profile.getToken(code = code)
-                        Preferences.saveToken(token)
-
-                        val whoAmI = Network.profile.whoAmI()
-                        Preferences.userId.value = whoAmI.id
-
-                        emit(
-                            LoginResponse.Logged(
-                                user.await().mapper(
-                                    clubs = clubs.await(),
-                                    comments = comments,
-                                    friends = friends,
-                                    history = history,
-                                    favourites = favourites.await()
-                                )
-                            )
-                        )
-                    } catch (_: Exception) {
-                        Preferences.saveToken(Token.empty)
-                        Preferences.userId.value = 0L
-
-                        emit(LoginResponse.NotLogged)
-                    }
-                }
-            } catch (_: IllegalStateException) {
-                // Already logging
-            }
+        if (id <= 0L) {
+            emit(LoginResponse.Error(Res.string.text_error_profile, true))
+            return
         }
+
+        if (userId != id) {
+            resetUserData()
+        }
+        Preferences.userId.value = id
+        setUserParams(id)
+
+        val profile = loadUser(id)
+
+        currentCoroutineContext().ensureActive()
+        emit(LoginResponse.Logged(profile))
+        mailManager.getUnreadMessages()
+    }
+
+    private suspend fun login(code: String): Boolean {
+        if (code.isBlank()) {
+            emit(LoginResponse.Error(Res.string.text_error_login, false))
+            return false
+        }
+
+        return try {
+            val token = Network.profile.getToken(code)
+            currentCoroutineContext().ensureActive()
+
+            Preferences.saveToken(token)
+            Preferences.userId.value = 0L
+            Network.client.clearAuthTokens()
+            resetUserData()
+            true
+        } catch (e: CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            emit(LoginResponse.Error(Res.string.text_error_login, false))
+            false
+        }
+    }
+
+    private fun clearSession() {
+        Preferences.saveToken(Token.empty)
+        Preferences.userId.value = 0L
+        Network.client.clearAuthTokens()
+        resetUserData()
     }
 
     fun signOut() {
-        viewModelScope.launch {
-            updateState { it.copy(dialogState = null) }
-            emit(LoginResponse.Logging)
+        loadJob?.cancel()
+        loadJob = null
 
-            try {
-                val request = Network.profile.signOut()
+        val token = Preferences.token
+        clearSession()
+        tryEmit(LoginResponse.NotLogged)
 
-                if (request.status == HttpStatusCode.OK) {
-                    Preferences.saveToken(Token.empty)
-                    Preferences.userId.value = 0L
-                    Network.client.clearAuthTokens()
+        if (token != null) {
+            viewModelScope.launch {
+                try {
+                    Network.profile.signOut(token.accessToken)
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (_: Exception) {
 
-                    emit(LoginResponse.NotLogged)
-                } else {
-                    emit(LoginResponse.NetworkError)
                 }
-            } catch (_: Exception) {
-                emit(LoginResponse.NetworkError)
             }
         }
     }
