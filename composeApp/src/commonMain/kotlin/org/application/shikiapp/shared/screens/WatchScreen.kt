@@ -6,7 +6,6 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.focusGroup
 import androidx.compose.foundation.focusable
 import androidx.compose.foundation.gestures.detectTapGestures
@@ -14,11 +13,6 @@ import androidx.compose.foundation.gestures.detectVerticalDragGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsFocusedAsState
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -29,15 +23,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.*
-import androidx.compose.material3.Label
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.PlainTooltip
-import androidx.compose.material3.Slider
-import androidx.compose.material3.SliderDefaults
-import androidx.compose.material3.Text
 import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.SaveableStateHolder
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,7 +67,6 @@ import org.application.shikiapp.shared.models.ui.VideoSourceData
 import org.application.shikiapp.shared.models.ui.VideoVoice
 import org.application.shikiapp.shared.models.viewModels.WatchViewModel
 import org.application.shikiapp.shared.network.client.AnimeLibAuth
-import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.HideSystemBars
@@ -92,14 +78,13 @@ import org.application.shikiapp.shared.utils.enums.VideoSource
 import org.application.shikiapp.shared.utils.extensions.playerFocusRequest
 import org.application.shikiapp.shared.utils.extensions.playerKeyEvents
 import org.application.shikiapp.shared.utils.extensions.playerMouseEvents
-import org.application.shikiapp.shared.utils.extractCodeFromUrl
-import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
+import org.application.shikiapp.shared.utils.rememberToastState
 import org.application.shikiapp.shared.utils.ui.*
-import org.application.shikiapp.shared.utils.ui.Formatter
 import org.application.shikiapp.shared.utils.viewModel
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import shikiapp.composeapp.generated.resources.*
+import kotlin.coroutines.cancellation.CancellationException
 import kotlin.math.abs
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
@@ -1141,30 +1126,9 @@ private fun ButtonFocused(content: Any, modifier: Modifier = Modifier, tint: Col
 private fun AnimeLibAuth() {
     val scope = rememberCoroutineScope()
     val uriHandler = rememberLinkHandler()
-
-    var isLogging by rememberSaveable { mutableStateOf(false) }
-
-    DisposableEffect(Unit) {
-        val mainListener = ExternalUriHandler.listener
-
-        ExternalUriHandler.listener = { uri ->
-            if (uri.startsWith(ApiRoutes.REDIRECT_URI_LIB)) {
-                extractCodeFromUrl(uri)?.let { code ->
-                    isLogging = true
-
-                    scope.launch {
-                        try {
-                            AnimeLibAuth.getToken(code)
-                        } finally {
-                            isLogging = false
-                        }
-                    }
-                }
-            }
-        }
-
-        onDispose { ExternalUriHandler.listener = mainListener }
-    }
+    val toast = rememberToastState()
+    val isLogging by AnimeLibAuth.isLogging.collectAsStateWithLifecycle()
+    var preparing by remember { mutableStateOf(false) }
 
     if (isLogging) {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
@@ -1174,10 +1138,34 @@ private fun AnimeLibAuth() {
         Box(Modifier.fillMaxSize(), Alignment.Center) {
             Column(Modifier.width(240.dp), Arrangement.spacedBy(8.dp, Alignment.CenterVertically), Alignment.CenterHorizontally) {
                 Button(
-                    onClick = { uriHandler.onOpenLink(ApiRoutes.authUriLib) },
+                    enabled = !preparing,
+                    onClick = {
+                        if (!preparing && !AnimeLibAuth.isLogging.value) {
+                            preparing = true
+
+                            scope.launch {
+                                try {
+                                    uriHandler.onOpenLink(AnimeLibAuth.authUri())
+                                } catch (e: CancellationException) {
+                                    throw e
+                                } catch (_: Exception) {
+                                    toast.onShow(Res.string.text_error_login_page)
+                                } finally {
+                                    preparing = false
+                                }
+                            }
+                        }
+                    },
                     content = {
                         Text(stringResource(Res.string.text_login))
-                        VectorIcon(Icons.KeyboardArrowRight)
+
+                        if (preparing) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(24.dp),
+                                color = LocalContentColor.current,
+                                strokeWidth = 2.dp
+                            )
+                        } else VectorIcon(Icons.KeyboardArrowRight)
                     }
                 )
 
