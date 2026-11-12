@@ -15,8 +15,10 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.navDeepLink
+import androidx.navigation.toRoute
 import org.application.shikiapp.shared.di.AppConfig
 import org.application.shikiapp.shared.di.Preferences
+import org.application.shikiapp.shared.network.client.ApiRoutes
 import org.application.shikiapp.shared.screens.*
 import org.application.shikiapp.shared.ui.templates.VectorIcon
 import org.application.shikiapp.shared.utils.enums.Menu
@@ -25,6 +27,7 @@ import org.application.shikiapp.shared.utils.extensions.onNavigationItemClick
 import org.application.shikiapp.shared.utils.generateDeepLinks
 import org.application.shikiapp.shared.utils.linkedTypeMap
 import org.application.shikiapp.shared.utils.navigation.Screen.*
+import org.application.shikiapp.shared.utils.ui.AnimeLibLoginScreen
 import org.jetbrains.compose.resources.stringResource
 
 @Composable
@@ -103,7 +106,9 @@ private fun AppNavHost(navigator: NavHostController) =
             typeMap = linkedTypeMap,
             deepLinks = generateDeepLinks<Screen.Catalog>(
                 "/animes/studio/{studio}-.*",
+                "/animes/studio/{studio}",
                 "/mangas/publisher/{publisher}-.*",
+                "/mangas/publisher/{publisher}",
                 typeMap = linkedTypeMap
             )
         ) {
@@ -121,40 +126,64 @@ private fun AppNavHost(navigator: NavHostController) =
         composable<Profile>(
             deepLinks = listOf(
                 navDeepLink<Login>("*") {
-                    uriPattern = "${AppConfig.redirectUri}?code={code}"
+                    uriPattern = "${AppConfig.redirectUri}?code={code}&error={error}"
                 }
             )
         ) {
             ProfileScreen(navigator::navigate)
         }
 
+        composable<Screen.AnimeLibLogin>(
+            deepLinks = listOf(
+                navDeepLink<Screen.AnimeLibLogin>("*") {
+                    uriPattern = "${ApiRoutes.REDIRECT_URI_LIB}?code={code}&state={state}&error={error}"
+                }
+            )
+        ) {
+            val args = it.toRoute<Screen.AnimeLibLogin>()
+
+            AnimeLibLoginScreen(args.code, args.state, args.error) {
+                if (!navigator.popBackStack()) {
+                    navigator.navigate(Preferences.startPage.value.route)
+                }
+            }
+        }
+
         // Screens //
-        composable<Anime>(deepLinks = generateDeepLinks<Anime>("/animes/{id}-.*")) {
+        composable<Anime>(deepLinks = generateDeepLinks<Anime>("/animes/{id}-.*", "/animes/{id}")) {
             AnimeScreen(navigator::navigate, navigator::navigateUp)
         }
 
         composable<Manga>(
             deepLinks = generateDeepLinks<Manga>(
                 "/mangas/{id}-.*",
-                "/ranobe/{id}-.*"
+                "/mangas/{id}",
+                "/ranobe/{id}-.*",
+                "/ranobe/{id}"
             )
         ) {
             MangaScreen(navigator::navigate, navigator::navigateUp)
         }
 
-        composable<Screen.Character>(deepLinks = generateDeepLinks<Screen.Character>("/characters/{id}-.*")) {
+        composable<Screen.Character>(deepLinks = generateDeepLinks<Screen.Character>("/characters/{id}-.*", "/characters/{id}")) {
             CharacterScreen(navigator::navigate, navigator::navigateUp)
         }
 
-        composable<Person>(deepLinks = generateDeepLinks<Person>("/people/{id}-.*")) {
+        composable<Person>(deepLinks = generateDeepLinks<Person>("/people/{id}-.*", "/people/{id}")) {
             PersonScreen(navigator::navigate, navigator::navigateUp)
         }
 
-        composable<User> {
-            UserScreen(navigator::navigate, navigator::navigateUp)
-        }
+        composable<User>(
+            content = { UserScreen(navigator::navigate, navigator::navigateUp) },
+            deepLinks = generateDeepLinks<User>(
+                "/users/{id}-.*",
+                "/users/{id}",
+                "/users/{nickname}",
+                "/{nickname}"
+            )
+        )
 
-        composable<Club> {
+        composable<Club>(deepLinks = generateDeepLinks<Club>("/clubs/{id}-.*", "/clubs/{id}")) {
             ClubScreen(navigator::navigate, navigator::navigateUp)
         }
 

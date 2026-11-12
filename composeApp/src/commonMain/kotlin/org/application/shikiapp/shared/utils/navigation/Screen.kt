@@ -24,7 +24,10 @@ sealed interface Screen {
     object Profile : Screen
 
     @Serializable
-    data class Login(val code: String? = null) : Screen
+    data class Login(val code: String? = null, val error: String? = null) : Screen
+
+    @Serializable
+    data class AnimeLibLogin(val code: String? = null, val state: String? = null, val error: String? = null) : Screen
 
     @Serializable
     data class Anime(val id: String) : Screen
@@ -39,7 +42,7 @@ sealed interface Screen {
     data class Person(val id: Long) : Screen
 
     @Serializable
-    data class User(val id: Long) : Screen
+    data class User(val id: Long = 0L, val nickname: String? = null) : Screen
 
     @Serializable
     data class Club(val id: Long) : Screen
