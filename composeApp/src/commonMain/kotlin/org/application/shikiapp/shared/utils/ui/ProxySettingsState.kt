@@ -1,13 +1,12 @@
 package org.application.shikiapp.shared.utils.ui
 
 import androidx.compose.runtime.*
+import org.application.shikiapp.shared.di.AppServices
 import org.application.shikiapp.shared.di.Preferences
-import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.data.preferences.rememberPreference
 
 const val MAX_URL_COUNT = 5
-const val MAX_YGGDRASIL_PEER_COUNT = 3
 
 private val URL_REGEX = Regex(
     pattern = "^https://[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}(/.*)?$",
@@ -16,11 +15,6 @@ private val URL_REGEX = Regex(
 
 private val PROXY_HOST_REGEX = Regex(
     pattern = """^(https?|socks5)://(localhost|(?:(?:25[0-5]|2[0-4]\d|[01]?\d\d?)\.){3}(?:25[0-5]|2[0-4]\d|[01]?\d\d?)|(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,})$""",
-    option = RegexOption.IGNORE_CASE,
-)
-
-private val YGGDRASIL_PEER_REGEX = Regex(
-    pattern = """^(tcp|tls|quic|ws|wss)://\S+$""",
     option = RegexOption.IGNORE_CASE,
 )
 
@@ -33,15 +27,10 @@ class ProxySettingsState(
     proxyPort: String,
     proxyUsername: String,
     proxyPassword: String,
-    yggdrasilEnabled: Boolean,
-    yggdrasilPeers: List<String>,
+    val extraSettings: NetworkSettings? = null,
 ) {
     val urlList = mutableStateListOf<String>().apply {
         addAll(urlList.ifEmpty { listOf(BLANK) })
-    }
-
-    val peerList = mutableStateListOf<String>().apply {
-        addAll(yggdrasilPeers.ifEmpty { listOf(BLANK) })
     }
 
     var isUserMode by mutableStateOf(isUserMode)
@@ -62,30 +51,13 @@ class ProxySettingsState(
     var proxyPass by mutableStateOf(proxyPassword)
         private set
 
-    var isYggdrasilEnabled by mutableStateOf(yggdrasilEnabled)
-        private set
-
     var anyError by mutableStateOf(false)
         private set
 
-    val urlListItems: List<InputItem>
-        get() = urlList.map { value ->
-            InputItem(
-                value = value,
-                isError = anyError && isUserMode && !isValidBaseUrl(value)
-            )
-        }
-
-    val peerListItems: List<InputItem>
-        get() = peerList.map { value ->
-            InputItem(
-                value = value,
-                isError = anyError && isYggdrasilEnabled && !isValidPeer(value)
-            )
-        }
+    fun isUrlError(value: String) = anyError && isUserMode && !isValidBaseUrl(value)
 
     val isNetworkUrl: Boolean
-        get() = !isYggdrasilEnabled
+        get() = extraSettings?.usesOwnConnection != true
 
     val isHostError: Boolean
         get() = anyError && isProxyEnabled && !validateProxyHost()
@@ -111,21 +83,11 @@ class ProxySettingsState(
         anyError = false
     }
 
-    fun toggleYggdrasil(enabled: Boolean) {
-        isYggdrasilEnabled = enabled
-        anyError = false
-    }
-
-    fun validateProxyHost() = proxyHost.matches(PROXY_HOST_REGEX)
-    fun validateProxyPort() = proxyPort.toIntOrNull() in 1..65535
+    private fun validateProxyHost() = proxyHost.matches(PROXY_HOST_REGEX)
+    private fun validateProxyPort() = proxyPort.toIntOrNull() in 1..65535
 
     fun updateUrl(index: Int, value: String) {
         urlList[index] = value.trim()
-        anyError = false
-    }
-
-    fun updatePeer(index: Int, value: String) {
-        peerList[index] = value.trim()
         anyError = false
     }
 
@@ -165,25 +127,13 @@ class ProxySettingsState(
         }
     }
 
-    fun addPeer() {
-        if (peerList.size < MAX_YGGDRASIL_PEER_COUNT) {
-            peerList.add(BLANK)
-        }
-    }
-
-    fun removeLastPeer() {
-        if (peerList.size > 1) {
-            peerList.removeLast()
-        }
-    }
-
     fun clear(onCleared: () -> Unit) {
         isUserMode = false
         isProxyEnabled = false
-        isYggdrasilEnabled = false
         anyError = false
 
         Preferences.clearUserNetworkSettings()
+        extraSettings?.clear()
 
         onCleared()
     }
@@ -191,11 +141,10 @@ class ProxySettingsState(
     fun save(onSaved: () -> Unit) {
         val hasLinkError = isNetworkUrl && isUserMode && urlList.any { !isValidBaseUrl(it) }
         val hasProxyError = isNetworkUrl && isProxyEnabled && (!validateProxyHost() || !validateProxyPort())
-        val hasYggdrasilError = isYggdrasilEnabled && (peerList.isEmpty() || peerList.any { !isValidPeer(it) })
 
-        anyError = hasLinkError || hasProxyError || hasYggdrasilError
+        anyError = hasLinkError || hasProxyError
 
-        if (anyError) {
+        if (anyError || extraSettings?.save() == false) {
             return
         }
 
@@ -203,24 +152,14 @@ class ProxySettingsState(
             it.trim().takeIf(String::isNotEmpty)
         }
 
-        val peers = peerList.mapNotNullTo(LinkedHashSet()) {
-            it.trim().takeIf(String::isNotEmpty)
-        }
-
         Preferences.setLinksSettings(isUserMode, urls)
         Preferences.setProxySettings(isProxyEnabled, proxyHost, proxyPort, proxyUser, proxyPass)
-        Preferences.setYggdrasilSettings(isYggdrasilEnabled, peers.toList())
 
         onSaved()
     }
 
     private fun isValidBaseUrl(value: String) = value.isNotBlank() && URL_REGEX.matches(value)
-    private fun isValidPeer(value: String) = value.isNotBlank() && YGGDRASIL_PEER_REGEX.matches(value)
 
-    data class InputItem(
-        val value: String,
-        val isError: Boolean,
-    )
 }
 
 @Composable
@@ -234,10 +173,10 @@ fun rememberProxySettingsState(): ProxySettingsState {
     val proxyUser by rememberPreference { proxyUsername }
     val proxyPass by rememberPreference { proxyPassword }
 
-    val yggdrasilEnabled by rememberPreference { yggdrasilEnabled }
-    val yggdrasilPeers by rememberPreference { yggdrasilPeers }
+    val factory = AppServices.networkSettings
+    val extraSettings = remember(factory) { factory?.invoke() }
 
-    return remember(urls, userMode, isProxy, proxyHost, proxyPort, proxyUser, proxyPass, yggdrasilEnabled, yggdrasilPeers) {
+    return remember(urls, userMode, isProxy, proxyHost, proxyPort, proxyUser, proxyPass, extraSettings) {
         ProxySettingsState(
             urlList = urls.split(',').ifEmpty { listOf(BLANK) },
             isUserMode = userMode,
@@ -246,8 +185,7 @@ fun rememberProxySettingsState(): ProxySettingsState {
             proxyPort = proxyPort,
             proxyUsername = proxyUser,
             proxyPassword = proxyPass,
-            yggdrasilEnabled = Network.isYggdrasilAvailable && yggdrasilEnabled,
-            yggdrasilPeers = yggdrasilPeers.split(',').ifEmpty { listOf(BLANK) },
+            extraSettings = extraSettings,
         )
     }
 }
