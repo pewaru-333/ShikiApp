@@ -52,17 +52,6 @@
 
                 <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
             </intent-filter>
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data
-                    android:host="${authHost}"
-                    android:pathSuffix="${authSuffix}"
-                    android:scheme="${authScheme}" />
-            </intent-filter>
 
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
@@ -74,25 +63,6 @@
                     android:host="type"
                     android:path="/callback"
                     android:scheme="ru.libapp.oauth" />
-            </intent-filter>
-
-            <intent-filter>
-                <action android:name="android.intent.action.VIEW" />
-
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-
-                <data android:scheme="https" />
-                <data android:host="${base}" />
-                <data android:host="${mirrorOne}" />
-                <data android:host="${mirrorTwo}" />
-                <data android:pathPrefix="/animes" />
-                <data android:pathPrefix="/mangas" />
-                <data android:pathPrefix="/ranobe" />
-                <data android:pathPrefix="/characters" />
-                <data android:pathPrefix="/people" />
-                <data android:pathPrefix="/animes/studio" />
-                <data android:pathPrefix="/mangas/publisher" />
             </intent-filter>
         </activity>
 

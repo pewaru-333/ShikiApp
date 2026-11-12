@@ -1,4 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-    <application android:networkSecurityConfig="@xml/network_security_config" />
+    <application android:networkSecurityConfig="@xml/network_security_config">
+        <activity
+            android:name="org.application.shikiapp.MainActivity"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data
+                    android:host="auth"
+                    android:path="/login"
+                    android:scheme="darkshiki" />
+            </intent-filter>
+
+        </activity>
+    </application>
 </manifest>
