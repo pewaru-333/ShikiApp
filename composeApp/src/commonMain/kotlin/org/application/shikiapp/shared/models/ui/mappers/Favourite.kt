@@ -3,9 +3,10 @@ package org.application.shikiapp.shared.models.ui.mappers
 import org.application.shikiapp.shared.models.data.Favourites
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.utils.enums.FavouriteItem
+import org.application.shikiapp.shared.utils.ui.Formatter
 
 fun Favourites.toBasicContentMap() = buildMap(FavouriteItem.entries.size) {
-    if (animes.isNotEmpty()) put(FavouriteItem.ANIME, animes.toBasicContent())
+    if (animes.isNotEmpty()) put(FavouriteItem.ANIME, animes.toBasicContent(isAnime = true))
     if (mangas.isNotEmpty()) put(FavouriteItem.MANGA, mangas.toBasicContent())
     if (ranobe.isNotEmpty()) put(FavouriteItem.RANOBE, ranobe.toBasicContent())
     if (characters.isNotEmpty()) put(FavouriteItem.CHARACTERS, characters.toBasicContent())
@@ -15,10 +16,11 @@ fun Favourites.toBasicContentMap() = buildMap(FavouriteItem.entries.size) {
     if (producers.isNotEmpty()) put(FavouriteItem.OTHERS, producers.toBasicContent())
 }
 
-private fun List<Favourites.Favourite>.toBasicContent() = map {
+private fun List<Favourites.Favourite>.toBasicContent(isAnime: Boolean = false) = map {
     BasicContent(
         id = it.id.toString(),
         title = it.russian.takeUnless(String?::isNullOrEmpty) ?: it.name,
-        poster = it.image.replace("x64", "x96")
+        poster = if (isAnime) Formatter.replaceMissingAnimePoster(it.image.replace("x64", "x96"), it.id)
+        else it.image.replace("x64", "x96")
     )
 }

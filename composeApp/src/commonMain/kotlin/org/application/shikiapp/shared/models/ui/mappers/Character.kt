@@ -52,7 +52,8 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationT
     return Related(
         id = id.toString(),
         title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
-        poster = Formatter.replaceMissingAnimePoster(image.original, id),
+        poster = if (this is AnimeBasic) Formatter.replaceMissingAnimePoster(image.original, id)
+        else image.original,
         kind = kindEnum,
         status = Enum.safeValueOf<Status>(status),
         season = Formatter.getSeason(airedOn, kind),
@@ -65,7 +66,8 @@ fun org.application.shikiapp.shared.models.data.BasicContent.toRelated(relationT
 fun org.application.shikiapp.shared.models.data.BasicContent.toContent() = Content(
     id = id.toString(),
     kind = Enum.safeValueOf<Kind>(kind),
-    poster = Formatter.replaceMissingAnimePoster(image.original, id),
+    poster = if (this is AnimeBasic) Formatter.replaceMissingAnimePoster(image.original, id)
+    else image.original,
     score = score?.let(Formatter::convertScore),
     season = Formatter.getSeason(airedOn, kind),
     status = Enum.safeValueOf<Status>(status),

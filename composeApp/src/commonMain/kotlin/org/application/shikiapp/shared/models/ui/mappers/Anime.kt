@@ -1,15 +1,23 @@
 package org.application.shikiapp.shared.models.ui.mappers
 
-import org.application.shikiapp.generated.common.*
+import org.application.shikiapp.generated.common.AnimeAiringQuery
+import org.application.shikiapp.generated.common.AnimeListQuery
+import org.application.shikiapp.generated.common.AnimeRandomQuery
 import org.application.shikiapp.generated.common.fragment.Link
+import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.BasicInfo
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.data.Topic
-import org.application.shikiapp.shared.models.ui.*
+import org.application.shikiapp.shared.models.ui.ExternalLink
 import org.application.shikiapp.shared.models.ui.list.BasicContent
 import org.application.shikiapp.shared.models.ui.list.Content
-import org.application.shikiapp.shared.utils.*
-import org.application.shikiapp.shared.utils.enums.*
+import org.application.shikiapp.shared.utils.BLANK
+import org.application.shikiapp.shared.utils.EXTERNAL_LINK_KINDS
+import org.application.shikiapp.shared.utils.ResourceText
+import org.application.shikiapp.shared.utils.enums.Kind
+import org.application.shikiapp.shared.utils.enums.LinkedType
+import org.application.shikiapp.shared.utils.enums.RelationKind
+import org.application.shikiapp.shared.utils.enums.Status
 import org.application.shikiapp.shared.utils.extensions.safeValueOf
 import org.application.shikiapp.shared.utils.ui.Formatter
 import shikiapp.composeapp.generated.resources.Res
@@ -18,7 +26,8 @@ import shikiapp.composeapp.generated.resources.text_unknown
 fun BasicInfo.toBasicContent() = BasicContent(
     id = id.toString(),
     title = russian.takeUnless(String?::isNullOrEmpty) ?: name,
-    poster = Formatter.replaceMissingAnimePoster(image.original, id)
+    poster = if (this is AnimeBasic) Formatter.replaceMissingAnimePoster(image.original, id)
+    else image.original
 )
 
 fun Link.mapper() = ExternalLink(
