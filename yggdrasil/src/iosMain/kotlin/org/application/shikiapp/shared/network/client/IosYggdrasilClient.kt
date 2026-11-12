@@ -59,6 +59,13 @@ internal object IosYggdrasilClient : YggdrasilClient {
                     val nativeError = alloc<ObjCObjectVar<NSError?>>()
                     nativeError.value = null
 
+                    if (YggbridgeIsStarted()) {
+                        check(ShikiYggbridgeStop(error = nativeError.ptr)) {
+                            nativeError.value?.localizedDescription ?: "Failed to stop Yggdrasil"
+                        }
+                        nativeError.value = null
+                    }
+
                     val started = ShikiYggbridgeStart(
                         peersJSON = peersJson,
                         savedPrivateKeyPEM = privateKeyPem.orEmpty(),

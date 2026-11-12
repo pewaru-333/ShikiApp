@@ -12,32 +12,21 @@ import io.ktor.http.content.OutgoingContent
 import io.ktor.util.date.GMTDate
 import io.ktor.utils.io.ByteReadChannel
 import io.ktor.utils.io.InternalAPI
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.coroutines.CancellationException
 import kotlinx.io.IOException
 import kotlinx.serialization.json.Json
 
 class YggdrasilEngine(
     private val yggdrasil: YggdrasilClient,
-    peers: List<String>,
-    privateKeyPem: String?,
+    private val settings: () -> YggdrasilConfig,
     private val onPrivateKeyGenerated: (String) -> Unit
 ) : HttpClientEngineFactory<YggdrasilEngineConfig> {
-
-    private val peers = peers
-        .mapNotNullTo(LinkedHashSet()) { it.trim().takeIf(String::isNotEmpty) }
-        .toList()
-
-    private val privateKeyPem = privateKeyPem
-        ?.trim()
-        ?.takeIf(String::isNotEmpty)
 
     override fun create(block: YggdrasilEngineConfig.() -> Unit): HttpClientEngine =
         YggdrasilClientEngine(
             config = YggdrasilEngineConfig().apply(block),
             yggdrasil = yggdrasil,
-            peers = peers,
-            privateKeyPem = privateKeyPem,
+            settings = settings,
             onPrivateKeyGenerated = onPrivateKeyGenerated
         )
 
@@ -45,38 +34,24 @@ class YggdrasilEngine(
     private class YggdrasilClientEngine(
         override val config: YggdrasilEngineConfig,
         private val yggdrasil: YggdrasilClient,
-        private val peers: List<String>,
-        private val privateKeyPem: String?,
+        private val settings: () -> YggdrasilConfig,
         private val onPrivateKeyGenerated: (String) -> Unit
     ) : HttpClientEngineBase("Yggdrasil") {
 
         override val supportedCapabilities: Set<HttpClientEngineCapability<*>> = setOf(HttpTimeoutCapability)
-
-        private val mutex = Mutex()
-
-        private var started = false
 
         private val json = Json {
             ignoreUnknownKeys = true
         }
 
         private suspend fun ensureStarted() {
-            if (started) {
-                return
-            }
+            val config = settings()
+            if (!config.enabled || config.peers.isEmpty()) throw IOException()
 
-            mutex.withLock {
-                if (started) {
-                    return
-                }
+            yggdrasil.start(config.peers, config.privateKeyPem)
 
-                yggdrasil.start(peers, privateKeyPem)
-
-                if (privateKeyPem == null) {
-                    onPrivateKeyGenerated(yggdrasil.privateKeyPem())
-                }
-
-                started = true
+            if (config.privateKeyPem == null) {
+                onPrivateKeyGenerated(yggdrasil.privateKeyPem())
             }
         }
 
@@ -111,8 +86,10 @@ class YggdrasilEngine(
                     body = body,
                     timeoutMillis = requestTimeout
                 )
-            } catch (e: Throwable) {
-                throw IOException("Yggdrasil request failed: ${data.url}", e)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                throw IOException(e)
             }
 
             val responseHeadersMap = json.decodeFromString<Map<String, List<String>>>(bridgeResponse.headersJson)

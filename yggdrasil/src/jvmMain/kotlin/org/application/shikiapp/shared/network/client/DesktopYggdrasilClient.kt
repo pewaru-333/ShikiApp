@@ -38,13 +38,16 @@ internal object DesktopYggdrasilClient : YggdrasilClient {
                 if (startedPeers == normalizedPeers) {
                     return
                 }
+                withContext(Dispatchers.IO) {
+                    native.YggStop().consumeNativeString()?.let { throw IOException(it) }
+                }
             }
 
             val peersJson = Json.encodeToString(normalizedPeers)
 
             withContext(Dispatchers.IO) {
                 native.YggStart(peersJson, privateKeyPem.orEmpty())
-                    .consumeNativeString()
+                    .consumeNativeString()?.let { throw IOException(it) }
             }
 
             startedPeers = normalizedPeers
@@ -80,6 +83,7 @@ internal object DesktopYggdrasilClient : YggdrasilClient {
 
             try {
                 val response = NativeYggResponse(responsePointer)
+                response.error?.getString(0, "UTF-8")?.takeIf(String::isNotBlank)?.let { throw IOException(it) }
                 val responseBody = if (response.body == null || response.bodyLen == 0L) {
                     byteArrayOf()
                 } else {

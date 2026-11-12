@@ -5,11 +5,12 @@ import io.ktor.client.HttpClientConfig
 
 interface YggdrasilTransport {
     fun createClient(
-        config: YggdrasilConfig,
+        config: () -> YggdrasilConfig,
         onPrivateKeyGenerated: (String) -> Unit,
         block: HttpClientConfig<*>.() -> Unit
     ): HttpClient
 
     suspend fun startProxy(config: YggdrasilConfig, onPrivateKeyGenerated: (String) -> Unit): Int
     suspend fun stopProxy()
+    suspend fun stop()
 }

@@ -26,6 +26,9 @@ internal object AndroidYggdrasilClient : YggdrasilClient {
                 if (startedPeers == normalizedPeers) {
                     return
                 }
+                withContext(Dispatchers.IO) {
+                    Yggbridge.stop()
+                }
             }
 
             val peersJson = Json.encodeToString(normalizedPeers)

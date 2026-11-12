@@ -5,14 +5,13 @@ import io.ktor.client.HttpClientConfig
 
 object BridgeYggdrasilTransport : YggdrasilTransport {
     override fun createClient(
-        config: YggdrasilConfig,
+        config: () -> YggdrasilConfig,
         onPrivateKeyGenerated: (String) -> Unit,
         block: HttpClientConfig<*>.() -> Unit
     ): HttpClient = HttpClient(
         YggdrasilEngine(
             yggdrasil = platformYggdrasilClient(),
-            peers = config.peers,
-            privateKeyPem = config.privateKeyPem,
+            settings = config,
             onPrivateKeyGenerated = onPrivateKeyGenerated
         )
     ) {
@@ -32,4 +31,6 @@ object BridgeYggdrasilTransport : YggdrasilTransport {
     }
 
     override suspend fun stopProxy() = platformYggdrasilClient().stopProxy()
+
+    override suspend fun stop() = platformYggdrasilClient().stop()
 }

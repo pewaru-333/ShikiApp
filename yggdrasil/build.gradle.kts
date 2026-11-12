@@ -28,7 +28,7 @@ kotlin {
     iosArm64()
     iosSimulatorArm64()
 
-    val framework = rootProject.file("composeApp/libs/ios/Yggbridge.xcframework")
+    val framework = rootProject.file("yggdrasil/libs/ios/Yggbridge.xcframework")
     if (System.getProperty("os.name").startsWith("Mac", ignoreCase = true)) {
         listOf(
             targets.getByName("iosArm64") to "ios-arm64",
