@@ -8,5 +8,6 @@ enum class VideoSource(val title: StringResource) {
     COLLAPS(Res.string.video_source_collapse),
     CVH(Res.string.video_source_videohub),
     AKSOR(Res.string.video_source_aksor),
-    ANIMELIB(Res.string.video_source_animelib)
+    ANIMELIB(Res.string.video_source_animelib),
+    YANDEX(Res.string.video_source_yandex)
 }
