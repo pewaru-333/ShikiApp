@@ -19,7 +19,7 @@ import platform.WebKit.*
 import platform.darwin.NSObject
 
 internal actual fun isAuthLoginAvailable(): Boolean =
-    !Network.isYggdrasilEnabled || NSProcessInfo.processInfo.operatingSystemVersion.useContents {
+    !Network.requiresAuthProxy || NSProcessInfo.processInfo.operatingSystemVersion.useContents {
         majorVersion >= 17
     }
 

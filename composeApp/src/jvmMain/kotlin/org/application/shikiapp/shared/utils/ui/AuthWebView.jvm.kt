@@ -8,7 +8,7 @@ import org.application.shikiapp.shared.network.client.Network
 internal actual fun isAuthLoginAvailable() = true
 
 @Composable
-internal actual fun preferAuthWebView() = Network.isYggdrasilEnabled
+internal actual fun preferAuthWebView() = Network.requiresAuthProxy
 
 @Composable
 internal actual fun AuthWebView(
