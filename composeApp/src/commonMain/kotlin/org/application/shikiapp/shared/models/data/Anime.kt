@@ -1,6 +1,7 @@
 package org.application.shikiapp.shared.models.data
 
 
+import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 
 
@@ -60,6 +61,6 @@ class AnimeBasic : BasicContent() {
     //@SerialName("episodes")
     val episodes: Int? = null
 
-//    @SerialName("episodes_aired")
-//    val episodesAired: Int? = null
+    @SerialName("episodes_aired")
+    val episodesAired: Int? = null
 }
