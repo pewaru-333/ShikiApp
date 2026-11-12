@@ -24,8 +24,9 @@ import coil3.request.crossfade
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.builtins.nullable
 import kotlinx.serialization.json.Json
-import okio.ByteString.Companion.encodeUtf8
 import okio.Path
+import org.application.shikiapp.shared.di.AppConfig
+import org.application.shikiapp.shared.di.AppServices
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.network.client.ImageInterceptor
 import org.application.shikiapp.shared.network.client.Network
@@ -33,7 +34,6 @@ import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.LinkedType
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
-import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import kotlin.jvm.JvmSuppressWildcards
 import kotlin.reflect.KType
@@ -47,6 +47,7 @@ fun sharedImageLoader(
 ) = ImageLoader.Builder(context)
     .components {
         add(KtorNetworkFetcherFactory(Network.baseClient))
+        AppServices.imageInterceptor?.let(::add)
         add(ImageInterceptor)
         components()
     }
@@ -64,26 +65,6 @@ fun sharedImageLoader(
     }
     .build()
 
-fun generateRandomString(length: Int = 40): String {
-    val allowedChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789"
-    return CharArray(length) { allowedChars.random() }.concatToString()
-}
-
-fun generateCodeChallenge(verifier: String) = verifier.encodeUtf8()
-    .sha256()
-    .base64Url()
-    .trimEnd('=')
-
-fun extractCodeFromUrl(url: String): String? {
-    val query = url.substringAfter('?', BLANK)
-        .substringBefore('#')
-
-    if (query.isEmpty()) return null
-    return query.splitToSequence('&')
-        .map { it.split('=', limit = 2) }
-        .firstOrNull { it.size == 2 && it[0] == "code" }
-        ?.get(1)
-}
 
 inline fun <reified T> serializableNavType(
     serializer: KSerializer<T>,
@@ -110,14 +91,12 @@ inline fun <reified T> serializableNavType(
 inline fun <reified T : Any> generateDeepLinks(
     vararg paths: String,
     typeMap: Map<KType, @JvmSuppressWildcards NavType<*>> = emptyMap()
-) = Preferences.appUrlList.flatMap { domain ->
-    paths.map { path ->
-        navDeepLink<T>(
-            basePath = "*",
-            typeMap = typeMap,
-            deepLinkBuilder = { uriPattern = "$domain$path" }
-        )
-    }
+) = paths.map { path ->
+    navDeepLink<T>(
+        basePath = "*",
+        typeMap = typeMap,
+        deepLinkBuilder = { uriPattern = "${AppConfig.baseUrl.trimEnd('/')}$path" }
+    )
 }
 
 @Composable
@@ -150,9 +129,6 @@ expect fun getFullscreenDialogProperties(): DialogProperties
 
 @Composable
 expect fun rememberDataManager(): Pair<IDataManager, PermissionState>
-
-@Composable
-expect fun rememberVerifiedDomain() : IDomain
 
 @Composable
 expect fun rememberToastState(): IToast
