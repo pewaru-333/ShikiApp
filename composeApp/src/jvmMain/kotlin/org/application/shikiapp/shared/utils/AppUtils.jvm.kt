@@ -14,16 +14,13 @@ import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.ibm.icu.text.RelativeDateTimeFormatter
-import com.sun.jna.Platform
 import org.application.shikiapp.shared.utils.data.DataManagerDesktop
 import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.ui.HtmlParser
-import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
-import java.io.File
 import java.util.Locale
 
 
@@ -72,27 +69,6 @@ private fun parseNode(node: Node, builder: AnnotatedString.Builder) {
     }
 }
 
-fun initVlc() {
-    val platform = Platform.RESOURCE_PREFIX
-    val resourcesDir = System.getProperty("compose.application.resources.dir")?.let(::File)
-
-    val vlcPath = if (resourcesDir != null && resourcesDir.exists() && File(resourcesDir, "vlc/$platform").exists()) {
-        File(resourcesDir, "vlc/$platform").absolutePath
-    } else {
-        val userDir = System.getProperty("user.dir")
-        val baseDir = if (userDir.endsWith("desktopApp")) File(userDir)
-        else File(userDir, "desktopApp")
-
-        File(baseDir, "files/vlc/$platform").absolutePath
-    }
-
-    val vlcDirectory = File(vlcPath)
-    if (vlcDirectory.exists() && vlcDirectory.isDirectory) {
-        System.setProperty("jna.library.path", vlcPath)
-        System.setProperty("VLC_PLUGIN_PATH", "$vlcPath/plugins")
-    }
-}
-
 fun getDefaultLocale(): String = Locale.getDefault().language
 
 actual fun isDynamicColorAvailable() = false
@@ -132,12 +108,6 @@ actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     }
 
     return Pair(dataManager, permissionState)
-}
-
-@Composable
-actual fun rememberVerifiedDomain() = object : IDomain {
-    override val isVerified = true
-    override fun onSettingsLaunch() = Unit
 }
 
 @Composable

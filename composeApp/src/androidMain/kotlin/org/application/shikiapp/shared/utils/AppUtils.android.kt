@@ -2,7 +2,6 @@ package org.application.shikiapp.shared.utils
 
 import android.Manifest
 import android.app.LocaleManager
-import android.content.Context
 import android.content.pm.ActivityInfo
 import android.graphics.Color
 import android.icu.text.RelativeDateTimeFormatter
@@ -13,7 +12,6 @@ import androidx.activity.SystemBarStyle
 import androidx.activity.compose.LocalActivity
 import androidx.activity.enableEdgeToEdge
 import androidx.annotation.ChecksSdkIntAtLeast
-import androidx.annotation.RequiresApi
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.*
@@ -27,18 +25,14 @@ import androidx.compose.ui.window.DialogWindowProvider
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
-import androidx.lifecycle.compose.LifecycleResumeEffect
 import kotlinx.coroutines.launch
 import org.application.shikiapp.shared.utils.data.DataManagerAndroid
 import org.application.shikiapp.shared.utils.data.IDataManager
 import org.application.shikiapp.shared.utils.enums.ScreenOrientation
-import org.application.shikiapp.shared.utils.extensions.isAllDomainsVerified
-import org.application.shikiapp.shared.utils.extensions.openAppLinksSettings
 import org.application.shikiapp.shared.utils.extensions.showToast
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.permissions.rememberPermissionState
 import org.application.shikiapp.shared.utils.ui.Formatter
-import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -97,33 +91,6 @@ actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     val dataManager = remember { DataManagerAndroid(context) }
 
     return Pair(dataManager, permissionState)
-}
-
-@Composable
-actual fun rememberVerifiedDomain(): IDomain {
-    val context = LocalContext.current
-    val verified = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || rememberDomainVerification(context)
-
-    return remember(context, verified) {
-        object : IDomain {
-            override val isVerified = verified
-            override fun onSettingsLaunch() = context.openAppLinksSettings()
-        }
-    }
-}
-
-@RequiresApi(Build.VERSION_CODES.S)
-@Composable
-private fun rememberDomainVerification(context: Context): Boolean {
-    var verified by remember(context) { mutableStateOf(context.isAllDomainsVerified()) }
-
-    LifecycleResumeEffect(context) {
-        verified = context.isAllDomainsVerified()
-
-        onPauseOrDispose { }
-    }
-
-    return verified
 }
 
 @Composable

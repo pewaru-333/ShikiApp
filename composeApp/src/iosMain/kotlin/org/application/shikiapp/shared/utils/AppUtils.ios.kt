@@ -18,7 +18,6 @@ import org.application.shikiapp.shared.utils.enums.ScreenOrientation
 import org.application.shikiapp.shared.utils.permissions.PermissionState
 import org.application.shikiapp.shared.utils.permissions.rememberPermissionState
 import org.application.shikiapp.shared.utils.ui.HtmlParser
-import org.application.shikiapp.shared.utils.ui.IDomain
 import org.application.shikiapp.shared.utils.ui.IToast
 import org.jetbrains.compose.resources.StringResource
 import org.jetbrains.compose.resources.getString
@@ -110,14 +109,6 @@ actual fun rememberDataManager(): Pair<IDataManager, PermissionState> {
     val dataManager = remember { DataManagerIos() }
 
     return Pair(dataManager, permissionState)
-}
-
-@Composable
-actual fun rememberVerifiedDomain() = remember {
-    object : IDomain {
-        override val isVerified = true
-        override fun onSettingsLaunch() = Unit
-    }
 }
 
 @Composable
