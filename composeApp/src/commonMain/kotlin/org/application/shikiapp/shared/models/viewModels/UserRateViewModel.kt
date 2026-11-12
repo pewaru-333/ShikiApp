@@ -54,8 +54,8 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     private val _ratesState = MutableStateFlow(UserRatesState())
     val ratesState = _ratesState.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000L), UserRatesState())
 
-    private val _newRate = MutableStateFlow(NewRateState())
-    val newRate = _newRate.asStateFlow()
+    val newRate: StateFlow<NewRateState>
+        field = MutableStateFlow(NewRateState())
 
     private val _rateUiEvent = Channel<UserRateUiEvent>()
     val rateUiEvent = _rateUiEvent.receiveAsFlow()
@@ -67,8 +67,6 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         }
     ) { response, state ->
         if (response !is RatesResponse.Success) return@combine emptyMap()
-
-        val noSearch = state.search.isBlank()
 
         val typeComparator = when (state.order) {
             OrderRates.TITLE -> compareBy(UserRate::title)
@@ -84,8 +82,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             OrderDirection.DESCENDING -> typeComparator.thenBy(UserRate::title).reversed()
         }
 
-        response.rates
-            .filter { noSearch || it.title.contains(state.search, ignoreCase = true) }
+        val filtered = if (state.search.isBlank()) response.rates
+        else response.rates.filter { it.title.contains(state.search, ignoreCase = true) }
+
+        filtered
             .groupBy { Enum.safeValueOf<WatchStatus>(it.status) }
             .mapValues { (_, value) -> value.sortedWith(orderComparator) }
     }
@@ -96,50 +96,37 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
         if (userId == null) return
 
         viewModelScope.launch {
-            if (Preferences.token == null && editable) {
-                _response.emit(RatesResponse.Unlogged)
-                return@launch
-            }
-
-            if (_response.value !is RatesResponse.Success) {
-                _response.emit(RatesResponse.Loading)
-            }
-
             try {
-                val allRates = mutableListOf<UserRate>()
-                val limit = 500
-
-                suspend fun fetchPage(page: Int) = if (type == LinkedType.ANIME) {
-                    Network.rates.getAnimeRates(userId, page, limit)
-                } else {
-                    Network.rates.getMangaRates(userId, page, limit)
+                if (Preferences.token == null && editable) {
+                    _response.emit(RatesResponse.Unlogged)
+                    return@launch
                 }
 
-                val firstPage = fetchPage(1) ?: emptyList()
-                allRates.addAll(firstPage.map(BaseRate::mapper))
+                if (_response.value !is RatesResponse.Success) {
+                    _response.emit(RatesResponse.Loading)
+                }
 
-                if (firstPage.size >= limit) {
-                    val pools = 5
-                    var currentPage = 2
-                    var moreDataAvailable = true
+                val rates = withContext(Dispatchers.Default) {
+                    val allRates = ArrayList<UserRate>()
+                    val limit = 5000
+                    var page = 1
 
-                    while (moreDataAvailable) {
-                        val jobs = coroutineScope {
-                            (0 until pools).map { pool -> async { fetchPage(currentPage + pool) } }
-                        }
-
-                        val result = jobs.mapNotNull { it.await() }
-                        allRates.addAll(result.flatMap { it.map(BaseRate::mapper) })
-
-                        if (result.size < pools || result.any { it.size < limit }) {
-                            moreDataAvailable = false
+                    do {
+                        val response = if (type == LinkedType.ANIME) {
+                            Network.rates.getAnimeRates(userId, page, limit)
                         } else {
-                            currentPage += pools
-                        }
-                    }
-                }
+                            Network.rates.getMangaRates(userId, page, limit)
+                        }.orEmpty()
 
-                _response.emit(RatesResponse.Success(allRates.distinctBy(UserRate::id)))
+                        response.mapTo(allRates, BaseRate::mapper)
+                        page++
+                    } while (response.size >= limit)
+
+                    allRates.distinctBy(UserRate::id)
+                }
+                _response.emit(RatesResponse.Success(rates))
+            } catch (e: CancellationException) {
+                throw e
             } catch (e: ClientRequestException) {
                 _response.emit(
                     value = if (e.response.status.value == 403) RatesResponse.NoAccess
@@ -147,6 +134,10 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                 )
             } catch (_: Exception) {
                 _response.emit(RatesResponse.Error)
+            } finally {
+                if (isActive) {
+                    _ratesState.update { it.copy(isRefreshing = false) }
+                }
             }
         }
     }
@@ -183,19 +174,17 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     fun reload(type: LinkedType = _type.value) {
-        viewModelScope.launch {
-            _ratesState.update { it.copy(isRefreshing = true) }
-            _response.emit(RatesResponse.Loading)
+        if (userId == null) return
 
-            loadRates(type)
-            _ratesState.update { it.copy(isRefreshing = false) }
-        }
+        _ratesState.update { it.copy(isRefreshing = true) }
+        _response.value = RatesResponse.Loading
+        loadRates(type)
     }
 
     fun getRate(rate: UserRate, linkedType: LinkedType = type.value) {
         val status = Enum.safeValueOf<WatchStatus>(rate.status)
 
-        _newRate.update { state ->
+        newRate.update { state ->
             state.copy(
                 id = rate.id.toString(),
                 status = status.name,
@@ -217,7 +206,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             onCreate()
 
             try {
-                with(_newRate.value) {
+                with(newRate.value) {
                     Network.rates.createRate(
                         NewRate(
                             userId = Preferences.userId.value,
@@ -251,7 +240,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             _ratesState.update { it.copy(showDialog = false) }
 
             try {
-                val request = with(_newRate.value) {
+                val request = with(newRate.value) {
                     Network.rates.updateRate(
                         id = rateId.toLong(),
                         newRate = NewRate(
@@ -273,17 +262,13 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
                     val index = oldRates.indexOfFirst { it.id.toString() == rateId }
 
                     if (index != -1) {
-                        val score = responseRate.score.toIntOrDefault()
-                        val rewatches = responseRate.rewatches.toIntOrDefault()
                         val updatedRate = oldRates[index].copy(
                             status = responseRate.status.toString(),
-                            score = score,
-                            scoreString = score.takeIf { it != 0 }?.toString() ?: "-",
+                            score = responseRate.score.toIntOrDefault(),
                             chapters = responseRate.chapters.toIntOrDefault(),
                             episodes = responseRate.episodes.toIntOrDefault(),
                             volumes = responseRate.volumes.toIntOrDefault(),
-                            rewatches = rewatches,
-                            rewatchExists = rewatches > 0,
+                            rewatches = responseRate.rewatches.toIntOrDefault(),
                             text = responseRate.text
                         )
 
@@ -307,7 +292,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             onUpdate()
 
             try {
-                with(_newRate.value) {
+                with(newRate.value) {
                     Network.rates.updateRate(
                         id = rateId.toLong(),
                         newRate = NewRate(
@@ -365,7 +350,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
 
             try {
                 Network.rates.delete(rateId.toLong())
-                _newRate.emit(NewRateState())
+                newRate.emit(NewRateState())
             } catch (_: Exception) {
 
             } finally {
@@ -415,22 +400,22 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
     }
 
     fun onEvent(event: RateEvent) = when (event) {
-        is RateEvent.SetRateId -> _newRate.update { it.copy(id = event.rateId) }
+        is RateEvent.SetRateId -> newRate.update { it.copy(id = event.rateId) }
 
-        is RateEvent.SetStatus -> _newRate.update {
+        is RateEvent.SetStatus -> newRate.update {
             it.copy(
                 status = event.status.name,
                 statusName = event.type.getWatchStatusTitle(event.status)
             )
         }
 
-        is RateEvent.SetScore -> _newRate.update { it.copy(score = event.score) }
+        is RateEvent.SetScore -> newRate.update { it.copy(score = event.score) }
 
         is RateEvent.SetChapters -> with(event.chapters) {
             val value = this?.ifEmpty { null }
 
             if (value == null || value.isDigitsOnly()) {
-                _newRate.update {
+                newRate.update {
                     it.copy(chapters = value)
                 }
             }
@@ -440,7 +425,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             val value = this?.ifEmpty { null }
 
             if (value == null || value.isDigitsOnly()) {
-                _newRate.update {
+                newRate.update {
                     it.copy(episodes = value)
                 }
             }
@@ -450,7 +435,7 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             val value = this?.ifEmpty { null }
 
             if (value == null || value.isDigitsOnly()) {
-                _newRate.update {
+                newRate.update {
                     it.copy(volumes = value)
                 }
             }
@@ -460,12 +445,12 @@ class UserRateViewModel(saved: SavedStateHandle) : ViewModel() {
             val value = this?.ifEmpty { null }
 
             if (value == null || value.isDigitsOnly()) {
-                _newRate.update {
+                newRate.update {
                     it.copy(rewatches = value)
                 }
             }
         }
 
-        is RateEvent.SetText -> _newRate.update { it.copy(text = event.text.orEmpty()) }
+        is RateEvent.SetText -> newRate.update { it.copy(text = event.text.orEmpty()) }
     }
 }
