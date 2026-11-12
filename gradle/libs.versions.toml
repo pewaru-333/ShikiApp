@@ -4,14 +4,14 @@ activity = "1.13.0"
 compose-bom = "2026.09.00"
 core-ktx = "1.19.1"
 media3 = "1.11.1"
-webkit = "1.17.1"
+webkit = "1.18.0"
 
 # Compose Multiplatform / JetBrains
 compose-adaptive = "1.3.0"
 compose-lifecycle = "2.11.0"
 compose-material3 = "1.12.0-alpha03"
 compose-multiplatform = "1.12.2"
-compose-navigation = "2.10.0-rc01"
+compose-navigation = "2.10.0"
 compose-navigation-event = "1.1.0"
 compose-paging = "3.5.3"
 
@@ -19,30 +19,27 @@ compose-paging = "3.5.3"
 kotlin = "2.4.21"
 kotlinx-coroutines = "1.11.0"
 kotlinx-datetime = "0.8.0"
-kotlinx-serialization-json = "1.11.0"
+kotlinx-serialization-json = "1.12.0"
 
 # Network
 apollo-api = "5.2.0"
-ktor = "3.6.0"
+ktor = "3.6.1"
 
 # WebView (desktop)
 javafx = "25.0.2"
-
-# Video (desktop)
-vlcj = "5.0.0-M6"
 
 # Video (Android)
 libass = "0.5.1"
 
 # Utils
 coil = "3.6.3"
-icu = "78.3"
+icu = "79.1"
 ksoup = "0.2.6"
 zoomable = "2.16.0"
 jna = "5.19.1" # jvm
 
 # Build
-gradle = "9.4.1"
+gradle = "9.5.1"
 
 [libraries]
 # AndroidX
@@ -91,6 +88,7 @@ ktor-client-core = { group = "io.ktor", name = "ktor-client-core", version.ref =
 ktor-serialization-kotlinx-json = { group = "io.ktor", name = "ktor-serialization-kotlinx-json", version.ref = "ktor" }
 
 # Coil
+coil-core = { group = "io.coil-kt.coil3", name = "coil-core", version.ref = "coil" }
 coil-compose = { group = "io.coil-kt.coil3", name = "coil-compose", version.ref = "coil" }
 coil-gif = { group = "io.coil-kt.coil3", name = "coil-gif", version.ref = "coil" }
 coil-network-ktor = { group = "io.coil-kt.coil3", name = "coil-network-ktor3", version.ref = "coil" }
@@ -102,9 +100,6 @@ javafx-controls = { group = "org.openjfx", name = "javafx-controls", version.ref
 javafx-media = { group = "org.openjfx", name = "javafx-media", version.ref = "javafx" }
 javafx-web = { group = "org.openjfx", name = "javafx-web", version.ref = "javafx" }
 javafx-swing = { group = "org.openjfx", name = "javafx-swing", version.ref = "javafx" }
-
-# Video (desktop)
-vlcj = { group = "uk.co.caprica", name = "vlcj", version.ref = "vlcj" }
 
 # Video (Android)
 libass = { group = "io.github.peerless2012", name = "ass-media", version.ref = "libass" }
