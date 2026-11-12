@@ -92,6 +92,11 @@ abstract class VideoPlayer {
             PlayerEvent.Play -> Unit
             PlayerEvent.Pause -> Unit
             PlayerEvent.Ended -> Unit
+            PlayerEvent.Error -> {
+                state.isPlaying = false
+                state.isLoading = false
+                controls.hideControls()
+            }
 
             is PlayerEvent.ChangeQuality -> controls.hideControls()
 
