@@ -16,7 +16,6 @@ import coil3.compose.setSingletonImageLoaderFactory
 import okio.FileSystem
 import org.application.shikiapp.shared.di.AppModule
 import org.application.shikiapp.shared.di.Module
-import org.application.shikiapp.shared.utils.initVlc
 import org.application.shikiapp.shared.utils.navigation.DesktopDeepLink
 import org.application.shikiapp.shared.utils.navigation.ExternalUriHandler
 import org.application.shikiapp.shared.utils.sharedImageLoader
@@ -33,7 +32,6 @@ fun main(args: Array<String>) {
     }
 
     DesktopDeepLink.registerUriSchemeIfNeeded(ProductServices.userAgent)
-    initVlc()
 
     val services = ProductServices.create()
     AppModule.init(Module(services))
@@ -59,11 +57,12 @@ fun main(args: Array<String>) {
                 val windowManager = rememberWindowManager(windowState)
 
                 CompositionLocalProvider(
-                    LocalWindowManager provides windowManager,
-                    LocalAuthWebView provides ProductServices.authWebView
-                ) {
-                    App()
-                }
+                    content = { App() },
+                    values = arrayOf(
+                        LocalWindowManager provides windowManager,
+                        LocalAuthWebView provides ProductServices.authWebView
+                    )
+                )
 
                 LaunchedEffect(windowState.isInitialized) {
                     if (windowState.isInitialized) {
