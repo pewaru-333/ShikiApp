@@ -39,7 +39,7 @@ internal actual fun isAuthLoginAvailable() = true
 
 @Composable
 internal actual fun preferAuthWebView(): Boolean {
-    if (Network.isYggdrasilEnabled) {
+    if (Network.requiresAuthProxy) {
         return true
     }
 
