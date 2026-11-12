@@ -6,6 +6,7 @@ sealed interface PlayerEvent {
     data object Play : PlayerEvent
     data object Pause : PlayerEvent
     data object Ended : PlayerEvent
+    data object Error : PlayerEvent
 
     data class SelectEpisode(val number: Int) : PlayerEvent
 
