@@ -1,4 +1,5 @@
 plugins {
+    alias(libs.plugins.composeCompiler)
     alias(libs.plugins.kotlinMultiplatform)
     alias(libs.plugins.androidMultiplatformKotlinLibrary)
     alias(libs.plugins.apollo)
@@ -38,6 +39,7 @@ kotlin {
         implementation(libs.apollo.api)
         implementation(libs.kotlin.library)
         implementation(libs.kotlinx.coroutines.core)
+        implementation(libs.ksoup)
         implementation(libs.compose.resources)
         implementation(libs.compose.ui)
         implementation(libs.androidx.paging.compose)

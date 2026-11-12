@@ -1,5 +1,0 @@
-— Added episode title display and double-tap video rewind.
-— Added exclusion of catalog filters when long-pressed.
-— Optimized picture-in-picture mode on iOS.
-— Fixed remote control navigation in the player on Android TV.
-— Fixed the display of text, images, and videos in the news.

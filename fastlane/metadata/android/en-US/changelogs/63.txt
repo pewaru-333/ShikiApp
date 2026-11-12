@@ -1,0 +1,6 @@
+— Added a display of the number of released episodes for ongoings.
+— Added links to clubs and user names, as well as to the catalog when clicking on a genre, studio or publisher.
+— Updated the player engine on PC.
+— Optimized the display of user comments and descriptions to the content.
+— The login logic has been changed. The corresponding error messages have been added.
+— Fixed an issue where existing posters would not load.

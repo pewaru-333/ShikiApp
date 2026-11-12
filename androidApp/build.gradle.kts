@@ -14,10 +14,6 @@ android {
         versionCode = project.findProperty("APP_VERSION_CODE").toString().toInt()
         versionName = project.findProperty("APP_VERSION_NAME") as String
 
-        buildFeatures {
-            buildConfig = true
-        }
-
         ndk {
             abiFilters.addAll(listOf("arm64-v8a", "armeabi-v7a"))
         }
@@ -27,29 +23,11 @@ android {
         create("ShikiApp") {
             dimension = "version"
             applicationId = "org.application.shikiapp"
-
-            manifestPlaceholders["authScheme"] = "app"
-            manifestPlaceholders["authHost"] = "login"
-            manifestPlaceholders["authSuffix"] = ""
-            manifestPlaceholders["base"] = "shikimori.io"
-            manifestPlaceholders["mirrorOne"] = "shikimori.one"
-            manifestPlaceholders["mirrorTwo"] = "shiki.one"
-
-            buildConfigField("String", "USER_AGENT", "\"ShikiApp\"")
         }
 
         create("DarkShiki") {
             dimension = "version"
             applicationId = "rip.shikimori.app"
-
-            manifestPlaceholders["authScheme"] = "darkshiki"
-            manifestPlaceholders["authHost"] = "auth"
-            manifestPlaceholders["authSuffix"] = "login"
-            manifestPlaceholders["base"] = "shikimori.rip"
-            manifestPlaceholders["mirrorOne"] = "shikimori.club"
-            manifestPlaceholders["mirrorTwo"] = "shikimori.net"
-
-            buildConfigField("String", "USER_AGENT", "\"DarkShiki\"")
         }
     }
 

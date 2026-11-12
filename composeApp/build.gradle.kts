@@ -92,6 +92,7 @@ kotlin {
                 implementation(libs.bundles.ktor)
 
                 // Utils
+                api(libs.coil.core)
                 implementation(libs.coil.compose)
                 implementation(libs.coil.network.ktor)
                 implementation(libs.kotlinx.datetime)
@@ -119,9 +120,8 @@ kotlin {
                 // Internalization
                 implementation(libs.icu4j)
 
-                // Video player
-                implementation(libs.vlcj)
-                implementation(libs.jna) // VLC and Yggdrasil
+                // Video player (jna bridge)
+                implementation(libs.jna)
             }
         }
     }

@@ -46,12 +46,13 @@ compose.desktop {
             description = "Stage native resources for $appName by OS and architecture"
             from("files") {
                 into("common")
-                exclude("vlc/**", "yggbridge/**")
+                exclude("yggbridge/**", "player/**")
             }
 
-            mapOf("windows-x64" to "win32-x86-64", "linux-x64" to "linux-x86-64").forEach { (target, vlcPlatform) ->
-                from("files/vlc/$vlcPlatform") {
-                    into("$target/vlc/$vlcPlatform")
+            listOf("windows-x64", "linux-x64").forEach { target ->
+                val platform = target.substringBefore('-')
+                from("files/player/$platform") {
+                    into("$target/player/$platform")
                 }
 
                 if (isShikiRip) {

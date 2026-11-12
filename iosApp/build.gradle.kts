@@ -25,7 +25,7 @@ kotlin {
 
             export(projects.composeApp)
             if (linkBridge) {
-                val framework = rootProject.layout.projectDirectory.dir("composeApp/libs/ios/Yggbridge.xcframework")
+                val framework = rootProject.layout.projectDirectory.dir("yggdrasil/libs/ios/Yggbridge.xcframework")
                 linkerOpts("-framework", "Yggbridge", "-F${framework.dir(slice).asFile.absolutePath}")
             }
         }
