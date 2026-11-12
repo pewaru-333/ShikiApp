@@ -111,9 +111,7 @@ object MangaMapper {
                     title = main.russian ?: main.name,
                     poster = main.poster?.originalUrl.orEmpty(),
                     kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
-                    kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                     score = it.score,
-                    scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                     status = it.status.rawValue,
                     text = it.text,
                     episodes = it.episodes,
@@ -122,7 +120,6 @@ object MangaMapper {
                     volumes = it.volumes,
                     chapters = it.chapters,
                     rewatches = it.rewatches,
-                    rewatchExists = it.rewatches > 0,
                     fullChapters = BLANK,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now()
