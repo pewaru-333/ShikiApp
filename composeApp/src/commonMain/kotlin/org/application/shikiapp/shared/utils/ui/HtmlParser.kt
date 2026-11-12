@@ -14,7 +14,6 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import com.fleeksoft.ksoup.Ksoup
-import com.fleeksoft.ksoup.nodes.Document
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
@@ -36,236 +35,303 @@ sealed interface CommentContent {
 }
 
 object HtmlParser {
-    private fun preprocessHtml(document: Document) {
-        document.select(".b-spoiler_inline").forEach { spoilerElement ->
-            val contentHtml = spoilerElement.selectFirst("span")?.html().orEmpty()
+    private val quoteTag = Regex("""\[quote(?:=([^]]*))?]|\[/quote]""", RegexOption.IGNORE_CASE)
 
-            spoilerElement.html(contentHtml)
+    fun parseComment(html: String, baseUrl: String = ApiRoutes.workingBaseUrl): List<CommentContent> {
+        if (html.isBlank()) return emptyList()
+
+        val document = Ksoup.parse(html, baseUrl)
+        document.select("div.right-text, .b-replies, script, style").remove()
+
+        for (english in document.select("span.name-en")) {
+            val russian = english.nextElementSibling()?.takeIf { it.hasClass("name-ru") } ?: continue
+            if (russian.text().isNotBlank()) english.remove()
+            else russian.remove()
         }
+
+        for (element in document.select("[data-text-ru], [data-text-en]")) {
+            val text = element.attr("data-text-ru").ifBlank { element.attr("data-text-en") }
+            if (text.isNotBlank()) element.text(text)
+        }
+
+        return Parser().parseNodes(document.body().childNodes())
     }
 
-    fun parseComment(html: String): List<CommentContent> {
-        val localizedHtml = Formatter.localizeNames(html)
-        val document = Ksoup.parse(localizedHtml, ApiRoutes.workingBaseUrl).apply {
-            select("div.right-text").remove()
-            select(".b-replies").remove()
-        }
+    private class Parser {
+        private var nextId = 0
 
-        preprocessHtml(document)
+        fun parseNodes(
+            nodes: List<Node>,
+            textStyle: SpanStyle = styleEmpty,
+            preformatted: Boolean = false,
+            link: LinkAnnotation.Url? = null
+        ): List<CommentContent> {
+            var contentList = ArrayList<CommentContent>()
+            val inlineNodes = ArrayList<Node>()
+            val quotes = ArrayDeque<Pair<String, ArrayList<CommentContent>>>()
 
-        return parseNodes(document.body().childNodes())
-    }
+            fun makeInlineGroup() {
+                if (inlineNodes.isEmpty()) return
 
-    private fun parseNodes(nodes: List<Node>): List<CommentContent> {
-        val contentList = mutableListOf<CommentContent>()
-        val inlineNodes = mutableListOf<Node>()
-
-        fun makeInlineGroup() {
-            if (inlineNodes.isNotEmpty()) {
-                val (annotatedString, inlineContentMap) = stringFromNodes(inlineNodes)
-
-                if (annotatedString.isNotBlank()) {
-                    contentList.add(CommentContent.TextContent(annotatedString, inlineContentMap))
+                val (text, inlineContent) = stringFromNodes(inlineNodes, preformatted, textStyle, link)
+                if (text.isNotBlank()) {
+                    contentList.add(CommentContent.TextContent(text, inlineContent))
                 }
 
                 inlineNodes.clear()
             }
-        }
 
-        nodes.forEach { node ->
-            if (isBlockElement(node)) {
+            fun closeQuote() {
                 makeInlineGroup()
 
-                when {
-                    (node as Element).hasClass("b-quote") || node.hasClass("b-quote-v2") || node.tagName() == "blockquote" -> {
-                        val author = node.selectFirst(".quoteable")?.text() ?: "Пользователь"
-                        val quoteHtml = node.selectFirst(".quote-content")?.html() ?: BLANK
+                val (author, parent) = quotes.removeLast()
+                parent.add(CommentContent.QuoteContent(author, contentList))
+                contentList = parent
+            }
 
-                        contentList.add(CommentContent.QuoteContent(author, parseComment(quoteHtml)))
-                    }
+            for (node in nodes) {
+                if (node is TextNode && !preformatted) {
+                    val text = node.getWholeText()
+                    var position = 0
 
-                    node.hasClass("b-spoiler_block") -> {
-                        val titleSpan = node.children().firstOrNull { it.tagName() == "span" }
-                        val title = titleSpan?.text()?.trim() ?: "Спойлер"
-                        val contentNodes = node.childNodes().filter { it != titleSpan }
+                    for (tag in quoteTag.findAll(text)) {
+                        val closing = tag.value.startsWith("[/")
+                        if (closing && quotes.isEmpty()) continue
 
-                        contentList.add(CommentContent.SpoilerContent(title, parseNodes(contentNodes)))
-                    }
-
-                    node.hasClass("b-image") -> {
-                        val imgTag = node.selectFirst("img")
-
-                        val fullUrl = when {
-                            node.tagName() == "a" -> node.attr("abs:href")
-                            node.parent()?.tagName() == "a" -> node.parent()?.attr("abs:href")
-                            else -> null
-                        }
-
-                        contentList.add(
-                            CommentContent.ImageContent(
-                                previewUrl = imgTag?.attr("abs:src") ?: fullUrl.orEmpty(),
-                                fullUrl = fullUrl,
-                                width = imgTag?.attr("data-width")?.toFloatOrNull(),
-                                height = imgTag?.attr("data-height")?.toFloatOrNull()
-                            )
-                        )
-                    }
-
-                    node.hasClass("b-video") -> {
-                        val link = node.selectFirst("a.video-link")
-                        val img = node.selectFirst("img")
-
-                        val source = node.selectFirst(".marker")?.text().orEmpty()
-                        val videoUrl = link?.attr("href") ?: link?.attr("data-href").orEmpty()
-                        val previewUrl = img?.attr("src").orEmpty().let { url ->
-                            when {
-                                url.startsWith("//") -> "https:$url"
-                                url.startsWith("http://") -> url.replace("http://", "https://")
-                                else -> url
-                            }
-                        }
-
-                        contentList.add(CommentContent.VideoContent(previewUrl, videoUrl, source))
-                    }
-
-                    node.hasClass("ban") -> {
-                        val modElement = node.selectFirst(".b-user16 a")
-                        val modName = modElement?.attr("title") ?: "Модератор"
-                        val modAvatar = modElement?.selectFirst("img")?.attr("abs:src").orEmpty()
-
-                        val resolutionNode = node.selectFirst(".resolution")
-                        val (reasonText, _) = if (resolutionNode != null) {
-                            stringFromNodes(resolutionNode.childNodes())
+                        inlineNodes.add(TextNode(text.substring(position, tag.range.first)))
+                        if (closing) {
+                            closeQuote()
                         } else {
-                            AnnotatedString(node.text()) to emptyMap()
+                            makeInlineGroup()
+                            quotes.addLast(Pair(tag.groupValues[1].substringAfterLast(';'), contentList))
+                            contentList = ArrayList()
                         }
 
-                        contentList.add(CommentContent.BanContent(modName, modAvatar, reasonText))
+                        position = tag.range.last + 1
                     }
 
-                    node.tagName() == "ul" || node.tagName() == "ol" -> {
-                        val isOrdered = node.tagName() == "ol"
-                        val listItems = node.children().filter { it.tagName() == "li" }.mapIndexed { index, li ->
-                            val prefix = if (isOrdered) "${index + 1}. " else "• "
-                            CommentContent.ListItemContent(prefix, parseNodes(li.childNodes()))
-                        }
-                        contentList.add(CommentContent.ListContent(isOrdered, listItems))
+                    if (position > 0) {
+                        inlineNodes.add(TextNode(text.substring(position)))
+                        continue
                     }
                 }
-            } else if (isBlockContainer(node)) {
-                makeInlineGroup()
-                contentList.addAll(parseNodes(node.childNodes()))
-            } else {
-                inlineNodes.add(node)
+
+                if (node is Element && (node.tagName() == "script" || node.tagName() == "style")) continue
+
+                if (node is Element && isBlockElement(node)) {
+                    makeInlineGroup()
+
+                    when {
+                        node.hasClass("b-quote") || node.hasClass("b-quote-v2") || node.tagName() == "blockquote" -> {
+                            val authorNode = node.children().firstOrNull { it.hasClass("quoteable") }
+                            val body = node.children().firstOrNull { it.hasClass("quote-content") }
+                            val content = body?.childNodes() ?: node.childNodes().filter { it != authorNode }
+
+                            contentList.add(CommentContent.QuoteContent(authorNode?.text().orEmpty(), parseNodes(content, textStyle, preformatted, link)))
+                        }
+
+                        node.hasClass("b-spoiler") || node.hasClass("b-spoiler_block") || node.hasClass("b-spoiler_inline") -> {
+                            val titleNode = if (node.hasClass("b-spoiler_inline")) null else node.children().firstOrNull {
+                                it.tagName() == "label" || it.hasClass("label") ||
+                                        (node.hasClass("b-spoiler_block") && it.tagName() == "span")
+                            }
+                            val body = node.children().firstOrNull { it.hasClass("inner") }
+                            val content = body?.childNodes() ?: node.childNodes().filter { it != titleNode }
+
+                            contentList.add(CommentContent.SpoilerContent(titleNode?.text().orEmpty(), parseNodes(content, textStyle, preformatted, link)))
+                        }
+
+                        node.hasClass("b-image") || node.tagName() == "img" -> {
+                            val image = if (node.tagName() == "img") node else node.selectFirst("img")
+                            val link = if (node.tagName() == "a") node else node.closest("a")
+                            val fullUrl = link?.url("href").orEmpty().ifEmpty { link?.url("data-href").orEmpty() }
+                            val previewUrl = image?.url("src").orEmpty()
+                                .ifEmpty { image?.url("data-src").orEmpty() }
+                                .ifEmpty { fullUrl }
+
+                            if (previewUrl.isNotEmpty()) {
+                                contentList.add(
+                                    CommentContent.ImageContent(
+                                        previewUrl = previewUrl,
+                                        fullUrl = fullUrl.ifEmpty { null },
+                                        width = image?.dimension("data-width") ?: image?.dimension("width") ?: node.dimension("data-width"),
+                                        height = image?.dimension("data-height") ?: image?.dimension("height") ?: node.dimension("data-height")
+                                    )
+                                )
+                            }
+                        }
+
+                        node.hasClass("b-video") -> {
+                            val link = node.selectFirst("a.video-link") ?: node.selectFirst("a")
+                            val videoUrl = link?.url("href").orEmpty().ifEmpty { link?.url("data-href").orEmpty() }
+
+                            if (videoUrl.isNotEmpty()) {
+                                contentList.add(
+                                    CommentContent.VideoContent(
+                                        previewUrl = node.selectFirst("img")?.url("src").orEmpty(),
+                                        videoUrl = videoUrl,
+                                        source = node.selectFirst(".marker")?.text().orEmpty()
+                                    )
+                                )
+                            }
+                        }
+
+                        node.hasClass("ban") -> {
+                            val moderator = node.selectFirst(".b-user16 a")
+                            val resolution = node.selectFirst(".resolution")
+                            val reason = if (resolution == null) AnnotatedString(node.text())
+                            else stringFromNodes(resolution.childNodes(), preformatted).first
+
+                            contentList.add(
+                                CommentContent.BanContent(
+                                    moderatorName = moderator?.attr("title").orEmpty().ifBlank { moderator?.text().orEmpty() },
+                                    moderatorAvatar = moderator?.selectFirst("img")?.url("src").orEmpty(),
+                                    reason = reason
+                                )
+                            )
+                        }
+
+                        node.tagName() == "ul" || node.tagName() == "ol" -> {
+                            val ordered = node.tagName() == "ol"
+                            var number = node.attr("start").toIntOrNull() ?: 1
+                            val items = buildList {
+                                for (item in node.children()) {
+                                    if (item.tagName() != "li") continue
+                                    if (ordered) number = item.attr("value").toIntOrNull() ?: number
+
+                                    val prefix = if (ordered) "${number++}. " else "• "
+                                    add(CommentContent.ListItemContent(prefix, parseNodes(item.childNodes(), textStyle, preformatted, link)))
+                                }
+                            }
+
+                            contentList.add(CommentContent.ListContent(ordered, items))
+                        }
+
+                        else -> contentList.addAll(parseNodes(node.childNodes(), textStyle, preformatted, link))
+                    }
+                } else if (node is Element && (isBlockContainer(node) || containsBlock(node))) {
+                    makeInlineGroup()
+                    contentList.addAll(
+                        elements = parseNodes(
+                            nodes = node.childNodes(),
+                            textStyle = textStyle.merge(getStyleForTag(node.tagName())),
+                            preformatted = preformatted || node.tagName() == "pre",
+                            link = if (node.tagName() != "a") link
+                            else {
+                                val url = node.url("href").ifEmpty { node.url("data-href") }
+                                if (url.isEmpty()) link else LinkAnnotation.Url(url, TextLinkStyles(style = styleLink))
+                            }
+                        )
+                    )
+                } else {
+                    inlineNodes.add(node)
+                }
             }
+
+            makeInlineGroup()
+            while (quotes.isNotEmpty()) {
+                closeQuote()
+            }
+
+            return contentList
         }
-        makeInlineGroup()
 
-        return contentList
-    }
+        private fun stringFromNodes(
+            nodes: List<Node>,
+            preformatted: Boolean,
+            textStyle: SpanStyle = styleEmpty,
+            link: LinkAnnotation.Url? = null
+        ): Pair<AnnotatedString, Map<String, InlineTextContent>> {
+            val inlineContent = HashMap<String, InlineTextContent>()
+            val text = buildAnnotatedString {
+                withStyle(textStyle) {
+                    if (link == null) appendNodes(nodes, inlineContent, preformatted)
+                    else withLink(link) {
+                        appendNodes(nodes, inlineContent, preformatted)
+                    }
+                }
+            }
 
-    private fun stringFromNodes(nodes: List<Node>): Pair<AnnotatedString, Map<String, InlineTextContent>> {
-        val inlineContentMap = mutableMapOf<String, InlineTextContent>()
-        var smileyCounter = 0
+            return Pair(text, inlineContent)
+        }
 
-        val annotatedString = buildAnnotatedString {
-            nodes.forEach { node ->
+        private fun AnnotatedString.Builder.appendNodes(
+            nodes: List<Node>,
+            inlineContent: MutableMap<String, InlineTextContent>,
+            preformatted: Boolean
+        ) {
+            for (node in nodes) {
                 when (node) {
-                    is TextNode -> append(node.text())
-                    is Element -> {
-                        when {
-                            node.hasClass("smiley") -> {
-                                val id = "smiley_${smileyCounter++}"
-                                appendInlineContent(id, "[emoji]")
-                                inlineContentMap[id] = InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.Center)) {
-                                    AnimatedAsyncImage(node.attr("abs:src"), Modifier.fillMaxSize())
-                                }
+                    is TextNode -> append(if (preformatted) node.getWholeText() else node.text())
+
+                    is Element -> when {
+                        node.tagName() == "script" || node.tagName() == "style" -> Unit
+
+                        isInlineImage(node) -> {
+                            val id = "smiley_${nextId++}"
+                            val url = node.url("src").ifEmpty { node.url("data-src") }
+                            appendInlineContent(id, node.attr("alt").ifBlank { "[emoji]" })
+                            inlineContent[id] = InlineTextContent(Placeholder(24.sp, 24.sp, PlaceholderVerticalAlign.Center)) {
+                                AnimatedAsyncImage(url, Modifier.fillMaxSize())
+                            }
+                        }
+
+                        node.hasClass("b-spoiler_inline") -> {
+                            val id = "spoiler_${nextId++}"
+                            val start = length
+                            appendNodes(node.childNodes(), inlineContent, preformatted)
+
+                            if (length > start) addStringAnnotation("spoiler_inline", id, start, length)
+                        }
+
+                        node.tagName() == "br" -> append("\n")
+
+                        else -> {
+                            val style = getStyleForTag(node.tagName())
+                            val styleIndex = if (style == styleEmpty) null else pushStyle(style)
+                            val url = if (node.tagName() == "a") node.url("href").ifEmpty { node.url("data-href") } else BLANK
+
+                            if (url.isEmpty()) {
+                                appendNodes(node.childNodes(), inlineContent, preformatted || node.tagName() == "pre")
+                            } else withLink(LinkAnnotation.Url(url, TextLinkStyles(style = styleLink))) {
+                                appendNodes(node.childNodes(), inlineContent, preformatted)
                             }
 
-                            node.hasClass("b-spoiler_inline") || (node.hasClass("b-spoiler") && node.hasClass("unprocessed")) -> {
-                                val id = "spoiler_${smileyCounter++}"
-                                val isUnprocessed = node.hasClass("unprocessed")
-
-                                if (isUnprocessed) {
-                                    val labelText = node.selectFirst("label")?.text()?.trim() ?: "Спойлер"
-                                    val labelStart = length
-                                    append(labelText)
-                                    addStringAnnotation("spoiler_label", id, labelStart, length)
-
-                                    val contentNodes = node.selectFirst(".inner")?.childNodes() ?: node.childNodes()
-                                    val contentStart = length
-                                    val (childText, childInlineContent) = stringFromNodes(contentNodes)
-
-                                    append(childText)
-                                    inlineContentMap.putAll(childInlineContent)
-                                    addStringAnnotation("spoiler_content", id, contentStart, length)
-                                } else {
-                                    val contentStart = length
-                                    val (childText, childInlineContent) = stringFromNodes(node.childNodes())
-
-                                    append(childText)
-                                    inlineContentMap.putAll(childInlineContent)
-                                    addStringAnnotation("spoiler_inline", id, contentStart, length)
-                                }
-                            }
-
-                            else -> {
-                                if (node.tagName() == "br") {
-                                    append("\n")
-                                } else {
-                                    val style = getStyleForTag(node.tagName())
-                                    val startIndex = length
-                                    val (childText, childInlineContent) = stringFromNodes(node.childNodes())
-
-                                    append(childText)
-                                    inlineContentMap.putAll(childInlineContent)
-                                    addStyle(style, startIndex, length)
-
-                                    if (node.tagName() == "a" && node.hasAttr("href")) {
-                                        addLink(
-                                            start = startIndex,
-                                            end = length,
-                                            url = LinkAnnotation.Url(
-                                                url = node.attr("abs:href"),
-                                                styles = TextLinkStyles(
-                                                    style = SpanStyle(
-                                                        color = Color(0xFF33BBFF),
-                                                        textDecoration = TextDecoration.Underline
-                                                    )
-                                                )
-                                            )
-                                        )
-                                    }
-                                }
-                            }
+                            if (styleIndex != null) pop(styleIndex)
                         }
                     }
                 }
             }
         }
 
-        return Pair(annotatedString, inlineContentMap)
-    }
+        private fun isBlockElement(node: Element): Boolean =
+            node.hasClass("b-quote") || node.hasClass("b-quote-v2") || node.tagName() == "blockquote" ||
+                    node.hasClass("b-spoiler") || node.hasClass("b-spoiler_block") ||
+                    (node.hasClass("b-spoiler_inline") && containsBlock(node)) ||
+                    node.hasClass("b-image") || (node.tagName() == "img" && !isInlineImage(node)) ||
+                    node.hasClass("b-video") || node.hasClass("ban") || node.tagName() == "ul" || node.tagName() == "ol"
 
-    private fun isBlockElement(node: Node) = node is Element &&
-            (node.hasClass("b-quote") ||
-                    node.hasClass("b-quote-v2") ||
-                    node.tagName() == "blockquote" ||
-                    node.hasClass("b-spoiler_block") ||
-                    (node.hasClass("b-spoiler") && !node.hasClass("unprocessed")) ||
-                    node.hasClass("b-image") ||
-                    node.hasClass("b-video") ||
-                    node.hasClass("ban") ||
-                    node.tagName() == "ul" ||
-                    node.tagName() == "ol")
+        private fun isInlineImage(node: Element) =
+            node.hasClass("smiley") || (node.tagName() == "img" && node.closest(".b-user16") != null)
 
-    private fun isBlockContainer(node: Node): Boolean {
-        if (node !is Element) return false
-        if (node.hasClass("b-spoiler") && node.hasClass("unprocessed")) return false
-
-        return when (node.tagName()) {
-            "div", "p", "center", "h1", "h2", "h3", "h4", "h5", "h6", "pre" -> true
+        private fun isBlockContainer(node: Element) = when (node.tagName()) {
+            "div", "p", "center", "h1", "h2", "h3", "h4", "h5", "h6", "pre", "section", "article", "figure" -> true
             else -> false
+        }
+
+        private fun containsBlock(node: Element): Boolean =
+            node.children().any { isBlockElement(it) || isBlockContainer(it) || containsBlock(it) }
+
+        private fun Element.dimension(attribute: String) =
+            attr(attribute).toFloatOrNull()?.takeIf { it > 0f && it.isFinite() }
+
+        private fun Element.url(attribute: String): String {
+            if (attr(attribute).isBlank()) return BLANK
+
+            val url = attr("abs:$attribute")
+
+            return if (url.startsWith("http://img.youtube.com/") || url.startsWith("http://i.ytimg.com/")) url.replaceFirst("http://", "https://")
+            else url
         }
     }
 
@@ -275,7 +341,7 @@ object HtmlParser {
         "em", "i" -> styleItalic
         "u" -> styleUnderline
         "a" -> styleLink
-        "code" -> styleCode
+        "code", "pre" -> styleCode
         "sup" -> styleSup
         "sub" -> styleSub
         "h1" -> styleH1
@@ -284,9 +350,10 @@ object HtmlParser {
         "h4" -> styleH4
         "h5" -> styleH5
         "h6" -> styleH6
-        else -> SpanStyle()
+        else -> styleEmpty
     }
 
+    private val styleEmpty = SpanStyle()
     private val styleStrike = SpanStyle(textDecoration = TextDecoration.LineThrough)
     private val styleBold = SpanStyle(fontWeight = FontWeight.Bold)
     private val styleItalic = SpanStyle(fontStyle = FontStyle.Italic)

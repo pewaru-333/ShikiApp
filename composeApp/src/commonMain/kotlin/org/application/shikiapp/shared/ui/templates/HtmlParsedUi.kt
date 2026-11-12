@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -31,179 +32,167 @@ import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.min
 import androidx.compose.ui.util.fastForEach
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.extensions.flattenImages
 import org.application.shikiapp.shared.utils.ui.CommentContent
+import org.jetbrains.compose.resources.stringResource
+import shikiapp.composeapp.generated.resources.Res
+import shikiapp.composeapp.generated.resources.text_moderator
+import shikiapp.composeapp.generated.resources.text_spoiler
+import shikiapp.composeapp.generated.resources.text_video
 
 @Composable
 fun HtmlContent(commentContent: List<CommentContent>?) {
-    var galleryInfo by remember { mutableStateOf<Pair<List<CommentContent.ImageContent>, Int>?>(null) }
+    var imageIndex by remember(commentContent) { mutableStateOf<Int?>(null) }
 
     val allImages = remember(commentContent) {
         commentContent?.flattenImages() ?: emptyList()
     }
-
-    val initialIndex = galleryInfo?.second ?: 0
-    val imageUrls = remember(galleryInfo) {
-        galleryInfo?.first?.map { it.fullUrl ?: it.previewUrl } ?: emptyList()
+    val imageUrls = remember(allImages) {
+        allImages.map { it.fullUrl?.takeIf(String::isNotBlank) ?: it.previewUrl }
     }
 
-    BoxWithConstraints {
-        val containerMaxWidth = maxWidth
-
-        Column {
-            commentContent?.fastForEach { item ->
-                RenderContent(
-                    content = item,
-                    containerMaxWidth = containerMaxWidth,
-                    onImageClick = {
-                        val index = allImages.indexOf(it)
-                        if (index != -1) {
-                            galleryInfo = allImages to index
-                        }
+    Column {
+        commentContent?.fastForEach { item ->
+            RenderContent(
+                content = item,
+                onImageClick = { image ->
+                    val index = allImages.indexOfFirst { it === image }
+                    if (index != -1) {
+                        imageIndex = index
                     }
-                )
-            }
+                }
+            )
         }
     }
 
-    DialogImages(
-        images = imageUrls,
-        initialIndex = initialIndex,
-        isVisible = galleryInfo != null,
-        onClose = { galleryInfo = null }
-    )
+    if (allImages.isNotEmpty()) {
+        DialogImages(
+            images = imageUrls,
+            initialIndex = imageIndex ?: 0,
+            isVisible = imageIndex != null,
+            onClose = { imageIndex = null }
+        )
+    }
 }
 
 @Composable
 private fun RenderContent(
     content: CommentContent,
-    containerMaxWidth: Dp,
     onImageClick: (CommentContent.ImageContent) -> Unit
 ) {
     when (content) {
         is CommentContent.TextContent -> {
-            var opened by remember { mutableStateOf(setOf<String>()) }
+            var opened by remember(content.text) { mutableStateOf(emptySet<String>()) }
+            val annotations = remember(content.text) {
+                content.text.getStringAnnotations("spoiler_inline", 0, content.text.length)
+                    .sortedWith(compareBy(AnnotatedString.Range<String>::start)
+                        .thenByDescending(AnnotatedString.Range<String>::end)
+                        .thenBy { it.item.substringAfterLast('_').toIntOrNull() ?: 0 })
+            }
 
-            val visualString = remember(content.text, opened) {
-                val builder = AnnotatedString.Builder()
-                val structuralAnnotations = content.text.getStringAnnotations(0, content.text.length)
-                    .filter { it.tag == "spoiler_label" || it.tag == "spoiler_content" }
-                    .sortedBy { it.start }
+            val closed = remember(annotations, opened) {
+                annotations.filter { it.item !in opened }
+            }
 
-                var currentIndex = 0
-                for (ann in structuralAnnotations) {
-                    if (ann.start < currentIndex) continue
-                    if (ann.start > currentIndex) {
-                        builder.append(content.text.subSequence(currentIndex, ann.start))
-                    }
+            val visualString = remember(content.text, annotations, opened, closed) {
+                if (annotations.isEmpty()) return@remember content.text
 
-                    val isRevealed = ann.item in opened
-                    if (ann.tag == "spoiler_label" && !isRevealed) {
-                        builder.append(content.text.subSequence(ann.start, ann.end))
-                    } else if (ann.tag == "spoiler_content" && isRevealed) {
-                        builder.append(content.text.subSequence(ann.start, ann.end))
-                    }
-
-                    currentIndex = ann.end
+                val source = content.text.flatMapAnnotations { annotation ->
+                    if (annotation.item is LinkAnnotation && closed.any { it.start < annotation.end && it.end > annotation.start }) emptyList()
+                    else listOf(annotation)
                 }
-
-                if (currentIndex < content.text.length) {
-                    builder.append(content.text.subSequence(currentIndex, content.text.length))
-                }
-
-                val beforeString = builder.toAnnotatedString()
-                val finalBuilder = AnnotatedString.Builder(beforeString)
-
-                val openStyle = SpanStyle(
-                    background = Color.Gray.copy(alpha = 0.2f),
-                    textDecoration = TextDecoration.None,
-                    color = Color.Unspecified
-                )
-
-                val closedInlineStyle = SpanStyle(
+                val builder = AnnotatedString.Builder(source)
+                val openStyle = SpanStyle(background = Color.Gray.copy(alpha = 0.2f))
+                val closedStyle = SpanStyle(
                     background = Color.Gray,
                     color = Color.Transparent,
                     textDecoration = TextDecoration.None
                 )
 
-                val closedLabelStyle = SpanStyle(
-                    textDecoration = TextDecoration.Underline,
-                    color = Color(0xFF33BBFF),
-                    background = Color.Transparent
-                )
+                annotations.forEachIndexed { index, annotation ->
+                    val hidden = annotations.subList(0, index).any {
+                        it.start <= annotation.start && it.end >= annotation.end && it.item !in opened
+                    }
+                    if (hidden) return@forEachIndexed
 
-                beforeString.getStringAnnotations("spoiler_inline", 0, beforeString.length).forEach { ann ->
-                    val isRevealed = ann.item in opened
-                    val style = if (isRevealed) openStyle else closedInlineStyle
+                    val isOpen = annotation.item in opened
+                    val style = if (isOpen) openStyle else closedStyle
+                    builder.addStyle(style, annotation.start, annotation.end)
 
-                    finalBuilder.addStyle(style, ann.start, ann.end)
-                    finalBuilder.addLink(
-                        start = ann.start,
-                        end = ann.end,
-                        clickable = LinkAnnotation.Clickable(
-                            tag = ann.item,
-                            styles = TextLinkStyles(style = style),
-                            linkInteractionListener = {
-                                opened = if (isRevealed) opened - ann.item else opened + ann.item
+                    fun addToggle(start: Int, end: Int) {
+                        if (start >= end) return
+
+                        builder.addLink(
+                            start = start,
+                            end = end,
+                            clickable = LinkAnnotation.Clickable(
+                                tag = annotation.item,
+                                styles = TextLinkStyles(style = style),
+                                linkInteractionListener = {
+                                    opened = if (annotation.item in opened) opened - annotation.item
+                                    else opened + annotation.item
+                                }
+                            )
+                        )
+                    }
+
+                    if (!isOpen) {
+                        addToggle(annotation.start, annotation.end)
+                    } else {
+                        val excluded = buildList {
+                            source.getLinkAnnotations(annotation.start, annotation.end).forEach {
+                                add(it.start to it.end)
                             }
-                        )
-                    )
-                }
+                            annotations.subList(index + 1, annotations.size).forEach {
+                                if (it.start >= annotation.start && it.end <= annotation.end) add(it.start to it.end)
+                            }
+                        }.sortedBy { it.first }
 
-                beforeString.getStringAnnotations("spoiler_label", 0, beforeString.length).forEach { ann ->
-                    if (ann.item !in opened) {
-                        finalBuilder.addStyle(closedLabelStyle, ann.start, ann.end)
-                        finalBuilder.addLink(
-                            start = ann.start,
-                            end = ann.end,
-                            clickable = LinkAnnotation.Clickable(
-                                tag = ann.item,
-                                styles = TextLinkStyles(style = closedLabelStyle),
-                                linkInteractionListener = { opened = opened + ann.item }
-                            )
-                        )
+                        var start = annotation.start
+                        for ((left, right) in excluded) {
+                            addToggle(start, left.coerceIn(annotation.start, annotation.end))
+                            start = maxOf(start, right.coerceAtMost(annotation.end))
+                        }
+                        addToggle(start, annotation.end)
                     }
                 }
 
-                beforeString.getStringAnnotations("spoiler_content", 0, beforeString.length).forEach { ann ->
-                    if (ann.item in opened) {
-                        finalBuilder.addStyle(openStyle, ann.start, ann.end)
-                        finalBuilder.addLink(
-                            start = ann.start,
-                            end = ann.end,
-                            clickable = LinkAnnotation.Clickable(
-                                tag = ann.item,
-                                styles = TextLinkStyles(style = openStyle),
-                                linkInteractionListener = { opened = opened - ann.item }
-                            )
-                        )
-                    }
-                }
+                builder.toAnnotatedString()
+            }
 
-                finalBuilder.toAnnotatedString()
+            val inlineContent = remember(content.text, content.inlineContent, annotations, closed) {
+                if (annotations.isEmpty() || content.inlineContent.isEmpty()) return@remember content.inlineContent
+
+                val hidden = content.text.getStringAnnotations(0, content.text.length)
+                    .mapNotNullTo(HashSet()) { annotation ->
+                        if (
+                            annotation.item in content.inlineContent &&
+                            closed.any { annotation.start < it.end && annotation.end > it.start }
+                        ) annotation.item else null
+                    }
+
+                if (hidden.isEmpty()) content.inlineContent
+                else content.inlineContent.mapValues { (id, inline) ->
+                    if (id in hidden) InlineTextContent(inline.placeholder) {} else inline
+                }
             }
 
             Text(
                 text = visualString,
                 style = MaterialTheme.typography.bodyLarge,
-                inlineContent = content.inlineContent,
+                inlineContent = inlineContent,
                 modifier = Modifier.padding(vertical = 4.dp),
                 overflow = TextOverflow.Ellipsis
             )
         }
 
         is CommentContent.ListContent -> {
-            Column(
-                modifier = Modifier.padding(vertical = 4.dp),
-                verticalArrangement = Arrangement.spacedBy(4.dp)
-            ) {
+            Column(Modifier.padding(vertical = 4.dp), Arrangement.spacedBy(4.dp)) {
                 content.items.fastForEach { item ->
-                    RenderContent(item, containerMaxWidth, onImageClick)
+                    RenderContent(item, onImageClick)
                 }
             }
         }
@@ -223,44 +212,37 @@ private fun RenderContent(
                     verticalArrangement = Arrangement.spacedBy(4.dp)
                 ) {
                     content.items.fastForEach { item ->
-                        RenderContent(item, containerMaxWidth, onImageClick)
+                        RenderContent(item, onImageClick)
                     }
                 }
             }
         }
 
-        is CommentContent.ImageContent -> {
+        is CommentContent.ImageContent -> Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 4.dp)
+        ) {
             val density = LocalDensity.current
             val maxHeight = 240.dp
-
-            val knownSize = content.width != null && content.height != null && content.height > 0f
-            val modifier = if (knownSize) {
-                val originalWidth = with(density) { content.width.toDp() }
-                val aspectRatio = content.width / content.height
-
-                var finalWidth = min(originalWidth, containerMaxWidth)
-                var finalHeight = finalWidth / aspectRatio
-
-                if (finalHeight > maxHeight) {
-                    finalHeight = maxHeight
-                    finalWidth = finalHeight * aspectRatio
-                }
-
-                Modifier.size(finalWidth, finalHeight)
+            val width = content.width
+            val height = content.height
+            val knownSize = width != null && height != null && width > 0f && height > 0f && width.isFinite() && height.isFinite()
+            val imageModifier = if (knownSize) {
+                Modifier
+                    .sizeIn(maxWidth = with(density) { width.toDp() }, maxHeight = maxHeight)
+                    .aspectRatio(width / height)
             } else {
                 Modifier
-                    .widthIn(max = containerMaxWidth / 2)
+                    .fillMaxWidth()
                     .heightIn(120.dp, maxHeight)
-                    .wrapContentHeight()
             }
 
             AnimatedAsyncImage(
                 model = content.previewUrl,
-                contentScale = ContentScale.Crop,
-                modifier = Modifier
-                    .padding(vertical = 4.dp)
+                contentScale = ContentScale.Fit,
+                modifier = imageModifier
                     .clip(MaterialTheme.shapes.medium)
-                    .then(modifier)
                     .clickable { onImageClick(content) }
             )
         }
@@ -276,7 +258,12 @@ private fun RenderContent(
                     .aspectRatio(16f / 9f)
                     .clip(MaterialTheme.shapes.medium)
                     .border(1.dp, MaterialTheme.colorScheme.outlineVariant, MaterialTheme.shapes.medium)
-                    .clickable { uriHandler.openUri(content.videoUrl) }
+                    .clickable(enabled = content.videoUrl.isNotBlank()) {
+                        try {
+                            uriHandler.openUri(content.videoUrl)
+                        } catch (_: IllegalArgumentException) {
+                        }
+                    }
             ) {
                 AnimatedAsyncImage(
                     model = content.previewUrl,
@@ -287,7 +274,7 @@ private fun RenderContent(
 
                 Surface(Modifier.size(56.dp), CircleShape, Color.Black.copy(alpha = 0.6f)) {
                     VectorIcon(
-                        imageVector = Icons.Refresh,
+                        imageVector = Icons.PlayCircle,
                         tint = Color.White,
                         modifier = Modifier.padding(14.dp)
                     )
@@ -301,7 +288,7 @@ private fun RenderContent(
                         .padding(8.dp)
                 ) {
                     Text(
-                        text = content.source.uppercase(),
+                        text = content.source.ifBlank { stringResource(Res.string.text_video) }.uppercase(),
                         modifier = Modifier.padding(8.dp, 4.dp),
                         style = MaterialTheme.typography.labelSmall.copy(color = Color.White)
                     )
@@ -310,7 +297,7 @@ private fun RenderContent(
         }
 
         is CommentContent.SpoilerContent -> {
-            var isVisible by remember { mutableStateOf(false) }
+            var isVisible by remember(content) { mutableStateOf(false) }
             val rotation by animateFloatAsState(targetValue = if (isVisible) 90f else 0f)
 
             Column(
@@ -319,10 +306,14 @@ private fun RenderContent(
                     .padding(vertical = 4.dp)
                     .clip(MaterialTheme.shapes.medium)
                     .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-                    .clickable { isVisible = !isVisible }
-                    .padding(12.dp, 10.dp)
             ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .clickable { isVisible = !isVisible }
+                        .padding(12.dp, 10.dp)
+                ) {
                     VectorIcon(
                         imageVector = Icons.KeyboardArrowRight,
                         tint = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -334,7 +325,7 @@ private fun RenderContent(
                     Spacer(Modifier.width(8.dp))
 
                     Text(
-                        text = content.title,
+                        text = content.title.ifBlank { stringResource(Res.string.text_spoiler) },
                         style = MaterialTheme.typography.bodyMedium.copy(
                             fontWeight = FontWeight.Bold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -347,9 +338,9 @@ private fun RenderContent(
                     enter = expandVertically(tween(300)) + fadeIn(tween(300)),
                     exit = shrinkVertically(tween(300)) + fadeOut(tween(300))
                 ) {
-                    Column(Modifier.padding(start = 8.dp, top = 12.dp)) {
+                    Column(Modifier.padding(start = 20.dp, end = 12.dp, bottom = 10.dp)) {
                         content.items.fastForEach {
-                            RenderContent(it, containerMaxWidth, onImageClick)
+                            RenderContent(it, onImageClick)
                         }
                     }
                 }
@@ -373,18 +364,20 @@ private fun RenderContent(
                     }
                     .padding(start = 12.dp)
             ) {
-                Text(
-                    text = content.author,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        color = primary
+                if (content.author.isNotBlank()) {
+                    Text(
+                        text = content.author,
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold,
+                            color = primary
+                        )
                     )
-                )
 
-                Spacer(Modifier.height(4.dp))
+                    Spacer(Modifier.height(4.dp))
+                }
 
                 content.items.fastForEach {
-                    RenderContent(it, containerMaxWidth, onImageClick)
+                    RenderContent(it, onImageClick)
                 }
             }
         }
@@ -404,7 +397,7 @@ private fun RenderContent(
                     Spacer(Modifier.width(8.dp))
 
                     Text(
-                        text = "${content.moderatorName}:",
+                        text = content.moderatorName.ifBlank { stringResource(Res.string.text_moderator) } + ":",
                         style = MaterialTheme.typography.labelLarge.copy(
                             color = MaterialTheme.colorScheme.error,
                             fontWeight = FontWeight.Bold
@@ -433,18 +426,18 @@ fun LazyListScope.htmlContent(
 
     val images = contentList.flattenImages()
 
-    items(contentList) { item ->
-        BoxWithConstraints(Modifier.fillMaxWidth()) {
-            RenderContent(
-                content = item,
-                containerMaxWidth = maxWidth,
-                onImageClick = { clickedImage ->
-                    val index = images.indexOf(clickedImage)
-                    if (index != -1) {
-                        onImageClick(images, index)
-                    }
+    items(
+        items = contentList,
+        contentType = { it::class }
+    ) { item ->
+        RenderContent(
+            content = item,
+            onImageClick = { clickedImage ->
+                val index = images.indexOfFirst { it === clickedImage }
+                if (index != -1) {
+                    onImageClick(images, index)
                 }
-            )
-        }
+            }
+        )
     }
 }
