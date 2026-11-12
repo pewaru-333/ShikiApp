@@ -25,7 +25,6 @@ import org.application.shikiapp.shared.models.ui.mappers.toVideoVoices
 import org.application.shikiapp.shared.network.client.AnimeLibAuth
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.network.parser.*
-import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.enums.VideoSource
 import org.application.shikiapp.shared.utils.navigation.Screen
 import kotlin.time.Duration.Companion.seconds
@@ -100,6 +99,11 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         PlayerEvent.Play -> startWatchTimer()
         PlayerEvent.Pause -> cancelWatchTimer()
         PlayerEvent.Ended -> setEpisodeWatched()
+        PlayerEvent.Error -> {
+            videoJob?.cancel()
+            cancelWatchTimer()
+            _state.update { it.copy(isVideoLoading = false, isVideoError = true) }
+        }
 
         is PlayerEvent.SelectEpisode -> selectEpisode(event.number)
         is PlayerEvent.ChangeQuality -> changeQuality(event.quality)
@@ -125,11 +129,12 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         videoJob = viewModelScope.launch {
             try {
                 val parser = when (source) {
-                    VideoSource.KODIK -> KodikParser.getInstance()
-                    VideoSource.COLLAPS -> CollapsParser.getInstance()
-                    VideoSource.CVH -> CvhParser.getInstance()
-                    VideoSource.AKSOR -> AksorParser.getInstance()
-                    VideoSource.ANIMELIB -> AnimeLibParser.getInstance()
+                    VideoSource.KODIK -> KodikParser.instance
+                    VideoSource.COLLAPS -> CollapsParser.instance
+                    VideoSource.CVH -> CvhParser.instance
+                    VideoSource.AKSOR -> AksorParser.instance
+                    VideoSource.YANDEX -> YandexParser.instance
+                    VideoSource.ANIMELIB -> AnimeLibParser.instance
                 }
 
                 val result = parser.getPlaylistLink(episode.link)
@@ -140,14 +145,12 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                     addAll(result.subtitles)
                 }
 
+                currentCoroutineContext().ensureActive()
+
                 _command.send(
                     element = PlayerEvent.Command.LoadVideo(
-                        episodeModel = EpisodeModel(
-                            number = episode.number,
+                        episodeModel = episode.copy(
                             link = result.url,
-                            title = episode.title,
-                            audioIndex = episode.audioIndex,
-                            screenshot = episode.screenshot,
                             fallback = result.fallbackUrls,
                             qualityList = qualityList,
                             subtitles = subtitles,
@@ -223,10 +226,10 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         viewModelScope.launch {
             try {
                 val sources = supervisorScope {
-                    val cvhDef = async { CvhParser.getInstance().searchById(contentId) }
-                    val kodikDef = async { KodikParser.getInstance().searchById(contentId) }
+                    val cvhDef = async { CvhParser.instance.searchById(contentId) }
+                    val kodikDef = async { KodikParser.instance.searchById(contentId) }
                     val aksorDef = async {
-                        AksorParser.getInstance().searchById(contentId)
+                        AksorParser.instance.searchById(contentId)
                             .toVideoVoices()
                             .sortedWith(voiceComparator)
                             .takeIf { it.isNotEmpty() }
@@ -237,10 +240,28 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                     val firstItem = kodikResult.firstOrNull()
                     val targetSeason = firstItem?.lastSeason ?: 1
 
+                    val yandexDef = async {
+                        val item = kodikResult.firstOrNull { (it.kinopoiskId?.toLongOrNull() ?: 0) > 0 }
+                        val kinopoiskId = item?.kinopoiskId ?: return@async null
+                        val season = item.lastSeason ?: 1
+                        val seasonKey = season.toString()
+                        val episodeCount = kodikResult.maxOfOrNull { result ->
+                            if (result.kinopoiskId != kinopoiskId) return@maxOfOrNull 0
+
+                            result.seasons?.get(seasonKey)?.episodes?.keys
+                                ?.maxOfOrNull { it.toIntOrNull() ?: 0 }
+                                ?: result.lastEpisode ?: result.episodesCount ?: 0
+                        }?.takeIf { it > 0 }
+
+                        YandexParser.instance
+                            .searchById(kinopoiskId, season, episodeCount, item.type.endsWith("serial"))
+                            .takeIf { it.voices.isNotEmpty() }
+                    }
+
                     val collapsDef = async {
                         val imdbId = firstItem?.imdbId?.takeIf(String::isNotBlank) ?: return@async null
 
-                        CollapsParser.getInstance().searchById(imdbId)
+                        CollapsParser.instance.searchById(imdbId)
                             .toVideoVoices(targetSeason)
                             .sortedWith(voiceComparator)
                             .takeIf { it.isNotEmpty() }
@@ -252,20 +273,18 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                         val otherTitle = firstItem?.otherTitle.orEmpty()
                         if (titleOrig.isBlank() && otherTitle.isBlank()) return@async null
 
-                        val animeLib = AnimeLibParser.getInstance()
-
                         launch {
-                            if (Preferences.libToken != null && !AnimeLibAuth.validateToken()) {
+                            if (Preferences.libToken != null && AnimeLibAuth.validateToken() == false) {
                                 AnimeLibAuth.refreshToken()
                             }
                         }
 
-                        val anime = animeLib.searchByTitle(contentId, "$titleOrig/$otherTitle") ?: return@async null
+                        val anime = AnimeLibParser.instance.searchByTitle(contentId, "$titleOrig/$otherTitle") ?: return@async null
 
                         coroutineScope {
-                            val teamsDef = async { animeLib.getTeams(anime.slugUrl) }
+                            val teamsDef = async { AnimeLibParser.instance.getTeams(anime.slugUrl) }
 
-                            animeLib.searchById(anime.id.toString())
+                            AnimeLibParser.instance.searchById(anime.id.toString())
                                 .toVideoVoices(teamsDef.await())
                                 .takeIf { it.isNotEmpty() }
                                 ?.let { VideoSourceData(VideoSource.ANIMELIB, it) }
@@ -287,7 +306,8 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
                         kodikVoices.takeIf { it.isNotEmpty() }?.let { VideoSourceData(VideoSource.KODIK, it) },
                         cvhVoices.takeIf { it.isNotEmpty() }?.let { VideoSourceData(VideoSource.CVH, it) },
                         aksorDef.awaitOrNull(),
-                        libDef.awaitOrNull()
+                        libDef.awaitOrNull(),
+                        yandexDef.awaitOrNull()
                     )
                 }
 
@@ -320,7 +340,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
         videoJob = viewModelScope.launch {
             try {
-                val detailResponse = AnimeLibParser.getInstance()
+                val detailResponse = AnimeLibParser.instance
                     .getEpisodeDetails(episode.link)
                     .toEpisodeVoices(episode.number)
                     .sortedWith(voiceComparator)
@@ -394,7 +414,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
 
         _state.update { it.copy(currentQuality = newQuality) }
 
-        if (selectedSource.type == VideoSource.COLLAPS) return
+        if (selectedSource.type == VideoSource.COLLAPS || selectedSource.type == VideoSource.YANDEX) return
 
         videoJob?.cancel()
         _state.update {
@@ -407,10 +427,11 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
         videoJob = viewModelScope.launch {
             try {
                 val parser = when (selectedSource.type) {
-                    VideoSource.KODIK -> KodikParser.getInstance()
-                    VideoSource.CVH -> CvhParser.getInstance()
-                    VideoSource.AKSOR -> AksorParser.getInstance()
-                    VideoSource.ANIMELIB -> AnimeLibParser.getInstance()
+                    VideoSource.KODIK -> KodikParser.instance
+                    VideoSource.CVH -> CvhParser.instance
+                    VideoSource.AKSOR -> AksorParser.instance
+                    VideoSource.YANDEX -> YandexParser.instance
+                    VideoSource.ANIMELIB -> AnimeLibParser.instance
                 }
 
                 val parseUrl = if (selectedSource.type == VideoSource.ANIMELIB) {
@@ -452,7 +473,7 @@ class WatchViewModel(saved: SavedStateHandle) : ViewModel() {
     fun logout() {
         videoJob?.cancel()
         cancelWatchTimer()
-        Preferences.saveTokenLib(BLANK, BLANK)
+        AnimeLibAuth.signOut()
 
         _state.update {
             it.copy(
