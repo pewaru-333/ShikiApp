@@ -47,7 +47,7 @@ class AnimeViewModel(saved: SavedStateHandle) : CachedDetailViewModel<AnimeT, An
 
         val reviews = reviewsFlow ?: Pager(
             config = PagingConfig(pageSize = 15),
-            pagingSourceFactory = { ReviewsPaging(data.url) }
+            pagingSourceFactory = { ReviewsPaging(contentId, data.url) }
         ).flow.cachedIn(viewModelScope).also {
             reviewsFlow = it
         }
