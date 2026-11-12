@@ -2,10 +2,10 @@ package org.application.shikiapp.shared.models.ui.mappers.dark
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
-import org.application.shikiapp.generated.darkshiki.MangaExtraQuery
 import org.application.shikiapp.generated.common.MangaMainQuery
 import org.application.shikiapp.generated.common.type.MangaKindEnum.light_novel
 import org.application.shikiapp.generated.common.type.MangaKindEnum.novel
+import org.application.shikiapp.generated.darkshiki.MangaExtraQuery
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.data.MangaBasic
 import org.application.shikiapp.shared.models.ui.*
@@ -114,9 +114,7 @@ object MangaMapper {
                     title = main.russian ?: main.name,
                     poster = main.poster?.originalUrl.orEmpty(),
                     kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
-                    kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                     score = it.score,
-                    scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                     status = it.status.rawValue,
                     text = it.text,
                     episodes = it.episodes,
@@ -125,7 +123,6 @@ object MangaMapper {
                     volumes = it.volumes,
                     chapters = it.chapters,
                     rewatches = it.rewatches,
-                    rewatchExists = it.rewatches > 0,
                     fullChapters = BLANK,
                     createdAt = Clock.System.now(),
                     updatedAt = Clock.System.now()

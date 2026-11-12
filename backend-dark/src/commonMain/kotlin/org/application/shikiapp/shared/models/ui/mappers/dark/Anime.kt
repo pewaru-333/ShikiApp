@@ -2,10 +2,10 @@ package org.application.shikiapp.shared.models.ui.mappers.dark
 
 import androidx.paging.PagingData
 import kotlinx.coroutines.flow.Flow
+import org.application.shikiapp.generated.common.AnimeMainQuery
 import org.application.shikiapp.generated.darkshiki.AnimeExtraQuery
 import org.application.shikiapp.generated.darkshiki.fragment.PersonRole
 import org.application.shikiapp.generated.darkshiki.fragment.RelatedFragment
-import org.application.shikiapp.generated.common.AnimeMainQuery
 import org.application.shikiapp.shared.models.data.AnimeBasic
 import org.application.shikiapp.shared.models.data.Franchise
 import org.application.shikiapp.shared.models.ui.*
@@ -95,7 +95,7 @@ object AnimeMapper {
                 .map(AnimeExtraQuery.Data.Anime.PersonRole::toContent),
             personMain = extra.personRoles.orEmpty()
                 .mapNotNull { role -> if (role.rolesRu.any { it in ROLES_RUSSIAN }) role.toContent() else null },
-            poster = Formatter.replaceMissingAnimePoster(main.poster?.originalUrl, main.id),
+            poster = main.poster?.originalUrl.orEmpty(),
             rating = Enum.safeValueOf<Rating>(main.rating?.rawValue).title,
             related = extra.related.orEmpty().map(AnimeExtraQuery.Data.Anime.Related::mapper).distinctBy(Related::id),
             releasedOn = Formatter.convertDate(main.releasedOn?.date, false),
@@ -138,18 +138,16 @@ object AnimeMapper {
                         title = main.russian ?: main.name,
                         poster = main.poster?.originalUrl.orEmpty(),
                         kindEnum = Enum.safeValueOf<Kind>(main.kind?.rawValue),
-                        kindString = Enum.safeValueOf<Kind>(main.kind?.rawValue).title,
                         score = it.score,
-                        scoreString = it.score.let { if (it != 0) it else '-' }.toString(),
                         status = it.status.rawValue,
                         text = it.text,
                         episodesSorting = 0,
                         episodes = it.episodes,
+                        episodesAired = if (Enum.safeValueOf<Status>(main.status?.rawValue) == Status.ONGOING) main.episodesAired else null,
                         fullEpisodes = Formatter.getFullEpisodes(main.episodes, main.status?.rawValue),
                         volumes = it.volumes,
                         chapters = it.chapters,
                         rewatches = it.rewatches,
-                        rewatchExists = it.rewatches > 0,
                         fullChapters = BLANK,
                         createdAt = Clock.System.now(),
                         updatedAt = Clock.System.now()
