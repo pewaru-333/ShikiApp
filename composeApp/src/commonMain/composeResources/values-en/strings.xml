@@ -56,6 +56,7 @@
     <string name="text_show_all_u">Show all</string>
     <string name="text_source">Source</string>
     <string name="text_spoiler">Spoiler</string>
+    <string name="text_moderator">Moderator</string>
     <string name="text_studio">Studio</string>
     <string name="text_subtitles">Subtitles</string>
     <string name="text_updates">Updates</string>
@@ -298,8 +299,6 @@
 
     <string name="preference_language">App language</string>
 
-    <string name="preference_deep_link">App links</string>
-    <string name="preference_deep_link_explain_disabled">Disabled when using custom links</string>
 
     <string name="preference_network_config">Network configuration</string>
 
@@ -309,8 +308,6 @@
     <string name="preference_use_proxy">Enable proxy server</string>
     <string name="preference_use_proxy_summary">Not applicable to requests when watching anime episodes</string>
 
-    <string name="preference_use_yggdrasil">Enable Yggdrasil</string>
-    <string name="preference_use_yggdrasil_summary">User peers are used</string>
 
     <!-- Палитра -->
     <string name="palette_default">Default</string>
@@ -327,11 +324,11 @@
     <string name="video_source_videohub">VideoHub</string>
     <string name="video_source_aksor">Aksor</string>
     <string name="video_source_animelib">AnimeLib</string>
+    <string name="video_source_yandex">Yandex</string>
 
     <!-- Другое -->
     <string name="blank" />
     <string name="text_base_url_format">Format: https://host.domain</string>
-    <string name="text_yggdrasil_peer_format">protocol://host.domain:port</string>
     <string name="text_broadcast_message_club">Broadcast</string>
     <string name="text_editing">Editing</string>
     <string name="text_empty">Empty</string>
@@ -352,11 +349,8 @@
     <string name="text_saved">Saved!</string>
     <string name="text_settings">Settings</string>
     <string name="text_to_profile">Go to profile</string>
-    <string name="text_to_settings">Go to settings</string>
     <string name="text_try_again">Try again</string>
-    <string name="text_turned_off">Turned off</string>
     <string name="text_turned_off_short">Off</string>
-    <string name="text_turned_on">Turned on</string>
     <string name="text_unknown">Unknown</string>
     <string name="text_username_optional">Username (optional)</string>
     <string name="text_year_in">in %1$d</string>
@@ -377,14 +371,15 @@
     <string name="text_birthday">Birth date</string>
     <string name="text_deathday">Date of death</string>
 
-    <string name="text_add_app_links">To enable login, add supported links in the settings</string>
     <string name="text_forward_to_browser">You will be redirected to the login page in your browser</string>
-    <string name="text_forward_to_yggdrasil">Yggdrasil login requires at least iOS 17</string>
+    <string name="text_error_profile">Failed to load profile</string>
+    <string name="text_error_login">Could not complete login. Please log in again</string>
+    <string name="text_error_login_page">Failed to load login page</string>
+    <string name="text_login_expired">Your session has expired. Please log in again</string>
+    <string name="text_login_cancelled">Login cancelled</string>
     <string name="text_login_to_modify_lists">To manage your lists, you need to log in</string>
     <string name="text_login_to_animelib">To use AnimeLib source, you need to log in</string>
 
-    <string name="text_app_links_support">App links support</string>
-    <string name="text_app_links_domain_status">Domain status</string>
 
     <string name="text_enter_message">Enter a message</string>
     <string name="text_pay_attention">Please note!</string>

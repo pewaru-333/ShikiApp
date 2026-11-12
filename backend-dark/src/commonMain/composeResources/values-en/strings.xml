@@ -1,0 +1,6 @@
+<resources>
+    <string name="preference_use_yggdrasil">Enable Yggdrasil</string>
+    <string name="preference_use_yggdrasil_summary">User peers are used</string>
+    <string name="text_yggdrasil_peer_format">protocol://host.domain:port</string>
+    <string name="text_yggdrasil_login_unavailable">Login through Yggdrasil requires iOS 17 or later</string>
+</resources>

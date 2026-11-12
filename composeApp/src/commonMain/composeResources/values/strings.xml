@@ -56,6 +56,7 @@
     <string name="text_show_all_u">Показать всё</string>
     <string name="text_source">Первоисточник</string>
     <string name="text_spoiler">Спойлер</string>
+    <string name="text_moderator">Модератор</string>
     <string name="text_studio">Студия</string>
     <string name="text_subtitles">Субтитры</string>
     <string name="text_updates">Обновления</string>
@@ -325,8 +326,6 @@
 
     <string name="preference_language">Язык приложения</string>
 
-    <string name="preference_deep_link">Ссылки приложения</string>
-    <string name="preference_deep_link_explain_disabled">Отключено при использовании пользовательских ссылок</string>
 
     <string name="preference_network_config">Конфигурация сети</string>
 
@@ -336,8 +335,6 @@
     <string name="preference_use_proxy">Использовать прокси-сервер</string>
     <string name="preference_use_proxy_summary">Не распространяется на запросы при просмотре эпизодов аниме</string>
 
-    <string name="preference_use_yggdrasil">Использовать Yggdrasil</string>
-    <string name="preference_use_yggdrasil_summary">Используются пользовательские пиры</string>
 
     <!-- Палитра -->
     <string name="palette_default">Стандартная</string>
@@ -354,11 +351,11 @@
     <string name="video_source_videohub">ВидеоХаб</string>
     <string name="video_source_aksor">Aksor</string>
     <string name="video_source_animelib">AnimeLib</string>
+    <string name="video_source_yandex">Яндекс</string>
 
     <!-- Другое -->
     <string name="blank" />
     <string name="text_base_url_format">Формат: https://хост.домен</string>
-    <string name="text_yggdrasil_peer_format">протокол://хост.домен:порт</string>
     <string name="text_broadcast_message_club">Рассылка</string>
     <string name="text_editing">Редактирование</string>
     <string name="text_empty">Пусто</string>
@@ -379,11 +376,8 @@
     <string name="text_saved">Сохранено!</string>
     <string name="text_settings">Настройки</string>
     <string name="text_to_profile">В профиль</string>
-    <string name="text_to_settings">В настройки</string>
     <string name="text_try_again">Повторить</string>
-    <string name="text_turned_off">Выключено</string>
     <string name="text_turned_off_short">Выкл.</string>
-    <string name="text_turned_on">Включено</string>
     <string name="text_unknown">Неизвестно</string>
     <string name="text_username_optional">Имя пользователя (необязательно)</string>
     <string name="text_year_in">в %1$d году</string>
@@ -404,14 +398,15 @@
     <string name="text_birthday">Дата рождения</string>
     <string name="text_deathday">Дата смерти</string>
 
-    <string name="text_add_app_links">Для поддержки входа добавьте поддерживаемые ссылки в настройках</string>
     <string name="text_forward_to_browser">Вы будете перенаправлены на страницу входа в браузере</string>
-    <string name="text_forward_to_yggdrasil">Вход с использованием Yggdrasil возможен только с iOS 17</string>
+    <string name="text_error_profile">Не удалось загрузить профиль</string>
+    <string name="text_error_login">Не удалось завершить вход. Попробуйте войти снова</string>
+    <string name="text_error_login_page">Не удалось загрузить страницу входа</string>
+    <string name="text_login_expired">Срок действия входа истёк. Войдите снова</string>
+    <string name="text_login_cancelled">Вход отменён</string>
     <string name="text_login_to_modify_lists">Для работы со списками необходимо осуществить вход в приложение</string>
     <string name="text_login_to_animelib">Для просмотра аниме из AnimeLib необходимо авторизоваться</string>
 
-    <string name="text_app_links_support">Поддержка ссылок</string>
-    <string name="text_app_links_domain_status">Состояние доменов</string>
 
     <string name="text_enter_message">Введите сообщение</string>
     <string name="text_pay_attention">Обратите внимание!</string>
