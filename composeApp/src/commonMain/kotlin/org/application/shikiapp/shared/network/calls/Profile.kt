@@ -2,10 +2,18 @@ package org.application.shikiapp.shared.network.calls
 
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
+import io.ktor.client.plugins.ResponseException
+import io.ktor.client.plugins.auth.AuthCircuitBreaker
+import io.ktor.client.plugins.expectSuccess
+import io.ktor.client.plugins.retry
+import io.ktor.client.plugins.timeout
 import io.ktor.client.request.*
 import io.ktor.client.request.forms.submitForm
 import io.ktor.http.*
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.currentCoroutineContext
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.ensureActive
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.io.IOException
@@ -30,14 +38,17 @@ class Profile(private val client: HttpClient) {
             append("code", code)
             append("redirect_uri", AppConfig.redirectUri)
         }
-    ).body<Token>()
+    ) {
+        expectSuccess = true
+        attributes.put(AuthCircuitBreaker, Unit)
+        retry { maxRetries = 0 }
+    }.body<Token>()
 
     suspend fun refreshToken(refreshToken: String, builder: HttpRequestBuilder.() -> Unit): Token? =
         mutex.withLock {
-            with(Preferences.token) {
-                if (this != null && this.refreshToken != refreshToken) {
-                    return@withLock this
-                }
+            val currentToken = Preferences.token ?: return@withLock null
+            if (currentToken.refreshToken != refreshToken) {
+                return@withLock currentToken
             }
 
             repeat(3) { attempt ->
@@ -53,17 +64,28 @@ class Profile(private val client: HttpClient) {
                         }
                     )
 
-                    if (response.status.isSuccess()) {
-                        val newToken = response.body<Token>()
+                    val newToken = if (response.status.isSuccess()) response.body<Token>() else null
+                    currentCoroutineContext().ensureActive()
+
+                    val savedToken = Preferences.token
+                    if (savedToken?.refreshToken != refreshToken) {
+                        return@withLock savedToken
+                    }
+
+                    if (newToken != null) {
                         Preferences.saveToken(newToken)
                         return@withLock newToken
                     } else if (response.status == HttpStatusCode.BadRequest || response.status == HttpStatusCode.Unauthorized) {
                         Preferences.saveToken(Token.empty)
                         return@withLock null
+                    } else {
+                        throw ResponseException(response, BLANK)
                     }
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     if (e !is IOException || attempt == 2) {
-                        return@withLock null
+                        throw e
                     }
 
                     delay((1000L * (attempt + 1)).milliseconds)
@@ -73,9 +95,17 @@ class Profile(private val client: HttpClient) {
             return@withLock null
         }
 
-    suspend fun whoAmI() = client.get("users/whoami").body<UserBrief>()
+    suspend fun whoAmI() = client.get("users/whoami") {
+        expectSuccess = true
+        header(HttpHeaders.CacheControl, "no-store")
+    }.body<UserBrief>()
 
-    suspend fun signOut() = client.post("users/sign_out")
+    suspend fun signOut(accessToken: String) = client.post("users/sign_out") {
+        attributes.put(AuthCircuitBreaker, Unit)
+        bearerAuth(accessToken)
+        retry { maxRetries = 0 }
+        timeout { requestTimeoutMillis = 5000 }
+    }
 
     suspend fun addFavourite(linkedType: String, linkedId: Any, kind: String = BLANK) =
         client.post("favorites/$linkedType/$linkedId/$kind")
