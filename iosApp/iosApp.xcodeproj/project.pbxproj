@@ -339,11 +339,11 @@
 				ENABLE_PREVIEWS = YES;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"$(SRCROOT)/../composeApp/libs/ios/Yggbridge.xcframework/ios-arm64",
+					"$(SRCROOT)/../yggdrasil/libs/ios/Yggbridge.xcframework/ios-arm64",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = (
 					"$(inherited)",
-					"$(SRCROOT)/../composeApp/libs/ios/Yggbridge.xcframework/ios-arm64_x86_64-simulator",
+					"$(SRCROOT)/../yggdrasil/libs/ios/Yggbridge.xcframework/ios-arm64_x86_64-simulator",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
@@ -455,11 +455,11 @@
 				ENABLE_PREVIEWS = YES;
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphoneos*]" = (
 					"$(inherited)",
-					"$(SRCROOT)/../composeApp/libs/ios/Yggbridge.xcframework/ios-arm64",
+					"$(SRCROOT)/../yggdrasil/libs/ios/Yggbridge.xcframework/ios-arm64",
 				);
 				"FRAMEWORK_SEARCH_PATHS[sdk=iphonesimulator*]" = (
 					"$(inherited)",
-					"$(SRCROOT)/../composeApp/libs/ios/Yggbridge.xcframework/ios-arm64_x86_64-simulator",
+					"$(SRCROOT)/../yggdrasil/libs/ios/Yggbridge.xcframework/ios-arm64_x86_64-simulator",
 				);
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = iosApp/Info.plist;
