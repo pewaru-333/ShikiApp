@@ -1,0 +1,909 @@
+query FilmPage($contentUuid: String!, $isAuthorized: Boolean!, $withPrechosenEpisode: Boolean!, $episodeNumber: Int!, $seasonNumber: Int!, $withUserData: Boolean!, $socialArgumentLimit: Int!, $includeSocialArgumentTypes: [ReactionType!]!) {
+  movieByContentUuid(contentUuid: $contentUuid) {
+    id
+    contentId
+    ...TicketOption
+    ...AgeRestriction
+    ...OverviewMeta
+    ...ContentOverview
+    ...ContentDetails
+    ...ContentCard
+    ...MovieSocial @include(if: $isAuthorized)
+    ...SerialStructure
+    ...MovieSeoMeta
+    ...PrechosenEpisode @include(if: $withPrechosenEpisode)
+    ...MainTrailer
+    ...Promo
+    ...OttNextEpisode @include(if: $isAuthorized)
+    ...OttMovieTiming @include(if: $isAuthorized)
+    ...MovieType
+    __typename
+  }
+  ...MovieWebPage
+}
+
+fragment TicketOptionPurchasableValues on TicketOption {
+  purchasable
+  __typename
+}
+
+fragment ReleaseAnnounceIncompleteDate on ReleaseAnnounce {
+  releaseDate {
+    accuracy
+    date
+    __typename
+  }
+  __typename
+}
+
+fragment TicketOptionReleaseAnnounceValues on TicketOption {
+  releaseAnnounce {
+    available
+    ...ReleaseAnnounceIncompleteDate
+    __typename
+  }
+  __typename
+}
+
+fragment TicketOptionValues on TicketOption {
+  ...TicketOptionPurchasableValues
+  ...TicketOptionReleaseAnnounceValues
+  __typename
+}
+
+fragment RatingValue on RatingValue {
+  value
+  isActive
+  count
+  __typename
+}
+
+fragment OttPreviewFeatures on OttPreview {
+  features(filter: {layout: OTT_TITLE_CARD, onlyClientSupported: true}) {
+    alias
+    displayedName: displayName
+    group
+    __typename
+  }
+  __typename
+}
+
+fragment AvailabilityViewOption on ViewOption {
+  watchabilityStatus
+  availabilityAnnounce {
+    __typename
+  }
+  __typename
+}
+
+fragment Years on Movie {
+  __typename
+  ... on VideoInterface {
+    productionYear(override: OTT_WHEN_EXISTS)
+    __typename
+  }
+  ... on Series {
+    releaseYears {
+      start
+      end
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment MovieRatingListItem on MovieInList {
+  movieListSlug
+  position
+  __typename
+}
+
+fragment MovieRatingLists on Movie {
+  ratingLists {
+    top10 {
+      ...MovieRatingListItem
+      __typename
+    }
+    top250 {
+      ...MovieRatingListItem
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment AudioMeta on AudioMeta {
+  forAdult
+  language
+  languageName
+  quality
+  qualityName
+  studio
+  type
+  __typename
+}
+
+fragment SubtitleMeta on SubtitleMeta {
+  forAdult
+  language
+  languageName
+  studio
+  type
+  __typename
+}
+
+fragment MovieRating on Movie {
+  rating {
+    kinopoisk {
+      ...RatingValue
+      __typename
+    }
+    plannedToWatch {
+      ...RatingValue
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment Title on Title {
+  localized
+  original
+  __typename
+}
+
+fragment MovieTitle on Movie {
+  title {
+    ...Title
+    __typename
+  }
+  __typename
+}
+
+fragment ImageSize on ImageSize {
+  width
+  height
+  __typename
+}
+
+fragment MovieHorizontalLogo on MovieLogos {
+  horizontal {
+    avatarsUrl
+    origSize {
+      ...ImageSize
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment Image on Image {
+  avatarsUrl
+  fallbackUrl
+  __typename
+}
+
+fragment MovieVerticalPoster on MoviePosters {
+  vertical(override: OTT_WHEN_EXISTS) {
+    ...Image
+    __typename
+  }
+  verticalWithRightholderLogo {
+    ...Image
+    __typename
+  }
+  __typename
+}
+
+fragment SkippableFragment on SkippableFragment {
+  type
+  startTime
+  endTime
+  final
+  __typename
+}
+
+fragment SocialUserProfileId on UserProfileInterface {
+  id {
+    kpId
+    ottId
+    puid
+    __typename
+  }
+  __typename
+}
+
+fragment SocialUserPreview on UserProfileInterface {
+  ...SocialUserProfileId
+  social {
+    url
+    avatar {
+      defaultValue {
+        value {
+          avatarsUrl
+          fallbackUrl
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    name {
+      defaultValue {
+        value
+        __typename
+      }
+      __typename
+    }
+    alias {
+      defaultValue {
+        source
+        value
+        __typename
+      }
+      __typename
+    }
+    isSubscribedTo @include(if: $isAuthorized)
+    __typename
+  }
+  __typename
+}
+
+fragment MovieUserDataSocialArguments on MovieUserData {
+  socialArgument(limit: $socialArgumentLimit) {
+    items {
+      user {
+        ...SocialUserPreview
+        __typename
+      }
+      reactions(includeTypes: $includeSocialArgumentTypes) {
+        ... on Vote {
+          value
+          __typename
+        }
+        ... on Watched {
+          watched
+          __typename
+        }
+        ... on WatchingSeries {
+          watchingSeries
+          __typename
+        }
+        ... on PlannedToWatch {
+          plannedToWatch
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    statistics {
+      byReaction {
+        ... on VoteStatistic {
+          average
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    total
+    limit
+    offset
+    __typename
+  }
+  __typename
+}
+
+fragment EpisodeBase on Episode {
+  id
+  contentId
+  number
+  __typename
+}
+
+fragment SeasonBase on Season {
+  id
+  contentId
+  number
+  __typename
+}
+
+fragment SerialStructureEpisode on Episode {
+  ...EpisodeBase
+  synopsis(override: OTT_WHEN_EXISTS)
+  title {
+    ...Title
+    __typename
+  }
+  season {
+    ...SeasonBase
+    __typename
+  }
+  cover {
+    avatarsUrl
+    fallbackUrl
+    __typename
+  }
+  ott {
+    duration
+    editorAnnotation
+    plannedAvailabilityDate
+    viewOption {
+      availabilityStatus
+      availabilityEndDate
+      __typename
+    }
+    timing @include(if: $withUserData) {
+      current
+      __typename
+    }
+    __typename
+  }
+  viewOption {
+    watchabilityStatus
+    __typename
+  }
+  __typename
+}
+
+fragment VideoInterface on VideoInterface {
+  duration
+  kpProductionYear: productionYear(override: DISABLED)
+  ottProductionYear: productionYear(override: OTT_WHEN_EXISTS)
+  __typename
+}
+
+fragment MovieSeoInfo on Movie {
+  id
+  title {
+    localized
+    original
+    __typename
+  }
+  shortDescription
+  synopsis
+  genres {
+    id
+    name
+    slug
+    __typename
+  }
+  countries {
+    id
+    name
+    __typename
+  }
+  viewOption {
+    isAvailableOnline: isWatchable(filter: {anyDevice: false, anyRegion: false})
+    availabilityAnnounce {
+      __typename
+    }
+    __typename
+  }
+  watchabilityCount: watchability(limit: 0) {
+    total
+    __typename
+  }
+  ott {
+    preview {
+      features(filter: {layout: OTT_TITLE_CARD, onlyClientSupported: true}) {
+        alias
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  ... on Film {
+    ...VideoInterface
+    __typename
+  }
+  ... on Video {
+    ...VideoInterface
+    __typename
+  }
+  ... on Series {
+    releaseYears {
+      start
+      end
+      __typename
+    }
+    seasonsAll: seasons(limit: 0) {
+      total
+      __typename
+    }
+    seasonsOnline: seasons(limit: 0, isOnlyOnline: true) {
+      total
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment SchemaOrgVideoObject on Movie {
+  id
+  title {
+    localized
+    original
+    __typename
+  }
+  ottSynopsis: synopsis(override: OTT_WHEN_EXISTS)
+  gallery {
+    posters {
+      vertical(override: OTT_WHEN_EXISTS) {
+        avatarsUrl
+        fallbackUrl
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  ott {
+    promoTrailers: trailers(onlyPromo: true, limit: 1) {
+      items {
+        streamUrl
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  ... on Film {
+    duration
+    productionYear(override: OTT_WHEN_EXISTS)
+    __typename
+  }
+  ... on Video {
+    duration
+    productionYear(override: OTT_WHEN_EXISTS)
+    __typename
+  }
+  ... on TvSeries {
+    releaseYears {
+      start
+      end
+      __typename
+    }
+    __typename
+  }
+  ... on MiniSeries {
+    releaseYears {
+      start
+      end
+      __typename
+    }
+    __typename
+  }
+  ... on TvShow {
+    releaseYears {
+      start
+      end
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment PrechosenEpisodeData on Episode {
+  ...EpisodeBase
+  season {
+    ...SeasonBase
+    __typename
+  }
+  ott {
+    duration
+    viewOption {
+      availabilityStatus
+      __typename
+    }
+    __typename
+  }
+  viewOption {
+    watchabilityStatus
+    __typename
+  }
+  __typename
+}
+
+fragment OttEpisodeTiming on Episode {
+  ott {
+    timing {
+      current
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment NextEpisode on Episode {
+  ...EpisodeBase
+  title {
+    ...Title
+    __typename
+  }
+  cover {
+    avatarsUrl
+    fallbackUrl
+    __typename
+  }
+  ott {
+    duration
+    viewOption {
+      availabilityEndDate
+      availabilityStatus
+      __typename
+    }
+    __typename
+  }
+  season {
+    ...SeasonBase
+    __typename
+  }
+  ...OttEpisodeTiming
+  __typename
+}
+
+fragment TicketOption on Movie {
+  ticketOption {
+    ...TicketOptionValues
+    __typename
+  }
+  __typename
+}
+
+fragment AgeRestriction on Movie {
+  restriction {
+    age
+    __typename
+  }
+  __typename
+}
+
+fragment OverviewMeta on Movie {
+  contentId
+  __typename
+  rating {
+    kinopoisk {
+      ...RatingValue
+      __typename
+    }
+    plannedToWatch {
+      ...RatingValue
+      __typename
+    }
+    __typename
+  }
+  ott {
+    preview {
+      ...OttPreviewFeatures
+      ... on OttPreview_AbstractVideo {
+        duration
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  genres {
+    id
+    name
+    __typename
+  }
+  restriction {
+    age
+    __typename
+  }
+  countries {
+    id
+    name
+    __typename
+  }
+  userData @include(if: $isAuthorized) {
+    voting {
+      value
+      __typename
+    }
+    __typename
+  }
+  viewOption {
+    ...AvailabilityViewOption
+    __typename
+  }
+  ...Years
+  ... on Series {
+    seasonsAll: seasons(limit: 0) {
+      total
+      __typename
+    }
+    __typename
+  }
+  ...MovieRatingLists
+}
+
+fragment ContentOverview on Movie {
+  shortDescription
+  editorAnnotation
+  userData @include(if: $isAuthorized) {
+    watchStatuses {
+      watched {
+        value
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  ott {
+    preview {
+      ... on OttPreview_AbstractVideo {
+        duration
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment ContentDetails on Movie {
+  id
+  contentId
+  title {
+    original
+    __typename
+  }
+  ottSynopsis: synopsis(override: OTT_WHEN_EXISTS)
+  actors: members(limit: 10, role: [ACTOR, CAMEO, UNCREDITED]) {
+    items {
+      person {
+        id
+        name
+        originalName
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  directors: members(role: DIRECTOR, limit: 5) {
+    items {
+      person {
+        id
+        name
+        originalName
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  ott {
+    preview {
+      ...OttPreviewFeatures
+      availableMetadata {
+        audioMeta {
+          ...AudioMeta
+          __typename
+        }
+        subtitleMeta {
+          ...SubtitleMeta
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  ...MovieRating
+  userData @include(if: $isAuthorized) {
+    voting {
+      value
+      __typename
+    }
+    __typename
+  }
+  viewOption {
+    ...AvailabilityViewOption
+    __typename
+  }
+  ...MovieRatingLists
+  __typename
+}
+
+fragment ContentCard on Movie {
+  ...MovieTitle
+  gallery {
+    covers {
+      horizontal {
+        avatarsUrl
+        __typename
+      }
+      __typename
+    }
+    logos {
+      rightholderForCover(filter: {formFactor: M}) {
+        image {
+          avatarsUrl
+          __typename
+        }
+        theme
+        __typename
+      }
+      ...MovieHorizontalLogo
+      rightholderForCoverRecommendedTheme
+      __typename
+    }
+    posters {
+      ...MovieVerticalPoster
+      __typename
+    }
+    __typename
+  }
+  ott {
+    ... on Ott_AbstractVideo {
+      skippableFragments {
+        ...SkippableFragment
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment MovieSocial on Movie {
+  userData {
+    ...MovieUserDataSocialArguments
+    __typename
+  }
+  __typename
+}
+
+fragment SerialStructure on Series {
+  id
+  seasons(limit: 10000, source: ONLINE_WITH_ANNOUNCEMENTS) {
+    items {
+      id
+      contentId
+      number
+      episodes(limit: 1, source: ONLINE_WITH_ANNOUNCEMENTS) {
+        items {
+          ...SerialStructureEpisode
+          __typename
+        }
+        total
+        __typename
+      }
+      episodeGroupings(filter: {source: ONLINE_WITH_ANNOUNCEMENTS}, capacity: 20) {
+        from
+        to
+        offset
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment MovieSeoMeta on Movie {
+  ...MovieSeoInfo
+  ...SchemaOrgVideoObject
+  __typename
+}
+
+fragment PrechosenEpisode on Series {
+  episode(episodeNumber: $episodeNumber, seasonNumber: $seasonNumber) {
+    ...PrechosenEpisodeData
+    offsetInSeason(filter: {source: ONLINE_WITH_ANNOUNCEMENTS})
+    __typename
+  }
+  __typename
+}
+
+fragment MainTrailer on Movie {
+  contentId
+  ott {
+    mainTrailers: trailers(limit: 2) {
+      items {
+        contentGroupUuid
+        main
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment Promo on Movie {
+  contentId
+  ott {
+    promos: trailers(limit: 1, onlyPromo: true) {
+      items {
+        contentGroupUuid
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment OttNextEpisode on Movie {
+  id
+  contentId
+  ott {
+    ... on Ott_AbstractSeries {
+      nextEpisode(fallbackToFirstEpisode: true) {
+        contentId
+        fallback
+        episode {
+          offsetInSeason(filter: {source: ONLINE_WITH_ANNOUNCEMENTS})
+          ...NextEpisode
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment OttMovieTiming on Movie {
+  id
+  ott {
+    preview {
+      ... on OttPreview_AbstractVideo {
+        timing {
+          current
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}
+
+fragment MovieType on Movie {
+  __typename
+}
+
+fragment MovieWebPage on Query {
+  webPage {
+    ottFilmPage(contentGroupUuid: $contentUuid) {
+      htmlMeta {
+        openGraph {
+          image {
+            avatarsUrl
+            __typename
+          }
+          __typename
+        }
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+  __typename
+}

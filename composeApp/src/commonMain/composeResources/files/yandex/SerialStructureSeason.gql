@@ -1,0 +1,74 @@
+query SerialStructureSeason($contentId: String!, $limit: Int!, $offset: Int!, $withUserData: Boolean!) {
+  seasonByContentId(contentId: $contentId) {
+    id
+    contentId
+    number
+    episodes(limit: $limit, offset: $offset, source: ONLINE_WITH_ANNOUNCEMENTS) {
+      total
+      items {
+        ...SerialStructureEpisode
+        __typename
+      }
+      __typename
+    }
+    __typename
+  }
+}
+
+fragment EpisodeBase on Episode {
+  id
+  contentId
+  number
+  __typename
+}
+
+fragment Title on Title {
+  localized
+  original
+  __typename
+}
+
+fragment SeasonBase on Season {
+  id
+  contentId
+  number
+  __typename
+}
+
+fragment SerialStructureEpisode on Episode {
+  ...EpisodeBase
+  synopsis(override: OTT_WHEN_EXISTS)
+  title {
+    ...Title
+    __typename
+  }
+  season {
+    ...SeasonBase
+    __typename
+  }
+  cover {
+    avatarsUrl
+    fallbackUrl
+    __typename
+  }
+  ott {
+    duration
+    editorAnnotation
+    plannedAvailabilityDate
+    viewOption {
+      availabilityStatus
+      availabilityEndDate
+      __typename
+    }
+    timing @include(if: $withUserData) {
+      current
+      __typename
+    }
+    __typename
+  }
+  viewOption {
+    watchabilityStatus
+    __typename
+  }
+  __typename
+}
