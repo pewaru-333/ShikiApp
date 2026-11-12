@@ -2,25 +2,15 @@ package org.application.shikiapp.shared.network.client
 
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
-import org.application.shikiapp.shared.di.AppServices
-import org.application.shikiapp.shared.di.Preferences
 
 internal fun createHttpClient(
     proxyConfig: ProxyConfig?,
-    yggdrasilConfig: YggdrasilConfig,
+    extension: NetworkExtension?,
     block: HttpClientConfig<*>.() -> Unit
-): HttpClient {
-    if (!yggdrasilConfig.enabled) {
-        return createPlatformHttpClient(proxyConfig, block)
-    }
-
-    val transport = checkNotNull(AppServices.yggdrasilTransport) // точно не null по конфигурации
-    return transport.createClient(
-        config = yggdrasilConfig,
-        onPrivateKeyGenerated = { Preferences.yggdrasilPrivateKey.value = it },
-        block = block
-    )
-}
+) = extension?.createClient(
+    block = block,
+    normal = { createPlatformHttpClient(proxyConfig) {} }
+) ?: createPlatformHttpClient(proxyConfig, block)
 
 internal expect fun createPlatformHttpClient(
     proxyConfig: ProxyConfig?,

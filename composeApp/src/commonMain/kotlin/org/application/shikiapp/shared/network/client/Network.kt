@@ -23,28 +23,24 @@ import org.application.shikiapp.shared.network.calls.*
 
 
 object Network {
-    val isYggdrasilAvailable: Boolean
-        get() = AppServices.yggdrasilTransport != null && AppConfig.yggdrasilAddress != null
+    val isConnectionActive: Boolean
+        get() = extension?.isActive == true
 
-    private val yggdrasil by lazy {
-        YggdrasilConfig(
-            enabled = isYggdrasilAvailable && Preferences.yggdrasilEnabled.value,
-            peers = Preferences.yggdrasilPeerList,
-            privateKeyPem = Preferences.yggdrasilPrivateKey.value.takeIf(String::isNotBlank)
-        )
-    }
+    val hasNetworkExtension: Boolean
+        get() = extension != null
 
-    val isYggdrasilEnabled: Boolean
-        get() = yggdrasil.enabled
+    val requiresAuthProxy: Boolean
+        get() = extension?.requiresAuthProxy == true
+
+    internal val baseUrlResolver = BaseUrlResolver()
+
+    private val extension
+        get() = AppServices.networkExtension
 
     val baseClient: HttpClient by lazy {
-        val proxy = if (yggdrasil.enabled) {
-            null
-        } else {
-            getProxyConfig()
-        }
+        val proxy = getProxyConfig()
 
-        createHttpClient(proxy, yggdrasil) {
+        createHttpClient(proxy, extension) {
             engine {
                 dispatcher = Dispatchers.IO
             }
@@ -117,31 +113,14 @@ object Network {
             install(HttpTimeout) {
                 requestTimeoutMillis = 60_000
                 connectTimeoutMillis = 30_000
-                socketTimeoutMillis = 15_000
+                socketTimeoutMillis = 30_000
             }
 
             install(HttpCache)
 
             install(RateLimit)
 
-            install(BaseUrlResolverPlugin) {
-                if (yggdrasil.enabled) {
-                    val address = AppConfig.yggdrasilAddress
-                    if (address != null) {
-                        baseUrlProvider = { address }
-                        isYggdrasil = { true }
-                    }
-                } else {
-                    val (baseUrl, mirrors) = Preferences.appUrlPair
-
-                    baseUrlProvider = { baseUrl }
-                    mirrorsProvider = { mirrors }
-                }
-
-                onNewUrl = { workingUrl ->
-                    ApiRoutes.workingBaseUrl = workingUrl
-                }
-            }
+            install(BaseUrlResolverPlugin)
 
             defaultRequest {
                 url("/api/")
@@ -166,7 +145,6 @@ object Network {
     val content by lazy { Content(client) }
     val animeRepository get() = AppServices.animeRepository
     val mangaRepository get() = AppServices.mangaRepository
-
     val characterRepository get() = AppServices.characterRepository
 
     internal fun getProxyConfig() = ProxyConfig.create(
@@ -177,22 +155,11 @@ object Network {
         pass = Preferences.proxyPassword.value
     )
 
-    suspend fun startAuthProxy(): Int? {
-        if (!isYggdrasilEnabled) return null
+    suspend fun resolveFallback(): String = extension?.resolve(baseClient) ?: throw IOException()
 
-        val transport = checkNotNull(AppServices.yggdrasilTransport) // точно не null по конфигурации
-        val port = transport.startProxy(yggdrasil) { privateKey ->
-            Preferences.yggdrasilPrivateKey.value = privateKey
-        }
-
-        ApiRoutes.workingBaseUrl = checkNotNull(AppConfig.yggdrasilAddress) // точно не null по конфигурации
-
-        return port
-    }
+    suspend fun startAuthProxy(): Int? = extension?.startAuthProxy()
 
     suspend fun stopAuthProxy() {
-        if (isYggdrasilEnabled) {
-            AppServices.yggdrasilTransport?.stopProxy()
-        }
+        extension?.stopAuthProxy()
     }
 }
