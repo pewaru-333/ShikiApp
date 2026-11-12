@@ -5,18 +5,6 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
 @Serializable
-data class KodikTokensResponse(
-    val stable: List<KodikTokenItem> = emptyList(),
-    val unstable: List<KodikTokenItem> = emptyList(),
-    val legacy: List<KodikTokenItem> = emptyList()
-)
-
-@Serializable
-data class KodikTokenItem(
-    val tokn: String
-)
-
-@Serializable
 data class KodikSearchResponse(
     val results: List<KodikResultItem>
 )
@@ -41,7 +29,9 @@ data class KodikResultItem(
     val screenshots: List<String>? = null,
     val quality: String? = null,
     @SerialName("last_episode")
-    val lastEpisode: Int? = null
+    val lastEpisode: Int? = null,
+    @SerialName("kinopoisk_id")
+    val kinopoiskId: String? = null
 )
 
 @Serializable
