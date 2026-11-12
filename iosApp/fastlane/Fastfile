@@ -20,12 +20,9 @@ platform :ios do
     profile_name = ENV.fetch("IOS_PROVISIONING_PROFILE_NAME", "appstore release2")
     raw_version_name = read_gradle_property("APP_VERSION_NAME")
     version_code = read_gradle_property("APP_VERSION_CODE")
-    clean_version_name = raw_version_name.include?("-") ? raw_version_name.split("-").last : raw_version_name
+    clean_version_name = raw_version_name.split("-").last
 
     UI.message("Applying Version: #{clean_version_name} and Build: #{version_code} to iOS project...")
-
-    increment_version_number(version_number: clean_version_name, xcodeproj: File.expand_path("../iosApp.xcodeproj", __dir__))
-    increment_build_number(build_number: version_code, xcodeproj: File.expand_path("../iosApp.xcodeproj", __dir__))
 
     build_app(
       project: File.expand_path("../iosApp.xcodeproj", __dir__),
@@ -36,6 +33,8 @@ platform :ios do
       codesigning_identity: "Apple Distribution",
       xcargs: {
         "APP_USER_AGENT" => "DarkShiki",
+        "MARKETING_VERSION" => clean_version_name,
+        "CURRENT_PROJECT_VERSION" => version_code,
         "CODE_SIGN_STYLE" => "Manual",
         "DEVELOPMENT_TEAM" => "2AN324X242",
         "PROVISIONING_PROFILE_SPECIFIER" => profile_name
@@ -53,7 +52,7 @@ platform :ios do
     )
   end
 
-  desc "Phase 3: Deploy the pre-built .ipa to App Store Connect"
+  desc "Phase 2: Deploy the pre-built .ipa to App Store Connect"
   lane :deploy_ios_release do
     version_code = read_gradle_property("APP_VERSION_CODE")
     changelog_path = File.expand_path("../../fastlane/metadata/android/ru/changelogs/#{version_code}.txt", __dir__)
