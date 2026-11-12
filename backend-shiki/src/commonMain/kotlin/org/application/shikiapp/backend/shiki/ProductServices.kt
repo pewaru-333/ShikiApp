@@ -10,12 +10,11 @@ import org.application.shikiapp.shared.network.client.Network
 object ProductServices {
     private val config = AppConfig(
         baseUrl = "https://shikimori.io",
-        urlMirrors = listOf("https://shikimori.one", "https://shiki.one"),
+        urlMirrors = listOf("https://shikimori.one"),
         userAgent = "ShikiApp",
         clientId = "C0IlIBQYqt9VHjuoayfbBG9ulhBH9XWuTOxSX_6oE6g",
         clientSecret = "0U2MtkFgtGUP9_TFKBw1ORVy6S68KZDz_AdKsoMfnFM",
         redirectUri = "app://login",
-        yggdrasilAddress = null,
         authScopes = setOf("user_rates", "messages", "comments", "topics", "clubs", "friends")
     )
 
@@ -24,5 +23,6 @@ object ProductServices {
         animeRepository = { IAnimeRepository(Network.apollo) },
         mangaRepository = { IMangaRepository(Network.apollo) },
         characterRepository = { ICharacterRepository(Network.apollo) },
+        imageInterceptor = AnimePosterInterceptor()
     )
 }
