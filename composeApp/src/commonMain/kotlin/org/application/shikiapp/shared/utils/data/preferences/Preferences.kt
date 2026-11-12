@@ -48,9 +48,6 @@ class Preferences(private val app: IPreferences) {
     val proxyUsername = PreferenceString(PREF_PROXY_USERNAME, BLANK)
     val proxyPassword = PreferenceString(PREF_PROXY_PASSWORD, BLANK)
 
-    val yggdrasilEnabled = PreferenceBoolean(PREF_YGGDRASIL_ENABLED, false)
-    val yggdrasilPeers = PreferenceString(PREF_YGGDRASIL_PEERS, BLANK)
-    val yggdrasilPrivateKey = PreferenceString(PREF_YGGDRASIL_PRIVATE_KEY, BLANK)
 
 
     val token: Token?
@@ -66,6 +63,12 @@ class Preferences(private val app: IPreferences) {
                 refreshToken = refreshToken
             )
         }
+
+    val libAuthState: String
+        get() = app.getString(AUTH_STATE_LIB, BLANK)
+
+    val libCodeVerifier: String
+        get() = app.getString(CODE_VERIFIER_LIB, BLANK)
 
     val libToken: Token?
         get() {
@@ -93,20 +96,16 @@ class Preferences(private val app: IPreferences) {
     val appUrlList: List<String>
         get() = appUrlsString.value.split(',')
 
-    val appUrlPair: Pair<String, List<String>>
-        get() {
-            val list = appUrlList
-            return list[0] to list.drop(1)
-        }
-
-    val yggdrasilPeerList: List<String>
-        get() = yggdrasilPeers.value.split(',')
-
     fun saveToken(token: Token) = app.edit {
         putString(ACCESS_TOKEN, token.accessToken)
         putString(REFRESH_TOKEN, token.refreshToken)
         putLong(EXPIRES_IN, token.expiresIn)
         putLong(CREATED_AT, token.createdAt)
+    }
+
+    fun saveAuthLib(state: String, verifier: String) = app.edit {
+        putString(AUTH_STATE_LIB, state)
+        putString(CODE_VERIFIER_LIB, verifier)
     }
 
     fun saveTokenLib(accessToken: String, refreshToken: String) = app.edit {
@@ -141,8 +140,6 @@ class Preferences(private val app: IPreferences) {
         proxyUsername.value = BLANK
         proxyPassword.value = BLANK
 
-        yggdrasilEnabled.value = false
-        yggdrasilPeers.value = BLANK
     }
 
     fun setLinksSettings(isUserMode: Boolean, urlList: List<String>) {
@@ -161,14 +158,6 @@ class Preferences(private val app: IPreferences) {
             proxyPort.value = port
             proxyUsername.value = user
             proxyPassword.value = pass
-        }
-    }
-
-    fun setYggdrasilSettings(checked: Boolean, peerList: List<String>) {
-        yggdrasilEnabled.value = checked
-
-        if (checked) {
-            yggdrasilPeers.value = peerList.joinToString(",")
         }
     }
 

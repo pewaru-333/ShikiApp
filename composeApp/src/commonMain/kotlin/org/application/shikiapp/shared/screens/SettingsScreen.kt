@@ -4,9 +4,7 @@ import AppLanguages
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyListScope
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
@@ -17,12 +15,10 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import org.application.shikiapp.shared.di.Preferences
-import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.ui.templates.*
 import org.application.shikiapp.shared.ui.theme.Icons
 import org.application.shikiapp.shared.utils.*
@@ -39,11 +35,9 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
     val rememberListOrder by rememberPreference { rememberCatalogOrder }
     val rememberRatesOrder by rememberPreference { rememberRatesOrder }
     val dynamicColors by rememberPreference { dynamicColors }
-    val useUserUrlList by rememberPreference { useUserUrlList }
 
     val isCompact = rememberWindowSize().isCompact
 
-    var showDeeplinkSetting by rememberSaveable { mutableStateOf(false) }
     var showProxySettings by rememberSaveable { mutableStateOf(false) }
 
     AnimatedDialogScreen(isVisible, stringResource(Res.string.text_settings), onBack) { values ->
@@ -180,11 +174,6 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
                 valueToText = { stringResource(Res.string.preference_cache_size_mb, it) }
             )
 
-            deeplinkSetting(
-                isEnabled = !useUserUrlList,
-                onClick = { showDeeplinkSetting = true }
-            )
-
             preference(
                 key = PREF_NETWORK_CONFIG_SETTINGS,
                 title = { Text(stringResource(Res.string.preference_network_config)) },
@@ -193,7 +182,6 @@ fun SettingsScreen(isVisible: Boolean, onBack: () -> Unit) {
         }
     }
 
-    DeeplinkScreen(showDeeplinkSetting) { showDeeplinkSetting = false }
     ProxySettings(showProxySettings) { showProxySettings = false }
 }
 
@@ -210,126 +198,6 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
             style = MaterialTheme.typography.labelLarge,
             color = MaterialTheme.colorScheme.secondary,
         )
-
-        @Composable
-        fun SettingsToggleRow(
-            title: String,
-            summary: String? = null,
-            checked: Boolean,
-            onCheckedChange: (Boolean) -> Unit,
-            enabled: Boolean = true
-        ) = Row(
-            verticalAlignment = Alignment.CenterVertically,
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(vertical = 12.dp)
-                .toggleable(
-                    value = checked,
-                    enabled = enabled,
-                    role = Role.Switch,
-                    onValueChange = onCheckedChange
-                )
-        ) {
-            Column(
-                modifier = Modifier
-                    .weight(1f)
-                    .padding(end = 16.dp)
-            ) {
-                Text(
-                    text = title,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = if (enabled) {
-                        MaterialTheme.colorScheme.onSurface
-                    } else {
-                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                    }
-                )
-
-                if (summary != null) {
-                    Text(
-                        text = summary,
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = if (enabled) {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.38f)
-                        }
-                    )
-                }
-            }
-
-            Switch(
-                checked = checked,
-                onCheckedChange = null,
-                enabled = enabled
-            )
-        }
-
-        @Composable
-        fun ProxyInputRow(
-            index: Int,
-            item: ProxySettingsState.InputItem,
-            itemCount: Int,
-            maxItemCount: Int,
-            onValueChange: (String) -> Unit,
-            onAdd: () -> Unit,
-            onRemove: () -> Unit,
-            modifier: Modifier = Modifier,
-            placeholder: String? = null,
-            errorText: String? = null,
-            enabled: Boolean = true
-        ) = Row(
-            modifier = modifier.fillMaxWidth(),
-            verticalAlignment = Alignment.Top
-        ) {
-            OutlinedTextField(
-                value = item.value,
-                onValueChange = onValueChange,
-                modifier = Modifier.weight(1f),
-                singleLine = true,
-                enabled = enabled,
-                isError = item.isError,
-                leadingIcon = { Text("${index + 1}") },
-                placeholder = placeholder?.let {
-                    {
-                        Text(
-                            text = it,
-                            maxLines = 1,
-                            softWrap = false
-                        )
-                    }
-                },
-                supportingText = if (!item.isError || errorText == null) null else {
-                    {
-                        Text(
-                            text = errorText,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-                }
-            )
-
-            Box(
-                contentAlignment = Alignment.Center,
-                modifier = Modifier
-                    .padding(start = 8.dp)
-                    .size(48.dp, 56.dp)
-            ) {
-                when (index) {
-                    0 if itemCount < maxItemCount -> FilledTonalIconButton(
-                        onClick = onAdd,
-                        enabled = enabled,
-                        content = { VectorIcon(Icons.Add) }
-                    )
-
-                    itemCount - 1 if itemCount > 1 -> FilledTonalIconButton(
-                        onClick = onRemove,
-                        enabled = enabled,
-                        content = { VectorIcon(Icons.Remove) }
-                    )
-                }
-            }
-        }
 
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
@@ -359,10 +227,11 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
 
                 AnimatedVisibility(state.isUserMode) {
                     Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
-                        state.urlListItems.forEachIndexed { index, item ->
+                        state.urlList.forEachIndexed { index, value ->
                             ProxyInputRow(
                                 index = index,
-                                item = item,
+                                value = value,
+                                isError = state.isUrlError(value),
                                 itemCount = state.urlList.size,
                                 maxItemCount = MAX_URL_COUNT,
                                 errorText = stringResource(Res.string.text_base_url_format),
@@ -434,33 +303,7 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
                     }
                 }
 
-                if (Network.isYggdrasilAvailable) {
-                    Spacer(Modifier.height(24.dp))
-
-                    SettingsToggleRow(
-                        title = stringResource(Res.string.preference_use_yggdrasil),
-                        summary = stringResource(Res.string.preference_use_yggdrasil_summary),
-                        checked = state.isYggdrasilEnabled,
-                        onCheckedChange = state::toggleYggdrasil
-                    )
-
-                    AnimatedVisibility(state.isYggdrasilEnabled) {
-                        Column(Modifier.fillMaxWidth(), Arrangement.spacedBy(8.dp)) {
-                            state.peerListItems.forEachIndexed { index, item ->
-                                ProxyInputRow(
-                                    index = index,
-                                    item = item,
-                                    itemCount = state.peerList.size,
-                                    maxItemCount = MAX_YGGDRASIL_PEER_COUNT,
-                                    placeholder = stringResource(Res.string.text_yggdrasil_peer_format),
-                                    onValueChange = { state.updatePeer(index, it) },
-                                    onAdd = state::addPeer,
-                                    onRemove = state::removeLastPeer
-                                )
-                            }
-                        }
-                    }
-                }
+                state.extraSettings?.Content()
 
                 Spacer(Modifier.height(32.dp))
 
@@ -502,8 +345,3 @@ private fun ProxySettings(isVisible: Boolean, onBack: () -> Unit) =
             }
         }
     }
-
-expect fun LazyListScope.deeplinkSetting(isEnabled: Boolean, onClick: () -> Unit)
-
-@Composable
-expect fun DeeplinkScreen(isVisible: Boolean, onBack: () -> Unit)
