@@ -10,38 +10,15 @@ import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.flow.channelFlow
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import kotlinx.io.IOException
 import org.application.shikiapp.shared.di.Preferences
 import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.basicJson
-import kotlin.concurrent.Volatile
 import kotlin.coroutines.cancellation.CancellationException
 
 class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client) {
-
-    companion object {
-        private const val API_HOST_ENC = "uggcf://ncv.pqayvof.bet/ncv"
-        val API_HOST by lazy { cypher13(API_HOST_ENC) }
-        val API_AUTH_URL by lazy { cypher13("uggcf://nhgu.uragnvpqa.bet/nhgu/bnhgu/nhgubevmr") }
-
-        val ORIGIN by lazy { cypher13("uggcf://i5.navzryvo.bet") }
-
-        @Volatile
-        private var INSTANCE: AnimeLibParser? = null
-
-        private val mutex = Mutex()
-
-        suspend fun getInstance(): AnimeLibParser {
-            INSTANCE?.let { return it }
-            return mutex.withLock {
-                INSTANCE ?: AnimeLibParser(Network.watchClient).also { INSTANCE = it }
-            }
-        }
-    }
-
     override val token: String
         get() = Preferences.libToken?.accessToken.orEmpty()
 
@@ -61,20 +38,20 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
 
         val targetPlayer = detailResponse.data.players.firstOrNull {
             it.player.equals("Animelib", ignoreCase = true) && it.team?.id == team.toLongOrNull()
-        } ?: throw Exception("No Animelib")
+        } ?: throw IOException()
 
-        val videoHost = "${cypher13("uggcf://ivqrb1.pqayvof.bet")}/.%D0%B0s/"
+        val sortedQualities = targetPlayer.video?.quality.orEmpty()
+            .filterTo(ArrayList()) { it.href.isNotBlank() }
+            .also { it.sortByDescending(AnimeLibVideoQuality::quality) }
 
-        val sortedQualities = targetPlayer.video?.quality
-            ?.sortedByDescending(AnimeLibVideoQuality::quality)
-            .orEmpty()
+        val targetQuality = sortedQualities.firstOrNull { it.quality == quality }
+            ?: sortedQualities.firstOrNull()
+            ?: throw IOException()
 
-        val targetIndex = sortedQualities.indexOfFirst { it.quality == quality }
-        val targetQuality = sortedQualities.getOrNull(targetIndex)
-
-        val defaultUrl = targetQuality?.href?.let { "$videoHost$it" }.orEmpty()
-        val fallbackUrls = sortedQualities.mapIndexedNotNull { index, item ->
-            if (index != targetIndex) "$videoHost${item.href}" else null
+        val urls = LinkedHashSet(videoUrls(targetQuality.href))
+        for (item in sortedQualities) {
+            if (item == targetQuality) continue
+            urls.addAll(videoUrls(item.href))
         }
 
         val subtitleTracks = targetPlayer.subtitles.mapIndexedNotNull { index, sub ->
@@ -89,8 +66,8 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
         }
 
         return PlaylistResult(
-            url = defaultUrl,
-            fallbackUrls = fallbackUrls,
+            url = urls.first(),
+            fallbackUrls = urls.drop(1),
             qualityList = sortedQualities.map(AnimeLibVideoQuality::quality),
             subtitles = subtitleTracks,
             headers = mapOf(
@@ -142,5 +119,30 @@ class AnimeLibParser private constructor(client: HttpClient) : BaseParser(client
             }
         }
         return basicJson.decodeFromString<AnimeLibEpisodeDetailResponse>(response.bodyAsText())
+    }
+
+    private fun videoUrls(href: String): List<String> {
+        if (href.startsWith("https://") || href.startsWith("http://")) return listOf(href)
+        if (href.startsWith("//")) return listOf("https:$href")
+
+        val path = href.trimStart('/')
+        return VIDEO_HOSTS.map { "$it/$path" }
+    }
+
+    companion object {
+        private const val API_HOST_ENC = "uggcf://ncv.pqayvof.bet/ncv"
+        val API_HOST by lazy { cypher13(API_HOST_ENC) }
+        val API_AUTH_URL by lazy { cypher13("uggcf://nhgu.uragnvpqa.bet/nhgu/bnhgu/nhgubevmr") }
+
+        val ORIGIN by lazy { cypher13("uggcf://i5.navzryvo.bet") }
+        private val VIDEO_HOSTS by lazy {
+            listOf(
+                cypher13("uggcf://ivqrb1.vztyvo.vasb"),
+                "${cypher13("uggcf://ivqrb1.pqayvof.bet")}/.%D0%B0s",
+                cypher13("uggcf://ivqrb2.pqayvof.bet")
+            )
+        }
+
+        val instance: AnimeLibParser by lazy { AnimeLibParser(Network.watchClient) }
     }
 }

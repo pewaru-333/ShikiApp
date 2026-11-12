@@ -15,23 +15,7 @@ import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
 
-class AksorParser private constructor(client: HttpClient) : BaseParser(client) {
-    companion object {
-        private val API_HOST by lazy { cypher13("uggcf://ncv.lnav.gi") }
-        private val PLAYER_URL by lazy { cypher13("uggcf://cynlre.nxfbe.gi") }
-        private val ORIGIN by lazy { cypher13("uggcf://byq.lhzzlnav.zr") }
-        private val videoUrl = Regex(
-            pattern = """(?:https?:)?//(?:www\.)?(?:player\.)?aksor(?:\.yani)?\.tv/video/([A-Za-z0-9_-]+)(?:[/?#].*)?""",
-            option = RegexOption.IGNORE_CASE
-        )
-
-        private val parserInstance by lazy { AksorParser(Network.watchClient) }
-
-        fun getInstance(): AksorParser = parserInstance
-    }
-
-    override val token: String = BLANK
-
+class AksorParser private constructor(client: HttpClient, override val token: String) : BaseParser(client) {
     override suspend fun searchById(id: String): AksorPlaylistResponse {
         val shikimoriId = id.toIntOrNull() ?: return AksorPlaylistResponse()
         if (shikimoriId <= 0) return AksorPlaylistResponse()
@@ -100,5 +84,17 @@ class AksorParser private constructor(client: HttpClient) : BaseParser(client) {
                 if (userAgent != null) put(HttpHeaders.UserAgent, userAgent)
             }
         )
+    }
+
+    companion object {
+        private val API_HOST by lazy { cypher13("uggcf://ncv.lnav.gi") }
+        private val PLAYER_URL by lazy { cypher13("uggcf://cynlre.nxfbe.gi") }
+        private val ORIGIN by lazy { cypher13("uggcf://byq.lhzzlnav.zr") }
+        private val videoUrl = Regex(
+            pattern = """(?:https?:)?//(?:www\.)?(?:player\.)?aksor(?:\.yani)?\.tv/video/([A-Za-z0-9_-]+)(?:[/?#].*)?""",
+            option = RegexOption.IGNORE_CASE
+        )
+
+        val instance: AksorParser by lazy { AksorParser(Network.watchClient, BLANK) }
     }
 }

@@ -1,38 +1,17 @@
 package org.application.shikiapp.shared.network.parser
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.statement.*
-import io.ktor.util.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import io.ktor.client.HttpClient
+import io.ktor.client.request.get
+import io.ktor.client.request.parameter
+import io.ktor.client.statement.bodyAsText
+import io.ktor.util.flattenEntries
 import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.models.ui.mappers.getQualityMap
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
-import kotlin.concurrent.Volatile
 
-class CvhParser private constructor(client: HttpClient) : BaseParser(client) {
-    companion object {
-        private const val API_HOST_ENC = "uggcf://cyncv.pqaivqrbuho.pbz/ncv/i1/cynlre/fi"
-        private val API_HOST by lazy { cypher13(API_HOST_ENC) }
-
-        @Volatile
-        private var INSTANCE: CvhParser? = null
-
-        private val mutex = Mutex()
-        suspend fun getInstance(): CvhParser {
-            INSTANCE?.let { return it }
-            return mutex.withLock {
-                INSTANCE ?: CvhParser(Network.watchClient).also { INSTANCE = it }
-            }
-        }
-
-    }
-
-    override val token: String = BLANK
-
+class CvhParser private constructor(client: HttpClient, override val token: String) : BaseParser(client) {
     override suspend fun searchById(id: String): CvhPlaylistResponse {
         val response = client.get("$API_HOST/playlist") {
             parameter("id", id)
@@ -67,5 +46,12 @@ class CvhParser private constructor(client: HttpClient) : BaseParser(client) {
             qualityList = qualityList,
             headers = request.call.request.headers.flattenEntries().toMap()
         )
+    }
+
+    companion object {
+        private const val API_HOST_ENC = "uggcf://cyncv.pqaivqrbuho.pbz/ncv/i1/cynlre/fi"
+        private val API_HOST by lazy { cypher13(API_HOST_ENC) }
+
+        val instance: CvhParser by lazy { CvhParser(Network.watchClient, BLANK) }
     }
 }

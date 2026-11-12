@@ -1,12 +1,12 @@
 package org.application.shikiapp.shared.network.parser
 
-import io.ktor.client.*
-import io.ktor.client.request.*
-import io.ktor.client.request.forms.*
-import io.ktor.client.statement.*
-import io.ktor.http.*
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
+import io.ktor.client.HttpClient
+import io.ktor.client.request.forms.submitForm
+import io.ktor.client.request.get
+import io.ktor.client.statement.bodyAsText
+import io.ktor.http.isSuccess
+import io.ktor.http.parameters
+import kotlinx.io.IOException
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -14,85 +14,10 @@ import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.BLANK
 import org.application.shikiapp.shared.utils.basicJson
-import kotlin.concurrent.Volatile
-import kotlin.coroutines.cancellation.CancellationException
 import kotlin.io.encoding.Base64
 
-class KodikParser private constructor(override val token: String, client: HttpClient) : BaseParser(client) {
+class KodikParser private constructor(client: HttpClient, override val token: String) : BaseParser(client) {
     private var cryptStep: Int? = null
-
-    companion object {
-        private const val TOKENS_URL_ENC = "uggcf://enj.tvguhohfrepbagrag.pbz/lnArflGbegvX/NavzrCnefref/ersf/urnqf/znva/xqx_gbxaf/gbxraf.wfba"
-        private const val SEARCH_URL_ENC = "uggcf://xbqvx-ncv.pbz/frnepu"
-        private const val PLAYER_URL_ENC = "uggcf://xbqvxcynlre.pbz"
-
-        private val TOKENS_URL by lazy { cypher13(TOKENS_URL_ENC) }
-        private val SEARCH_URL by lazy { cypher13(SEARCH_URL_ENC) }
-        private val PLAYER_URL by lazy { cypher13(PLAYER_URL_ENC) }
-
-        @Volatile
-        private var INSTANCE: KodikParser? = null
-        private val mutex = Mutex()
-
-        suspend fun getInstance(): KodikParser {
-            INSTANCE?.let { return it }
-
-            return mutex.withLock {
-                INSTANCE?.let { return@withLock it }
-
-                val tokensText = Network.watchClient.get(TOKENS_URL).bodyAsText()
-                val tokensData = basicJson.decodeFromString<KodikTokensResponse>(tokensText)
-
-                val allTokens = tokensData.stable + tokensData.unstable + tokensData.legacy
-
-                var validParser: KodikParser? = null
-                for ((tokn) in allTokens) {
-                    val decryptedToken = decryptToken(tokn)
-                    if (validateToken(decryptedToken, Network.watchClient)) {
-                        validParser = KodikParser(decryptedToken, Network.watchClient)
-                        break
-                    }
-                }
-
-                if (validParser == null) {
-                    throw NullPointerException()
-                }
-
-                INSTANCE = validParser
-                validParser
-            }
-        }
-
-        private fun decryptToken(token: String): String {
-            val half = token.length / 2
-            val p1Reversed = token.substring(0, half).reversed()
-            val p2Reversed = token.substring(half).reversed()
-
-            val p1Decoded = decodeBase64(p1Reversed)
-            val p2Decoded = decodeBase64(p2Reversed)
-
-            return p2Decoded + p1Decoded
-        }
-
-        private suspend fun validateToken(testToken: String, client: HttpClient) = try {
-            val response = client.submitForm(
-                url = SEARCH_URL,
-                formParameters = parameters {
-                    append("token", testToken)
-                    append("title", "Наруто")
-                    append("limit", "1")
-                }
-            )
-            val text = response.bodyAsText()
-            val obj = basicJson.parseToJsonElement(text).jsonObject
-
-            obj["error"]?.jsonPrimitive?.content != "Отсутствует или неверный токен"
-        } catch (e: CancellationException) {
-            throw e
-        } catch (_: Exception) {
-            false
-        }
-    }
 
     override suspend fun searchById(id: String): List<KodikResultItem> {
         val response = client.submitForm(
@@ -104,6 +29,8 @@ class KodikParser private constructor(override val token: String, client: HttpCl
                 append("with_episodes_data", "true")
             }
         )
+
+        if (!response.status.isSuccess()) throw IOException()
 
         val data = basicJson.decodeFromString<KodikSearchResponse>(response.bodyAsText())
         return data.results
@@ -231,5 +158,15 @@ class KodikParser private constructor(override val token: String, client: HttpCl
         } catch (_: Exception) {
             null
         }
+    }
+
+    companion object {
+        private const val TOKEN_ENC = "56n768q08s43091901p44o54sr970049"
+        private const val SEARCH_URL_ENC = "uggcf://xbqvx-ncv.pbz/frnepu"
+        private const val PLAYER_URL_ENC = "uggcf://xbqvxcynlre.pbz"
+
+        private val SEARCH_URL by lazy { cypher13(SEARCH_URL_ENC) }
+        private val PLAYER_URL by lazy { cypher13(PLAYER_URL_ENC) }
+        val instance: KodikParser by lazy { KodikParser(Network.watchClient, cypher13(TOKEN_ENC)) }
     }
 }

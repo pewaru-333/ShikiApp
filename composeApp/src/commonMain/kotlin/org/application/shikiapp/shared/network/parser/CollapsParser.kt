@@ -5,39 +5,13 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.parameter
 import io.ktor.client.statement.bodyAsText
-import kotlinx.coroutines.sync.Mutex
-import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.jsonPrimitive
 import org.application.shikiapp.shared.models.ui.PlaylistResult
 import org.application.shikiapp.shared.models.ui.SubtitleTrack
 import org.application.shikiapp.shared.network.client.Network
 import org.application.shikiapp.shared.utils.basicJson
-import kotlin.concurrent.Volatile
 
-class CollapsParser private constructor(client: HttpClient) : BaseParser(client) {
-
-    companion object {
-        private const val API_HOST_ENC = "uggcf://ncvpbyyncf.pp"
-        private const val TOKEN_ENC = "4p250s7np0n8p8n658p789186o9n58n5"
-
-        private val API_HOST by lazy { cypher13(API_HOST_ENC) }
-        private val DECRYPTED_TOKEN by lazy { cypher13(TOKEN_ENC) }
-
-        @Volatile
-        private var INSTANCE: CollapsParser? = null
-        private val mutex = Mutex()
-
-        suspend fun getInstance(): CollapsParser {
-            INSTANCE?.let { return it }
-            return mutex.withLock {
-                INSTANCE ?: CollapsParser(Network.watchClient).also { INSTANCE = it }
-            }
-        }
-    }
-
-    override val token: String
-        get() = DECRYPTED_TOKEN
-
+class CollapsParser private constructor(client: HttpClient, override val token: String) : BaseParser(client) {
     override suspend fun searchById(id: String): CollapsTitleDetails {
         val response = client.get("$API_HOST/franchise/details") {
             parameter("token", token)
@@ -162,5 +136,15 @@ class CollapsParser private constructor(client: HttpClient) : BaseParser(client)
         }
 
         return null
+    }
+
+    companion object {
+        private const val API_HOST_ENC = "uggcf://ncvpbyyncf.pp"
+        private const val TOKEN_ENC = "4p250s7np0n8p8n658p789186o9n58n5"
+
+        private val API_HOST by lazy { cypher13(API_HOST_ENC) }
+        private val DECRYPTED_TOKEN by lazy { cypher13(TOKEN_ENC) }
+
+        val instance: CollapsParser by lazy { CollapsParser(Network.watchClient, DECRYPTED_TOKEN) }
     }
 }
